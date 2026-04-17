@@ -78,8 +78,14 @@ workflows:
             -Pandroid.injected.signing.key.alias="$CM_KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$CM_KEY_PASSWORD"
 
+      - name: Locate APK output
+        script: |
+          echo "=== APK files found ==="
+          find "$CM_BUILD_DIR" -name "*.apk" 2>/dev/null
+          echo "=== End APK search ==="
+
     artifacts:
-      - mobile/android/app/build/outputs/apk/release/*.apk
+      - mobile/android/**/release/*.apk
 
     publishing:
       firebase:
