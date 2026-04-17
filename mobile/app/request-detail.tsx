@@ -84,7 +84,8 @@ export default function RequestDetail() {
           )
         `)
         .eq('request_id', id)
-        .order('amount', { ascending: true }),
+        .order('amount', { ascending: true })
+        .limit(20),
     ]);
 
     if (reqData)  setRequest(reqData);

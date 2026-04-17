@@ -4,7 +4,7 @@
 //           rocket upsell bounce, score counter, header entrance
 // ============================================================
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Modal, TextInput,
@@ -13,12 +13,13 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { COLORS } from '../../src/constants/theme';
-import { CATEGORY_GROUPS, JORDAN_CITIES, TIER_META, CREDIT_COST } from '../../src/constants/categories';
+import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceRequest, Provider, User, RecurringContract } from '../../src/types';
 import { FREQ_VISITS_PER_MONTH } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { calcUrgentPremium, calcContractTotal, sanitizeAmount } from '../../src/utils/pricing';
 
 const CONTRACT_COLOR = '#10B981';
 const CONTRACT_DIM   = '#10B98122';
@@ -535,7 +536,7 @@ function DemoRequestCard({
       <View style={demoStyles.metaRow}>
         <Text style={demoStyles.metaText}>📍 {req.city}{req.district ? ` — ${req.district}` : ''}</Text>
         <Text style={demoStyles.metaText}>
-          {ICON_MAP[CATEGORY_GROUPS.flatMap(g => g.categories).find(c => c.slug === req.category_slug)?.icon ?? ''] ?? '🔧'} {req.category_slug}
+          {ICON_MAP[ALL_CATEGORIES.find(c => c.slug === req.category_slug)?.icon ?? ''] ?? '🔧'} {req.category_slug}
         </Text>
       </View>
 
@@ -664,44 +665,51 @@ export default function ProviderFeed() {
   const [cityFilter, setCityFilter] = useState<string>('all');
 
   // Demo request
-  const [demoStatus, setDemoStatus]         = useState<DemoStatus | null>(null);
-  const [demoBidTarget, setDemoBidTarget]   = useState(false);
-  const [demoBidAmount, setDemoBidAmount]   = useState('');
-  const [demoBidNote, setDemoBidNote]       = useState('');
-  const [demoBidLoading, setDemoBidLoading] = useState(false);
-  const [demoSuccess, setDemoSuccess]       = useState(false);
+  const [demoStatus, setDemoStatus] = useState<DemoStatus | null>(null);
+  const [demoSuccess, setDemoSuccess] = useState(false);
 
-  // Bid modal
-  const [bidTarget, setBidTarget]   = useState<RequestWithMeta | null>(null);
-  const [bidAmount, setBidAmount]   = useState('');
-  const [bidNote, setBidNote]       = useState('');
-  const [bidLoading, setBidLoading] = useState(false);
+  // Grouped: demo bid modal state
+  const [demoModal, setDemoModal] = useState({ open: false, amount: '', note: '', loading: false });
 
-  // Urgent accept modal
-  const [urgentTarget, setUrgentTarget]     = useState<RequestWithMeta | null>(null);
-  const [urgentLoading, setUrgentLoading]   = useState(false);
+  // Grouped: bid modal state
+  const [bidModal, setBidModal] = useState<{
+    target: RequestWithMeta | null; amount: string; note: string; loading: boolean;
+  }>({ target: null, amount: '', note: '', loading: false });
+
+  // Grouped: urgent accept modal state
+  const [urgentModal, setUrgentModal] = useState<{
+    target: RequestWithMeta | null; loading: boolean;
+  }>({ target: null, loading: false });
 
   const [showUpsell, setShowUpsell] = useState(false);
 
   // Recurring contracts
-  const [contracts, setContracts]             = useState<RecurringContract[]>([]);
-  const [contractBidTarget, setContractBidTarget] = useState<RecurringContract | null>(null);
-  const [contractBidAmount, setContractBidAmount] = useState('');
-  const [contractBidNote, setContractBidNote]   = useState('');
-  const [contractBidLoading, setContractBidLoading] = useState(false);
+  const [contracts, setContracts] = useState<RecurringContract[]>([]);
+
+  // Grouped: contract bid modal state
+  const [contractModal, setContractModal] = useState<{
+    target: RecurringContract | null; amount: string; note: string; loading: boolean;
+  }>({ target: null, amount: '', note: '', loading: false });
 
   // Pending job commitment (bid accepted by client, provider must confirm)
-  const [pendingCommit, setPendingCommit] = useState<{ job_id: string; title: string; is_urgent: boolean } | null>(null);
+  const [pendingCommit, setPendingCommit] = useState<{
+    job_id: string; title: string; is_urgent: boolean;
+  } | null>(null);
 
   // Entrance anims
   const headerOp     = useRef(new Animated.Value(0)).current;
   const headerY      = useRef(new Animated.Value(-20)).current;
   const filterOp     = useRef(new Animated.Value(0)).current;
 
-  // Per-card entrance anims (pool of MAX_CARDS)
-  const cardAnims = useRef(
-    Array.from({ length: MAX_CARDS }, () => new Animated.Value(0))
-  ).current;
+  // Dynamic card anim pool — only allocates Animated.Values for actual cards shown
+  const cardAnimsRef = useRef<Animated.Value[]>([]);
+
+  const getCardAnim = (index: number): Animated.Value => {
+    if (!cardAnimsRef.current[index]) {
+      cardAnimsRef.current[index] = new Animated.Value(0);
+    }
+    return cardAnimsRef.current[index];
+  };
 
   const runEntranceAnims = (count: number) => {
     Animated.parallel([
@@ -712,44 +720,54 @@ export default function ProviderFeed() {
     ]).start();
 
     const n = Math.min(count, MAX_CARDS);
-    cardAnims.slice(0, n).forEach(a => a.setValue(0));
+    const anims = Array.from({ length: n }, (_, i) => {
+      const a = getCardAnim(i);
+      a.setValue(0);
+      return a;
+    });
     Animated.stagger(
       40,
-      cardAnims.slice(0, n).map(a =>
-        Animated.spring(a, { toValue: 1, tension: 90, friction: 10, useNativeDriver: true })
-      )
+      anims.map(a => Animated.spring(a, { toValue: 1, tension: 90, friction: 10, useNativeDriver: true }))
     ).start();
   };
+
+  // Cleanup: stop all animations and release on unmount
+  useEffect(() => () => {
+    cardAnimsRef.current.forEach(a => a.stopAnimation());
+    cardAnimsRef.current = [];
+  }, []);
 
   const load = useCallback(async () => {
     const { data: { user: authUser } } = await supabase.auth.getUser();
     if (!authUser) return;
 
-    const [{ data: providerData }, { data: requestsData }, { data: contractsData }] = await Promise.all([
+    // All four queries run in parallel — no waterfall
+    const [
+      { data: providerData },
+      { data: requestsData },
+      { data: contractsData },
+      { data: demoData },
+    ] = await Promise.all([
       supabase.from('providers').select('*, user:users(*)').eq('id', authUser.id).single(),
       supabase
         .from('requests')
         .select('*, category:service_categories(name_ar, icon), bids_count:bids(count)')
         .eq('status', 'open')
-        .order('is_urgent',    { ascending: false })   // urgent pinned at top
-        .order('created_at',   { ascending: false })
+        .order('is_urgent',  { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(40),
       supabase
         .from('public_contract_feed')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20),
+      supabase.rpc('get_provider_demo', { p_provider_id: authUser.id }),
     ]);
 
     if (providerData)  setProvider(providerData);
     if (requestsData)  setRequests(requestsData);
     if (contractsData) setContracts(contractsData as RecurringContract[]);
-
-    // Fetch demo request status (only relevant for new providers)
-    const { data: demoData } = await supabase.rpc('get_provider_demo', {
-      p_provider_id: authUser.id,
-    });
-    if (demoData) setDemoStatus(demoData as DemoStatus);
+    if (demoData)      setDemoStatus(demoData as DemoStatus);
 
     setLoading(false);
     runEntranceAnims(requestsData?.length ?? 0);
@@ -759,16 +777,16 @@ export default function ProviderFeed() {
 
   // ── Realtime: detect incoming job commitment request ─────────
   useEffect(() => {
-    let providerId: string | null = null;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return;
-      providerId = user.id;
+    const setup = async () => {
+      const { data: { user }, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !user) return;
 
-      // Check on mount for any existing pending commit
-      supabase
+      // On mount: check for any existing pending commit (JOIN avoids N+1)
+      const { data } = await supabase
         .from('jobs')
-        .select('id, provider_commit_deadline, request:requests(title, is_urgent)')
+        .select('id, request:requests(title, is_urgent)')
         .eq('provider_id', user.id)
         .eq('status', 'active')
         .is('provider_committed_at', null)
@@ -776,45 +794,41 @@ export default function ProviderFeed() {
         .gt('provider_commit_deadline', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            const req = (data as any).request ?? {};
-            setPendingCommit({
-              job_id:    data.id,
-              title:     req.title ?? 'طلب',
-              is_urgent: !!req.is_urgent,
-            });
-          }
-        });
+        .single();
 
-      // Realtime: listen for new jobs assigned to this provider
-      const channel = supabase
+      if (data) {
+        const req = (data as any).request ?? {};
+        setPendingCommit({ job_id: data.id, title: req.title ?? 'طلب', is_urgent: !!req.is_urgent });
+      }
+
+      // Realtime: JOIN included in SELECT so no secondary fetch per INSERT
+      channel = supabase
         .channel(`provider_jobs:${user.id}`)
         .on('postgres_changes', {
           event:  'INSERT',
           schema: 'public',
           table:  'jobs',
           filter: `provider_id=eq.${user.id}`,
-        }, (payload) => {
-          // Fetch request title
-          supabase
+        }, async (payload) => {
+          // Fetch title+is_urgent in a single targeted query (payload lacks joined fields)
+          const { data: req } = await supabase
             .from('requests')
             .select('title, is_urgent')
             .eq('id', payload.new.request_id)
-            .single()
-            .then(({ data: req }) => {
-              setPendingCommit({
-                job_id:    payload.new.id,
-                title:     req?.title ?? 'طلب',
-                is_urgent: !!req?.is_urgent,
-              });
-            });
+            .single();
+          setPendingCommit({
+            job_id:    payload.new.id,
+            title:     req?.title ?? 'طلب',
+            is_urgent: !!req?.is_urgent,
+          });
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR') console.warn('[Waseet] provider_jobs channel error');
+        });
+    };
 
-      return () => { supabase.removeChannel(channel); };
-    });
+    setup().catch(console.error);
+    return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -823,24 +837,27 @@ export default function ProviderFeed() {
     setRefreshing(false);
   }, [load]);
 
-  const allCategories = CATEGORY_GROUPS.flatMap(g => g.categories);
-  const filtered = requests.filter(r => {
-    if (catFilter !== 'all' && r.category_slug !== catFilter) return false;
-    if (cityFilter !== 'all' && r.city !== cityFilter) return false;
-    return true;
-  });
+  // useMemo: only re-filter when requests list or active filters change
+  const filtered = useMemo(() =>
+    requests.filter(r => {
+      if (catFilter  !== 'all' && r.category_slug !== catFilter)  return false;
+      if (cityFilter !== 'all' && r.city          !== cityFilter) return false;
+      return true;
+    }),
+    [requests, catFilter, cityFilter],
+  );
 
   const handleBidPress = (req: RequestWithMeta, index: number) => {
     if (!provider?.is_subscribed && index > 0) {
       setShowUpsell(true);
     } else {
-      setBidTarget(req);
+      setBidModal(prev => ({ ...prev, target: req, amount: '', note: '' }));
     }
   };
 
   const submitDemoBid = async () => {
-    if (!demoBidAmount) return;
-    const amount = parseFloat(demoBidAmount);
+    if (!demoModal.amount) return;
+    const amount = parseFloat(demoModal.amount);
     if (isNaN(amount) || amount <= 0) {
       Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
       return;
@@ -848,47 +865,47 @@ export default function ProviderFeed() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    setDemoBidLoading(true);
+    setDemoModal(prev => ({ ...prev, loading: true }));
     const { data, error } = await supabase.rpc('submit_demo_bid', {
       p_provider_id: user.id,
       p_amount:      amount,
-      p_note:        demoBidNote.trim() || null,
+      p_note:        demoModal.note.trim() || null,
     });
-    setDemoBidLoading(false);
+    setDemoModal(prev => ({ ...prev, loading: false }));
 
     if (error || (data as any)?.error) {
       Alert.alert(t('common.error'), error?.message ?? (data as any)?.error);
       return;
     }
 
-    setDemoBidTarget(false);
-    setDemoBidAmount('');
-    setDemoBidNote('');
+    setDemoModal({ open: false, amount: '', note: '', loading: false });
     setDemoStatus({ status: 'submitted', bid_amount: amount });
     setDemoSuccess(true);
   };
 
   const submitUrgentAccept = async () => {
-    if (!urgentTarget) return;
-    setUrgentLoading(true);
+    const target = urgentModal.target;
+    if (!target) return;
+    setUrgentModal(prev => ({ ...prev, loading: true }));
     const { data: { user } } = await supabase.auth.getUser();
-    const premiumMin = urgentTarget.ai_suggested_price_min
-      ? Math.round(urgentTarget.ai_suggested_price_min * (1 + (urgentTarget.urgent_premium_pct ?? 25) / 100))
-      : 0;
+
+    // Use centralized pricing utility
+    const { min: premiumMin } = calcUrgentPremium(
+      target.ai_suggested_price_min,
+      target.ai_suggested_price_max,
+      target.urgent_premium_pct ?? 25,
+    );
 
     const { data: rpcResult, error } = await supabase.rpc('submit_bid_with_credits', {
-      p_request_id:  urgentTarget.id,
+      p_request_id:  target.id,
       p_provider_id: user!.id,
-      p_amount:      premiumMin || 0,
+      p_amount:      premiumMin ?? 0,
       p_note:        t('providerFeed.urgentBidNote'),
       p_credit_cost: CREDIT_COST.urgent,
     });
-    setUrgentLoading(false);
+    setUrgentModal(prev => ({ ...prev, loading: false }));
 
-    if (error) {
-      Alert.alert(t('common.error'), error.message);
-      return;
-    }
+    if (error) { Alert.alert(t('common.error'), error.message); return; }
     const result = rpcResult as { error?: string; bid_id?: string };
     if (result?.error) {
       const msgMap: Record<string, string> = {
@@ -900,19 +917,22 @@ export default function ProviderFeed() {
       Alert.alert(t('common.error'), msgMap[result.error] ?? result.error);
       return;
     }
-    setUrgentTarget(null);
+    setUrgentModal({ target: null, loading: false });
     Alert.alert(t('providerFeed.successUrgentTitle'), t('providerFeed.successUrgentMsg'));
     load();
   };
 
   const submitBid = async () => {
-    if (!bidTarget || !bidAmount) return;
-    const amount = parseFloat(bidAmount);
-    if (isNaN(amount) || amount <= 0) { Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount')); return; }
+    const { target, amount: amountStr, note } = bidModal;
+    if (!target || !amountStr) return;
+    const amount = parseFloat(amountStr);
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
+      return;
+    }
 
-    // Validate bid amount against admin-configured min/max for this category
     const { data: validation } = await supabase.rpc('validate_bid_amount', {
-      p_category_slug: bidTarget.category_slug,
+      p_category_slug: target.category_slug,
       p_amount: amount,
     });
     if (validation && !validation.valid) {
@@ -924,64 +944,64 @@ export default function ProviderFeed() {
       return;
     }
 
-    setBidLoading(true);
+    setBidModal(prev => ({ ...prev, loading: true }));
     const { data: { user } } = await supabase.auth.getUser();
-    const creditCost = bidTarget.is_urgent ? CREDIT_COST.urgent : CREDIT_COST.normal;
+    const creditCost = target.is_urgent ? CREDIT_COST.urgent : CREDIT_COST.normal;
 
     const { data: rpcResult, error } = await supabase.rpc('submit_bid_with_credits', {
-      p_request_id:  bidTarget.id,
+      p_request_id:  target.id,
       p_provider_id: user!.id,
       p_amount:      amount,
-      p_note:        bidNote.trim() || null,
+      p_note:        note.trim() || null,
       p_credit_cost: creditCost,
     });
-    setBidLoading(false);
+    setBidModal(prev => ({ ...prev, loading: false }));
 
-    if (error) {
-      Alert.alert(t('common.error'), error.message);
-      return;
-    }
+    if (error) { Alert.alert(t('common.error'), error.message); return; }
     const result = rpcResult as { error?: string; bid_id?: string };
     if (result?.error) {
       const msgMap: Record<string, string> = {
-        NO_CREDITS:       t('providerFeed.errNoCredits'),
-        COOLDOWN_ACTIVE:  t('providerFeed.errCooldown'),
-        MAX_ACTIVE_BIDS:  t('providerFeed.errMaxActiveBids'),
-        NOT_SUBSCRIBED:   t('providerFeed.mustSubscribe'),
-        REQUEST_NOT_FOUND:t('common.error'),
+        NO_CREDITS:        t('providerFeed.errNoCredits'),
+        COOLDOWN_ACTIVE:   t('providerFeed.errCooldown'),
+        MAX_ACTIVE_BIDS:   t('providerFeed.errMaxActiveBids'),
+        NOT_SUBSCRIBED:    t('providerFeed.mustSubscribe'),
+        REQUEST_NOT_FOUND: t('common.error'),
       };
       Alert.alert(t('common.error'), msgMap[result.error] ?? result.error);
       return;
     }
-    setBidTarget(null); setBidAmount(''); setBidNote('');
+    setBidModal({ target: null, amount: '', note: '', loading: false });
     Alert.alert(t('providerFeed.successBidTitle'), t('providerFeed.successBidMsg'));
     load();
   };
 
   const submitContractBid = async () => {
-    if (!contractBidTarget || !contractBidAmount) return;
-    const price = parseFloat(contractBidAmount);
-    if (isNaN(price) || price <= 0) { Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount')); return; }
+    const { target, amount: amountStr, note } = contractModal;
+    if (!target || !amountStr) return;
+    const price = parseFloat(amountStr);
+    if (isNaN(price) || price <= 0) {
+      Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
+      return;
+    }
 
-    setContractBidLoading(true);
+    setContractModal(prev => ({ ...prev, loading: true }));
     const { data: { user } } = await supabase.auth.getUser();
-    // Deduct 3 credits for contract bid (done inside submit_contract_bid which calls credits check)
-    // First deduct credits via RPC, then submit the contract bid
+
     const { data: creditResult, error: creditError } = await supabase.rpc('submit_bid_with_credits', {
-      p_request_id:  contractBidTarget.id, // contract_id used as request_id placeholder for credit check
+      p_request_id:  target.id,
       p_provider_id: user!.id,
       p_amount:      price,
-      p_note:        contractBidNote.trim() || null,
+      p_note:        note.trim() || null,
       p_credit_cost: CREDIT_COST.contract,
     });
     if (creditError) {
-      setContractBidLoading(false);
+      setContractModal(prev => ({ ...prev, loading: false }));
       Alert.alert(t('common.error'), creditError.message);
       return;
     }
     const creditRes = creditResult as { error?: string };
     if (creditRes?.error) {
-      setContractBidLoading(false);
+      setContractModal(prev => ({ ...prev, loading: false }));
       const msgMap: Record<string, string> = {
         NO_CREDITS:      t('providerFeed.errNoCredits'),
         COOLDOWN_ACTIVE: t('providerFeed.errCooldown'),
@@ -993,18 +1013,15 @@ export default function ProviderFeed() {
     }
 
     const { error } = await supabase.rpc('submit_contract_bid', {
-      p_contract_id:     contractBidTarget.id,
+      p_contract_id:     target.id,
       p_provider_id:     user!.id,
       p_price_per_visit: price,
-      p_note:            contractBidNote.trim() || null,
+      p_note:            note.trim() || null,
     });
-    setContractBidLoading(false);
+    setContractModal(prev => ({ ...prev, loading: false }));
 
-    if (error) {
-      Alert.alert(t('common.error'), error.message);
-      return;
-    }
-    setContractBidTarget(null); setContractBidAmount(''); setContractBidNote('');
+    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    setContractModal({ target: null, amount: '', note: '', loading: false });
     Alert.alert(t('providerFeed.successContractBidTitle'), t('providerFeed.successContractBidMsg'));
     load();
   };
@@ -1098,7 +1115,7 @@ export default function ProviderFeed() {
               {t('providerFeed.allFilter')}
             </Text>
           </TouchableOpacity>
-          {allCategories.map(cat => (
+          {ALL_CATEGORIES.map(cat => (
             <TouchableOpacity
               key={cat.slug}
               style={[styles.filterChip, catFilter === cat.slug && styles.filterChipActive]}
@@ -1116,7 +1133,7 @@ export default function ProviderFeed() {
       {demoStatus && (demoStatus.status === 'pending' || demoStatus.status === 'submitted') && (
         <DemoRequestCard
           demo={demoStatus}
-          onBidPress={() => setDemoBidTarget(true)}
+          onBidPress={() => setDemoModal(prev => ({ ...prev, open: true }))}
           onSkip={() => setDemoStatus(null)}
         />
       )}
@@ -1138,7 +1155,7 @@ export default function ProviderFeed() {
               <ContractMiniCard
                 key={c.id}
                 contract={c}
-                onPress={() => setContractBidTarget(c)}
+                onPress={() => setContractModal(prev => ({ ...prev, target: c }))}
               />
             ))}
           </ScrollView>
@@ -1166,23 +1183,23 @@ export default function ProviderFeed() {
             item={item}
             index={index}
             isLocked={!item.is_urgent && !provider?.is_subscribed && index > 0}
-            entranceAnim={cardAnims[Math.min(index, MAX_CARDS - 1)]}
+            entranceAnim={getCardAnim(Math.min(index, MAX_CARDS - 1))}
             onBidPress={() => handleBidPress(item, index)}
-            onUrgentAccept={() => setUrgentTarget(item)}
+            onUrgentAccept={() => setUrgentModal(prev => ({ ...prev, target: item }))}
           />
         )}
       />
 
       {/* ── Bid Modal ─────────────────────────────────────────── */}
-      <Modal visible={!!bidTarget} transparent animationType="slide">
+      <Modal visible={!!bidModal.target} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { paddingBottom: contentPad }]}>
             <Text style={[styles.modalTitle, { textAlign: ta }]}>{t('providerFeed.submitBid')}</Text>
-            <Text style={[styles.modalSubtitle, { textAlign: ta }]}>{bidTarget?.title}</Text>
+            <Text style={[styles.modalSubtitle, { textAlign: ta }]}>{bidModal.target?.title}</Text>
 
-            {bidTarget?.ai_suggested_price_min && (
+            {bidModal.target?.ai_suggested_price_min && (
               <Text style={[styles.modalAiHint, { textAlign: ta }]}>
-                {t('providerFeed.aiPrice', { min: bidTarget.ai_suggested_price_min, max: bidTarget.ai_suggested_price_max })}
+                {t('providerFeed.aiPrice', { min: bidModal.target.ai_suggested_price_min, max: bidModal.target.ai_suggested_price_max })}
               </Text>
             )}
 
@@ -1190,11 +1207,11 @@ export default function ProviderFeed() {
             {provider?.is_subscribed && (
               <View style={styles.creditCostHint}>
                 <Text style={styles.creditCostHintText}>
-                  {bidTarget?.is_urgent
+                  {bidModal.target?.is_urgent
                     ? t('providerFeed.creditCostUrgent')
                     : t('providerFeed.creditCostNormal')}
                   {provider.subscription_tier !== 'premium' && (
-                    ` • ${t('providerFeed.creditsRemaining', { count: Math.max(0, (provider.bid_credits ?? 0) - (bidTarget?.is_urgent ? CREDIT_COST.urgent : CREDIT_COST.normal)) })}`
+                    ` • ${t('providerFeed.creditsRemaining', { count: Math.max(0, (provider.bid_credits ?? 0) - (bidModal.target?.is_urgent ? CREDIT_COST.urgent : CREDIT_COST.normal)) })}`
                   )}
                 </Text>
               </View>
@@ -1206,8 +1223,8 @@ export default function ProviderFeed() {
               placeholder="0.00"
               placeholderTextColor={COLORS.textMuted}
               keyboardType="decimal-pad"
-              value={bidAmount}
-              onChangeText={setBidAmount}
+              value={bidModal.amount}
+              onChangeText={text => setBidModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
               textAlign={ta}
             />
 
@@ -1216,22 +1233,22 @@ export default function ProviderFeed() {
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
               placeholderTextColor={COLORS.textMuted}
-              value={bidNote}
-              onChangeText={setBidNote}
+              value={bidModal.note}
+              onChangeText={text => setBidModal(prev => ({ ...prev, note: text }))}
               textAlign={ta}
               multiline
             />
 
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setBidTarget(null)}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setBidModal(prev => ({ ...prev, target: null, amount: '', note: '' }))}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalSubmit, (!bidAmount || bidLoading) && styles.btnDisabled]}
+                style={[styles.modalSubmit, (!bidModal.amount || bidModal.loading) && styles.btnDisabled]}
                 onPress={submitBid}
-                disabled={!bidAmount || bidLoading}
+                disabled={!bidModal.amount || bidModal.loading}
               >
-                {bidLoading
+                {bidModal.loading
                   ? <ActivityIndicator color={COLORS.bg} size="small" />
                   : <Text style={styles.modalSubmitText}>{t('providerFeed.sendBid')}</Text>
                 }
@@ -1242,18 +1259,18 @@ export default function ProviderFeed() {
       </Modal>
 
       {/* ── Contract Bid Modal ───────────────────────────────── */}
-      <Modal visible={!!contractBidTarget} transparent animationType="slide">
+      <Modal visible={!!contractModal.target} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { paddingBottom: contentPad }]}>
             <View style={cBidStyles.header}>
               <Text style={cBidStyles.badge}>{t('providerFeed.contractBadge')}</Text>
             </View>
-            <Text style={[styles.modalTitle, { textAlign: ta }]}>{contractBidTarget?.title}</Text>
-            {contractBidTarget && (
+            <Text style={[styles.modalTitle, { textAlign: ta }]}>{contractModal.target?.title}</Text>
+            {contractModal.target && (
               <View style={cBidStyles.summary}>
                 <Text style={[cBidStyles.summaryText, { textAlign: ta }]}>
-                  {t(`providerFeed.freq${contractBidTarget.frequency.charAt(0).toUpperCase() + contractBidTarget.frequency.slice(1)}` as any)} · {contractBidTarget.duration_months} · {' '}
-                  {t('providerFeed.contractVisitCount', { count: FREQ_VISITS_PER_MONTH[contractBidTarget.frequency] * contractBidTarget.duration_months })}
+                  {t(`providerFeed.freq${contractModal.target.frequency.charAt(0).toUpperCase() + contractModal.target.frequency.slice(1)}` as any)} · {contractModal.target.duration_months} · {' '}
+                  {t('providerFeed.contractVisitCount', { count: FREQ_VISITS_PER_MONTH[contractModal.target.frequency] * contractModal.target.duration_months })}
                 </Text>
               </View>
             )}
@@ -1263,15 +1280,15 @@ export default function ProviderFeed() {
               placeholder="0.00"
               placeholderTextColor={COLORS.textMuted}
               keyboardType="decimal-pad"
-              value={contractBidAmount}
-              onChangeText={setContractBidAmount}
+              value={contractModal.amount}
+              onChangeText={text => setContractModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
               textAlign="right"
             />
-            {contractBidAmount && contractBidTarget && !isNaN(parseFloat(contractBidAmount)) && (
+            {contractModal.amount && contractModal.target && !isNaN(parseFloat(contractModal.amount)) && (
               <View style={cBidStyles.totalBox}>
                 <Text style={cBidStyles.totalLabel}>{t('providerFeed.contractTotalExpected')}</Text>
                 <Text style={cBidStyles.totalValue}>
-                  {(parseFloat(contractBidAmount) * FREQ_VISITS_PER_MONTH[contractBidTarget.frequency] * contractBidTarget.duration_months).toFixed(0)} د.أ
+                  {calcContractTotal(parseFloat(contractModal.amount), contractModal.target.frequency, contractModal.target.duration_months).toFixed(0)} د.أ
                 </Text>
               </View>
             )}
@@ -1280,21 +1297,21 @@ export default function ProviderFeed() {
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.contractNotePlaceholder')}
               placeholderTextColor={COLORS.textMuted}
-              value={contractBidNote}
-              onChangeText={setContractBidNote}
+              value={contractModal.note}
+              onChangeText={text => setContractModal(prev => ({ ...prev, note: text }))}
               textAlign={ta}
               multiline
             />
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setContractBidTarget(null)}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setContractModal(prev => ({ ...prev, target: null, amount: '', note: '' }))}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[cBidStyles.submitBtn, (!contractBidAmount || contractBidLoading) && styles.btnDisabled]}
+                style={[cBidStyles.submitBtn, (!contractModal.amount || contractModal.loading) && styles.btnDisabled]}
                 onPress={submitContractBid}
-                disabled={!contractBidAmount || contractBidLoading}
+                disabled={!contractModal.amount || contractModal.loading}
               >
-                {contractBidLoading
+                {contractModal.loading
                   ? <ActivityIndicator color="#fff" size="small" />
                   : <Text style={cBidStyles.submitBtnText}>{t('providerFeed.contractSendBid')}</Text>
                 }
@@ -1312,42 +1329,49 @@ export default function ProviderFeed() {
       />
 
       {/* ── Urgent Accept Modal ───────────────────────────────── */}
-      <Modal visible={!!urgentTarget} transparent animationType="slide">
+      <Modal visible={!!urgentModal.target} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={urgentStyles.acceptSheet}>
             <Text style={[urgentStyles.acceptTitle, { textAlign: ta }]}>{t('providerFeed.urgentAcceptTitle')}</Text>
-            <Text style={[urgentStyles.acceptSubtitle, { textAlign: ta }]}>{urgentTarget?.title}</Text>
+            <Text style={[urgentStyles.acceptSubtitle, { textAlign: ta }]}>{urgentModal.target?.title}</Text>
 
             <View style={urgentStyles.acceptRow}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentServiceLabel')}</Text>
               <Text style={urgentStyles.acceptValue}>
                 {lang === 'ar'
-                  ? (urgentTarget?.category?.name_ar ?? urgentTarget?.category_slug)
-                  : (urgentTarget?.category?.name_ar ?? urgentTarget?.category_slug)}
+                  ? (urgentModal.target?.category?.name_ar ?? urgentModal.target?.category_slug)
+                  : (urgentModal.target?.category?.name_ar ?? urgentModal.target?.category_slug)}
               </Text>
             </View>
             <View style={urgentStyles.acceptRow}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentCityLabel')}</Text>
-              <Text style={urgentStyles.acceptValue}>{urgentTarget?.city}</Text>
+              <Text style={urgentStyles.acceptValue}>{urgentModal.target?.city}</Text>
             </View>
             <View style={urgentStyles.acceptRow}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentDescLabel')}</Text>
               <Text style={[urgentStyles.acceptValue, { flex: 0.65 }]} numberOfLines={3}>
-                {urgentTarget?.description}
+                {urgentModal.target?.description}
               </Text>
             </View>
 
-            {urgentTarget?.ai_suggested_price_min ? (
-              <View style={urgentStyles.acceptPriceTip}>
-                <Text style={[urgentStyles.acceptPriceTipText, { textAlign: ta }]}>
-                  {t('providerFeed.urgentPriceTip', {
-                    min: Math.round((urgentTarget.ai_suggested_price_min ?? 0) * 1.25),
-                    max: Math.round((urgentTarget.ai_suggested_price_max ?? 0) * 1.25),
-                    pct: urgentTarget.urgent_premium_pct ?? 25,
-                  })}
-                </Text>
-              </View>
-            ) : null}
+            {urgentModal.target?.ai_suggested_price_min ? (() => {
+              const urgent = calcUrgentPremium(
+                urgentModal.target.ai_suggested_price_min,
+                urgentModal.target.ai_suggested_price_max,
+                urgentModal.target.urgent_premium_pct ?? 25,
+              );
+              return (
+                <View style={urgentStyles.acceptPriceTip}>
+                  <Text style={[urgentStyles.acceptPriceTipText, { textAlign: ta }]}>
+                    {t('providerFeed.urgentPriceTip', {
+                      min: urgent.min,
+                      max: urgent.max,
+                      pct: urgentModal.target.urgent_premium_pct ?? 25,
+                    })}
+                  </Text>
+                </View>
+              );
+            })() : null}
 
             <View style={urgentStyles.acceptCommitment}>
               <Text style={{ fontSize: 20 }}>⚠️</Text>
@@ -1359,17 +1383,17 @@ export default function ProviderFeed() {
             <View style={urgentStyles.acceptBtns}>
               <TouchableOpacity
                 style={urgentStyles.acceptCancel}
-                onPress={() => setUrgentTarget(null)}
-                disabled={urgentLoading}
+                onPress={() => setUrgentModal(prev => ({ ...prev, target: null }))}
+                disabled={urgentModal.loading}
               >
                 <Text style={urgentStyles.acceptCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[urgentStyles.acceptConfirm, urgentLoading && styles.btnDisabled]}
+                style={[urgentStyles.acceptConfirm, urgentModal.loading && styles.btnDisabled]}
                 onPress={submitUrgentAccept}
-                disabled={urgentLoading}
+                disabled={urgentModal.loading}
               >
-                {urgentLoading
+                {urgentModal.loading
                   ? <ActivityIndicator color="#fff" size="small" />
                   : <Text style={urgentStyles.acceptConfirmText}>{t('providerFeed.urgentAcceptBtn')}</Text>
                 }
@@ -1380,7 +1404,7 @@ export default function ProviderFeed() {
       </Modal>
 
       {/* ── Demo Bid Modal ────────────────────────────────────── */}
-      <Modal visible={demoBidTarget} transparent animationType="slide">
+      <Modal visible={demoModal.open} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={[styles.modalSheet, { paddingBottom: contentPad }]}>
             {/* Header */}
@@ -1415,8 +1439,8 @@ export default function ProviderFeed() {
               placeholder="0.00"
               placeholderTextColor={COLORS.textMuted}
               keyboardType="decimal-pad"
-              value={demoBidAmount}
-              onChangeText={setDemoBidAmount}
+              value={demoModal.amount}
+              onChangeText={text => setDemoModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
               textAlign={ta}
             />
 
@@ -1425,22 +1449,22 @@ export default function ProviderFeed() {
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
               placeholderTextColor={COLORS.textMuted}
-              value={demoBidNote}
-              onChangeText={setDemoBidNote}
+              value={demoModal.note}
+              onChangeText={text => setDemoModal(prev => ({ ...prev, note: text }))}
               textAlign={ta}
               multiline
             />
 
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setDemoBidTarget(false)}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setDemoModal(prev => ({ ...prev, open: false, amount: '', note: '' }))}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[demoBidStyles.submitBtn, (!demoBidAmount || demoBidLoading) && styles.btnDisabled]}
+                style={[demoBidStyles.submitBtn, (!demoModal.amount || demoModal.loading) && styles.btnDisabled]}
                 onPress={submitDemoBid}
-                disabled={!demoBidAmount || demoBidLoading}
+                disabled={!demoModal.amount || demoModal.loading}
               >
-                {demoBidLoading
+                {demoModal.loading
                   ? <ActivityIndicator color="#fff" size="small" />
                   : <Text style={demoBidStyles.submitBtnText}>{t('providerFeed.demoSubmitBtn')}</Text>
                 }
