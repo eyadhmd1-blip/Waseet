@@ -19,77 +19,115 @@
 
 workflows:
 
-  # ─────────────────────────────────────────────
-  # ANDROID → Firebase App Distribution
-  # ─────────────────────────────────────────────
+  # ──────────────────────────────────────────────────────────────────────────────
+  # WORKFLOW 1: Android → Firebase App Distribution
+  # ──────────────────────────────────────────────────────────────────────────────
   android-staging:
     name: Android Staging → Firebase App Distribution
-    max_build_duration: 60
-    instance_type: linux
-    working_directory: mobile
+    max_build_duration: 60          # minutes — fail fast if something hangs
+    instance_type: linux_x2        # 8 vCPUs / 16 GB RAM — faster Gradle builds
+    working_directory: mobile      # all script steps run from the mobile/ folder
 
     environment:
       node: 20.18.0
-      java: 17
+      java: 17                     # required by React Native 0.81 / Gradle 8
 
+      # Secret groups — create these in Codemagic dashboard (see CICD.md §4)
       groups:
-        - android_signing
-        - firebase_credentials
+        - android_signing           # CM_KEYSTORE, CM_KEYSTORE_PASSWORD,
+                                   #   CM_KEY_ALIAS, CM_KEY_PASSWORD
+        - firebase_credentials      # FIREBASE_TOKEN, FIREBASE_ANDROID_APP_ID
 
       vars:
+        # ── App metadata ──────────────────────────────────────────────────────
         PACKAGE_NAME: "com.waseet.app"
-        APP_NAME: "Waseet"
+        APP_NAME:     "Waseet"
 
-        EXPO_PUBLIC_ENV: "staging"
-        EXPO_PUBLIC_SUPABASE_URL: "https://bkbjsstxhvdnqcmpuulf.supabase.co"
+        # ── Supabase (staging project) ────────────────────────────────────────
+        EXPO_PUBLIC_ENV:              "staging"
+        EXPO_PUBLIC_SUPABASE_URL:     "https://bkbjsstxhvdnqcmpuulf.supabase.co"
         EXPO_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrYmpzc3R4aHZkbnFjbXB1dWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMjY3ODcsImV4cCI6MjA5MTgwMjc4N30.-B_KTG1LYlKBlNCWjQhLKYfkp5lXN4xhIm1oMYhHsE4"
-        EXPO_PUBLIC_PROJECT_ID: "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
+        EXPO_PUBLIC_PROJECT_ID:       "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
 
     cache:
       cache_paths:
-        - $CM_BUILD_DIR/mobile/node_modules
-        - $HOME/.gradle/caches
+        - $CM_BUILD_DIR/mobile/node_modules   # cache npm packages across builds
+        - $HOME/.gradle/caches                # cache Gradle dependencies
 
     scripts:
-      - name: Install dependencies
-        script: npm ci --prefer-offline
+      # ── 1. Dependencies ───────────────────────────────────────────────────────
+      - name: Install npm dependencies
+        script: |
+          npm ci --prefer-offline
 
+      # ── 2. Write google-services.json (required for expo-notifications / FCM) ─
+      #       Store the file content as base64 in GOOGLE_SERVICES_JSON secret.
+      #       If you have not set up Firebase yet, comment this step out.
       - name: Write google-services.json
         script: |
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then
-            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > google-services.json
-            mv google-services.json android/app/google-services.json
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode \
+              > $CM_BUILD_DIR/mobile/google-services.json
+            echo "google-services.json written successfully."
+          else
+            echo "⚠  GOOGLE_SERVICES_JSON not set — skipping. Push notifications may not work."
           fi
 
-      - name: Expo prebuild Android
-        script: npx expo prebuild --clean --platform android --non-interactive
-
-      - name: Decode keystore
+      # ── 3. Generate native Android project from Expo managed config ───────────
+      - name: Run expo prebuild (Android)
         script: |
-          echo "$CM_KEYSTORE" | base64 --decode > /tmp/keystore.jks
+          npx expo prebuild \
+            --clean \
+            --platform android \
+            --non-interactive
 
-      - name: Set version code
-        script: echo "versionCode=$BUILD_NUMBER" >> android/gradle.properties
+          # If google-services.json was provided, copy it to the generated project
+          if [ -f "$CM_BUILD_DIR/mobile/google-services.json" ]; then
+            cp "$CM_BUILD_DIR/mobile/google-services.json" \
+               "$CM_BUILD_DIR/mobile/android/app/google-services.json"
+            echo "google-services.json copied to android/app/"
+          fi
 
-      - name: Build APK
+      # ── 4. Set up Android keystore for signing ────────────────────────────────
+      #       CM_KEYSTORE is the base64-encoded .jks file stored as a secret.
+      - name: Set up Android keystore
+        script: |
+          echo "$CM_KEYSTORE" | base64 --decode > /tmp/waseet-release.jks
+          echo "Keystore decoded to /tmp/waseet-release.jks"
+
+      # ── 5. Inject build number from Codemagic's auto-increment counter ─────────
+      - name: Set build number
+        script: |
+          # Codemagic provides $BUILD_NUMBER starting from 1, auto-incremented.
+          # We write it to a file so Gradle can read it.
+          echo "versionCode=$BUILD_NUMBER" >> android/gradle.properties
+          echo "Android versionCode set to $BUILD_NUMBER"
+
+      # ── 6. Build signed release APK ────────────────────────────────────────────
+      - name: Build Android release APK
         script: |
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease \
-            -Pandroid.injected.signing.store.file=/tmp/keystore.jks \
+            -Pandroid.injected.signing.store.file=/tmp/waseet-release.jks \
             -Pandroid.injected.signing.store.password="$CM_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$CM_KEY_ALIAS" \
-            -Pandroid.injected.signing.key.password="$CM_KEY_PASSWORD"
+            -Pandroid.injected.signing.key.password="$CM_KEY_PASSWORD" \
+            -Pandroid.injected.version.code="$BUILD_NUMBER" \
+            --stacktrace
 
+    # ── Artifacts to preserve after the build ─────────────────────────────────
     artifacts:
       - mobile/android/app/build/outputs/apk/release/*.apk
+      - mobile/android/app/build/outputs/mapping/release/mapping.txt  # ProGuard map
 
+    # ── Publishing ─────────────────────────────────────────────────────────────
     publishing:
       firebase:
-        firebase_token: $FIREBASE_TOKEN
+        firebase_token: $FIREBASE_TOKEN          # CI token from `firebase login:ci`
         android:
-          app_id: $FIREBASE_ANDROID_APP_ID
-          groups:
+          app_id: $FIREBASE_ANDROID_APP_ID       # format: 1:XXXXXXXXXX:android:XXXXXXXX
+          groups:                                # tester groups defined in Firebase console
             - testers
           artifact_type: apk
 
@@ -101,88 +139,160 @@ workflows:
           failure: true
 
 
-  # ─────────────────────────────────────────────
-  # iOS → TestFlight
-  # ─────────────────────────────────────────────
+  # ──────────────────────────────────────────────────────────────────────────────
+  # WORKFLOW 2: iOS → TestFlight
+  # ──────────────────────────────────────────────────────────────────────────────
   ios-staging:
     name: iOS Staging → TestFlight
-    max_build_duration: 90
-    instance_type: mac_mini_m2
+    max_build_duration: 90          # iOS builds take longer — Xcode archive
+    instance_type: mac_mini_m2     # Apple Silicon runner (fastest available)
     working_directory: mobile
 
     environment:
       node: 20.18.0
-      xcode: 16.2
+      xcode: 16.2                  # Xcode version on the runner
       cocoapods: 1.16.2
 
+      # Codemagic manages code signing automatically using these secrets.
+      # The private key is downloaded from App Store Connect and stored as a secret.
       ios_signing:
-        distribution_type: app_store
+        distribution_type: app_store    # produces App Store / TestFlight IPA
         bundle_identifier: com.waseet.app
 
       groups:
-        - app_store_credentials
-        - ios_credentials
+        - app_store_credentials    # APP_STORE_CONNECT_ISSUER_ID,
+                                   #   APP_STORE_CONNECT_KEY_IDENTIFIER,
+                                   #   APP_STORE_CONNECT_PRIVATE_KEY
+        - ios_credentials          # Optional: GOOGLE_SERVICE_INFO_PLIST (for push notif.)
 
       vars:
-        EXPO_PUBLIC_ENV: "staging"
-        EXPO_PUBLIC_SUPABASE_URL: "https://bkbjsstxhvdnqcmpuulf.supabase.co"
+        BUNDLE_ID: "com.waseet.app"
+        APP_NAME:  "Waseet"
+
+        # Supabase (same staging project as Android)
+        EXPO_PUBLIC_ENV:              "staging"
+        EXPO_PUBLIC_SUPABASE_URL:     "https://bkbjsstxhvdnqcmpuulf.supabase.co"
         EXPO_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrYmpzc3R4aHZkbnFjbXB1dWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMjY3ODcsImV4cCI6MjA5MTgwMjc4N30.-B_KTG1LYlKBlNCWjQhLKYfkp5lXN4xhIm1oMYhHsE4"
-        EXPO_PUBLIC_PROJECT_ID: "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
+        EXPO_PUBLIC_PROJECT_ID:       "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
 
     cache:
       cache_paths:
         - $CM_BUILD_DIR/mobile/node_modules
-        - $HOME/Library/Caches/CocoaPods
+        - $HOME/Library/Caches/CocoaPods         # CocoaPods cache
 
     scripts:
-      - name: Install dependencies
-        script: npm ci --prefer-offline
+      # ── 1. Dependencies ───────────────────────────────────────────────────────
+      - name: Install npm dependencies
+        script: |
+          npm ci --prefer-offline
 
-      - name: Expo prebuild iOS
-        script: npx expo prebuild --clean --platform ios --non-interactive
+      # ── 2. Write GoogleService-Info.plist (for push notifications on iOS) ─────
+      #       Store base64-encoded content in GOOGLE_SERVICE_INFO_PLIST secret.
+      - name: Write GoogleService-Info.plist
+        script: |
+          if [ -n "$GOOGLE_SERVICE_INFO_PLIST" ]; then
+            echo "$GOOGLE_SERVICE_INFO_PLIST" | base64 --decode \
+              > $CM_BUILD_DIR/mobile/GoogleService-Info.plist
+            echo "GoogleService-Info.plist written."
+          else
+            echo "⚠  GOOGLE_SERVICE_INFO_PLIST not set — skipping."
+          fi
 
-      - name: Install pods
+      # ── 3. Generate native iOS project from Expo managed config ───────────────
+      - name: Run expo prebuild (iOS)
+        script: |
+          npx expo prebuild \
+            --clean \
+            --platform ios \
+            --non-interactive
+
+          # Copy GoogleService-Info.plist if provided
+          if [ -f "$CM_BUILD_DIR/mobile/GoogleService-Info.plist" ]; then
+            cp "$CM_BUILD_DIR/mobile/GoogleService-Info.plist" \
+               "$CM_BUILD_DIR/mobile/ios/waseet/GoogleService-Info.plist" 2>/dev/null || true
+            echo "GoogleService-Info.plist copied."
+          fi
+
+      # ── 4. Install CocoaPods ──────────────────────────────────────────────────
+      - name: Install CocoaPods dependencies
         script: |
           cd ios
-          pod install
+          pod install --repo-update
 
-      - name: Apply signing
-        script: xcode-project use-profiles
-
-      - name: Set build number
-        script: agvtool new-version -all "$BUILD_NUMBER"
-
-      - name: Build IPA
+      # ── 5. Apply Codemagic-managed code signing profiles ──────────────────────
+      #       Codemagic fetches the correct provisioning profile from Apple
+      #       Developer Portal using the App Store Connect API key.
+      - name: Apply code signing
         script: |
-          xcodebuild \
-            -workspace ios/*.xcworkspace \
-            -scheme waseet \
-            -configuration Release \
-            -archivePath $CM_BUILD_DIR/build/app.xcarchive \
-            archive
+          xcode-project use-profiles
 
+      # ── 6. Set build number ───────────────────────────────────────────────────
+      - name: Set build number
+        script: |
+          agvtool new-version -all "$BUILD_NUMBER"
+          echo "iOS CFBundleVersion set to $BUILD_NUMBER"
+
+      # ── 7. Detect generated Xcode workspace ───────────────────────────────────
+      #       expo prebuild names the workspace after the app slug ("waseet").
+      - name: Locate Xcode workspace
+        script: |
+          WORKSPACE=$(find ios -name "*.xcworkspace" -maxdepth 1 | head -1)
+          if [ -z "$WORKSPACE" ]; then
+            echo "ERROR: No .xcworkspace found in ios/" && exit 1
+          fi
+          SCHEME=$(basename "$WORKSPACE" .xcworkspace)
+          echo "Found workspace: $WORKSPACE  scheme: $SCHEME"
+
+          # Export for subsequent steps
+          echo "XCODE_WORKSPACE=$WORKSPACE" >> $CM_ENV
+          echo "XCODE_SCHEME=$SCHEME"       >> $CM_ENV
+
+      # ── 8. Archive and export IPA ──────────────────────────────────────────────
+      - name: Build iOS IPA
+        script: |
+          # Archive
+          xcodebuild \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme    "$XCODE_SCHEME" \
+            -configuration Release \
+            -archivePath "$CM_BUILD_DIR/build/waseet.xcarchive" \
+            -destination "generic/platform=iOS" \
+            CODE_SIGN_STYLE=Automatic \
+            DEVELOPMENT_TEAM="$APP_STORE_CONNECT_TEAM_ID" \
+            archive \
+            | xcpretty
+
+          # Export IPA
           xcodebuild \
             -exportArchive \
-            -archivePath $CM_BUILD_DIR/build/app.xcarchive \
-            -exportOptionsPlist ios/ExportOptions.plist \
-            -exportPath $CM_BUILD_DIR/build/ipa
+            -archivePath    "$CM_BUILD_DIR/build/waseet.xcarchive" \
+            -exportOptionsPlist "$CM_BUILD_DIR/mobile/ios/ExportOptions.plist" \
+            -exportPath     "$CM_BUILD_DIR/build/ipa" \
+            | xcpretty
 
     artifacts:
       - build/ipa/*.ipa
-      - build/app.xcarchive
+      - build/waseet.xcarchive         # useful for symbolication of crash reports
+      - /tmp/xcodebuild_logs/*.log
 
     publishing:
+      # Codemagic uploads the IPA to App Store Connect and submits to TestFlight
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        api_key:   $APP_STORE_CONNECT_PRIVATE_KEY     # contents of the .p8 file
+        key_id:    $APP_STORE_CONNECT_KEY_IDENTIFIER  # 10-character key ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID       # UUID from App Store Connect
 
         submit_to_testflight: true
 
+        # Testers are managed in App Store Connect → TestFlight → Internal/External
+        # Groups listed here must already exist in App Store Connect.
         beta_groups:
-          - Internal Testers
+          - "Internal Testers"
 
-        submit_to_app_store: false
+        submit_to_app_store: false      # staging only — no production submission
+
+        release_notes:
+          en-US: "Waseet staging build #$BUILD_NUMBER — branch: $CM_BRANCH"
 
       email:
         recipients:
@@ -190,4 +300,3 @@ workflows:
         notify:
           success: true
           failure: true
-
