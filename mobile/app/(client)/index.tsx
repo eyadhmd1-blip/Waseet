@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { COLORS } from '../../src/constants/theme';
-import { CATEGORY_GROUPS } from '../../src/constants/categories';
+import { CATEGORY_GROUPS, ALL_CATEGORIES } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { User, ServiceRequest } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -47,13 +47,18 @@ const POPULAR_SLUGS = ['electrical', 'plumbing', 'cleaning', 'ac_repair', 'car_r
 
 // ─── Quick Access Row ─────────────────────────────────────────
 
+// Pre-computed once at module level — never recomputed on render
+const POPULAR_ITEMS = POPULAR_SLUGS.map(slug => {
+  const cat = ALL_CATEGORIES.find(c => c.slug === slug);
+  return { slug, iconKey: cat?.icon ?? '' };
+});
+
 function QuickAccessRow({ onPress }: { onPress: (slug: string) => void }) {
   const { t } = useLanguage();
-  const allCats = CATEGORY_GROUPS.flatMap(g => g.categories);
-  const popular = POPULAR_SLUGS.map(slug => {
-    const cat = allCats.find(c => c.slug === slug);
-    return { slug, icon: cat ? ICON_MAP[cat.icon] ?? '🔧' : '🔧' };
-  });
+  const popular = POPULAR_ITEMS.map(p => ({
+    slug: p.slug,
+    icon: ICON_MAP[p.iconKey] ?? '🔧',
+  }));
 
   return (
     <View style={qStyles.section}>
@@ -264,17 +269,18 @@ const tbStyles = StyleSheet.create({
 // ─── Urgent Countdown (inline on request cards) ──────────────
 
 function UrgentCountdownInline({ expiresAt }: { expiresAt: string }) {
-  const [remaining, setRemaining] = useState(() =>
-    Math.max(0, new Date(expiresAt).getTime() - Date.now())
-  );
+  const target = new Date(expiresAt).getTime();
+  const [remaining, setRemaining] = useState(() => Math.max(0, target - Date.now()));
 
   useEffect(() => {
-    if (remaining === 0) return;
+    // Recalculate against wall-clock to avoid drift, stop when expired
     const iv = setInterval(() => {
-      setRemaining(prev => Math.max(0, prev - 1000));
+      const left = Math.max(0, target - Date.now());
+      setRemaining(left);
+      if (left === 0) clearInterval(iv);
     }, 1000);
     return () => clearInterval(iv);
-  }, []);
+  }, [target]);
 
   const mins = Math.floor(remaining / 60000);
   const secs = Math.floor((remaining % 60000) / 1000);

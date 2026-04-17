@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, TextInput, Alert,
@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { COLORS } from '../../src/constants/theme';
 import { JORDAN_CITIES } from '../../src/constants/categories';
+import { calcStatusCounts } from '../../src/utils/pricing';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { User } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -61,10 +62,7 @@ export default function ClientProfile() {
     }
 
     if (reqData) {
-      const total       = reqData.length;
-      const open        = reqData.filter(r => r.status === 'open').length;
-      const in_progress = reqData.filter(r => r.status === 'in_progress').length;
-      const completed   = reqData.filter(r => r.status === 'completed').length;
+      const { total, open, in_progress, completed } = calcStatusCounts(reqData);
       setStats({ total, open, in_progress, completed });
     }
 

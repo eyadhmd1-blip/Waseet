@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, Image, Dimensions, Switch,
@@ -7,15 +7,17 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { COLORS } from '../../src/constants/theme';
-import { TIER_META, SUBSCRIPTION_PLANS, CATEGORY_GROUPS, REP_DISCOUNT } from '../../src/constants/categories';
+import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, REP_DISCOUNT } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User, PortfolioItem } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { calcLoyaltyProgress } from '../../src/utils/pricing';
 
 const { width: W } = Dimensions.get('window');
 const MINI_CELL    = (W - 32 - 8) / 3; // 3 cols, 16px side padding, 4px gaps
 
+// LOYALTY_MILESTONES now lives in src/constants/loyalty.ts — imported via calcLoyaltyProgress
 const LOYALTY_MILESTONES = [10, 25, 50, 100];
 
 const ICON_MAP: Record<string, string> = {
@@ -129,20 +131,25 @@ export default function ProviderProfile() {
 
   if (!provider) return null;
 
-  const tierMeta        = TIER_META[provider.reputation_tier];
-  const nextMilestone   = LOYALTY_MILESTONES.find(m => m > provider.lifetime_jobs) ?? null;
-  const prevMilestone   = LOYALTY_MILESTONES.filter(m => m <= provider.lifetime_jobs).pop() ?? 0;
-  const loyaltyProgress = nextMilestone
-    ? (provider.lifetime_jobs - prevMilestone) / (nextMilestone - prevMilestone)
-    : 1;
+  const tierMeta = TIER_META[provider.reputation_tier];
+  const plan     = SUBSCRIPTION_PLANS.find(p => p.tier === provider.subscription_tier);
 
-  const allCategories = CATEGORY_GROUPS.flatMap(g => g.categories);
-  const myCats        = allCategories.filter(c => provider.categories?.includes(c.slug));
-  const plan          = SUBSCRIPTION_PLANS.find(p => p.tier === provider.subscription_tier);
+  // Memoized: recompute only when provider.lifetime_jobs changes
+  const { nextMilestone, prevMilestone: _prev, progress: loyaltyProgress } = useMemo(
+    () => calcLoyaltyProgress(provider.lifetime_jobs),
+    [provider.lifetime_jobs],
+  );
+  // Memoized: recompute only when provider.categories changes
+  const myCats = useMemo(
+    () => ALL_CATEGORIES.filter(c => provider.categories?.includes(c.slug)),
+    [provider.categories],
+  );
 
-  // Portfolio mini grid — show up to 8 items + optional "add" tile
-  const portfolioPreview = portfolioItems.slice(0, 8);
-  const totalViews       = portfolioItems.reduce((s, i) => s + i.views_count, 0);
+  // Memoized: recompute only when portfolioItems changes
+  const { portfolioPreview, totalViews } = useMemo(() => ({
+    portfolioPreview: portfolioItems.slice(0, 8),
+    totalViews:       portfolioItems.reduce((s, i) => s + i.views_count, 0),
+  }), [portfolioItems]);
 
   return (
     <ScrollView
