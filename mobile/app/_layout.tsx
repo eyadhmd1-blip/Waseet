@@ -161,13 +161,16 @@ export default function RootLayout() {
     } else if ((role as string) === 'unverified') {
       if ((segments[0] as string) !== 'verify-phone') router.replace('/verify-phone' as any);
     } else {
-      // Allow root-level shared screens (request-detail, chat, provider-profile, etc.)
-      // without redirecting back to the role's home tab.
-      const inSharedScreen = !inAuth && !inClient && !inProvider;
-      if (!inSharedScreen) {
-        if (role === 'provider' && !inProvider) router.replace('/(provider)');
-        if (role === 'client'   && !inClient)   router.replace('/(client)');
+      // Redirect logged-in users who somehow ended up in the auth group
+      if (inAuth) {
+        if (role === 'client')   router.replace('/(client)');
+        if (role === 'provider') router.replace('/(provider)');
       }
+      // Only redirect cross-role access: client in provider area, or provider in client area.
+      // Root-level shared screens (support, notification-settings, recurring-request, etc.)
+      // are neither inClient nor inProvider, so they are always allowed through.
+      if (role === 'client'   && inProvider) router.replace('/(client)');
+      if (role === 'provider' && inClient)   router.replace('/(provider)');
     }
 
     // Hide splash only after routing is decided — no flash of wrong screen
