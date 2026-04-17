@@ -1,0 +1,331 @@
+name: Staging Deploy
+
+on:
+  push:
+    branches:
+      - staging
+  workflow_dispatch:
+    inputs:
+      skip_functions:
+        description: 'Skip edge function deployment'
+        type: boolean
+        default: false
+      skip_mobile:
+        description: 'Skip mobile OTA update'
+        type: boolean
+        default: false
+      seed_data:
+        description: 'Seed test data after deployment'
+        type: boolean
+        default: false
+
+concurrency:
+  group: staging-deploy
+  cancel-in-progress: false   # never cancel a running deploy mid-flight
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  # ──────────────────────────────────────────────────────────
+  # JOB 1: Validate environment & run pre-flight checks
+  # ──────────────────────────────────────────────────────────
+  preflight:
+    name: Pre-flight Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: |
+            mobile/package-lock.json
+            admin/package-lock.json
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase@latest
+
+      - name: Write mobile .env.local
+        run: |
+          cat > mobile/.env.local << 'EOF'
+          EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_PROJECT_ID=${{ secrets.EXPO_PUBLIC_PROJECT_ID }}
+          EOF
+
+      - name: Write admin .env.local
+        run: |
+          cat > admin/.env.local << 'EOF'
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_SESSION_SECRET=${{ secrets.ADMIN_SESSION_SECRET }}
+          EOF
+
+      - name: Run environment validator
+        run: bash scripts/verify-env.sh
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 2: Run database migrations
+  # ──────────────────────────────────────────────────────────
+  migrate:
+    name: Database Migrations
+    runs-on: ubuntu-latest
+    needs: preflight
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase@latest
+
+      - name: Apply migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          supabase db push --project-ref "$SUPABASE_PROJECT_REF"
+          echo "✓ Migrations applied"
+
+      - name: Verify migration state
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          supabase migration list --project-ref "$SUPABASE_PROJECT_REF"
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 3: Deploy edge functions
+  # ──────────────────────────────────────────────────────────
+  deploy-functions:
+    name: Edge Functions
+    runs-on: ubuntu-latest
+    needs: migrate
+    timeout-minutes: 15
+    if: ${{ github.event.inputs.skip_functions != 'true' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase@latest
+
+      - name: Deploy all edge functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: bash scripts/deploy-functions.sh
+
+      - name: Set edge function secrets
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          supabase secrets set \
+            ANTHROPIC_API_KEY="${{ secrets.ANTHROPIC_API_KEY }}" \
+            PADDLE_WEBHOOK_SECRET="${{ secrets.PADDLE_WEBHOOK_SECRET }}" \
+            --project-ref "$SUPABASE_PROJECT_REF"
+          echo "✓ Secrets applied to edge functions"
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 4: Build and deploy admin panel
+  # ──────────────────────────────────────────────────────────
+  deploy-admin:
+    name: Admin Panel
+    runs-on: ubuntu-latest
+    needs: migrate
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: admin/package-lock.json
+
+      - name: Write admin .env.local
+        run: |
+          cat > admin/.env.local << 'EOF'
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_SESSION_SECRET=${{ secrets.ADMIN_SESSION_SECRET }}
+          EOF
+
+      - name: Install admin dependencies
+        run: npm ci --prefer-offline
+        working-directory: admin
+
+      - name: Build admin panel
+        run: npm run build
+        working-directory: admin
+
+      - name: Deploy to Vercel
+        if: ${{ env.VERCEL_TOKEN != '' }}
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm install -g vercel@latest
+          vercel deploy --prod --token "$VERCEL_TOKEN" \
+            --scope "$VERCEL_ORG_ID" \
+            --yes
+        working-directory: admin
+
+      - name: Upload admin build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-build-${{ github.sha }}
+          path: admin/.next/
+          retention-days: 7
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 5: Publish mobile OTA update
+  # ──────────────────────────────────────────────────────────
+  deploy-mobile:
+    name: Mobile OTA Update
+    runs-on: ubuntu-latest
+    needs: preflight
+    timeout-minutes: 20
+    if: ${{ github.event.inputs.skip_mobile != 'true' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Write mobile .env.local
+        run: |
+          cat > mobile/.env.local << 'EOF'
+          EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_PROJECT_ID=${{ secrets.EXPO_PUBLIC_PROJECT_ID }}
+          EOF
+
+      - name: Install mobile dependencies
+        run: npm ci --prefer-offline
+        working-directory: mobile
+
+      - name: Install EAS CLI
+        run: npm install -g eas-cli@latest
+
+      - name: Publish OTA update to staging channel
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          GIT_HASH="${{ github.sha }}"
+          SHORT_HASH="${GIT_HASH:0:7}"
+          UPDATE_MSG="v1.0.0-staging | $(date '+%Y-%m-%d %H:%M UTC') | ${SHORT_HASH}"
+          eas update \
+            --branch staging \
+            --message "$UPDATE_MSG" \
+            --auto \
+            --non-interactive
+          echo "✓ OTA update published: $UPDATE_MSG"
+        working-directory: mobile
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 6: Seed test data (optional)
+  # ──────────────────────────────────────────────────────────
+  seed:
+    name: Seed Test Data
+    runs-on: ubuntu-latest
+    needs: migrate
+    timeout-minutes: 5
+    if: ${{ github.event.inputs.seed_data == 'true' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        run: npm install -g supabase@latest
+
+      - name: Run seed SQL
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          supabase db execute \
+            --file supabase/seed-staging.sql \
+            --project-ref "$SUPABASE_PROJECT_REF"
+          echo "✓ Test data seeded"
+
+  # ──────────────────────────────────────────────────────────
+  # JOB 7: Post-deploy health check
+  # ──────────────────────────────────────────────────────────
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    needs: [deploy-functions, deploy-admin, deploy-mobile]
+    # Run health check even if mobile/functions were skipped
+    if: always() && needs.migrate.result == 'success'
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Write mobile .env.local
+        run: |
+          cat > mobile/.env.local << 'EOF'
+          EXPO_PUBLIC_SUPABASE_URL=${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_PROJECT_ID=${{ secrets.EXPO_PUBLIC_PROJECT_ID }}
+          EOF
+
+      - name: Write admin .env.local
+        run: |
+          cat > admin/.env.local << 'EOF'
+          NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ADMIN_USERNAME=${{ secrets.ADMIN_USERNAME }}
+          ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_SESSION_SECRET=${{ secrets.ADMIN_SESSION_SECRET }}
+          EOF
+
+      - name: Run health check
+        env:
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: bash scripts/health-check.sh
+
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## Staging Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Migrations | ${{ needs.migrate.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Edge Functions | ${{ needs.deploy-functions.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Admin Panel | ${{ needs.deploy-admin.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Mobile OTA | ${{ needs.deploy-mobile.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Ref:** \`${{ github.ref_name }}\`" >> $GITHUB_STEP_SUMMARY
