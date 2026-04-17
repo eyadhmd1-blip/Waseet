@@ -251,8 +251,14 @@ function Step3Services({
 // ── Step 4: Plan Selection (provider only) ────────────────────
 
 function Step4Plan({
-  planChoice, setPlanChoice, trialUsed,
-}: { planChoice: PlanChoice; setPlanChoice: (p: PlanChoice) => void; trialUsed: boolean }) {
+  planChoice, setPlanChoice, trialUsed, onStartFree, saving,
+}: {
+  planChoice: PlanChoice;
+  setPlanChoice: (p: PlanChoice) => void;
+  trialUsed: boolean;
+  onStartFree: () => void;
+  saving: boolean;
+}) {
   const { t, ta } = useLanguage();
 
   const creditsDesc: Record<string, string> = {
@@ -282,8 +288,9 @@ function Step4Plan({
             <Text style={styles.trialNote}>• {t('onboarding.trialCardNote1')}</Text>
             <Text style={styles.trialNote}>• {t('onboarding.trialCardNote2')}</Text>
             <TouchableOpacity
-              style={[styles.trialBtn, planChoice === 'trial' && styles.trialBtnActive]}
-              onPress={() => setPlanChoice('trial')}
+              style={[styles.trialBtn, planChoice === 'trial' && styles.trialBtnActive, saving && styles.trialBtnDisabled]}
+              onPress={onStartFree}
+              disabled={saving}
             >
               <Text style={styles.trialBtnText}>{t('onboarding.trialBtn')}</Text>
             </TouchableOpacity>
@@ -424,11 +431,13 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleSubmit = async () => {
+  // planOverride lets the trial button bypass stale planChoice state
+  const handleSubmit = async (planOverride?: PlanChoice) => {
+    const finalPlan = planOverride !== undefined ? planOverride : planChoice;
     setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) { Alert.alert(t('common.error'), t('common.error')); return; }
 
       // 1. Insert user row
       const { error: userErr } = await supabase.from('users').insert({
@@ -442,7 +451,6 @@ export default function OnboardingScreen() {
 
       if (userErr) {
         Alert.alert(t('common.error'), userErr.message);
-        setSaving(false);
         return;
       }
 
@@ -454,22 +462,28 @@ export default function OnboardingScreen() {
           bio: bio.trim() || null,
         };
 
-        if (planChoice === 'trial') {
-          providerPayload.is_subscribed   = true;
+        if (finalPlan === 'trial') {
+          providerPayload.is_subscribed     = true;
           providerPayload.subscription_tier = 'trial';
-          providerPayload.bid_credits     = 10;
-          providerPayload.trial_used      = true;
+          providerPayload.bid_credits       = 10;
+          providerPayload.trial_used        = true;
           providerPayload.subscription_ends = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000
           ).toISOString();
         }
 
-        await supabase.from('providers').insert(providerPayload);
+        const { error: provErr } = await supabase.from('providers').insert(providerPayload);
+        if (provErr) {
+          Alert.alert(t('common.error'), provErr.message);
+          return;
+        }
 
         // Schedule demo request (arrives ~1 hour after registration)
         await supabase.rpc('init_provider_demo', { p_provider_id: user.id });
       }
 
+      // Sync planChoice state so handleExplore routes correctly
+      if (planOverride !== undefined) setPlanChoice(planOverride);
       setDone(true);
     } catch (err: any) {
       Alert.alert(t('common.error'), err?.message ?? t('common.error'));
@@ -535,7 +549,16 @@ export default function OnboardingScreen() {
           <Step3Services selectedCats={selectedCats} setSelectedCats={setSelectedCats} />
         )}
         {currentStep === 4 && (
-          <Step4Plan planChoice={planChoice} setPlanChoice={setPlanChoice} trialUsed={trialUsed} />
+          <Step4Plan
+            planChoice={planChoice}
+            setPlanChoice={setPlanChoice}
+            trialUsed={trialUsed}
+            saving={saving}
+            onStartFree={() => {
+              setPlanChoice('trial');
+              handleSubmit('trial');
+            }}
+          />
         )}
       </Animated.View>
 
@@ -658,9 +681,10 @@ const styles = StyleSheet.create({
   trialTitle:  { fontSize: 17, fontWeight: '700', color: '#F1F5F9' },
   trialCredits: { fontSize: 15, color: '#FCD34D', marginBottom: 6, fontWeight: '600' },
   trialNote:   { fontSize: 12, color: '#94A3B8', marginBottom: 2 },
-  trialBtn:    { backgroundColor: '#92400E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 14 },
-  trialBtnActive: { backgroundColor: '#F59E0B' },
-  trialBtnText: { fontSize: 15, fontWeight: '700', color: '#FEF3C7' },
+  trialBtn:         { backgroundColor: '#92400E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 14 },
+  trialBtnActive:   { backgroundColor: '#F59E0B' },
+  trialBtnDisabled: { backgroundColor: '#334155' },
+  trialBtnText:     { fontSize: 15, fontWeight: '700', color: '#FEF3C7' },
 
   // Paid plan cards
   planCard: {
