@@ -1,0 +1,212 @@
+// ============================================================
+// WASEET — Rate Job Screen
+// Shown to client after job completion (confirmed_by_client=true)
+// Params: job_id, provider_name
+// ============================================================
+
+import { useState } from 'react';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  TextInput, ActivityIndicator, Alert,
+} from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { supabase } from '../src/lib/supabase';
+import { COLORS } from '../src/constants/theme';
+import { useLanguage } from '../src/hooks/useLanguage';
+import { useInsets } from '../src/hooks/useInsets';
+import { HEADER_PAD } from '../src/utils/layout';
+
+const TAG_KEYS = ['fast', 'excellent', 'affordable', 'professional', 'recommended', 'communication'] as const;
+type TagKey = typeof TAG_KEYS[number];
+
+export default function RateJobScreen() {
+    const { headerPad } = useInsets();
+  const router = useRouter();
+  const { t, ta } = useLanguage();
+  const { job_id, provider_name } = useLocalSearchParams<{
+    job_id: string;
+    provider_name: string;
+  }>();
+
+  const [rating, setRating]       = useState(0);
+  const [hovered, setHovered]     = useState(0);
+  const [review, setReview]       = useState('');
+  const [tags, setTags]           = useState<TagKey[]>([]);
+  const [submitting, setSubmit]   = useState(false);
+
+  const toggleTag = (tag: TagKey) => {
+    setTags(prev =>
+      prev.includes(tag) ? prev.filter(k => k !== tag) : [...prev, tag]
+    );
+  };
+
+  const displayRating = hovered || rating;
+
+  const handleSubmit = async () => {
+    if (rating === 0) {
+      Alert.alert(t('common.attention'), t('rateJob.selectStar'));
+      return;
+    }
+
+    setSubmit(true);
+
+    const tagStr = tags.length > 0
+      ? `\n\n✓ ${tags.map(k => t(`rateJob.tags.${k}` as any)).join(' · ')}`
+      : '';
+    const fullReview = (review.trim() + tagStr).trim();
+
+    const { error } = await supabase
+      .from('jobs')
+      .update({
+        client_rating: rating,
+        client_review: fullReview || null,
+      })
+      .eq('id', job_id);
+
+    setSubmit(false);
+
+    if (error) {
+      Alert.alert(t('common.error'), t('rateJob.errSubmit'));
+      return;
+    }
+
+    Alert.alert(
+      t('rateJob.successTitle'),
+      t('rateJob.successMsg', { name: provider_name }),
+      [{ text: t('common.confirm'), onPress: () => router.replace('/(client)/requests') }],
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Top bar */}
+      <View style={styles.topBar}>
+        <TouchableOpacity onPress={() => router.replace('/(client)/requests')} style={styles.backBtn}>
+          <Text style={styles.backText}>→</Text>
+        </TouchableOpacity>
+        <Text style={styles.topTitle}>{t('rateJob.title')}</Text>
+        <TouchableOpacity onPress={() => router.replace('/(client)/requests')}>
+          <Text style={styles.skipText}>{t('rateJob.skip')}</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.content}>
+        {/* Provider chip */}
+        <View style={styles.provChip}>
+          <View style={styles.provAvatar}>
+            <Text style={styles.provAvatarText}>{provider_name?.charAt(0) ?? '?'}</Text>
+          </View>
+          <View>
+            <Text style={[styles.provName, { textAlign: ta }]}>{provider_name}</Text>
+            <Text style={[styles.provSub, { textAlign: ta }]}>{t('rateJob.providerSub')}</Text>
+          </View>
+        </View>
+
+        {/* Star rating */}
+        <Text style={styles.rateLabel}>{t('rateJob.rateLabel')}</Text>
+        <View style={styles.starsRow}>
+          {[1, 2, 3, 4, 5].map(n => (
+            <TouchableOpacity
+              key={n}
+              onPress={() => { setRating(n); setHovered(0); }}
+              onPressIn={() => setHovered(n)}
+              onPressOut={() => setHovered(0)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.star, n <= displayRating && styles.starActive]}>
+                ⭐
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {displayRating > 0 && (
+          <Text style={styles.starLabel}>
+            {t(`rateJob.stars.${displayRating}` as any)}
+          </Text>
+        )}
+
+        {/* Quick tags */}
+        {rating >= 4 && (
+          <>
+            <Text style={[styles.tagsLabel, { textAlign: ta }]}>{t('rateJob.tagsLabel')}</Text>
+            <View style={styles.tagsWrap}>
+              {TAG_KEYS.map(key => (
+                <TouchableOpacity
+                  key={key}
+                  style={[styles.tag, tags.includes(key) && styles.tagActive]}
+                  onPress={() => toggleTag(key)}
+                >
+                  <Text style={[styles.tagText, tags.includes(key) && styles.tagTextActive]}>
+                    {t(`rateJob.tags.${key}` as any)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+
+        {/* Text review */}
+        <TextInput
+          style={styles.reviewInput}
+          placeholder={t('rateJob.reviewPlaceholder')}
+          placeholderTextColor={COLORS.textMuted}
+          value={review}
+          onChangeText={setReview}
+          textAlign={ta}
+          multiline
+          numberOfLines={3}
+          maxLength={500}
+        />
+
+        {/* Submit */}
+        <TouchableOpacity
+          style={[styles.submitBtn, (rating === 0 || submitting) && styles.submitBtnDisabled]}
+          onPress={handleSubmit}
+          disabled={rating === 0 || submitting}
+        >
+          {submitting
+            ? <ActivityIndicator color={COLORS.bg} />
+            : <Text style={styles.submitBtnText}>{t('rateJob.submit')} ✓</Text>
+          }
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.bg },
+
+  topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+  backText:  { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
+  topTitle:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  skipText:  { fontSize: 14, color: COLORS.textMuted },
+
+  content: { flex: 1, padding: 24 },
+
+  provChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 28, gap: 12, borderWidth: 1, borderColor: COLORS.border },
+  provAvatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
+  provAvatarText: { fontSize: 20, fontWeight: '700', color: COLORS.bg },
+  provName:       { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  provSub:        { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+
+  rateLabel:  { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center', marginBottom: 20 },
+  starsRow:   { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 8 },
+  star:       { fontSize: 40, opacity: 0.25 },
+  starActive: { opacity: 1 },
+  starLabel:  { fontSize: 16, fontWeight: '700', color: COLORS.accent, textAlign: 'center', marginBottom: 20 },
+
+  tagsLabel: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 10 },
+  tagsWrap:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  tag:       { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 1, borderColor: COLORS.border },
+  tagActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
+  tagText:   { fontSize: 13, color: COLORS.textMuted, fontWeight: '600' },
+  tagTextActive: { color: COLORS.accent },
+
+  reviewInput:    { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.textPrimary, fontSize: 14, borderWidth: 1, borderColor: COLORS.border, minHeight: 90, textAlignVertical: 'top', marginBottom: 24 },
+
+  submitBtn:         { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  submitBtnDisabled: { backgroundColor: COLORS.border },
+  submitBtnText:     { fontSize: 16, fontWeight: '700', color: COLORS.bg },
+});

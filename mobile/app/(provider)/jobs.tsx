@@ -1,0 +1,324 @@
+import { useEffect, useState, useCallback, useRef } from 'react';
+import {
+  View, Text, StyleSheet, FlatList, TouchableOpacity,
+  RefreshControl, ActivityIndicator, Modal, TextInput,
+  Alert,
+} from 'react-native';
+import { supabase } from '../../src/lib/supabase';
+import { COLORS } from '../../src/constants/theme';
+import { useLanguage } from '../../src/hooks/useLanguage';
+import type { Job } from '../../src/types';
+import { useInsets } from '../../src/hooks/useInsets';
+import { HEADER_PAD } from '../../src/utils/layout';
+
+type JobTab = 'active' | 'completed';
+
+type JobWithMeta = Job & {
+  request?: { title: string; category_slug: string; city: string };
+  client?:  { full_name: string; phone: string };
+};
+
+export default function ProviderJobs() {
+  useInsets();
+  const { t, ta, lang } = useLanguage();
+  const [tab, setTab]             = useState<JobTab>('active');
+  const [jobs, setJobs]           = useState<JobWithMeta[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const [confirmJob, setConfirmJob]       = useState<JobWithMeta | null>(null);
+  const [codeInput, setCodeInput]         = useState(['', '', '', '', '', '']);
+  const [confirmLoading, setConfirmLoading] = useState(false);
+  const [codeSent, setCodeSent]           = useState(false);
+  const [sendingCode, setSendingCode]     = useState(false);
+  const inputRefs = useRef<TextInput[]>([]);
+
+  const load = useCallback(async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from('jobs')
+      .select('*, request:requests(title, category_slug, city), client:users!jobs_client_id_fkey(full_name, phone)')
+      .eq('provider_id', user.id)
+      .eq('status', tab === 'active' ? 'active' : 'completed')
+      .order('created_at', { ascending: false });
+
+    if (data) setJobs(data);
+    setLoading(false);
+  }, [tab]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
+
+  const handleTaskDone = async (job: JobWithMeta) => {
+    setSendingCode(true);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const exp  = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+
+    const { error } = await supabase
+      .from('jobs')
+      .update({ confirm_code: code, confirm_code_exp: exp })
+      .eq('id', job.id);
+
+    if (error) {
+      Alert.alert(t('common.error'), error.message);
+      setSendingCode(false);
+      return;
+    }
+
+    await supabase.functions.invoke('send-confirm-notification', {
+      body: { job_id: job.id, client_id: job.client_id, code },
+    });
+
+    setSendingCode(false);
+    setCodeSent(true);
+    setConfirmJob(job);
+  };
+
+  const handleCodeChange = (value: string, index: number) => {
+    const next = [...codeInput];
+    next[index] = value.replace(/\D/g, '');
+    setCodeInput(next);
+    if (value && index < 5) inputRefs.current[index + 1]?.focus();
+    if (!value && index > 0) inputRefs.current[index - 1]?.focus();
+  };
+
+  const handleConfirmSubmit = async () => {
+    const enteredCode = codeInput.join('');
+    if (enteredCode.length < 6 || !confirmJob) return;
+
+    setConfirmLoading(true);
+
+    const { data, error } = await supabase.functions.invoke('confirm-job', {
+      body: { job_id: confirmJob.id, code: enteredCode },
+    });
+
+    setConfirmLoading(false);
+
+    if (error || data?.error) {
+      const msg = data?.error ?? error?.message ?? t('common.unknown');
+      Alert.alert(t('common.error'), msg);
+      return;
+    }
+
+    setConfirmJob(null);
+    setCodeSent(false);
+    setCodeInput(['', '', '', '', '', '']);
+    Alert.alert(
+      t('profile.confirmModal.successTitle'),
+      t('profile.confirmModal.successMsg')
+    );
+    load();
+  };
+
+  const renderActiveJob = ({ item }: { item: JobWithMeta }) => (
+    <View style={styles.card}>
+      <Text style={[styles.cardTitle, { textAlign: ta }]}>{item.request?.title}</Text>
+      <Text style={[styles.cardMeta, { textAlign: ta }]}>
+        {t(`cities.${item.request?.city}`, item.request?.city ?? '')} · {new Date(item.created_at).toLocaleDateString(lang === 'ar' ? 'ar-JO' : 'en-GB', { day: 'numeric', month: 'short' })}
+      </Text>
+      <Text style={[styles.clientName, { textAlign: ta }]}>{t('profile.clientLabel')}: {item.client?.full_name}</Text>
+
+      {item.confirm_code ? (
+        <View style={styles.waitingBox}>
+          <Text style={styles.waitingText}>{t('profile.waitingCode')}</Text>
+          <TouchableOpacity
+            style={styles.enterCodeBtn}
+            onPress={() => { setConfirmJob(item); setCodeSent(true); }}
+          >
+            <Text style={styles.enterCodeBtnText}>{t('profile.enterCode')}</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={[styles.doneBtn, sendingCode && styles.btnDisabled]}
+          onPress={() => handleTaskDone(item)}
+          disabled={sendingCode}
+        >
+          {sendingCode
+            ? <ActivityIndicator color={COLORS.bg} size="small" />
+            : <Text style={styles.doneBtnText}>{t('profile.jobsDoneConfirm')}</Text>
+          }
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+
+  const renderCompletedJob = ({ item }: { item: JobWithMeta }) => (
+    <View style={styles.card}>
+      <View style={styles.completedBadge}>
+        <Text style={styles.completedBadgeText}>{t('providerJobs.statusCompleted')}</Text>
+      </View>
+      <Text style={[styles.cardTitle, { textAlign: ta }]}>{item.request?.title}</Text>
+      <Text style={[styles.cardMeta, { textAlign: ta }]}>{t(`cities.${item.request?.city}`, item.request?.city ?? '')}</Text>
+      {item.client_rating && (
+        <View style={styles.ratingRow}>
+          {[1, 2, 3, 4, 5].map(s => (
+            <Text key={s} style={{ fontSize: 18 }}>
+              {s <= item.client_rating! ? '⭐' : '☆'}
+            </Text>
+          ))}
+          {item.client_review && (
+            <Text style={[styles.reviewText, { textAlign: ta }]}>{item.client_review}</Text>
+          )}
+        </View>
+      )}
+      <Text style={[styles.confirmedAt, { textAlign: ta }]}>
+        {t('profile.completedOn', {
+          date: new Date(item.confirmed_at!).toLocaleDateString(lang === 'ar' ? 'ar-JO' : 'en-GB', { day: 'numeric', month: 'long' })
+        })}
+      </Text>
+    </View>
+  );
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { textAlign: ta }]}>{t('providerJobs.title')}</Text>
+      </View>
+
+      <View style={styles.tabRow}>
+        <TouchableOpacity
+          style={[styles.tabBtn, tab === 'active' && styles.tabBtnActive]}
+          onPress={() => { setTab('active'); setLoading(true); }}
+        >
+          <Text style={[styles.tabText, tab === 'active' && styles.tabTextActive]}>{t('profile.tabActive')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabBtn, tab === 'completed' && styles.tabBtnActive]}
+          onPress={() => { setTab('completed'); setLoading(true); }}
+        >
+          <Text style={[styles.tabText, tab === 'completed' && styles.tabTextActive]}>{t('profile.tabCompleted')}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {loading ? (
+        <View style={styles.center}><ActivityIndicator color={COLORS.accent} /></View>
+      ) : (
+        <FlatList
+          data={jobs}
+          keyExtractor={item => item.id}
+          renderItem={tab === 'active' ? renderActiveJob : renderCompletedJob}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={{ fontSize: 48, marginBottom: 12 }}>
+                {tab === 'active' ? '🛠️' : '🏆'}
+              </Text>
+              <Text style={styles.emptyText}>
+                {tab === 'active' ? t('profile.noActiveJobs') : t('profile.noCompletedJobs')}
+              </Text>
+            </View>
+          }
+        />
+      )}
+
+      {/* ── Confirm Code Modal ── */}
+      <Modal visible={!!confirmJob && codeSent} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalSheet}>
+            <Text style={[styles.modalTitle, { textAlign: ta }]}>{t('profile.confirmModal.title')}</Text>
+            <Text style={[styles.modalSub, { textAlign: ta }]}>{t('profile.confirmModal.subtitle')}</Text>
+
+            <View style={styles.codeRow}>
+              {codeInput.map((digit, i) => (
+                <TextInput
+                  key={i}
+                  ref={ref => { if (ref) inputRefs.current[i] = ref; }}
+                  style={[styles.codeBox, digit ? styles.codeBoxFilled : null]}
+                  value={digit}
+                  onChangeText={v => handleCodeChange(v, i)}
+                  keyboardType="number-pad"
+                  maxLength={1}
+                  textAlign="center"
+                  selectTextOnFocus
+                />
+              ))}
+            </View>
+
+            <View style={styles.modalBtns}>
+              <TouchableOpacity
+                style={styles.modalCancel}
+                onPress={() => { setConfirmJob(null); setCodeSent(false); setCodeInput(['', '', '', '', '', '']); }}
+              >
+                <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalConfirm, (codeInput.join('').length < 6 || confirmLoading) && styles.btnDisabled]}
+                onPress={handleConfirmSubmit}
+                disabled={codeInput.join('').length < 6 || confirmLoading}
+              >
+                {confirmLoading
+                  ? <ActivityIndicator color={COLORS.bg} size="small" />
+                  : <Text style={styles.modalConfirmText}>{t('profile.confirmModal.confirm')}</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.bg },
+  center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 12 },
+  headerTitle: { fontSize: 24, fontWeight: '700', color: COLORS.textPrimary },
+
+  tabRow:        { flexDirection: 'row', marginHorizontal: 20, backgroundColor: COLORS.surface, borderRadius: 12, padding: 4, marginBottom: 16 },
+  tabBtn:        { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
+  tabBtnActive:  { backgroundColor: COLORS.bg },
+  tabText:       { fontSize: 14, color: COLORS.textSecondary },
+  tabTextActive: { color: COLORS.textPrimary, fontWeight: '700' },
+
+  listContent: { paddingHorizontal: 16, paddingBottom: 32 },
+
+  card:       { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
+  cardTitle:  { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
+  cardMeta:   { fontSize: 12, color: COLORS.textMuted, marginBottom: 4 },
+  clientName: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 14 },
+
+  doneBtn:      { backgroundColor: '#14532D', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#15803D' },
+  doneBtnText:  { fontSize: 15, fontWeight: '700', color: '#86EFAC' },
+  btnDisabled:  { backgroundColor: COLORS.border },
+
+  waitingBox:      { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#78350F', alignItems: 'center', gap: 10 },
+  waitingText:     { fontSize: 13, color: '#FCD34D', textAlign: 'center' },
+  enterCodeBtn:    { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 8 },
+  enterCodeBtnText:{ fontSize: 13, fontWeight: '700', color: COLORS.bg },
+
+  completedBadge:     { alignSelf: 'flex-end', backgroundColor: '#14532D', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
+  completedBadgeText: { fontSize: 11, color: '#86EFAC', fontWeight: '600' },
+  ratingRow:          { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 8, marginBottom: 4 },
+  reviewText:         { fontSize: 12, color: COLORS.textSecondary, marginStart: 8, flex: 1 },
+  confirmedAt:        { fontSize: 11, color: COLORS.textMuted, marginTop: 6 },
+
+  empty:     { alignItems: 'center', paddingTop: 80 },
+  emptyText: { fontSize: 16, color: COLORS.textMuted },
+
+  modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
+  modalSheet:   { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
+  modalSub:     { fontSize: 13, color: COLORS.textMuted, lineHeight: 20, marginBottom: 28 },
+  codeRow:      { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28 },
+  codeBox:      { width: 48, height: 60, borderRadius: 12, backgroundColor: COLORS.bg, borderWidth: 1, borderColor: COLORS.border, fontSize: 24, fontWeight: '700', color: COLORS.textPrimary },
+  codeBoxFilled:{ borderColor: COLORS.accent },
+  modalBtns:       { flexDirection: 'row', gap: 12 },
+  modalCancel:     { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  modalCancelText: { fontSize: 15, color: COLORS.textSecondary },
+  modalConfirm:    { flex: 2, backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  modalConfirmText:{ fontSize: 15, fontWeight: '700', color: COLORS.bg },
+});
