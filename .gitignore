@@ -1,0 +1,64 @@
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── Node ─────────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# ── Expo / React Native ───────────────────────────────────────────────────────
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/expo-env.d.ts
+mobile/.metro-health-check*
+
+# Native generated folders (regenerated via expo prebuild on every CI run)
+mobile/android/
+mobile/ios/
+
+# ── Secrets & credentials ─────────────────────────────────────────────────────
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.pem
+.env
+.env.local
+.env.*.local
+google-services.json
+GoogleService-Info.plist
+google-service-account.json
+
+# ── Build outputs ─────────────────────────────────────────────────────────────
+build/
+*.apk
+*.aab
+*.ipa
+*.xcarchive
+
+# ── Supabase ──────────────────────────────────────────────────────────────────
+supabase/.branches/
+supabase/.temp/
+
+# ── Admin (Next.js) ───────────────────────────────────────────────────────────
+admin/.next/
+admin/out/
+
+# ── TypeScript ────────────────────────────────────────────────────────────────
+*.tsbuildinfo
+
+# ── Fastlane ─────────────────────────────────────────────────────────────────
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/
+fastlane/test_output/

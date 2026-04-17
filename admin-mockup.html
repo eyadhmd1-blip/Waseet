@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Waseet Admin — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #060D1E;
+    --bg2:       #0A1428;
+    --surface:   #0F1C36;
+    --surface2:  #162040;
+    --border:    #1E2D50;
+    --border2:   #243460;
+    --text:      #E2E8F0;
+    --muted:     #64748B;
+    --faint:     #334155;
+    --amber:     #F59E0B;
+    --amber2:    #D97706;
+    --amber-dim: rgba(245,158,11,0.12);
+    --amber-glow:rgba(245,158,11,0.25);
+    --sky:       #38BDF8;
+    --emerald:   #34D399;
+    --red:       #F87171;
+    --violet:    #A78BFA;
+  }
+
+  html, body {
+    height: 100%; font-family: 'Cairo', sans-serif;
+    background: var(--bg); color: var(--text);
+    font-size: 14px; line-height: 1.5;
+    overflow: hidden;
+  }
+
+  /* ── Layout ────────────────────────────────── */
+  .app { display: flex; height: 100vh; }
+
+  /* ── Sidebar ────────────────────────────────── */
+  .sidebar {
+    width: 220px; flex-shrink: 0;
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    overflow-y: auto; overflow-x: hidden;
+  }
+  .sidebar::-webkit-scrollbar { width: 0; }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, #C9A84C, #F59E0B);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 900; color: #060D1E;
+    box-shadow: 0 0 16px rgba(201,168,76,0.35);
+  }
+  .logo-text { font-size: 16px; font-weight: 800; color: var(--amber); letter-spacing: -0.3px; }
+  .logo-sub  { font-size: 10px; color: var(--muted); }
+
+  .nav-group { padding: 16px 8px 4px; }
+  .nav-label {
+    font-size: 9px; font-weight: 700; color: var(--faint);
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 0 8px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 10px; cursor: pointer;
+    color: var(--muted); font-size: 13px; font-weight: 500;
+    transition: all 0.15s; margin-bottom: 2px;
+    user-select: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-item.active {
+    background: var(--amber-dim);
+    color: var(--amber);
+    font-weight: 700;
+  }
+  .nav-item.active::before {
+    content: ''; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--amber); flex-shrink: 0;
+  }
+  .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+  .nav-badge {
+    margin-right: auto; background: var(--red);
+    color: #fff; font-size: 9px; font-weight: 700;
+    border-radius: 20px; padding: 1px 6px; min-width: 18px; text-align: center;
+  }
+
+  /* ── Main ────────────────────────────────── */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+  /* ── Topbar ────────────────────────────────── */
+  .topbar {
+    height: 56px; display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .page-icon { font-size: 18px; }
+  .page-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .topbar-date { font-size: 12px; color: var(--muted); }
+  .admin-chip {
+    background: var(--amber-dim); border: 1px solid var(--amber-glow);
+    color: var(--amber); font-size: 11px; font-weight: 700;
+    border-radius: 20px; padding: 3px 10px;
+  }
+
+  /* ── Content ────────────────────────────────── */
+  .content {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 24px;
+    scrollbar-width: thin; scrollbar-color: var(--border) transparent;
+  }
+  .content::-webkit-scrollbar { width: 4px; }
+  .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Screen visibility */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* ── Shared ────────────────────────────────── */
+  h1 { font-size: 22px; font-weight: 800; color: var(--text); }
+  .page-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .pill-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .pill {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 10px 16px; min-width: 90px; text-align: right;
+  }
+  .pill-val { font-size: 20px; font-weight: 800; }
+  .pill-lbl { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .card-title { font-size: 14px; font-weight: 700; color: var(--text); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: rgba(255,255,255,0.02); }
+  th {
+    padding: 11px 16px; font-size: 11px; font-weight: 600;
+    color: var(--muted); text-align: right; white-space: nowrap;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 11px 16px; font-size: 13px; color: var(--text);
+    border-bottom: 1px solid rgba(30,45,80,0.5);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 8px; padding: 3px 10px; font-size: 11px; font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-success { background: rgba(52,211,153,0.12); color: #34D399; border: 1px solid rgba(52,211,153,0.25); }
+  .badge-danger  { background: rgba(248,113,113,0.12); color: #F87171; border: 1px solid rgba(248,113,113,0.25); }
+  .badge-info    { background: rgba(56,189,248,0.12);  color: #38BDF8; border: 1px solid rgba(56,189,248,0.25); }
+  .badge-warning { background: rgba(245,158,11,0.12);  color: #F59E0B; border: 1px solid rgba(245,158,11,0.25); }
+  .badge-muted   { background: rgba(100,116,139,0.12); color: #64748B; border: 1px solid rgba(100,116,139,0.25); }
+  .badge-violet  { background: rgba(167,139,250,0.12); color: #A78BFA; border: 1px solid rgba(167,139,250,0.25); }
+
+  .btn {
+    border: none; cursor: pointer; font-family: 'Cairo', sans-serif;
+    border-radius: 10px; font-size: 12px; font-weight: 700;
+    padding: 6px 14px; transition: all 0.15s;
+  }
+  .btn-amber { background: var(--amber); color: #060D1E; }
+  .btn-amber:hover { background: #FBBF24; }
+  .btn-ghost { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text); }
+  .btn-danger { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+  .btn-danger:hover { background: rgba(248,113,113,0.25); }
+
+  .avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: linear-gradient(135deg, #C9A84C, #F59E0B);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px; color: #060D1E;
+    flex-shrink: 0;
+  }
+  .avatar-provider { background: linear-gradient(135deg, #4C1D95, #7C3AED); color: #EDE9FE; }
+  .avatar-muted    { background: var(--surface2); color: var(--muted); }
+
+  .flex-between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .flex-wrap    { flex-wrap: wrap; }
+  .gap-3        { gap: 12px; }
+  .gap-4        { gap: 16px; }
+  .mb-4         { margin-bottom: 16px; }
+  .mb-5         { margin-bottom: 20px; }
+  .mb-6         { margin-bottom: 24px; }
+  .space-y > * + * { margin-top: 16px; }
+
+  /* ── Alert bar ────────────────────────────────── */
+  .alert-bar {
+    background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2);
+    border-radius: 14px; padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 20px;
+  }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  @keyframes urgentAdminPulse { 0%,100%{ border-color:rgba(239,68,68,0.35); box-shadow:none; } 50%{ border-color:rgba(239,68,68,0.7); box-shadow:0 0 18px rgba(239,68,68,0.12); } }
+  @keyframes urgentDotAdmin   { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.35; transform:scale(0.65); } }
+
+  /* ── Grid ────────────────────────────────── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* ── KPI cards ────────────────────────────────── */
+  .kpi-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 18px 20px;
+  }
+  .kpi-val  { font-size: 28px; font-weight: 900; }
+  .kpi-lbl  { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .kpi-sub  { font-size: 11px; margin-top: 8px; }
+
+  /* ── Bar chart ────────────────────────────────── */
+  .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .bar-label { width: 60px; text-align: right; font-size: 12px; color: var(--text); flex-shrink: 0; }
+  .bar-track { flex: 1; height: 22px; background: var(--surface2); border-radius: 6px; overflow: hidden; position: relative; }
+  .bar-fill  { height: 100%; border-radius: 6px; display: flex; align-items: center; padding: 0 8px; }
+  .bar-fill-amber { background: linear-gradient(90deg, rgba(217,119,6,0.7), rgba(245,158,11,0.7)); }
+  .bar-fill-sky   { background: linear-gradient(90deg, rgba(2,132,199,0.7),  rgba(56,189,248,0.7)); }
+  .bar-count { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 700; }
+
+  /* ── Progress bar ────────────────────────────────── */
+  .progress-wrap { background: var(--surface2); border-radius: 99px; overflow: hidden; height: 6px; }
+  .progress-bar  { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--amber2), var(--amber)); }
+
+  /* ── Toggle ────────────────────────────────── */
+  .toggle { position: relative; width: 42px; height: 24px; display: inline-block; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; border-radius: 99px;
+    cursor: pointer; transition: 0.2s;
+    background: var(--faint);
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute;
+    width: 16px; height: 16px; border-radius: 50%;
+    background: white; bottom: 4px; left: 4px;
+    transition: 0.2s;
+  }
+  .toggle input:checked + .toggle-slider { background: var(--amber); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(18px); }
+
+  /* ── Funnel bar ────────────────────────────────── */
+  .funnel-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .funnel-lbl { width: 110px; text-align: right; font-size: 12px; color: var(--muted); flex-shrink: 0; }
+  .funnel-track { flex: 1; height: 18px; background: var(--surface2); border-radius: 6px; overflow: hidden; }
+  .funnel-fill  { height: 100%; border-radius: 6px; }
+  .funnel-count { width: 70px; font-size: 11px; color: var(--muted); }
+
+  /* ── Notification history ────────────────────────────────── */
+  .notif-item {
+    border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; margin-bottom: 10px;
+  }
+  .notif-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .notif-meta  { font-size: 11px; color: var(--muted); margin-top: 4px; display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
+
+  /* ── Settings row ────────────────────────────────── */
+  .setting-row {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 18px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    margin-bottom: 10px;
+  }
+  .setting-info { text-align: right; }
+  .setting-lbl  { font-size: 13px; font-weight: 600; color: var(--text); }
+  .setting-desc { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .number-input {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px; color: var(--amber);
+    font-family: 'Cairo', sans-serif; font-size: 14px; font-weight: 700;
+    width: 70px; text-align: center; outline: none;
+  }
+
+  /* ── Audit action badge colors ────────────────────────────── */
+  .section-divider {
+    display: flex; align-items: center; gap: 12px; margin: 24px 0 14px;
+  }
+  .section-divider::before, .section-divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
+  }
+  .section-divider span {
+    font-size: 10px; font-weight: 700; color: var(--faint);
+    letter-spacing: 2px; text-transform: uppercase; white-space: nowrap;
+  }
+
+  /* ── Sub-tier breakdown ────────────────────────────────── */
+  .sub-row { margin-bottom: 14px; }
+  .sub-row-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+  .sub-tier-lbl  { font-size: 13px; color: var(--text); font-weight: 600; }
+  .sub-tier-meta { font-size: 11px; color: var(--muted); }
+  .sub-track { height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .sub-fill  { height: 100%; border-radius: 99px; }
+
+  /* Scrollable table wrapper */
+  .table-wrap { overflow-x: auto; }
+
+  /* Stalled row */
+  .row-stalled td { background: rgba(248,113,113,0.04); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ═══ SIDEBAR ══════════════════════════════════════════════════════ -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">و</div>
+      <div>
+        <div class="logo-text">وسيط</div>
+        <div class="logo-sub">لوحة الإدارة</div>
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">الرئيسية</div>
+      <div class="nav-item active" onclick="showScreen('dashboard',this)">
+        <span class="nav-icon">📊</span> لوحة التحكم
+      </div>
+      <div class="nav-item" onclick="showScreen('reports',this)">
+        <span class="nav-icon">📈</span> التقارير
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">المستخدمون</div>
+      <div class="nav-item" onclick="showScreen('users',this)">
+        <span class="nav-icon">👥</span> العملاء
+      </div>
+      <div class="nav-item" onclick="showScreen('providers',this)">
+        <span class="nav-icon">🔧</span> المزودون
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">العمليات</div>
+      <div class="nav-item" onclick="showScreen('requests',this)">
+        <span class="nav-icon">📋</span> الطلبات
+        <span class="nav-badge">3</span>
+      </div>
+      <div class="nav-item" onclick="showScreen('contracts',this)">
+        <span class="nav-icon">📄</span> العقود الدورية
+      </div>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">الإدارة</div>
+      <div class="nav-item" onclick="showScreen('notifications',this)">
+        <span class="nav-icon">🔔</span> الإشعارات
+      </div>
+      <div class="nav-item" onclick="showScreen('audit',this)">
+        <span class="nav-icon">🗂</span> سجل المراجعة
+      </div>
+      <div class="nav-item" onclick="showScreen('settings',this)">
+        <span class="nav-icon">⚙️</span> الإعدادات
+      </div>
+      <div class="nav-item" onclick="showScreen('support',this)" style="position:relative;">
+        <span class="nav-icon">🛟</span> الدعم الفني
+        <span class="nav-badge" style="background:var(--red)">3</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ═══ MAIN ══════════════════════════════════════════════════════ -->
+  <div class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <span class="page-icon" id="topIcon">📊</span>
+        <span class="page-title" id="topTitle">لوحة التحكم</span>
+      </div>
+      <div class="topbar-right">
+        <span class="topbar-date">الخميس، 10 أبريل 2026</span>
+        <span class="admin-chip">مدير</span>
+      </div>
+    </div>
+
+    <!-- ═══ CONTENT ══════════════════════════════════════════════════ -->
+    <div class="content">
+
+      <!-- ─── DASHBOARD ───────────────────────────────────────────── -->
+      <div class="screen active" id="screen-dashboard">
+
+        <!-- Alert bar — stale requests -->
+        <div class="alert-bar">
+          <button class="btn btn-amber" style="font-size:11px;padding:5px 12px">عرض الطلبات الراكدة</button>
+          <div style="display:flex;align-items:center;gap:10px;text-align:right">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--red)">3 طلبات راكدة بدون عروض</div>
+              <div style="font-size:11px;color:var(--muted)">مفتوحة أكثر من 48 ساعة — تحتاج تدخلاً</div>
+            </div>
+            <div class="alert-dot"></div>
+          </div>
+        </div>
+
+        <!-- Alert bar — urgent unconfirmed (provider timeout) -->
+        <div class="alert-bar" style="background:rgba(239,68,68,0.07);border-color:rgba(239,68,68,0.35);animation:urgentAdminPulse 2s ease-in-out infinite;">
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-danger" style="font-size:11px;padding:5px 12px" onclick="showScreen('support', document.getElementById('nav-support'))">فتح الدعم الفني</button>
+            <button class="btn" style="font-size:11px;padding:5px 12px;background:rgba(248,113,113,0.2);color:#FCA5A5;border:1px solid rgba(248,113,113,0.3);" onclick="dismissUrgentAlert()">رُصد ✓</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;text-align:right">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:#F87171;">🚨 مزود لم يستجب لطلب طارئ</div>
+              <div style="font-size:11px;color:#9CA3AF;margin-top:2px;">طلب رقم <strong style="color:#FCA5A5;">URG-00312</strong> — انتهى وقت التأكيد منذ 3 دقائق · عمّان · سباكة</div>
+            </div>
+            <div class="alert-dot" style="background:#F87171;animation:urgentDotAdmin 0.8s ease-in-out infinite;"></div>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="grid-4 mb-6">
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--sky)">1,248</div>
+            <div class="kpi-lbl">إجمالي العملاء</div>
+            <div class="kpi-sub" style="color:var(--emerald)">↑ +47 هذا الشهر</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--violet)">384</div>
+            <div class="kpi-lbl">إجمالي المزودين</div>
+            <div class="kpi-sub" style="color:var(--emerald)">↑ +12 هذا الشهر</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--amber)">2,891</div>
+            <div class="kpi-lbl">إجمالي الطلبات</div>
+            <div class="kpi-sub" style="color:var(--muted)">منذ الإطلاق</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--emerald)">1,706</div>
+            <div class="kpi-lbl">وظائف مكتملة</div>
+            <div class="kpi-sub">
+              <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+                <span style="font-size:11px;color:var(--emerald)">59%</span>
+                <div class="progress-wrap" style="flex:1;height:4px"><div class="progress-bar" style="width:59%"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-4 mb-6">
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--sky)">142</div>
+            <div class="kpi-lbl">طلبات مفتوحة</div>
+            <div class="kpi-sub" style="color:var(--muted)">بانتظار عروض</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--amber)">67</div>
+            <div class="kpi-lbl">وظائف جارية</div>
+            <div class="kpi-sub" style="color:var(--muted)">قيد التنفيذ الآن</div>
+          </div>
+          <div class="kpi-card" style="border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.04)">
+            <div class="kpi-val" style="color:var(--red)">3</div>
+            <div class="kpi-lbl">طلبات طارئة مفتوحة</div>
+            <div class="kpi-sub" style="color:var(--red);font-size:10px">تحتاج تدخلاً فورياً</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--violet)">28</div>
+            <div class="kpi-lbl">عقود بانتظار عروض</div>
+            <div class="kpi-sub" style="color:var(--muted)">عقود دورية</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- City chart -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">أكثر المدن نشاطاً (30 يوم)</div></div>
+            <div style="padding:16px 20px">
+              <div class="bar-row"><div class="bar-label">عمّان</div><div class="bar-track"><div class="bar-fill bar-fill-amber" style="width:100%"><span class="bar-count">318 طلب</span></div></div></div>
+              <div class="bar-row"><div class="bar-label">الزرقاء</div><div class="bar-track"><div class="bar-fill bar-fill-amber" style="width:58%"><span class="bar-count">184 طلب</span></div></div></div>
+              <div class="bar-row"><div class="bar-label">إربد</div><div class="bar-track"><div class="bar-fill bar-fill-amber" style="width:42%"><span class="bar-count">134 طلب</span></div></div></div>
+              <div class="bar-row"><div class="bar-label">العقبة</div><div class="bar-track"><div class="bar-fill bar-fill-sky" style="width:25%"><span class="bar-count">80 طلب</span></div></div></div>
+              <div class="bar-row"><div class="bar-label">السلط</div><div class="bar-track"><div class="bar-fill bar-fill-sky" style="width:18%"><span class="bar-count">56 طلب</span></div></div></div>
+            </div>
+          </div>
+
+          <!-- Recent users -->
+          <div class="card">
+            <div class="card-header flex-between">
+              <button class="btn btn-ghost" style="font-size:11px">عرض الكل</button>
+              <div class="card-title">آخر المسجلين</div>
+            </div>
+            <table>
+              <tbody>
+                <tr>
+                  <td><span class="badge badge-info">عميل</span></td>
+                  <td style="color:var(--muted);font-size:12px">عمّان</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">سارة الأحمد</div><div style="font-size:11px;color:var(--muted)">منذ ساعتين</div></div>
+                      <div class="avatar">س</div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-violet">مزود</span></td>
+                  <td style="color:var(--muted);font-size:12px">الزرقاء</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">محمد السالم</div><div style="font-size:11px;color:var(--muted)">منذ 5 ساعات</div></div>
+                      <div class="avatar avatar-provider">م</div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-info">عميل</span></td>
+                  <td style="color:var(--muted);font-size:12px">إربد</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">نور الخالد</div><div style="font-size:11px;color:var(--muted)">منذ 8 ساعات</div></div>
+                      <div class="avatar">ن</div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-violet">مزود</span></td>
+                  <td style="color:var(--muted);font-size:12px">عمّان</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">أحمد الرشيد</div><div style="font-size:11px;color:var(--muted)">منذ يوم</div></div>
+                      <div class="avatar avatar-provider">أ</div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── USERS ─────────────────────────────────────────────────── -->
+      <div class="screen" id="screen-users">
+        <div class="flex-between flex-wrap mb-5">
+          <div>
+            <h1>إدارة العملاء</h1>
+            <div class="page-sub">1,248 مستخدم مسجّل</div>
+          </div>
+          <div class="pill-row">
+            <div class="pill"><div class="pill-val" style="color:var(--sky)">1,140</div><div class="pill-lbl">عملاء</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--violet)">108</div><div class="pill-lbl">مزودون</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--sky)">291</div><div class="pill-lbl">موثّق</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--red)">7</div><div class="pill-lbl">معطّل</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>المستخدم</th><th>الهاتف</th><th>الدور</th><th>المدينة</th><th>التحقق</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600">سارة الأحمد</div></div>
+                      <div class="avatar">س</div>
+                    </div>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px;direction:ltr;text-align:right">+962 79 123 4567</td>
+                  <td><span class="badge badge-info">عميل</span></td>
+                  <td style="color:var(--muted)">عمّان</td>
+                  <td><span style="color:var(--sky);font-size:13px">✓ موثّق</span></td>
+                  <td><span class="badge badge-success">نشط</span></td>
+                  <td style="color:var(--muted);font-size:12px">10 أبريل 2026</td>
+                  <td><button class="btn btn-danger">تعطيل</button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600">خالد العمري</div></div>
+                      <div class="avatar">خ</div>
+                    </div>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px;direction:ltr;text-align:right">+962 77 987 6543</td>
+                  <td><span class="badge badge-info">عميل</span></td>
+                  <td style="color:var(--muted)">الزرقاء</td>
+                  <td style="color:var(--faint);font-size:12px">—</td>
+                  <td><span class="badge badge-success">نشط</span></td>
+                  <td style="color:var(--muted);font-size:12px">8 أبريل 2026</td>
+                  <td><button class="btn btn-danger">تعطيل</button></td>
+                </tr>
+                <tr style="opacity:0.6">
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+                      <div style="text-align:right">
+                        <div style="font-weight:600">ريم المنصور</div>
+                        <div style="font-size:11px;color:var(--red)">انتهاك شروط الاستخدام</div>
+                      </div>
+                      <div class="avatar avatar-muted">ر</div>
+                    </div>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px;direction:ltr;text-align:right">+962 78 555 0012</td>
+                  <td><span class="badge badge-info">عميل</span></td>
+                  <td style="color:var(--muted)">إربد</td>
+                  <td style="color:var(--faint);font-size:12px">—</td>
+                  <td><span class="badge badge-danger">معطّل</span></td>
+                  <td style="color:var(--muted);font-size:12px">3 أبريل 2026</td>
+                  <td><button class="btn btn-ghost">تفعيل</button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600">نور الخالد</div></div>
+                      <div class="avatar">ن</div>
+                    </div>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px;direction:ltr;text-align:right">+962 79 444 3322</td>
+                  <td><span class="badge badge-info">عميل</span></td>
+                  <td style="color:var(--muted)">عمّان</td>
+                  <td><span style="color:var(--sky);font-size:13px">✓ موثّق</span></td>
+                  <td><span class="badge badge-success">نشط</span></td>
+                  <td style="color:var(--muted);font-size:12px">1 أبريل 2026</td>
+                  <td><button class="btn btn-danger">تعطيل</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── PROVIDERS ──────────────────────────────────────────────── -->
+      <div class="screen" id="screen-providers">
+        <div class="flex-between flex-wrap mb-5">
+          <div>
+            <h1>إدارة المزودين</h1>
+            <div class="page-sub">384 مزود مسجّل</div>
+          </div>
+          <div class="pill-row">
+            <div class="pill"><div class="pill-val" style="color:var(--amber)">127</div><div class="pill-lbl">مشترك</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--sky)">218</div><div class="pill-lbl">موثّق</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--red)">9</div><div class="pill-lbl">موقوف</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--emerald)">4.3</div><div class="pill-lbl">متوسط التقييم</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>المزود</th><th>الرتبة</th><th>التقييم</th><th>الأعمال</th><th>الاشتراك</th><th>الحالة</th><th>انتهاء الاشتراك</th><th>إجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+                      <div style="text-align:right">
+                        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+                          <span style="font-weight:600">أحمد الرشيد</span>
+                          <span style="color:var(--sky);font-size:12px">✓</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--muted)">عمّان · 079 234 5678</div>
+                      </div>
+                      <div class="avatar avatar-provider">أ</div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-violet">خبير</span></td>
+                  <td style="color:var(--amber)">⭐ 4.9</td>
+                  <td style="font-weight:700;color:var(--text)">143</td>
+                  <td><span class="badge badge-violet">متميز</span></td>
+                  <td><span class="badge badge-success">نشط</span></td>
+                  <td style="color:var(--muted);font-size:12px">10 مايو 2026</td>
+                  <td>
+                    <div style="position:relative;display:inline-block">
+                      <button class="btn btn-ghost" onclick="toggleMenu(this)">إجراء ▾</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+                      <div style="text-align:right">
+                        <div style="font-weight:600">محمد السالم</div>
+                        <div style="font-size:11px;color:var(--muted)">الزرقاء · 077 876 5432</div>
+                      </div>
+                      <div class="avatar avatar-provider">م</div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-warning">موثوق</span></td>
+                  <td style="color:var(--amber)">⭐ 4.6</td>
+                  <td style="font-weight:700;color:var(--text)">89</td>
+                  <td><span class="badge badge-warning">محترف</span></td>
+                  <td><span class="badge badge-success">نشط</span></td>
+                  <td style="color:var(--muted);font-size:12px">1 يونيو 2026</td>
+                  <td><button class="btn btn-ghost">إجراء ▾</button></td>
+                </tr>
+                <tr style="opacity:0.6">
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+                      <div style="text-align:right">
+                        <div style="font-weight:600">فيصل الحربي</div>
+                        <div style="font-size:11px;color:var(--muted)">إربد · 078 111 2233</div>
+                        <div style="font-size:11px;color:var(--red)">شكاوى متعددة من العملاء</div>
+                      </div>
+                      <div class="avatar avatar-muted">ف</div>
+                    </div>
+                  </td>
+                  <td><span class="badge badge-info">صاعد</span></td>
+                  <td style="color:var(--muted)">⭐ 3.1</td>
+                  <td style="font-weight:700;color:var(--text)">12</td>
+                  <td style="color:var(--faint);font-size:12px">مجاني</td>
+                  <td><span class="badge badge-danger">موقوف</span></td>
+                  <td style="color:var(--faint);font-size:12px">—</td>
+                  <td><button class="btn btn-ghost">إجراء ▾</button></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:10px;justify-content:flex-end">
+                      <div style="text-align:right">
+                        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+                          <span style="font-weight:600">سلمى الجابر</span>
+                          <span style="color:var(--sky);font-size:12px">✓</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--muted)">عمّان · 079 666 7788</div>
+                      </div>
+                      <div class="avatar avatar-provider">س</div>
+                    </div>
+                  </td>
+                  <td><span class="badge" style="background:rgba(248,113,113,0.12);color:#F87171;border:1px solid rgba(248,113,113,0.25)">نخبة</span></td>
+                  <td style="color:var(--amber)">⭐ 5.0</td>
+                  <td style="font-weight:700;color:var(--text)">221</td>
+                  <td><span class="badge badge-violet">متميز</span></td>
+                  <td><span class="badge badge-success">نشط</span></td>
+                  <td style="color:var(--muted);font-size:12px">15 أبريل 2026</td>
+                  <td><button class="btn btn-ghost">إجراء ▾</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── REQUESTS ──────────────────────────────────────────────── -->
+      <div class="screen" id="screen-requests">
+        <div class="flex-between flex-wrap mb-5">
+          <div>
+            <h1>إدارة الطلبات</h1>
+            <div class="page-sub">142 طلب</div>
+          </div>
+          <div class="pill-row">
+            <div class="pill"><div class="pill-val" style="color:var(--sky)">142</div><div class="pill-lbl">مفتوح</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--amber)">67</div><div class="pill-lbl">جارٍ</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--emerald)">1,706</div><div class="pill-lbl">منجز</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--muted)">89</div><div class="pill-lbl">ملغي</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--red)">🚨 3</div><div class="pill-lbl">طارئ</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>الطلب</th><th>العميل</th><th>التصنيف</th><th>المدينة</th><th>العروض</th><th>السعر المقترح</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="row-stalled">
+                  <td>
+                    <div style="display:flex;align-items:center;gap:5px;justify-content:flex-end">
+                      <p style="font-weight:600;color:var(--text)">🚨 تسليك بالوعة مطبخ عاجل</p>
+                    </div>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px">سارة الأحمد</td>
+                  <td style="color:var(--muted);font-size:12px">سباكة</td>
+                  <td style="color:var(--muted)">عمّان</td>
+                  <td style="font-weight:700;color:var(--red)">0</td>
+                  <td style="color:var(--muted);font-size:12px">15–25 د.أ</td>
+                  <td><span class="badge badge-info">مفتوح</span></td>
+                  <td style="color:var(--muted);font-size:12px">8 أبريل 2026</td>
+                  <td><button class="btn btn-danger">إغلاق</button></td>
+                </tr>
+                <tr>
+                  <td><p style="font-weight:600">تركيب مكيف سبليت غرفة النوم</p></td>
+                  <td style="color:var(--muted);font-size:12px">خالد العمري</td>
+                  <td style="color:var(--muted);font-size:12px">تكييف</td>
+                  <td style="color:var(--muted)">الزرقاء</td>
+                  <td style="font-weight:700;color:var(--text)">4</td>
+                  <td style="color:var(--muted);font-size:12px">40–60 د.أ</td>
+                  <td><span class="badge badge-warning">جارٍ</span></td>
+                  <td style="color:var(--muted);font-size:12px">9 أبريل 2026</td>
+                  <td><button class="btn btn-danger">إغلاق</button></td>
+                </tr>
+                <tr class="row-stalled">
+                  <td>
+                    <div style="display:flex;align-items:center;gap:5px;justify-content:flex-end">
+                      <p style="font-weight:600">⚠️ صيانة غسالة ملابس</p>
+                    </div>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px">نور الخالد</td>
+                  <td style="color:var(--muted);font-size:12px">أجهزة منزلية</td>
+                  <td style="color:var(--muted)">إربد</td>
+                  <td style="font-weight:700;color:var(--red)">0</td>
+                  <td style="color:var(--muted);font-size:12px">20–35 د.أ</td>
+                  <td><span class="badge badge-info">مفتوح</span></td>
+                  <td style="color:var(--muted);font-size:12px">7 أبريل 2026</td>
+                  <td><button class="btn btn-danger">إغلاق</button></td>
+                </tr>
+                <tr>
+                  <td><p style="font-weight:600">طلاء غرفة معيشة</p></td>
+                  <td style="color:var(--muted);font-size:12px">فاطمة السعد</td>
+                  <td style="color:var(--muted);font-size:12px">دهان</td>
+                  <td style="color:var(--muted)">عمّان</td>
+                  <td style="font-weight:700;color:var(--text)">7</td>
+                  <td style="color:var(--muted);font-size:12px">80–120 د.أ</td>
+                  <td><span class="badge badge-success">منجز</span></td>
+                  <td style="color:var(--muted);font-size:12px">5 أبريل 2026</td>
+                  <td style="color:var(--faint);font-size:12px">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── CONTRACTS ──────────────────────────────────────────────── -->
+      <div class="screen" id="screen-contracts">
+        <div class="flex-between flex-wrap mb-5">
+          <div>
+            <h1>العقود الدورية</h1>
+            <div class="page-sub">74 عقد</div>
+          </div>
+          <div class="pill-row">
+            <div class="pill"><div class="pill-val" style="color:var(--sky)">28</div><div class="pill-lbl">بانتظار عروض</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--emerald)">32</div><div class="pill-lbl">نشط</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--muted)">14</div><div class="pill-lbl">منتهي</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--amber)">384</div><div class="pill-lbl">زيارات مجدولة</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>العقد</th><th>العميل</th><th>المزود</th><th>المدينة</th><th>التكرار</th><th>المدة</th><th>سعر الزيارة</th><th>العروض</th><th>الزيارات</th><th>الحالة</th><th>التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <p style="font-weight:600;color:var(--text)">تنظيف منزلي دوري</p>
+                    <p style="font-size:11px;color:var(--emerald);opacity:0.7">تنظيف</p>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px">سارة الأحمد</td>
+                  <td style="color:var(--muted);font-size:12px">سلمى الجابر</td>
+                  <td style="color:var(--muted)">عمّان</td>
+                  <td style="color:var(--muted);font-size:12px">أسبوعي</td>
+                  <td style="color:var(--muted);font-size:12px">6 شهر</td>
+                  <td style="color:var(--amber);font-weight:700;font-size:12px">18 د.أ</td>
+                  <td style="font-weight:700;color:var(--text)">3</td>
+                  <td style="font-size:12px;color:var(--muted)">8<span style="color:var(--faint)">/24</span></td>
+                  <td><span class="badge badge-success">نشط</span></td>
+                  <td style="color:var(--muted);font-size:12px">1 فبراير 2026</td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="font-weight:600;color:var(--text)">صيانة حديقة شهرية</p>
+                    <p style="font-size:11px;color:var(--emerald);opacity:0.7">حدائق</p>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px">خالد العمري</td>
+                  <td style="color:var(--faint);font-size:12px">—</td>
+                  <td style="color:var(--muted)">الزرقاء</td>
+                  <td style="color:var(--muted);font-size:12px">شهري</td>
+                  <td style="color:var(--muted);font-size:12px">12 شهر</td>
+                  <td style="color:var(--amber);font-weight:700;font-size:12px">35 د.أ</td>
+                  <td style="font-weight:700;color:var(--text)">5</td>
+                  <td style="font-size:12px;color:var(--muted)">0<span style="color:var(--faint)">/12</span></td>
+                  <td><span class="badge badge-info">بانتظار عروض</span></td>
+                  <td style="color:var(--muted);font-size:12px">5 أبريل 2026</td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="font-weight:600;color:var(--text)">تنظيف مكيفات كل أسبوعين</p>
+                    <p style="font-size:11px;color:var(--emerald);opacity:0.7">تكييف</p>
+                  </td>
+                  <td style="color:var(--muted);font-size:12px">نور الخالد</td>
+                  <td style="color:var(--muted);font-size:12px">أحمد الرشيد</td>
+                  <td style="color:var(--muted)">عمّان</td>
+                  <td style="color:var(--muted);font-size:12px">كل أسبوعين</td>
+                  <td style="color:var(--muted);font-size:12px">3 شهر</td>
+                  <td style="color:var(--amber);font-weight:700;font-size:12px">25 د.أ</td>
+                  <td style="font-weight:700;color:var(--text)">2</td>
+                  <td style="font-size:12px;color:var(--muted)">6<span style="color:var(--faint)">/6</span></td>
+                  <td><span class="badge badge-muted">منتهي</span></td>
+                  <td style="color:var(--muted);font-size:12px">1 يناير 2026</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── REPORTS ───────────────────────────────────────────────── -->
+      <div class="screen" id="screen-reports">
+        <div class="mb-5">
+          <h1>التقارير والتحليلات</h1>
+          <div class="page-sub">آخر 30 يوم</div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="grid-4 mb-5">
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--amber)">1,524 د.أ</div>
+            <div class="kpi-lbl">إيراد الاشتراكات / شهر</div>
+            <div class="kpi-sub" style="color:var(--muted)">127 مشترك</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--emerald)">576 د.أ</div>
+            <div class="kpi-lbl">إيراد العقود / شهر (تقديري)</div>
+            <div class="kpi-sub" style="color:var(--muted)">32 عقد نشط</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--sky)">59%</div>
+            <div class="kpi-lbl">طلبات مكتملة</div>
+            <div class="kpi-sub" style="color:var(--muted)">486 من 822</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--violet)">38 د.أ</div>
+            <div class="kpi-lbl">متوسط سعر الطلب</div>
+            <div class="kpi-sub" style="color:var(--muted)">614 طلب بسعر مقترح</div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-5">
+          <!-- Subscription breakdown -->
+          <div class="card" style="padding:20px">
+            <div class="card-title mb-4">توزيع الاشتراكات</div>
+            <div class="sub-row">
+              <div class="sub-row-head">
+                <div class="sub-tier-meta">576 د.أ</div>
+                <div><span class="sub-tier-lbl">متميز</span> <span class="sub-tier-meta">23 مزود × 25 د.أ</span></div>
+              </div>
+              <div class="sub-track"><div class="sub-fill" style="width:63%;background:var(--violet)"></div></div>
+            </div>
+            <div class="sub-row">
+              <div class="sub-row-head">
+                <div class="sub-tier-meta">756 د.أ</div>
+                <div><span class="sub-tier-lbl">محترف</span> <span class="sub-tier-meta">63 مزود × 12 د.أ</span></div>
+              </div>
+              <div class="sub-track"><div class="sub-fill" style="width:100%;background:var(--amber)"></div></div>
+            </div>
+            <div class="sub-row">
+              <div class="sub-row-head">
+                <div class="sub-tier-meta">205 د.أ</div>
+                <div><span class="sub-tier-lbl">أساسية</span> <span class="sub-tier-meta">41 مزود × 5 د.أ</span></div>
+              </div>
+              <div class="sub-track"><div class="sub-fill" style="width:38%;background:var(--faint)"></div></div>
+            </div>
+            <div style="border-top:1px solid var(--border);margin-top:16px;padding-top:12px;display:flex;justify-content:space-between">
+              <span style="color:var(--amber);font-weight:700;font-size:16px">1,537 د.أ</span>
+              <span style="color:var(--muted);font-size:13px">إجمالي الإيراد الشهري</span>
+            </div>
+          </div>
+
+          <!-- New users -->
+          <div class="card" style="padding:20px">
+            <div class="card-title mb-4">مستخدمون جدد (30 يوم)</div>
+            <div style="background:var(--surface2);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span style="color:var(--sky);font-weight:800;font-size:22px">47</span>
+              <div style="text-align:right"><div style="color:var(--text);font-size:13px">عملاء جدد</div><div style="color:var(--muted);font-size:11px">يبحثون عن خدمات</div></div>
+            </div>
+            <div style="background:var(--surface2);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <span style="color:var(--emerald);font-weight:800;font-size:22px">12</span>
+              <div style="text-align:right"><div style="color:var(--text);font-size:13px">مزودون جدد</div><div style="color:var(--muted);font-size:11px">يقدمون خدمات</div></div>
+            </div>
+            <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center">
+              <span style="color:var(--amber);font-weight:800;font-size:22px">59</span>
+              <div style="text-align:right"><div style="color:var(--text);font-size:13px">إجمالي التسجيلات</div><div style="color:var(--muted);font-size:11px">آخر 30 يوم</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Request funnel -->
+        <div class="card" style="padding:20px">
+          <div class="card-title mb-4">قمع الطلبات (30 يوم)</div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">طلبات مستلمة</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:100%;background:var(--sky);opacity:0.7"></div></div>
+            <div class="funnel-count">822 (100%)</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">وصلت عروضاً</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:78%;background:var(--violet);opacity:0.7"></div></div>
+            <div class="funnel-count">641 (78%)</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">قيد التنفيذ</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:67%;background:var(--amber);opacity:0.7"></div></div>
+            <div class="funnel-count">551 (67%)</div>
+          </div>
+          <div class="funnel-row">
+            <div class="funnel-lbl">مكتملة</div>
+            <div class="funnel-track"><div class="funnel-fill" style="width:59%;background:var(--emerald);opacity:0.7"></div></div>
+            <div class="funnel-count">486 (59%)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── NOTIFICATIONS ──────────────────────────────────────────── -->
+      <div class="screen" id="screen-notifications">
+        <div class="flex-between flex-wrap mb-5">
+          <div>
+            <h1>الإشعارات</h1>
+            <div class="page-sub">إرسال إشعارات للمستخدمين</div>
+          </div>
+          <div class="pill-row">
+            <div class="pill"><div class="pill-val" style="color:var(--text)">12,840</div><div class="pill-lbl">إجمالي الإشعارات</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--amber)">347</div><div class="pill-lbl">آخر 24 ساعة</div></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Send form -->
+          <div class="card" style="padding:20px">
+            <div class="card-title mb-4">إرسال إشعار</div>
+
+            <div style="margin-bottom:14px">
+              <div style="color:var(--muted);font-size:11px;margin-bottom:8px;text-align:right">الجمهور المستهدف</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+                <button class="btn btn-amber" style="font-size:12px">الجميع</button>
+                <button class="btn btn-ghost" style="font-size:12px">العملاء فقط</button>
+                <button class="btn btn-ghost" style="font-size:12px">المزودون فقط</button>
+                <button class="btn btn-ghost" style="font-size:12px">المشتركون</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom:14px">
+              <div style="color:var(--muted);font-size:11px;margin-bottom:6px;text-align:right">تصفية بالمدينة (اختياري)</div>
+              <select style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;text-align:right">
+                <option>كل المدن</option>
+                <option>عمّان</option>
+                <option>الزرقاء</option>
+                <option>إربد</option>
+              </select>
+            </div>
+
+            <div style="margin-bottom:14px">
+              <div style="color:var(--muted);font-size:11px;margin-bottom:6px;text-align:right">عنوان الإشعار</div>
+              <input type="text" placeholder="مثال: عرض خاص لهذا الأسبوع" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;text-align:right" />
+            </div>
+
+            <div style="margin-bottom:16px">
+              <div style="color:var(--muted);font-size:11px;margin-bottom:6px;text-align:right">نص الإشعار</div>
+              <textarea rows="4" placeholder="اكتب رسالتك هنا..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);font-family:'Cairo',sans-serif;font-size:13px;outline:none;resize:none;text-align:right"></textarea>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end">
+              <button class="btn btn-amber" style="padding:9px 24px;font-size:13px">إرسال الإشعار</button>
+            </div>
+          </div>
+
+          <!-- Broadcast history -->
+          <div class="card" style="padding:20px">
+            <div class="card-title mb-4">سجل البث</div>
+            <div class="notif-item">
+              <div class="notif-title">تحديث جديد — ميزة العقود الدورية متاحة الآن</div>
+              <div class="notif-meta">
+                <span class="badge badge-amber" style="background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);font-size:10px">1,248 مستخدم</span>
+                <span style="font-size:11px;color:var(--muted)">الجميع</span>
+                <span style="font-size:11px;color:var(--muted)">9 أبريل 2026</span>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-title">تذكير: أكمل ملفك المهني واحصل على شارة الثقة</div>
+              <div class="notif-meta">
+                <span class="badge" style="background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);font-size:10px">384 مستخدم</span>
+                <span style="font-size:11px;color:var(--muted)">المزودون</span>
+                <span style="font-size:11px;color:var(--muted)">7 أبريل 2026</span>
+              </div>
+            </div>
+            <div class="notif-item">
+              <div class="notif-title">خدمات المنازل في عمّان — عروض حصرية هذا الأسبوع</div>
+              <div class="notif-meta">
+                <span class="badge" style="background:rgba(245,158,11,0.1);color:var(--amber);border:1px solid rgba(245,158,11,0.2);font-size:10px">612 مستخدم</span>
+                <span style="font-size:11px;color:var(--muted)">عمّان · الجميع</span>
+                <span style="font-size:11px;color:var(--muted)">3 أبريل 2026</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── AUDIT ──────────────────────────────────────────────────── -->
+      <div class="screen" id="screen-audit">
+        <div class="flex-between flex-wrap mb-5">
+          <div>
+            <h1>سجل المراجعة</h1>
+            <div class="page-sub">248 حدث مسجّل</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <select style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-size:12px;outline:none">
+              <option>كل الإجراءات</option>
+              <option>تعطيل مستخدم</option>
+              <option>إيقاف مزود</option>
+              <option>توثيق مزود</option>
+              <option>إغلاق طلب</option>
+              <option>إشعار جماعي</option>
+            </select>
+            <select style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-size:12px;outline:none">
+              <option>كل الأنواع</option>
+              <option>مستخدم</option>
+              <option>مزود</option>
+              <option>طلب</option>
+              <option>نظام</option>
+            </select>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>الإجراء</th><th>النوع</th><th>الهدف</th><th>السبب / التفاصيل</th><th>التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="badge badge-danger">تعطيل مستخدم</span></td>
+                  <td style="color:var(--muted)">👤 مستخدم</td>
+                  <td style="font-weight:600">ريم المنصور</td>
+                  <td style="color:var(--muted);font-size:12px">انتهاك متكرر لشروط الاستخدام</td>
+                  <td style="color:var(--muted);font-size:12px;white-space:nowrap">10 أبريل 2026، 14:22</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-danger">إيقاف مزود</span></td>
+                  <td style="color:var(--muted)">🔧 مزود</td>
+                  <td style="font-weight:600">فيصل الحربي</td>
+                  <td style="color:var(--muted);font-size:12px">شكاوى متعددة من العملاء</td>
+                  <td style="color:var(--muted);font-size:12px;white-space:nowrap">9 أبريل 2026، 10:05</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-info">توثيق مزود</span></td>
+                  <td style="color:var(--muted)">🔧 مزود</td>
+                  <td style="font-weight:600">أحمد الرشيد</td>
+                  <td style="color:var(--muted);font-size:12px">—</td>
+                  <td style="color:var(--muted);font-size:12px;white-space:nowrap">8 أبريل 2026، 09:30</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-warning">إغلاق طلب</span></td>
+                  <td style="color:var(--muted)">📋 طلب</td>
+                  <td style="font-weight:600">صيانة غسالة ملابس</td>
+                  <td style="color:var(--muted);font-size:12px">لا يوجد مزودون في المنطقة</td>
+                  <td style="color:var(--muted);font-size:12px;white-space:nowrap">7 أبريل 2026، 16:48</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-violet">إشعار جماعي</span></td>
+                  <td style="color:var(--muted)">⚙️ نظام</td>
+                  <td style="font-weight:600">تحديث جديد — ميزة العقود الدورية</td>
+                  <td style="color:var(--muted);font-size:12px">segment: all · sent: 1248</td>
+                  <td style="color:var(--muted);font-size:12px;white-space:nowrap">9 أبريل 2026، 12:00</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-warning">تغيير رتبة</span></td>
+                  <td style="color:var(--muted)">🔧 مزود</td>
+                  <td style="font-weight:600">سلمى الجابر</td>
+                  <td style="color:var(--muted);font-size:12px">trusted → elite · أداء استثنائي</td>
+                  <td style="color:var(--muted);font-size:12px;white-space:nowrap">6 أبريل 2026، 11:15</td>
+                </tr>
+                <tr>
+                  <td><span class="badge badge-info">تحديث إعداد</span></td>
+                  <td style="color:var(--muted)">⚙️ نظام</td>
+                  <td style="font-weight:600">رسوم الطلبات الطارئة</td>
+                  <td style="color:var(--muted);font-size:12px">key: urgent_premium_pct · value: 20</td>
+                  <td style="color:var(--muted);font-size:12px;white-space:nowrap">5 أبريل 2026، 09:00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div style="border-top:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" style="font-size:11px">التالي ›</button>
+            </div>
+            <span style="color:var(--muted);font-size:12px">صفحة 1 من 5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── SETTINGS ──────────────────────────────────────────────── -->
+      <div class="screen" id="screen-settings">
+        <div class="mb-5">
+          <h1>إعدادات المنصة</h1>
+          <div class="page-sub">التحكم في سلوك المنصة وإعداداتها العامة</div>
+        </div>
+
+        <!-- System -->
+        <div class="section-divider"><span>النظام</span></div>
+        <div class="setting-row">
+          <label class="toggle"><input type="checkbox" /><span class="toggle-slider"></span></label>
+          <div class="setting-info">
+            <div class="setting-lbl">وضع الصيانة</div>
+            <div class="setting-desc">عند التفعيل، تعرض التطبيقات رسالة صيانة ولا يمكن تسجيل الدخول</div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+          <div class="setting-info">
+            <div class="setting-lbl">فتح التسجيلات الجديدة</div>
+            <div class="setting-desc">عند الإيقاف، لا يمكن إنشاء حسابات جديدة في التطبيق</div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <label class="toggle"><input type="checkbox" /><span class="toggle-slider"></span></label>
+          <div class="setting-info">
+            <div class="setting-lbl">التحقق الإلزامي للمزودين</div>
+            <div class="setting-desc">عند التفعيل، لا يمكن للمزودين تقديم عروض قبل اجتياز التحقق</div>
+          </div>
+        </div>
+
+        <!-- Financial -->
+        <div class="section-divider"><span>المالية</span></div>
+        <div class="setting-row">
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" value="20" class="number-input" /> <span style="color:var(--muted)">%</span>
+          </div>
+          <div class="setting-info">
+            <div class="setting-lbl">رسوم الطلبات الطارئة</div>
+            <div class="setting-desc">نسبة إضافية تُضاف على الطلبات المصنّفة طارئة</div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div style="display:flex;align-items:center;gap:6px">
+            <input type="number" value="5" class="number-input" /> <span style="color:var(--muted)">%</span>
+          </div>
+          <div class="setting-info">
+            <div class="setting-lbl">نسبة كاش باك الولاء</div>
+            <div class="setting-desc">نسبة من قيمة الطلب تُردّ كنقاط ولاء للعميل عند الإتمام</div>
+          </div>
+        </div>
+
+        <!-- Operational -->
+        <div class="section-divider"><span>التشغيل</span></div>
+        <div class="setting-row">
+          <input type="number" value="4" class="number-input" />
+          <div class="setting-info">
+            <div class="setting-lbl">نافذة الاستجابة للطلبات الطارئة (ساعات)</div>
+            <div class="setting-desc">عدد الساعات التي يُعتبر فيها الطلب الطارئ نشطاً قبل الإلغاء التلقائي</div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <input type="number" value="10" class="number-input" />
+          <div class="setting-info">
+            <div class="setting-lbl">الحد الأقصى للعروض لكل طلب</div>
+            <div class="setting-desc">أقصى عدد من المزودين يمكنهم تقديم عروض على طلب واحد</div>
+          </div>
+        </div>
+        <div class="setting-row">
+          <input type="number" value="7" class="number-input" />
+          <div class="setting-info">
+            <div class="setting-lbl">الإغلاق التلقائي للطلبات الراكدة (أيام)</div>
+            <div class="setting-desc">عدد الأيام التي يُغلق بعدها الطلب المفتوح تلقائياً إذا لم تكن هناك عروض</div>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;margin-top:20px">
+          <button class="btn btn-amber" style="padding:11px 28px;font-size:14px">حفظ الإعدادات</button>
+        </div>
+      </div>
+
+
+      <!-- ─── SUPPORT ──────────────────────────────────────────────── -->
+      <div class="screen" id="screen-support">
+        <div class="flex-between flex-wrap mb-5">
+          <div>
+            <h1>الدعم الفني</h1>
+            <div class="page-sub">إدارة تذاكر الدعم ومشاكل المستخدمين</div>
+          </div>
+          <div class="pill-row">
+            <div class="pill"><div class="pill-val" style="color:var(--sky)">3</div><div class="pill-lbl">مفتوحة</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--amber)">7</div><div class="pill-lbl">قيد المراجعة</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--red)">2</div><div class="pill-lbl">طارئة</div></div>
+            <div class="pill"><div class="pill-val" style="color:var(--emerald)">48</div><div class="pill-lbl">محلولة</div></div>
+          </div>
+        </div>
+
+        <!-- Stats + avg response -->
+        <div class="grid-4 mb-5">
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--amber)">2.4h</div>
+            <div class="kpi-lbl">متوسط وقت الاستجابة</div>
+            <div class="kpi-sub" style="color:var(--emerald)">↓ تحسّن ٢٠٪ هذا الأسبوع</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--emerald)">4.6⭐</div>
+            <div class="kpi-lbl">متوسط تقييم الدعم</div>
+            <div class="kpi-sub" style="color:var(--muted)">من ٤٨ تذكرة محلولة</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val" style="color:var(--sky)">60</div>
+            <div class="kpi-lbl">إجمالي التذاكر</div>
+            <div class="kpi-sub" style="color:var(--muted)">٤٨ محلولة · ١٢ نشطة</div>
+          </div>
+          <div class="kpi-card" style="border-color:rgba(248,113,113,0.3);background:rgba(248,113,113,0.04)">
+            <div class="kpi-val" style="color:var(--red)">2</div>
+            <div class="kpi-lbl">تذاكر طارئة</div>
+            <div class="kpi-sub" style="color:var(--red);font-size:10px">تحتاج تدخلاً فورياً</div>
+          </div>
+        </div>
+
+        <!-- Filter row -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <select style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-size:12px;outline:none">
+            <option>كل الحالات</option>
+            <option>مفتوحة</option>
+            <option>قيد المراجعة</option>
+            <option>محلولة</option>
+          </select>
+          <select style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-size:12px;outline:none">
+            <option>كل الفئات</option>
+            <option>مدفوعات</option>
+            <option>طلبات</option>
+            <option>مزود خدمة</option>
+            <option>حساب</option>
+          </select>
+          <select style="background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:8px 12px;font-family:'Cairo',sans-serif;font-size:12px;outline:none">
+            <option>كل الأولويات</option>
+            <option>طارئ</option>
+            <option>عادي</option>
+          </select>
+        </div>
+
+        <!-- Ticket table -->
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>رقم التذكرة</th><th>المستخدم</th><th>الموضوع</th><th>الفئة</th><th>الأولوية</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="background:rgba(248,113,113,0.04)">
+                  <td style="color:var(--amber);font-weight:700;font-size:12px">TKT-0061</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">سارة الأحمد</div><div style="font-size:11px;color:var(--muted)">عميل</div></div>
+                      <div class="avatar">س</div>
+                    </div>
+                  </td>
+                  <td style="max-width:200px"><p style="font-weight:600;font-size:13px;color:var(--text)">المزود لم يحضر في الموعد المحدد</p></td>
+                  <td><span class="badge badge-violet" style="font-size:10px">🔧 مزود خدمة</span></td>
+                  <td><span class="badge badge-danger" style="font-size:10px">🔴 طارئ</span></td>
+                  <td><span class="badge badge-info">مفتوحة</span></td>
+                  <td style="color:var(--muted);font-size:12px">منذ ٣ ساعات</td>
+                  <td>
+                    <div style="display:flex;gap:6px;">
+                      <button class="btn btn-amber" style="font-size:11px;padding:5px 10px" onclick="alert('فتح التذكرة TKT-0061')">فتح</button>
+                    </div>
+                  </td>
+                </tr>
+                <tr style="background:rgba(248,113,113,0.04)">
+                  <td style="color:var(--amber);font-weight:700;font-size:12px">TKT-0059</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">أحمد الرشيد</div><div style="font-size:11px;color:var(--muted)">مزود</div></div>
+                      <div class="avatar avatar-provider">أ</div>
+                    </div>
+                  </td>
+                  <td style="max-width:200px"><p style="font-weight:600;font-size:13px;color:var(--text)">خصم اشتراك غير مطبّق بعد التجديد</p></td>
+                  <td><span class="badge badge-warning" style="font-size:10px">💳 مدفوعات</span></td>
+                  <td><span class="badge badge-danger" style="font-size:10px">🔴 طارئ</span></td>
+                  <td><span class="badge badge-warning">قيد المراجعة</span></td>
+                  <td style="color:var(--muted);font-size:12px">منذ ٥ ساعات</td>
+                  <td><button class="btn btn-amber" style="font-size:11px;padding:5px 10px" onclick="alert('فتح التذكرة TKT-0059')">فتح</button></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--muted);font-weight:700;font-size:12px">TKT-0058</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">نور الخالد</div><div style="font-size:11px;color:var(--muted)">عميل</div></div>
+                      <div class="avatar">ن</div>
+                    </div>
+                  </td>
+                  <td style="max-width:200px"><p style="font-weight:600;font-size:13px;color:var(--text)">لم أتمكن من تقييم المزود بعد الإنجاز</p></td>
+                  <td><span class="badge badge-info" style="font-size:10px">📋 طلبات</span></td>
+                  <td><span class="badge badge-muted" style="font-size:10px">🔵 عادي</span></td>
+                  <td><span class="badge badge-info">مفتوحة</span></td>
+                  <td style="color:var(--muted);font-size:12px">منذ ٨ ساعات</td>
+                  <td><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">فتح</button></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--muted);font-weight:700;font-size:12px">TKT-0057</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">خالد العمري</div><div style="font-size:11px;color:var(--muted)">عميل</div></div>
+                      <div class="avatar">خ</div>
+                    </div>
+                  </td>
+                  <td style="max-width:200px"><p style="font-weight:600;font-size:13px;color:var(--text)">الخصم لم يُطبَّق على طلبي</p></td>
+                  <td><span class="badge badge-warning" style="font-size:10px">💳 مدفوعات</span></td>
+                  <td><span class="badge badge-muted" style="font-size:10px">🔵 عادي</span></td>
+                  <td><span class="badge badge-warning">قيد المراجعة</span></td>
+                  <td style="color:var(--muted);font-size:12px">منذ يوم</td>
+                  <td><button class="btn btn-ghost" style="font-size:11px;padding:5px 10px">فتح</button></td>
+                </tr>
+                <tr>
+                  <td style="color:var(--muted);font-weight:700;font-size:12px">TKT-0042</td>
+                  <td>
+                    <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+                      <div style="text-align:right"><div style="font-weight:600;font-size:13px">محمد السالم</div><div style="font-size:11px;color:var(--muted)">عميل</div></div>
+                      <div class="avatar">م</div>
+                    </div>
+                  </td>
+                  <td style="max-width:200px"><p style="font-weight:600;font-size:13px;color:var(--text)">استفسار عن تغيير المدينة في الملف</p></td>
+                  <td><span class="badge badge-muted" style="font-size:10px">👤 حساب</span></td>
+                  <td><span class="badge badge-muted" style="font-size:10px">🔵 عادي</span></td>
+                  <td><span class="badge badge-success">محلولة ✓</span></td>
+                  <td style="color:var(--muted);font-size:12px">٨ أبريل ٢٠٢٦</td>
+                  <td style="color:var(--faint);font-size:12px">
+                    <div style="display:flex;gap:2px;justify-content:flex-end">⭐⭐⭐⭐⭐</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+  const TITLES = {
+    dashboard:     { icon: '📊', title: 'لوحة التحكم' },
+    users:         { icon: '👥', title: 'إدارة العملاء' },
+    providers:     { icon: '🔧', title: 'إدارة المزودين' },
+    requests:      { icon: '📋', title: 'الطلبات' },
+    contracts:     { icon: '📄', title: 'العقود الدورية' },
+    reports:       { icon: '📈', title: 'التقارير' },
+    notifications: { icon: '🔔', title: 'الإشعارات' },
+    audit:         { icon: '🗂',  title: 'سجل المراجعة' },
+    settings:      { icon: '⚙️', title: 'الإعدادات' },
+    support:       { icon: '🛟', title: 'الدعم الفني' },
+  };
+
+  function showScreen(name, el) {
+    // Hide all screens
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    // Show target
+    document.getElementById('screen-' + name).classList.add('active');
+    // Update nav active state
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    el.classList.add('active');
+    // Update topbar
+    const t = TITLES[name] || {};
+    document.getElementById('topIcon').textContent  = t.icon  || '';
+    document.getElementById('topTitle').textContent = t.title || '';
+  }
+
+  // Dismiss the urgent unconfirmed alert from dashboard
+  function dismissUrgentAlert() {
+    const bars = document.querySelectorAll('.alert-bar');
+    // The second alert-bar is the urgent one
+    if (bars[1]) {
+      bars[1].style.transition = 'opacity 0.4s, max-height 0.4s, margin 0.4s, padding 0.4s';
+      bars[1].style.opacity    = '0';
+      bars[1].style.maxHeight  = '0';
+      bars[1].style.overflow   = 'hidden';
+      bars[1].style.marginBottom = '0';
+      bars[1].style.padding    = '0';
+    }
+  }
+</script>
+</body>
+</html>
