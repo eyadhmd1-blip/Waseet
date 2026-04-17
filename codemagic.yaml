@@ -130,9 +130,6 @@ workflows:
           groups:                                # tester groups defined in Firebase console
             - testers
           artifact_type: apk
-          release_notes:
-            en-US: "Waseet staging build #$BUILD_NUMBER — branch: $CM_BRANCH"
-            ar: "إصدار وسيط التجريبي #$BUILD_NUMBER — الفرع: $CM_BRANCH"
 
       email:
         recipients:
