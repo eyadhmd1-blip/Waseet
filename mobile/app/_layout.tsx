@@ -156,8 +156,23 @@ export default function RootLayout() {
     if (!role) {
       if (!inAuth) router.replace('/(auth)');
     } else if ((role as string) === 'onboarding') {
-      // New user — keep them in (auth) group for onboarding
-      if (!inAuth) router.replace('/(auth)/onboarding' as any);
+      if (!inAuth) {
+        // Don't blindly redirect — provider may have just finished the onboarding form.
+        // Re-query the DB; if a users row now exists, update role and let them through.
+        supabase.auth.getUser().then(({ data: { user: u } }) => {
+          if (!u) { router.replace('/(auth)/onboarding' as any); return; }
+          supabase
+            .from('users')
+            .select('role, phone_verified')
+            .eq('id', u.id)
+            .single()
+            .then(({ data }) => {
+              if (!data)                     router.replace('/(auth)/onboarding' as any);
+              else if (!data.phone_verified) router.replace('/verify-phone' as any);
+              else                           setRole(data.role); // triggers guard again with real role
+            });
+        });
+      }
     } else if ((role as string) === 'unverified') {
       if ((segments[0] as string) !== 'verify-phone') router.replace('/verify-phone' as any);
     } else {
