@@ -1,0 +1,698 @@
+// ============================================================
+// WASEET — Onboarding Screen (multi-step)
+// Steps: 1-Role → 2-Info → [3-Services (provider)] → [4-Plan (provider)] → 5-Done
+// ============================================================
+
+import { useState, useRef } from 'react';
+import {
+  View, Text, StyleSheet, TextInput, TouchableOpacity,
+  ScrollView, Alert, Animated, Dimensions,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { supabase } from '../../src/lib/supabase';
+import { JORDAN_CITIES, CATEGORY_GROUPS, SUBSCRIPTION_PLANS } from '../../src/constants/categories';
+import { useLanguage } from '../../src/hooks/useLanguage';
+import { useInsets } from '../../src/hooks/useInsets';
+import { HEADER_PAD, rs } from '../../src/utils/layout';
+
+const { width } = Dimensions.get('window');
+
+// Icon map matching provider profile
+const ICON_MAP: Record<string, string> = {
+  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
+  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙',
+  'pen-tool': '✏️', car: '🚗', battery: '🔋', gauge: '⚙️', snowflake: '❄️',
+  shield: '🛡️', droplet: '💧',
+};
+
+type Role = 'client' | 'provider';
+type PlanChoice = 'trial' | 'basic' | 'pro' | 'premium' | null;
+
+// ── Progress Bar ─────────────────────────────────────────────
+
+function ProgressBar({ current, total }: { current: number; total: number }) {
+  const pct = (current / total) * 100;
+  return (
+    <View style={styles.progressWrap}>
+      {Array.from({ length: total }).map((_, i) => (
+        <View
+          key={i}
+          style={[
+            styles.progressSegment,
+            i < current ? styles.progressSegmentActive : styles.progressSegmentInactive,
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+// ── Step 1: Role Selection ────────────────────────────────────
+
+function Step1Role({
+  role, onSelect,
+}: { role: Role; onSelect: (r: Role) => void }) {
+  const { t, ta } = useLanguage();
+  return (
+    <View style={styles.stepContent}>
+      <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step1Title')}</Text>
+      <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step1Sub')}</Text>
+
+      <View style={styles.roleCards}>
+        <TouchableOpacity
+          style={[styles.roleCard, role === 'client' && styles.roleCardActive]}
+          onPress={() => onSelect('client')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.roleEmoji}>👤</Text>
+          <Text style={[styles.roleCardTitle, role === 'client' && styles.roleCardTitleActive]}>
+            {t('onboarding.clientCardTitle')}
+          </Text>
+          <Text style={styles.roleCardSub}>{t('onboarding.clientCardSub')}</Text>
+          <View style={[styles.roleCheck, role === 'client' && styles.roleCheckActive]}>
+            {role === 'client' && <Text style={styles.roleCheckMark}>✓</Text>}
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.roleCard, role === 'provider' && styles.roleCardActive]}
+          onPress={() => onSelect('provider')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.roleEmoji}>🔧</Text>
+          <Text style={[styles.roleCardTitle, role === 'provider' && styles.roleCardTitleActive]}>
+            {t('onboarding.providerCardTitle')}
+          </Text>
+          <Text style={styles.roleCardSub}>{t('onboarding.providerCardSub')}</Text>
+          <View style={[styles.roleCheck, role === 'provider' && styles.roleCheckActive]}>
+            {role === 'provider' && <Text style={styles.roleCheckMark}>✓</Text>}
+          </View>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// ── Step 2: Personal Info ─────────────────────────────────────
+
+function Step2Info({
+  role, fullName, setFullName, city, setCity, bio, setBio,
+}: {
+  role: Role;
+  fullName: string; setFullName: (v: string) => void;
+  city: string; setCity: (v: string) => void;
+  bio: string; setBio: (v: string) => void;
+}) {
+  const { t, ta } = useLanguage();
+
+  return (
+    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false}>
+      <View style={styles.stepContent}>
+        <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step2Title')}</Text>
+        <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step2Sub')}</Text>
+
+        {/* Full name */}
+        <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('auth.fullName')} *</Text>
+        <TextInput
+          style={[styles.input, { textAlign: ta }]}
+          placeholder={t('auth.fullNamePlaceholder')}
+          placeholderTextColor="#475569"
+          value={fullName}
+          onChangeText={setFullName}
+        />
+
+        {/* City */}
+        <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('auth.city')} *</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
+          {JORDAN_CITIES.map(c => (
+            <TouchableOpacity
+              key={c}
+              style={[styles.chip, city === c && styles.chipActive]}
+              onPress={() => setCity(c)}
+            >
+              <Text style={[styles.chipText, city === c && styles.chipTextActive]}>
+                {t(`cities.${c}`, c)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        {/* Bio — providers only */}
+        {role === 'provider' && (
+          <>
+            <View style={styles.fieldLabelRow}>
+              <Text style={[styles.fieldLabelOptional]}>{t('onboarding.bioOptional')}</Text>
+              <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('onboarding.bioLabel')}</Text>
+            </View>
+            <TextInput
+              style={[styles.inputMulti, { textAlign: ta }]}
+              placeholder={t('onboarding.bioPlaceholder')}
+              placeholderTextColor="#475569"
+              value={bio}
+              onChangeText={setBio}
+              multiline
+              numberOfLines={4}
+              maxLength={200}
+            />
+            <Text style={styles.charCount}>{bio.length}/200</Text>
+          </>
+        )}
+      </View>
+    </ScrollView>
+  );
+}
+
+// ── Step 3: Service Selection (provider only) ─────────────────
+
+function Step3Services({
+  selectedCats, setSelectedCats,
+}: { selectedCats: string[]; setSelectedCats: (v: string[]) => void }) {
+  const { t, ta } = useLanguage();
+  const [search, setSearch] = useState('');
+
+  const allCats = CATEGORY_GROUPS.flatMap(g => g.categories);
+  const filtered = search.trim()
+    ? allCats.filter(c =>
+        c.name_ar.includes(search) || c.name_en.toLowerCase().includes(search.toLowerCase())
+      )
+    : null;
+
+  const toggle = (slug: string) => {
+    setSelectedCats(
+      selectedCats.includes(slug)
+        ? selectedCats.filter(s => s !== slug)
+        : [...selectedCats, slug]
+    );
+  };
+
+  const renderCat = (cat: typeof allCats[0]) => {
+    const active = selectedCats.includes(cat.slug);
+    return (
+      <TouchableOpacity
+        key={cat.slug}
+        style={[styles.catCard, active && styles.catCardActive]}
+        onPress={() => toggle(cat.slug)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.catEmoji}>{ICON_MAP[cat.icon] ?? '🔧'}</Text>
+        <Text style={[styles.catName, active && styles.catNameActive]} numberOfLines={2}>
+          {t(`categories.${cat.slug}`, cat.name_ar)}
+        </Text>
+        {active && <View style={styles.catCheck}><Text style={styles.catCheckMark}>✓</Text></View>}
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false}>
+      <View style={styles.stepContent}>
+        <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step3Title')}</Text>
+        <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step3Sub')}</Text>
+
+        {/* Search */}
+        <TextInput
+          style={[styles.searchInput, { textAlign: ta }]}
+          placeholder={t('onboarding.searchServices')}
+          placeholderTextColor="#475569"
+          value={search}
+          onChangeText={setSearch}
+        />
+
+        {filtered ? (
+          <View style={styles.catGrid}>
+            {filtered.map(renderCat)}
+          </View>
+        ) : (
+          CATEGORY_GROUPS.map(group => (
+            <View key={group.slug}>
+              <Text style={[styles.groupLabel, { textAlign: ta }]}>
+                {t(`categories.${group.slug}`, group.name_ar)}
+              </Text>
+              <View style={styles.catGrid}>
+                {group.categories.map(renderCat)}
+              </View>
+            </View>
+          ))
+        )}
+
+        {/* Selected summary */}
+        {selectedCats.length > 0 && (
+          <View style={styles.selectedBar}>
+            <Text style={styles.selectedBarText}>
+              {t('onboarding.selectedCount', { count: selectedCats.length })}
+            </Text>
+          </View>
+        )}
+      </View>
+    </ScrollView>
+  );
+}
+
+// ── Step 4: Plan Selection (provider only) ────────────────────
+
+function Step4Plan({
+  planChoice, setPlanChoice, trialUsed,
+}: { planChoice: PlanChoice; setPlanChoice: (p: PlanChoice) => void; trialUsed: boolean }) {
+  const { t, ta } = useLanguage();
+
+  const creditsDesc: Record<string, string> = {
+    basic:   t('onboarding.creditsDesc_basic'),
+    pro:     t('onboarding.creditsDesc_pro'),
+    premium: t('onboarding.creditsDesc_premium'),
+  };
+
+  return (
+    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false}>
+      <View style={styles.stepContent}>
+        <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step4Title')}</Text>
+        <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step4Sub')}</Text>
+
+        {/* Trial Card */}
+        {!trialUsed && (
+          <TouchableOpacity
+            style={[styles.trialCard, planChoice === 'trial' && styles.trialCardActive]}
+            onPress={() => setPlanChoice('trial')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.trialTop}>
+              <Text style={styles.trialBadge}>✨ {t('subscribe.trialBadge')}</Text>
+              <Text style={styles.trialTitle}>{t('onboarding.trialCardTitle')}</Text>
+            </View>
+            <Text style={styles.trialCredits}>{t('onboarding.trialCardCredits')}</Text>
+            <Text style={styles.trialNote}>• {t('onboarding.trialCardNote1')}</Text>
+            <Text style={styles.trialNote}>• {t('onboarding.trialCardNote2')}</Text>
+            <TouchableOpacity
+              style={[styles.trialBtn, planChoice === 'trial' && styles.trialBtnActive]}
+              onPress={() => setPlanChoice('trial')}
+            >
+              <Text style={styles.trialBtnText}>{t('onboarding.trialBtn')}</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        )}
+
+        {/* Paid Plans */}
+        {SUBSCRIPTION_PLANS.filter(p => !p.is_trial).map(plan => {
+          const active = planChoice === plan.tier;
+          const isPopular = plan.tier === 'pro';
+          return (
+            <TouchableOpacity
+              key={plan.tier}
+              style={[styles.planCard, active && styles.planCardActive]}
+              onPress={() => setPlanChoice(plan.tier as PlanChoice)}
+              activeOpacity={0.85}
+            >
+              {isPopular && (
+                <View style={styles.popularBadge}>
+                  <Text style={styles.popularBadgeText}>{t('onboarding.popularBadge')}</Text>
+                </View>
+              )}
+              <View style={styles.planRow}>
+                <View style={styles.planLeft}>
+                  <Text style={styles.planName}>{plan.name_ar}</Text>
+                  <Text style={styles.planDesc}>{creditsDesc[plan.tier] ?? ''}</Text>
+                  <Text style={styles.planCredits}>
+                    {plan.is_unlimited
+                      ? t('subscribe.unlimitedCredits')
+                      : t('subscribe.creditsLabel', { count: plan.bid_credits })}
+                  </Text>
+                </View>
+                <View style={styles.planRight}>
+                  <Text style={styles.planPrice}>{plan.price_jod}</Text>
+                  <Text style={styles.planCurrency}>د.أ{t('subscribe.perMonth')}</Text>
+                  <View style={[styles.planRadio, active && styles.planRadioActive]}>
+                    {active && <View style={styles.planRadioDot} />}
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+}
+
+// ── Step 5: Done ──────────────────────────────────────────────
+
+function StepDone({
+  role, planChoice, onExplore,
+}: { role: Role; planChoice: PlanChoice; onExplore: () => void }) {
+  const { t, ta } = useLanguage();
+
+  const subText = role === 'client'
+    ? t('onboarding.doneSubClient')
+    : planChoice === 'trial'
+      ? t('onboarding.doneSubProvider', { count: 10 })
+      : t('onboarding.doneSubProviderPaid');
+
+  return (
+    <ScrollView contentContainerStyle={[styles.stepContent, styles.doneContent]} showsVerticalScrollIndicator={false}>
+      <Text style={styles.doneEmoji}>🎉</Text>
+      <Text style={[styles.doneTitle, { textAlign: ta }]}>{t('onboarding.doneTitle')}</Text>
+      <Text style={[styles.doneSub, { textAlign: ta }]}>{subText}</Text>
+      <TouchableOpacity style={styles.doneBtn} onPress={onExplore} activeOpacity={0.85}>
+        <Text style={styles.doneBtnText}>{t('onboarding.exploreCTA')} ←</Text>
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+// ── Main Onboarding Screen ────────────────────────────────────
+
+export default function OnboardingScreen() {
+  const router = useRouter();
+  const { t, ta } = useLanguage();
+  const { contentPad } = useInsets();
+
+  // Form state
+  const [role, setRole]               = useState<Role>('client');
+  const [fullName, setFullName]       = useState('');
+  const [city, setCity]               = useState('');
+  const [bio, setBio]                 = useState('');
+  const [selectedCats, setSelectedCats] = useState<string[]>([]);
+  const [planChoice, setPlanChoice]   = useState<PlanChoice>('trial');
+  const [trialUsed]                   = useState(false); // could fetch from DB if needed
+  const [saving, setSaving]           = useState(false);
+  const [done, setDone]               = useState(false);
+
+  // Steps: client = [1,2,5]  provider = [1,2,3,4,5]
+  const steps = role === 'provider' ? [1, 2, 3, 4] : [1, 2];
+  const [stepIndex, setStepIndex]     = useState(0);
+  const currentStep = steps[stepIndex];
+  const totalVisual = role === 'provider' ? 4 : 2;
+
+  // Slide animation
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const animateNext = (dir: 1 | -1, cb: () => void) => {
+    Animated.timing(slideAnim, {
+      toValue: -dir * width,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => {
+      cb();
+      slideAnim.setValue(dir * width);
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
+
+  const goNext = () => {
+    // Validate current step
+    if (currentStep === 2 && (!fullName.trim() || !city)) {
+      Alert.alert(t('common.attention'), t('auth.fillAllFields'));
+      return;
+    }
+    if (currentStep === 3 && selectedCats.length === 0) {
+      Alert.alert(t('common.attention'), t('onboarding.selectAtLeastOne'));
+      return;
+    }
+
+    if (stepIndex < steps.length - 1) {
+      animateNext(1, () => setStepIndex(i => i + 1));
+    } else {
+      handleSubmit();
+    }
+  };
+
+  const goBack = () => {
+    if (stepIndex > 0) {
+      animateNext(-1, () => setStepIndex(i => i - 1));
+    }
+  };
+
+  const handleSubmit = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // 1. Insert user row
+      const { error: userErr } = await supabase.from('users').insert({
+        id: user.id,
+        role,
+        full_name: fullName.trim(),
+        phone: user.phone,
+        phone_verified: true,
+        city,
+      });
+
+      if (userErr) {
+        Alert.alert(t('common.error'), userErr.message);
+        setSaving(false);
+        return;
+      }
+
+      // 2. Insert provider row + activate trial if chosen
+      if (role === 'provider') {
+        const providerPayload: Record<string, any> = {
+          id: user.id,
+          categories: selectedCats,
+          bio: bio.trim() || null,
+        };
+
+        if (planChoice === 'trial') {
+          providerPayload.is_subscribed   = true;
+          providerPayload.subscription_tier = 'trial';
+          providerPayload.bid_credits     = 10;
+          providerPayload.trial_used      = true;
+          providerPayload.subscription_ends = new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          ).toISOString();
+        }
+
+        await supabase.from('providers').insert(providerPayload);
+
+        // Schedule demo request (arrives ~1 hour after registration)
+        await supabase.rpc('init_provider_demo', { p_provider_id: user.id });
+      }
+
+      setDone(true);
+    } catch (err: any) {
+      Alert.alert(t('common.error'), err?.message ?? t('common.error'));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleExplore = () => {
+    if (role === 'provider' && planChoice !== 'trial' && planChoice !== null) {
+      // Paid plan chosen → go to subscribe screen first
+      router.replace('/subscribe' as any);
+    } else {
+      router.replace(role === 'provider' ? '/(provider)' : '/(client)');
+    }
+  };
+
+  // Done screen
+  if (done) {
+    return (
+      <View style={styles.container}>
+        <StepDone role={role} planChoice={planChoice} onExplore={handleExplore} />
+      </View>
+    );
+  }
+
+  const isLastStep = stepIndex === steps.length - 1;
+  const canGoBack  = stepIndex > 0;
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        {canGoBack ? (
+          <TouchableOpacity style={styles.backBtn} onPress={goBack}>
+            <Text style={styles.backBtnText}>→</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.backBtn} />
+        )}
+        <ProgressBar current={stepIndex + 1} total={totalVisual} />
+        <View style={{ width: 48 }} />
+      </View>
+
+      {/* Step content */}
+      <Animated.View style={[styles.animWrap, { transform: [{ translateX: slideAnim }] }]}>
+        {currentStep === 1 && (
+          <Step1Role role={role} onSelect={r => {
+            setRole(r);
+            if (r === 'client') setPlanChoice(null);
+            else setPlanChoice('trial');
+          }} />
+        )}
+        {currentStep === 2 && (
+          <Step2Info
+            role={role}
+            fullName={fullName} setFullName={setFullName}
+            city={city} setCity={setCity}
+            bio={bio} setBio={setBio}
+          />
+        )}
+        {currentStep === 3 && (
+          <Step3Services selectedCats={selectedCats} setSelectedCats={setSelectedCats} />
+        )}
+        {currentStep === 4 && (
+          <Step4Plan planChoice={planChoice} setPlanChoice={setPlanChoice} trialUsed={trialUsed} />
+        )}
+      </Animated.View>
+
+      {/* CTA Button */}
+      <View style={[styles.footer, { paddingBottom: contentPad }]}>
+        <TouchableOpacity
+          style={[styles.nextBtn, saving && styles.nextBtnDisabled]}
+          onPress={goNext}
+          disabled={saving}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.nextBtnText}>
+            {saving
+              ? t('auth.registering')
+              : isLastStep
+                ? t('auth.createAccount')
+                : t('onboarding.nextBtn')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  container:   { flex: 1, backgroundColor: '#0F172A' },
+
+  // Header
+  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12 },
+  backBtn:     { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  backBtnText: { fontSize: 22, color: '#94A3B8', transform: [{ scaleX: -1 }] },
+
+  // Progress
+  progressWrap:            { flex: 1, flexDirection: 'row', gap: 6, paddingHorizontal: 8 },
+  progressSegment:         { flex: 1, height: 4, borderRadius: 2 },
+  progressSegmentActive:   { backgroundColor: '#F59E0B' },
+  progressSegmentInactive: { backgroundColor: '#334155' },
+
+  // Animated wrapper
+  animWrap:  { flex: 1 },
+
+  // Step common
+  stepScroll:  { flex: 1 },
+  stepContent: { padding: 24, paddingTop: 12 },
+  stepTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: '#F1F5F9', marginBottom: 6 },
+  stepSub:     { fontSize: rs(14, 12, 16), color: '#64748B', marginBottom: 28 },
+
+  // Role cards
+  roleCards:       { gap: 14 },
+  roleCard:        { backgroundColor: '#1E293B', borderRadius: 16, padding: 20, borderWidth: 1.5, borderColor: '#334155' },
+  roleCardActive:  { borderColor: '#F59E0B', backgroundColor: '#1C1908' },
+  roleEmoji:       { fontSize: rs(32, 26, 38), marginBottom: 10 },
+  roleCardTitle:   { fontSize: rs(18, 15, 20), fontWeight: '700', color: '#94A3B8', marginBottom: 4 },
+  roleCardTitleActive: { color: '#F59E0B' },
+  roleCardSub:     { fontSize: rs(13, 11, 15), color: '#475569' },
+  roleCheck:       { position: 'absolute', top: 16, left: 16, width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#334155', alignItems: 'center', justifyContent: 'center' },
+  roleCheckActive: { backgroundColor: '#F59E0B', borderColor: '#F59E0B' },
+  roleCheckMark:   { fontSize: 12, color: '#0F172A', fontWeight: '700' },
+
+  // Fields
+  fieldLabel:      { fontSize: 13, color: '#94A3B8', marginBottom: 8, marginTop: 16 },
+  fieldLabelRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 },
+  fieldLabelOptional: { fontSize: 11, color: '#475569' },
+  input: {
+    backgroundColor: '#1E293B', borderRadius: 12, paddingHorizontal: 16,
+    paddingVertical: 14, color: '#F1F5F9', fontSize: rs(16, 14, 18),
+    borderWidth: 1, borderColor: '#334155',
+  },
+  inputMulti: {
+    backgroundColor: '#1E293B', borderRadius: 12, paddingHorizontal: 16,
+    paddingVertical: 14, color: '#F1F5F9', fontSize: rs(15, 13, 17),
+    borderWidth: 1, borderColor: '#334155', minHeight: 100, textAlignVertical: 'top',
+  },
+  charCount:   { fontSize: 11, color: '#475569', textAlign: 'right', marginTop: 4 },
+
+  // City chips
+  chipsScroll: { marginBottom: 4 },
+  chip:        { backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: '#334155' },
+  chipActive:  { borderColor: '#F59E0B', backgroundColor: '#1C1908' },
+  chipText:    { color: '#94A3B8', fontSize: 14 },
+  chipTextActive: { color: '#F59E0B' },
+
+  // Category grid
+  searchInput: {
+    backgroundColor: '#1E293B', borderRadius: 12, paddingHorizontal: 16,
+    paddingVertical: 12, color: '#F1F5F9', fontSize: 15,
+    borderWidth: 1, borderColor: '#334155', marginBottom: 20,
+  },
+  groupLabel:  { fontSize: 13, color: '#64748B', marginBottom: 10, marginTop: 4 },
+  catGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
+  catCard: {
+    width: Math.max(80, Math.floor((width - 48 - 10) / 3)),
+    backgroundColor: '#1E293B', borderRadius: 12,
+    padding: 12, alignItems: 'center',
+    borderWidth: 1, borderColor: '#334155',
+  },
+  catCardActive: { borderColor: '#F59E0B', backgroundColor: '#1C1908' },
+  catEmoji:    { fontSize: 22, marginBottom: 6 },
+  catName:     { fontSize: 11, color: '#94A3B8', textAlign: 'center' },
+  catNameActive: { color: '#F59E0B' },
+  catCheck: {
+    position: 'absolute', top: 6, right: 6,
+    width: 16, height: 16, borderRadius: 8,
+    backgroundColor: '#F59E0B', alignItems: 'center', justifyContent: 'center',
+  },
+  catCheckMark: { fontSize: 9, color: '#0F172A', fontWeight: '700' },
+  selectedBar: { backgroundColor: '#1E293B', borderRadius: 10, padding: 12, marginTop: 4, borderWidth: 1, borderColor: '#F59E0B' },
+  selectedBarText: { color: '#F59E0B', fontSize: 13, textAlign: 'center' },
+
+  // Trial card
+  trialCard: {
+    backgroundColor: '#1A1500', borderRadius: 16, padding: 20,
+    borderWidth: 2, borderColor: '#92400E', marginBottom: 14,
+  },
+  trialCardActive: { borderColor: '#F59E0B' },
+  trialTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  trialBadge:  { fontSize: 12, color: '#F59E0B', fontWeight: '700' },
+  trialTitle:  { fontSize: 17, fontWeight: '700', color: '#F1F5F9' },
+  trialCredits: { fontSize: 15, color: '#FCD34D', marginBottom: 6, fontWeight: '600' },
+  trialNote:   { fontSize: 12, color: '#94A3B8', marginBottom: 2 },
+  trialBtn:    { backgroundColor: '#92400E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 14 },
+  trialBtnActive: { backgroundColor: '#F59E0B' },
+  trialBtnText: { fontSize: 15, fontWeight: '700', color: '#FEF3C7' },
+
+  // Paid plan cards
+  planCard: {
+    backgroundColor: '#1E293B', borderRadius: 16, padding: 16,
+    borderWidth: 1.5, borderColor: '#334155', marginBottom: 12,
+  },
+  planCardActive: { borderColor: '#F59E0B', backgroundColor: '#1C1908' },
+  popularBadge: { backgroundColor: '#F59E0B', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-end', marginBottom: 8 },
+  popularBadgeText: { fontSize: 11, fontWeight: '700', color: '#0F172A' },
+  planRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  planLeft:    { flex: 1 },
+  planRight:   { alignItems: 'flex-end', gap: 4 },
+  planName:    { fontSize: 17, fontWeight: '700', color: '#F1F5F9', marginBottom: 4 },
+  planDesc:    { fontSize: 12, color: '#64748B', marginBottom: 4 },
+  planCredits: { fontSize: 12, color: '#F59E0B' },
+  planPrice:   { fontSize: rs(22, 18, 26), fontWeight: '800', color: '#F1F5F9' },
+  planCurrency:{ fontSize: 12, color: '#64748B' },
+  planRadio:   { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#334155', alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  planRadioActive: { borderColor: '#F59E0B' },
+  planRadioDot:{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#F59E0B' },
+
+  // Done
+  doneContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  doneEmoji:   { fontSize: rs(64, 48, 80), marginBottom: 24 },
+  doneTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: '#F1F5F9', marginBottom: 14, textAlign: 'center' },
+  doneSub:     { fontSize: rs(15, 13, 17), color: '#64748B', textAlign: 'center', lineHeight: 24, marginBottom: 40 },
+  doneBtn:     { backgroundColor: '#F59E0B', borderRadius: 14, paddingVertical: 16, paddingHorizontal: 48, alignItems: 'center' },
+  doneBtnText: { fontSize: rs(17, 15, 19), fontWeight: '700', color: '#0F172A' },
+
+  // Footer CTA — paddingBottom applied dynamically via contentPad
+  footer:      { padding: 24, paddingTop: 12, paddingBottom: 24 },
+  nextBtn:     { backgroundColor: '#F59E0B', borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  nextBtnDisabled: { backgroundColor: '#334155' },
+  nextBtnText: { fontSize: rs(17, 15, 19), fontWeight: '700', color: '#0F172A' },
+});
