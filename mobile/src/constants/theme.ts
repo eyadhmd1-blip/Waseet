@@ -1,14 +1,15 @@
 import { StyleSheet } from 'react-native';
 
 export const COLORS = {
-  bg:           '#0F172A',
-  surface:      '#1E293B',
-  border:       '#334155',
-  textPrimary:  '#F1F5F9',
-  textSecondary:'#94A3B8',
-  textMuted:    '#475569',
-  accent:       '#F59E0B',
-  accentDim:    '#1C1A0E',
+  bg:            '#060E28',
+  surface:       '#0C1C45',
+  border:        '#1B3568',
+  textPrimary:   '#EEF4FF',
+  textSecondary: '#7DAFD6',
+  textMuted:     '#3A5C80',
+  accent:        '#C9A84C',
+  gold2:         '#E8C96A',
+  accentDim:     '#18120A',
 };
 
 export const ROUTES = {
