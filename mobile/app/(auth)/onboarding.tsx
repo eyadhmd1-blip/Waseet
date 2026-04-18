@@ -649,7 +649,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14, color: COLORS.textPrimary, fontSize: rs(15, 13, 17),
     borderWidth: 1, borderColor: COLORS.border, minHeight: 100, textAlignVertical: 'top',
   },
-  charCount:   { fontSize: 11, color: COLORS.textMuted, textAlign: 'right', marginTop: 4 },
+  charCount:   { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginTop: 4 },
 
   // City chips
   chipsScroll: { marginBottom: 4 },

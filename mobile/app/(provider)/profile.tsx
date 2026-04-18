@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
   sectionHeader:{ marginBottom: 12 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
   sectionEmoji: { fontSize: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right' },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto' },
   sectionLink:  { fontSize: 13, color: COLORS.accent, fontWeight: '600' },
 
   // ── Portfolio mini grid ──
@@ -576,7 +576,7 @@ const styles = StyleSheet.create({
   // ── Loyalty ──
   loyaltyCard:   { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
   loyaltyHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  loyaltyNext:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'right', flex: 1 },
+  loyaltyNext:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'auto', flex: 1 },
   loyaltyCount:  { fontSize: 13, color: COLORS.accent, fontWeight: '700' },
   progressBg:    { height: 8, backgroundColor: COLORS.bg, borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
   progressFill:  { height: '100%', backgroundColor: COLORS.accent, borderRadius: 4 },
@@ -591,9 +591,9 @@ const styles = StyleSheet.create({
   discountBanner:{ backgroundColor: COLORS.accentDim, borderRadius: 10, padding: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
   discountText:  { fontSize: 13, color: COLORS.accent, textAlign: 'center' },
   creditsBadge:     { backgroundColor: 'rgba(201,168,76,0.10)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, marginTop: 10, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
-  creditsBadgeText: { fontSize: 13, fontWeight: '700', color: COLORS.accent, textAlign: 'right' },
-  winDiscountText:  { fontSize: 13, color: '#86EFAC', marginTop: 8, textAlign: 'right' },
-  repDiscountText:  { fontSize: 13, color: '#7DD3FC', marginTop: 4, textAlign: 'right' },
+  creditsBadgeText: { fontSize: 13, fontWeight: '700', color: COLORS.accent, textAlign: 'auto' },
+  winDiscountText:  { fontSize: 13, color: '#86EFAC', marginTop: 8, textAlign: 'auto' },
+  repDiscountText:  { fontSize: 13, color: '#7DD3FC', marginTop: 4, textAlign: 'auto' },
 
   noSubCard:    { backgroundColor: COLORS.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', gap: 12 },
   noSubText:    { fontSize: 14, color: COLORS.textMuted },
@@ -606,11 +606,11 @@ const styles = StyleSheet.create({
   catChipSelected:     { backgroundColor: COLORS.accentDim, borderColor: COLORS.accent },
   catChipText:         { fontSize: 13, color: COLORS.textPrimary },
   catChipTextSelected: { color: COLORS.accent, fontWeight: '600' },
-  maxCatsNote:         { fontSize: 11, color: COLORS.textMuted, textAlign: 'right', marginTop: 6 },
+  maxCatsNote:         { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginTop: 6 },
   addCatsHint:         { backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed', alignItems: 'center' },
   addCatsHintText:     { fontSize: 13, color: COLORS.textMuted },
   catGroup:            { marginBottom: 16 },
-  catGroupLabel:       { fontSize: 13, color: COLORS.textMuted, fontWeight: '600', textAlign: 'right', marginBottom: 8 },
+  catGroupLabel:       { fontSize: 13, color: COLORS.textMuted, fontWeight: '600', textAlign: 'auto', marginBottom: 8 },
 
   // ── Category modal ──
   modalOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
 
   notifBtn:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 8, marginBottom: 8, backgroundColor: COLORS.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderColor: COLORS.border },
   notifBtnIcon:  { fontSize: 18 },
-  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'right' },
+  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'auto' },
   notifBtnArrow: { fontSize: 16, color: COLORS.textMuted },
 
   signOutBtn:  { marginHorizontal: 16, marginTop: 8, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#7F1D1D' },
@@ -634,6 +634,6 @@ const styles = StyleSheet.create({
   availRow:       { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
   availRowBorder: { borderTopWidth: 1, borderTopColor: COLORS.border },
   availTextWrap:  { flex: 1 },
-  availLabel:     { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 2 },
-  availSub:       { fontSize: 12, color: COLORS.textMuted, textAlign: 'right' },
+  availLabel:     { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 2 },
+  availSub:       { fontSize: 12, color: COLORS.textMuted, textAlign: 'auto' },
 });

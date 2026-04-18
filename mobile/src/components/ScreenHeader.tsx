@@ -1,11 +1,13 @@
 // ============================================================
-// ScreenHeader — Reusable header respecting safe area + RTL
+// ScreenHeader — Fixed, RTL-aware header for all screens
 //
-// Usage (tab screens with greeting):
-//   <ScreenHeader greeting="أهلاً، أحمد 👋" sub="عمان 📍" right={<NotifBtn />} />
+// Two variants:
 //
-// Usage (back-button screens):
-//   <ScreenHeader title="تفاصيل الطلب" onBack={() => router.back()} right={<ShareBtn />} />
+//   Tab (greeting) — home/feed screens
+//     <ScreenHeader greeting="أهلاً، أحمد" sub="📍 عمان" right={<NotifBtn />} />
+//
+//   Stack (back-button) — detail/modal screens
+//     <ScreenHeader title="تفاصيل الطلب" onBack={() => router.back()} right={<ShareBtn />} />
 // ============================================================
 
 import React from 'react';
@@ -13,17 +15,14 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useInsets } from '../hooks/useInsets';
 import { useLanguage } from '../hooks/useLanguage';
 import { COLORS } from '../constants/theme';
+import { flexRow, textStart } from '../utils/rtl';
 
 interface ScreenHeaderProps {
-  // Tab-style: show greeting + subtitle on start side, action on end side
   greeting?: string;
   sub?: string;
-  // Stack-style: title centred or start-aligned, back button on start side
   title?: string;
   onBack?: () => void;
-  // Optional action element on the far end (notification bell, share, etc.)
   right?: React.ReactNode;
-  // Optional override for backgroundColor
   bg?: string;
   borderBottom?: boolean;
 }
@@ -35,10 +34,12 @@ export function ScreenHeader({
   onBack,
   right,
   bg = COLORS.bg,
-  borderBottom = false,
+  borderBottom = true,
 }: ScreenHeaderProps) {
   const { headerPad } = useInsets();
   const { isRTL }     = useLanguage();
+
+  const ta = textStart(isRTL);
 
   const containerStyle = [
     styles.container,
@@ -46,90 +47,137 @@ export function ScreenHeader({
     borderBottom && styles.border,
   ];
 
-  // ── Tab greeting layout ───────────────────────────────────
+  // ── Tab greeting variant ──────────────────────────────────
   if (greeting !== undefined) {
     return (
       <View style={containerStyle}>
-        {/* In RTL: greeting on right (start), action on left (end) */}
-        {isRTL ? (
-          <>
-            <View style={styles.greetingWrap}>
-              <Text style={styles.greeting} numberOfLines={1}>{greeting}</Text>
-              {sub ? <Text style={styles.sub}>{sub}</Text> : null}
-            </View>
-            {right ? <View style={styles.actionWrap}>{right}</View> : null}
-          </>
-        ) : (
-          <>
-            {right ? <View style={styles.actionWrap}>{right}</View> : null}
-            <View style={styles.greetingWrap}>
-              <Text style={[styles.greeting, styles.ltrGreeting]} numberOfLines={1}>{greeting}</Text>
-              {sub ? <Text style={[styles.sub, styles.ltrSub]}>{sub}</Text> : null}
-            </View>
-          </>
-        )}
+        <View style={[styles.row, { flexDirection: flexRow(isRTL) }]}>
+          {/* Greeting block — always on the start (leading) edge */}
+          <View style={styles.greetingBlock}>
+            <Text style={[styles.greeting, { textAlign: ta }]} numberOfLines={1}>
+              {greeting}
+            </Text>
+            {sub ? (
+              <Text style={[styles.sub, { textAlign: ta }]} numberOfLines={1}>
+                {sub}
+              </Text>
+            ) : null}
+          </View>
+
+          {/* Action element — always on the end (trailing) edge */}
+          {right ? <View style={styles.actionSlot}>{right}</View> : null}
+        </View>
+
+        {/* Gold accent divider */}
+        <View style={styles.accentLine} />
       </View>
     );
   }
 
-  // ── Stack back-button layout ──────────────────────────────
+  // ── Stack back-button variant ─────────────────────────────
   return (
     <View style={containerStyle}>
-      {/* Back button on leading side */}
-      {onBack ? (
-        <TouchableOpacity style={styles.backBtn} onPress={onBack} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <Text style={styles.backIcon}>{isRTL ? '→' : '←'}</Text>
-        </TouchableOpacity>
-      ) : <View style={styles.backBtn} />}
+      <View style={[styles.row, { flexDirection: flexRow(isRTL) }]}>
+        {/* Back button — leading edge */}
+        {onBack ? (
+          <TouchableOpacity
+            style={styles.navBtn}
+            onPress={onBack}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={styles.backIcon}>{isRTL ? '→' : '←'}</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.navBtn} />
+        )}
 
-      {title ? (
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
-      ) : null}
+        {/* Title — centred */}
+        {title ? (
+          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        ) : (
+          <View style={{ flex: 1 }} />
+        )}
 
-      {right ? <View style={styles.actionWrap}>{right}</View> : <View style={styles.backBtn} />}
+        {/* Right action — trailing edge */}
+        {right ? (
+          <View style={styles.actionSlot}>{right}</View>
+        ) : (
+          <View style={styles.navBtn} />
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection:  'row',
+    backgroundColor: COLORS.bg,
+    paddingHorizontal: 20,
+    paddingBottom: 0,
+  },
+
+  row: {
     alignItems:     'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
     paddingBottom:  14,
   },
+
   border: {
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
-  greetingWrap: { flex: 1 },
-  greeting: {
-    fontSize:   21,
-    fontWeight: '700',
-    color:      COLORS.textPrimary,
-    textAlign:  'right',
+
+  // ── Greeting variant
+  greetingBlock: {
+    flex: 1,
   },
-  ltrGreeting: { textAlign: 'left' },
+  greeting: {
+    fontSize:   22,
+    fontWeight: '800',
+    color:      COLORS.textPrimary,
+    letterSpacing: -0.3,
+  },
   sub: {
-    fontSize:  12,
+    fontSize:  13,
     color:     COLORS.textMuted,
     marginTop: 3,
-    textAlign: 'right',
+    fontWeight: '500',
   },
-  ltrSub: { textAlign: 'left' },
-  actionWrap: { flexShrink: 0 },
-  // Stack header
-  backBtn: {
-    width: 40, height: 40,
-    alignItems: 'center', justifyContent: 'center',
+  accentLine: {
+    height:          2,
+    width:           40,
+    backgroundColor: COLORS.accent,
+    borderRadius:    2,
+    marginBottom:    10,
+    // stays on start edge; marginStart isn't reliable without I18nManager,
+    // so we use alignSelf and let the parent column handle direction
+    alignSelf:       'flex-start',
   },
-  backIcon: { fontSize: 22, color: COLORS.textSecondary },
+
+  // ── Stack variant
+  navBtn: {
+    width:           44,
+    height:          44,
+    alignItems:      'center',
+    justifyContent:  'center',
+  },
+  backIcon: {
+    fontSize: 22,
+    color:    COLORS.accent,
+    fontWeight: '600',
+  },
   title: {
     flex:       1,
     fontSize:   17,
-    fontWeight: '600',
+    fontWeight: '700',
     color:      COLORS.textPrimary,
     textAlign:  'center',
+  },
+
+  // ── Shared
+  actionSlot: {
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

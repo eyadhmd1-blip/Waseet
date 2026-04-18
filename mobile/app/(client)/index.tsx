@@ -16,6 +16,7 @@ import { useLanguage } from '../../src/hooks/useLanguage';
 import type { User, ServiceRequest } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD, SCREEN_WIDTH, rs } from '../../src/utils/layout';
+import { me, flexRow } from '../../src/utils/rtl';
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -86,7 +87,7 @@ function QuickAccessRow({ onPress }: { onPress: (slug: string) => void }) {
 
 const qStyles = StyleSheet.create({
   section: { marginBottom: 20 },
-  label:   { fontSize: 13, fontWeight: '600', color: COLORS.textMuted, textAlign: 'right', paddingHorizontal: 20, marginBottom: 10 },
+  label:   { fontSize: 13, fontWeight: '600', color: COLORS.textMuted, textAlign: 'auto', paddingHorizontal: 20, marginBottom: 10 },
   scroll:  { paddingHorizontal: 20, gap: 8 },
   pill:    {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -391,9 +392,9 @@ const MAX_PER_GROUP = 10;
 const TOTAL_GROUPS  = CATEGORY_GROUPS.length;
 
 export default function ClientHome() {
-  const { headerPad, contentPad } = useInsets();
+  const { contentPad } = useInsets();
   const router = useRouter();
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
   const [user, setUser]             = useState<User | null>(null);
   const [requests, setRequests]     = useState<ServiceRequest[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -509,115 +510,132 @@ export default function ClientHome() {
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />}
-    >
-      {/* ── Header ── */}
-      <Animated.View style={[styles.header, { opacity: headerOp, transform: [{ translateX: headerX }] }]}>
-        <View>
-          <Text style={[styles.greeting, { textAlign: ta }]}>{t('home.greeting')}، {user?.full_name?.split(' ')[0]} 👋</Text>
-          <Text style={[styles.city, { textAlign: ta }]}>📍 {t(`cities.${user?.city}`, user?.city ?? '')}</Text>
+    <View style={styles.container}>
+
+      {/* ── Fixed Header (never scrolls) ───────────────────── */}
+      <Animated.View
+        style={[styles.header, { opacity: headerOp, transform: [{ translateX: headerX }] }]}
+      >
+        <View style={[styles.headerRow, { flexDirection: flexRow(isRTL) }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.greeting, { textAlign: ta }]}>
+              {t('home.greeting')}، {user?.full_name?.split(' ')[0]} 👋
+            </Text>
+            <Text style={[styles.city, { textAlign: ta }]}>
+              📍 {t(`cities.${user?.city}`, user?.city ?? '')}
+            </Text>
+          </View>
+          <Animated.View style={{ transform: [{ scale: notifPulse }] }}>
+            <TouchableOpacity
+              style={styles.notifBtn}
+              onPress={() => router.push('/notification-settings')}
+              activeOpacity={0.75}
+            >
+              <Text style={{ fontSize: 20 }}>🔔</Text>
+            </TouchableOpacity>
+          </Animated.View>
         </View>
-        <Animated.View style={{ transform: [{ scale: notifPulse }] }}>
-          <TouchableOpacity style={styles.notifBtn}>
-            <Text style={{ fontSize: 20 }}>🔔</Text>
+        <View style={styles.headerAccent} />
+      </Animated.View>
+
+      {/* ── Scrollable Content ─────────────────────────────── */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />}
+      >
+        {/* ── Search bar ── */}
+        <Animated.View style={{ opacity: searchOp, transform: [{ translateY: searchY }] }}>
+          <TouchableOpacity style={styles.searchBar} activeOpacity={0.8} onPress={() => goToNewRequest()}>
+            <Text style={styles.searchPlaceholder}>{t('home.searchPlaceholder')}</Text>
+            <Text style={{ fontSize: 17 }}>🔍</Text>
           </TouchableOpacity>
         </Animated.View>
-      </Animated.View>
 
-      {/* ── Search bar ── */}
-      <Animated.View style={{ opacity: searchOp, transform: [{ translateY: searchY }] }}>
-        <TouchableOpacity style={styles.searchBar} activeOpacity={0.8} onPress={() => goToNewRequest()}>
-          <Text style={styles.searchPlaceholder}>{t('home.searchPlaceholder')}</Text>
-          <Text style={{ fontSize: 17 }}>🔍</Text>
-        </TouchableOpacity>
-      </Animated.View>
+        {/* ── Action banners (compact 2-row) ── */}
+        <Animated.View style={[styles.bannerWrap, { opacity: bannerOp, transform: [{ translateY: bannerY }] }]}>
+          <CtaBanner onPress={() => goToNewRequest()} />
 
-      {/* ── Action banners (compact 2-row) ── */}
-      <Animated.View style={[styles.bannerWrap, { opacity: bannerOp, transform: [{ translateY: bannerY }] }]}>
-        <CtaBanner onPress={() => goToNewRequest()} />
-
-        <View style={styles.bannerRow2}>
-          <View style={{ flex: 1 }}>
-            <UrgentBanner onPress={goToUrgent} />
-          </View>
-          <TouchableOpacity style={styles.recurringMini} onPress={goToRecurring} activeOpacity={0.85}>
-            <Text style={styles.recurringMiniIcon}>🔄</Text>
-            <Text style={styles.recurringMiniTitle}>{t('home.recurringShort')}</Text>
-            <Text style={styles.recurringMiniSub}>{t('home.recurringFixed')}</Text>
-          </TouchableOpacity>
-        </View>
-      </Animated.View>
-
-      {/* ── Category Browser ── */}
-      <Animated.View style={{ opacity: catSectionOp }}>
-        <QuickAccessRow onPress={goToNewRequest} />
-        <TabCategoryBrowser
-          activeGroup={activeGroup}
-          anims={groupAnims}
-          onGroupChange={handleGroupChange}
-          onCategoryPress={goToNewRequest}
-        />
-      </Animated.View>
-
-      {/* ── Recent requests ── */}
-      {requests.length > 0 ? (
-        <>
-          {/* Section header: title on start, "see all" on end — RTL-aware */}
-          <View style={styles.sectionRow}>
-            <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('home.recentRequests')}</Text>
-            <TouchableOpacity onPress={() => router.push('/(client)/requests')}>
-              <Text style={styles.seeAll}>{t('home.seeAll')}</Text>
+          <View style={[styles.bannerRow2, { flexDirection: flexRow(isRTL) }]}>
+            <View style={{ flex: 1 }}>
+              <UrgentBanner onPress={goToUrgent} />
+            </View>
+            <TouchableOpacity style={styles.recurringMini} onPress={goToRecurring} activeOpacity={0.85}>
+              <Text style={styles.recurringMiniIcon}>🔄</Text>
+              <Text style={styles.recurringMiniTitle}>{t('home.recurringShort')}</Text>
+              <Text style={styles.recurringMiniSub}>{t('home.recurringFixed')}</Text>
             </TouchableOpacity>
           </View>
-
-          {requests.map((req, i) => (
-            <Animated.View
-              key={req.id}
-              style={{
-                opacity: headerOp,
-                transform: [{ translateY: headerOp.interpolate({ inputRange: [0, 1], outputRange: [10 + i * 5, 0] }) }],
-              }}
-            >
-              <TouchableOpacity
-                style={[styles.requestCard, req.is_urgent && styles.requestCardUrgent]}
-                activeOpacity={0.8}
-                onPress={() => router.push({ pathname: '/request-detail', params: { id: req.id } })}
-              >
-                <View style={styles.requestLeft}>
-                  <View style={styles.requestTitleRow}>
-                    {req.is_urgent && (
-                      <Text style={styles.urgentTag}>🚨 {t('providerFeed.urgent')}</Text>
-                    )}
-                    <Text style={[styles.requestTitle, { textAlign: ta }]} numberOfLines={1}>{req.title}</Text>
-                  </View>
-                  <Text style={[styles.requestMeta, { textAlign: ta }]}>
-                    {String(t(`categories.${req.category_slug}`, (req as any).category?.name_ar ?? req.category_slug))} · {String(t(`cities.${req.city}`, req.city))}
-                  </Text>
-                  {req.is_urgent && req.urgent_expires_at && req.status === 'open' && (
-                    <UrgentCountdownInline expiresAt={req.urgent_expires_at} />
-                  )}
-                </View>
-                <View style={[styles.statusBadge, STATUS_COLORS[req.status]]}>
-                  <Text style={styles.statusText}>
-                    {t(`requests.status${req.status.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`, req.status)}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
-        </>
-      ) : (
-        <Animated.View style={[styles.emptyBox, { opacity: bannerOp }]}>
-          <Text style={styles.emptyIcon}>📭</Text>
-          <Text style={styles.emptyTitle}>{t('home.noRequests')}</Text>
-          <Text style={styles.emptySub}>{t('home.noRequestsSub')}</Text>
         </Animated.View>
-      )}
-    </ScrollView>
+
+        {/* ── Category Browser ── */}
+        <Animated.View style={{ opacity: catSectionOp }}>
+          <QuickAccessRow onPress={goToNewRequest} />
+          <TabCategoryBrowser
+            activeGroup={activeGroup}
+            anims={groupAnims}
+            onGroupChange={handleGroupChange}
+            onCategoryPress={goToNewRequest}
+          />
+        </Animated.View>
+
+        {/* ── Recent requests ── */}
+        {requests.length > 0 ? (
+          <>
+            {/* Section header: title on start, "see all" on end — RTL-aware */}
+            <View style={[styles.sectionRow, { flexDirection: flexRow(isRTL) }]}>
+              <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('home.recentRequests')}</Text>
+              <TouchableOpacity onPress={() => router.push('/(client)/requests')}>
+                <Text style={styles.seeAll}>{t('home.seeAll')}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {requests.map((req, i) => (
+              <Animated.View
+                key={req.id}
+                style={{
+                  opacity: headerOp,
+                  transform: [{ translateY: headerOp.interpolate({ inputRange: [0, 1], outputRange: [10 + i * 5, 0] }) }],
+                }}
+              >
+                <TouchableOpacity
+                  style={[styles.requestCard, req.is_urgent && styles.requestCardUrgent, { flexDirection: flexRow(isRTL) }]}
+                  activeOpacity={0.8}
+                  onPress={() => router.push({ pathname: '/request-detail', params: { id: req.id } })}
+                >
+                  <View style={[styles.requestLeft, me(12, isRTL)]}>
+                    <View style={[styles.requestTitleRow, { justifyContent: isRTL ? 'flex-end' : 'flex-start' }]}>
+                      {req.is_urgent && (
+                        <Text style={styles.urgentTag}>🚨 {t('providerFeed.urgent')}</Text>
+                      )}
+                      <Text style={[styles.requestTitle, { textAlign: ta }]} numberOfLines={1}>{req.title}</Text>
+                    </View>
+                    <Text style={[styles.requestMeta, { textAlign: ta }]}>
+                      {String(t(`categories.${req.category_slug}`, (req as any).category?.name_ar ?? req.category_slug))} · {String(t(`cities.${req.city}`, req.city))}
+                    </Text>
+                    {req.is_urgent && req.urgent_expires_at && req.status === 'open' && (
+                      <UrgentCountdownInline expiresAt={req.urgent_expires_at} />
+                    )}
+                  </View>
+                  <View style={[styles.statusBadge, STATUS_COLORS[req.status]]}>
+                    <Text style={styles.statusText}>
+                      {t(`requests.status${req.status.split('_').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join('')}`, req.status)}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            ))}
+          </>
+        ) : (
+          <Animated.View style={[styles.emptyBox, { opacity: bannerOp }]}>
+            <Text style={styles.emptyIcon}>📭</Text>
+            <Text style={styles.emptyTitle}>{t('home.noRequests')}</Text>
+            <Text style={styles.emptySub}>{t('home.noRequestsSub')}</Text>
+          </Animated.View>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -636,13 +654,31 @@ const styles = StyleSheet.create({
   content:   { paddingBottom: 24 },
   center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
 
-  // Header
+  // Scroll wrapper
+  scroll: { flex: 1 },
+
+  // Header — fixed above ScrollView
   header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop:        HEADER_PAD,
+    backgroundColor:   COLORS.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
-  greeting: { fontSize: 21, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right' },
-  city:     { fontSize: 12, color: COLORS.textMuted, textAlign: 'right', marginTop: 3 },
+  headerRow: {
+    alignItems:     'center',
+    justifyContent: 'space-between',
+    paddingBottom:  14,
+  },
+  headerAccent: {
+    height:          2,
+    width:           40,
+    backgroundColor: COLORS.accent,
+    borderRadius:    2,
+    marginBottom:    10,
+  },
+  greeting: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3 },
+  city:     { fontSize: 13, color: COLORS.textMuted, marginTop: 3, fontWeight: '500' },
   notifBtn: {
     width: 44, height: 44, backgroundColor: COLORS.surface, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border,
@@ -664,8 +700,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', overflow: 'hidden',
   },
-  ctaTitle: { fontSize: 15, fontWeight: '700', color: COLORS.accent, textAlign: 'right', marginBottom: 3 },
-  ctaSub:   { fontSize: 11, color: COLORS.textMuted, textAlign: 'right' },
+  ctaTitle: { fontSize: 15, fontWeight: '700', color: COLORS.accent, textAlign: 'auto', marginBottom: 3 },
+  ctaSub:   { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto' },
   shimmer:  { position: 'absolute', top: 0, bottom: 0, width: Math.round(SCREEN_WIDTH * 0.2), backgroundColor: 'rgba(201,168,76,0.10)', borderRadius: 16 },
 
   // Row 2: urgent + recurring mini side by side
@@ -673,8 +709,8 @@ const styles = StyleSheet.create({
   urgentWrap:     { },
   urgentBanner:   { backgroundColor: '#1A0A0A', borderRadius: 16, borderWidth: 1.5, overflow: 'hidden', flex: 1 },
   urgentInner:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14 },
-  urgentTitle:    { fontSize: 14, fontWeight: '800', color: '#EF4444', textAlign: 'right', marginBottom: 2 },
-  urgentSub:      { fontSize: 10, color: '#9CA3AF', textAlign: 'right' },
+  urgentTitle:    { fontSize: 14, fontWeight: '800', color: '#EF4444', textAlign: 'auto', marginBottom: 2 },
+  urgentSub:      { fontSize: 10, color: '#9CA3AF', textAlign: 'auto' },
   urgentCta:      { backgroundColor: '#DC2626', borderRadius: 9, paddingHorizontal: 12, paddingVertical: 8 },
   urgentCtaText:  { fontSize: 12, fontWeight: '800', color: '#fff' },
 
@@ -696,7 +732,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, marginBottom: 12, marginTop: 4,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right' },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto' },
   seeAll:       { fontSize: 13, color: COLORS.accent },
 
   // Request cards
@@ -705,14 +741,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 20, backgroundColor: COLORS.surface, borderRadius: 14,
     padding: 16, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border,
   },
-  requestLeft:       { flex: 1, marginRight: 12, marginLeft: 0 },
+  requestLeft:       { flex: 1 },
   requestTitleRow:   { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', marginBottom: 4 },
-  requestTitle:      { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'right', flexShrink: 1 },
-  requestMeta:       { fontSize: 12, color: COLORS.textMuted, textAlign: 'right' },
+  requestTitle:      { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'auto', flexShrink: 1 },
+  requestMeta:       { fontSize: 12, color: COLORS.textMuted, textAlign: 'auto' },
   requestCardUrgent: { borderColor: '#7F1D1D', borderWidth: 1.5, backgroundColor: '#1A0808' },
   urgentTag:         { fontSize: 10, fontWeight: '800', color: '#EF4444', backgroundColor: '#450A0A', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 },
-  urgentCountdown:   { fontSize: 11, color: '#FCA5A5', textAlign: 'right', marginTop: 3 },
-  urgentExpired:     { fontSize: 11, color: COLORS.textMuted, textAlign: 'right', marginTop: 3 },
+  urgentCountdown:   { fontSize: 11, color: '#FCA5A5', textAlign: 'auto', marginTop: 3 },
+  urgentExpired:     { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginTop: 3 },
 
   statusBadge:  { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   statusText:   { fontSize: 11, fontWeight: '600', color: COLORS.textPrimary },

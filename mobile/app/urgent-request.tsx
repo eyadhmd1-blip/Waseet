@@ -474,8 +474,8 @@ const styles = StyleSheet.create({
 
   guaranteeBadge: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#064E3B', borderRadius: 12, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: '#065F46' },
   guaranteeIcon:  { fontSize: 22 },
-  guaranteeTitle: { fontSize: 13, fontWeight: '700', color: '#6EE7B7', textAlign: 'right' },
-  guaranteeSub:   { fontSize: 11, color: '#34D399', textAlign: 'right', marginTop: 2 },
+  guaranteeTitle: { fontSize: 13, fontWeight: '700', color: '#6EE7B7', textAlign: 'auto' },
+  guaranteeSub:   { fontSize: 11, color: '#34D399', textAlign: 'auto', marginTop: 2 },
 
   urgentBtn:     { backgroundColor: '#DC2626', borderRadius: 14, paddingVertical: 17, alignItems: 'center', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 8 },
   urgentBtnText: { fontSize: 17, fontWeight: '800', color: '#fff' },
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
 
   confirmRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   confirmLabel: { fontSize: 13, color: COLORS.textMuted, flex: 0.35 },
-  confirmValue: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '600', flex: 0.65, textAlign: 'right' },
+  confirmValue: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '600', flex: 0.65, textAlign: 'auto' },
 
   priceSummary:      { backgroundColor: '#1C1A0E', borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
   priceSummaryTitle: { fontSize: 12, color: COLORS.textMuted, marginBottom: 10 },
