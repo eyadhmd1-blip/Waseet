@@ -51,15 +51,17 @@ workflows:
       - name: Install dependencies
         script: npm ci --prefer-offline
 
+      - name: Expo prebuild Android
+        script: npx expo prebuild --clean --platform android --non-interactive
+
       - name: Write google-services.json
         script: |
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then
-            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > google-services.json
-            mv google-services.json android/app/google-services.json
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > android/app/google-services.json
+            echo "✓ google-services.json written to android/app/"
+          else
+            echo "⚠ GOOGLE_SERVICES_JSON not set — skipping"
           fi
-
-      - name: Expo prebuild Android
-        script: npx expo prebuild --clean --platform android --non-interactive
 
       - name: Decode keystore
         script: |
