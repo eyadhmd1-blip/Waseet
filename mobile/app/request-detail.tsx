@@ -542,8 +542,8 @@ const styles = StyleSheet.create({
   descLabel: { fontSize: 12, color: COLORS.textMuted, marginBottom: 6 },
   descText:  { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22 },
 
-  aiPriceBox:   { marginTop: 16, backgroundColor: COLORS.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#78350F', alignItems: 'center' },
-  aiPriceLabel: { fontSize: 12, color: '#92400E', marginBottom: 4 },
+  aiPriceBox:   { marginTop: 16, backgroundColor: COLORS.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
+  aiPriceLabel: { fontSize: 12, color: COLORS.textMuted, marginBottom: 4 },
   aiPriceValue: { fontSize: 22, fontWeight: '700', color: COLORS.accent },
 
   section:      { marginBottom: 20 },
@@ -568,11 +568,11 @@ const styles = StyleSheet.create({
 
   shareProviderRow:        { flexDirection: 'row', gap: 8, marginBottom: 10 },
   shareProviderBtn:        { flex: 1, backgroundColor: COLORS.bg, borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  shareProviderBtnAccent:  { backgroundColor: COLORS.accentDim, borderColor: '#78350F' },
+  shareProviderBtnAccent:  { backgroundColor: COLORS.accentDim, borderColor: 'rgba(201,168,76,0.30)' },
   shareProviderBtnText:    { fontSize: 12, color: COLORS.textSecondary, fontWeight: '600' },
   shareProviderBtnTextAccent: { fontSize: 12, color: COLORS.accent, fontWeight: '700' },
 
-  inProgressNote:     { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#78350F' },
+  inProgressNote:     { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
   inProgressNoteText: { fontSize: 13, color: '#FCD34D', lineHeight: 20 },
 
   closedBox:  { alignItems: 'center', paddingVertical: 32, backgroundColor: COLORS.surface, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, marginBottom: 20 },
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
   closedText: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center' },
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
-  modalSheet:   { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
+  modalSheet:   { backgroundColor: '#0E1E4A', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: 'rgba(201,168,76,0.25)', padding: 24, paddingBottom: 48 },
   modalTitle:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 20 },
   modalProvider:{ fontSize: 15, color: COLORS.textSecondary, marginBottom: 16 },
   modalAmountRow:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 12, padding: 16, marginBottom: 12 },
@@ -599,11 +599,11 @@ const styles = StyleSheet.create({
 
   // ── Report modal ──
   reportOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  reportSheet:         { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+  reportSheet:         { backgroundColor: '#0E1E4A', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: 'rgba(201,168,76,0.25)', padding: 24, paddingBottom: 40 },
   reportTitle:         { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 4 },
   reportSubtitle:      { fontSize: 13, color: COLORS.textMuted, textAlign: 'right', marginBottom: 16 },
   reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  reportOptionSelected:{ backgroundColor: 'rgba(245,158,11,0.05)', borderRadius: 8 },
+  reportOptionSelected:{ backgroundColor: 'rgba(201,168,76,0.05)', borderRadius: 8 },
   reportRadio:         { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: COLORS.border },
   reportRadioSelected: { borderColor: COLORS.accent, backgroundColor: COLORS.accent },
   reportOptionText:    { flex: 1, fontSize: 14, color: COLORS.textSecondary, textAlign: 'right' },
