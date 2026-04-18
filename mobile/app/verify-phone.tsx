@@ -6,6 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
+import { COLORS } from '../src/constants/theme';
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -226,38 +227,38 @@ export default function VerifyPhoneScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: '#0F172A' },
+  container:    { flex: 1, backgroundColor: COLORS.bg },
   content:      { flex: 1, paddingHorizontal: 24, paddingTop: 80, alignItems: 'center' },
   iconWrap:     { marginBottom: 24 },
   icon:         { fontSize: 56 },
-  title:        { fontSize: 26, fontWeight: '700', color: '#F1F5F9', marginBottom: 8, width: '100%' },
-  subtitle:     { fontSize: 15, color: '#64748B', marginBottom: 36, width: '100%' },
+  title:        { fontSize: 26, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8, width: '100%' },
+  subtitle:     { fontSize: 15, color: COLORS.textMuted, marginBottom: 36, width: '100%' },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
     width: '100%',
   },
-  countryCode:  { color: '#64748B', fontSize: 16, paddingRight: 12 },
-  input:        { flex: 1, color: '#F1F5F9', fontSize: 18, paddingVertical: 16, letterSpacing: 2 },
-  btn:          { backgroundColor: '#F59E0B', borderRadius: 14, paddingVertical: 16, alignItems: 'center', width: '100%' },
-  btnDisabled:  { backgroundColor: '#334155' },
-  btnText:      { fontSize: 17, fontWeight: '700', color: '#0F172A' },
+  countryCode:  { color: COLORS.textMuted, fontSize: 16, paddingRight: 12 },
+  input:        { flex: 1, color: COLORS.textPrimary, fontSize: 18, paddingVertical: 16, letterSpacing: 2 },
+  btn:          { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', width: '100%' },
+  btnDisabled:  { backgroundColor: COLORS.border },
+  btnText:      { fontSize: 17, fontWeight: '700', color: COLORS.bg },
   otpRow:       { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32, width: '100%' },
   otpInput: {
     width: 48, height: 56, borderRadius: 12,
-    backgroundColor: '#1E293B', borderWidth: 1, borderColor: '#334155',
-    fontSize: 24, fontWeight: '700', color: '#F1F5F9',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    fontSize: 24, fontWeight: '700', color: COLORS.textPrimary,
   },
-  otpFilled:    { borderColor: '#F59E0B' },
+  otpFilled:    { borderColor: COLORS.accent },
   resendBtn:    { marginTop: 20, paddingVertical: 10 },
-  resendText:   { color: '#F59E0B', fontSize: 15, fontWeight: '600' },
-  resendDisabled: { color: '#475569' },
+  resendText:   { color: COLORS.accent, fontSize: 15, fontWeight: '600' },
+  resendDisabled: { color: COLORS.textMuted },
   changeBtn:    { marginTop: 12, paddingVertical: 10 },
-  changeText:   { color: '#64748B', fontSize: 14 },
+  changeText:   { color: COLORS.textMuted, fontSize: 14 },
 });

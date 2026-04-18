@@ -204,7 +204,7 @@ const shimmerStyles = StyleSheet.create({
   container: { ...StyleSheet.absoluteFillObject, borderRadius: 16, overflow: 'hidden' },
   sweep: {
     position: 'absolute', top: 0, bottom: 0, width: 70,
-    backgroundColor: 'rgba(245,158,11,0.07)',
+    backgroundColor: 'rgba(201,168,76,0.07)',
     transform: [{ skewX: '-20deg' }],
   },
 });
@@ -566,9 +566,9 @@ const demoStyles = StyleSheet.create({
   badgeText:   { fontSize: 11, fontWeight: '800', color: '#fff' },
   skipText:    { fontSize: 12, color: '#475569' },
   title:       { fontSize: 18, fontWeight: '700', color: '#F1F5F9', marginBottom: 6 },
-  desc:        { fontSize: 13, color: '#94A3B8', lineHeight: 20, marginBottom: 10 },
+  desc:        { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 10 },
   metaRow:     { flexDirection: 'row', gap: 14, marginBottom: 12 },
-  metaText:    { fontSize: 12, color: '#64748B' },
+  metaText:    { fontSize: 12, color: COLORS.textMuted },
   infoBox: {
     backgroundColor: DEMO_SOFT, borderRadius: 10, padding: 12,
     marginBottom: 14, borderWidth: 1, borderColor: DEMO_BORDER,
@@ -637,16 +637,16 @@ function DemoSuccessModal({
 
 const demoSuccessStyles = StyleSheet.create({
   overlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  sheet:       { backgroundColor: '#0F172A', borderRadius: 20, padding: 28, width: '100%', borderWidth: 1, borderColor: '#334155', alignItems: 'center' },
+  sheet:       { backgroundColor: COLORS.bg, borderRadius: 20, padding: 28, width: '100%', borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
   emoji:       { fontSize: 56, marginBottom: 16 },
-  title:       { fontSize: 22, fontWeight: '700', color: '#F1F5F9', marginBottom: 20, width: '100%' },
-  stepsBox:    { backgroundColor: '#1E293B', borderRadius: 14, padding: 16, marginBottom: 14, width: '100%' },
-  stepsTitle:  { fontSize: 14, fontWeight: '700', color: '#F1F5F9', marginBottom: 10, width: '100%' },
-  step:        { fontSize: 13, color: '#94A3B8', lineHeight: 22, width: '100%' },
+  title:       { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 20, width: '100%' },
+  stepsBox:    { backgroundColor: COLORS.surface, borderRadius: 14, padding: 16, marginBottom: 14, width: '100%' },
+  stepsTitle:  { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10, width: '100%' },
+  step:        { fontSize: 13, color: COLORS.textSecondary, lineHeight: 22, width: '100%' },
   creditsBox:  { backgroundColor: '#052E16', borderRadius: 10, padding: 12, marginBottom: 20, width: '100%', borderWidth: 1, borderColor: '#16A34A' },
   creditsText: { fontSize: 13, color: '#6EE7B7', width: '100%' },
-  ctaBtn:      { backgroundColor: '#F59E0B', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignItems: 'center', width: '100%' },
-  ctaBtnText:  { fontSize: 16, fontWeight: '700', color: '#0F172A' },
+  ctaBtn:      { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignItems: 'center', width: '100%' },
+  ctaBtnText:  { fontSize: 16, fontWeight: '700', color: COLORS.bg },
 });
 
 // ─── Main Screen ──────────────────────────────────────────────
@@ -1527,13 +1527,13 @@ const styles = StyleSheet.create({
   liveRow:   { flexDirection: 'row', alignItems: 'center' },
   liveText:  { fontSize: 11, color: '#22C55E', fontWeight: '600' },
 
-  upgradeBtn:     { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 },
+  upgradeBtn:     { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 },
   upgradeBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.bg },
 
-  creditsBadge:     { backgroundColor: 'rgba(245,158,11,0.12)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: 'rgba(245,158,11,0.3)' },
+  creditsBadge:     { backgroundColor: 'rgba(201,168,76,0.12)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
   creditsBadgeText: { fontSize: 12, fontWeight: '700', color: COLORS.accent },
 
-  creditCostHint:     { backgroundColor: 'rgba(245,158,11,0.08)', borderRadius: 8, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)' },
+  creditCostHint:     { backgroundColor: 'rgba(201,168,76,0.08)', borderRadius: 8, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: 'rgba(201,168,76,0.20)' },
   creditCostHintText: { fontSize: 12, color: COLORS.accent, textAlign: 'right', fontWeight: '600' },
 
   // ── Filter

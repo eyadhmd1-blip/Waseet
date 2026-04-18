@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { rs } from '../../src/utils/layout';
+import { COLORS } from '../../src/constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -100,7 +101,7 @@ function ConnectionAnimation() {
     return () => clearTimeout(timer);
   }, []);
 
-  const centerBg = centerGlow.interpolate({ inputRange: [0, 1], outputRange: ['rgba(120,53,15,1)', 'rgba(245,158,11,0.9)'] });
+  const centerBg = centerGlow.interpolate({ inputRange: [0, 1], outputRange: ['rgba(24,18,10,1)', 'rgba(201,168,76,0.9)'] });
 
   return (
     <Animated.View style={[styles.connRow, { opacity: rowOpacity }]}>
@@ -228,34 +229,34 @@ export default function WelcomeScreen() {
 
 const styles = StyleSheet.create({
   // paddingBottom applied dynamically via contentPad inset
-  container:    { flex: 1, backgroundColor: '#0F172A', justifyContent: 'space-between' },
+  container:    { flex: 1, backgroundColor: COLORS.bg, justifyContent: 'space-between' },
   hero:         { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: height * 0.04 },
   center:       { alignItems: 'center', justifyContent: 'center' },
   orbitFrame:   { width: ORBIT_RADIUS * 2, height: ORBIT_RADIUS * 2, marginBottom: 20 },
-  orbitRing:    { position: 'absolute', top: 0, left: 0, width: ORBIT_RADIUS * 2, height: ORBIT_RADIUS * 2, borderRadius: ORBIT_RADIUS, borderWidth: 1, borderColor: '#F59E0B', borderStyle: 'dashed' },
+  orbitRing:    { position: 'absolute', top: 0, left: 0, width: ORBIT_RADIUS * 2, height: ORBIT_RADIUS * 2, borderRadius: ORBIT_RADIUS, borderWidth: 1, borderColor: COLORS.accent, borderStyle: 'dashed' },
   orbitWheel:   { position: 'absolute', top: 0, left: 0, width: ORBIT_RADIUS * 2, height: ORBIT_RADIUS * 2 },
   orbitIcon:    { position: 'absolute', fontSize: rs(22, 16, 26) },
-  glow:         { position: 'absolute', top: ORBIT_RADIUS - GLOW_SIZE / 2, left: ORBIT_RADIUS - GLOW_SIZE / 2, width: GLOW_SIZE, height: GLOW_SIZE, borderRadius: GLOW_SIZE / 2, backgroundColor: '#F59E0B' },
+  glow:         { position: 'absolute', top: ORBIT_RADIUS - GLOW_SIZE / 2, left: ORBIT_RADIUS - GLOW_SIZE / 2, width: GLOW_SIZE, height: GLOW_SIZE, borderRadius: GLOW_SIZE / 2, backgroundColor: COLORS.accent },
   // Logo font scales with screen width — min 44 on SE, max 72 on tablets
-  logoAr:       { fontSize: rs(62, 44, 72), fontWeight: '800', color: '#F59E0B', letterSpacing: 2, textShadowColor: 'rgba(245,158,11,0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 20 },
-  logoEn:       { fontSize: rs(18, 14, 22), fontWeight: '300', color: '#94A3B8', letterSpacing: 9, marginTop: 2 },
-  tagline:      { fontSize: rs(14, 12, 16), color: '#64748B', marginTop: 4, textAlign: 'center', letterSpacing: 0.5, paddingHorizontal: width * 0.08 },
+  logoAr:       { fontSize: rs(62, 44, 72), fontWeight: '800', color: COLORS.accent, letterSpacing: 2, textShadowColor: 'rgba(201,168,76,0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 20 },
+  logoEn:       { fontSize: rs(18, 14, 22), fontWeight: '300', color: COLORS.textSecondary, letterSpacing: 9, marginTop: 2 },
+  tagline:      { fontSize: rs(14, 12, 16), color: COLORS.textMuted, marginTop: 4, textAlign: 'center', letterSpacing: 0.5, paddingHorizontal: width * 0.08 },
   connRow:      { flexDirection: 'row', alignItems: 'center', marginTop: 36, paddingHorizontal: 12 },
   // connNode width flexes with content — removed fixed width
   connNode:     { alignItems: 'center', minWidth: 48 },
-  connNodeDot:  { width: 42, height: 42, borderRadius: 21, backgroundColor: '#1E293B', borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  connNodeDot:  { width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.surface, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   connEmoji:    { fontSize: 20 },
-  connLabel:    { fontSize: 10, color: '#475569', marginTop: 4 },
-  connLine:     { flex: 1, height: 1.5, backgroundColor: '#F59E0B', marginHorizontal: 2 },
+  connLabel:    { fontSize: 10, color: COLORS.textMuted, marginTop: 4 },
+  connLine:     { flex: 1, height: 1.5, backgroundColor: COLORS.accent, marginHorizontal: 2 },
   connCenter:   { marginHorizontal: 6 },
-  connCenterBg: { width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: '#F59E0B', alignItems: 'center', justifyContent: 'center' },
-  connCenterText:{ fontSize: 17, fontWeight: '800', color: '#F59E0B' },
+  connCenterBg: { width: 40, height: 40, borderRadius: 20, borderWidth: 1.5, borderColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
+  connCenterText:{ fontSize: 17, fontWeight: '800', color: COLORS.accent },
   actions:      { paddingHorizontal: 24, gap: 12 },
-  btnPrimary:   { backgroundColor: '#F59E0B', borderRadius: 14, paddingVertical: 16, alignItems: 'center', shadowColor: '#F59E0B', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 },
-  btnPrimaryText:{ fontSize: 17, fontWeight: '700', color: '#0F172A', letterSpacing: 0.5 },
-  btnSecondary: { backgroundColor: 'transparent', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  btnSecondaryText:{ fontSize: 17, fontWeight: '600', color: '#CBD5E1' },
+  btnPrimary:   { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 },
+  btnPrimaryText:{ fontSize: 17, fontWeight: '700', color: COLORS.bg, letterSpacing: 0.5 },
+  btnSecondary: { backgroundColor: 'transparent', borderRadius: 14, paddingVertical: 16, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  btnSecondaryText:{ fontSize: 17, fontWeight: '600', color: COLORS.textPrimary },
   // top applied dynamically via headerPad inset
-  langToggle:   { position: 'absolute', right: 20, zIndex: 10, backgroundColor: '#1E293B', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#334155' },
-  langToggleText:{ fontSize: 13, fontWeight: '700', color: '#94A3B8', letterSpacing: 0.5 },
+  langToggle:   { position: 'absolute', right: 20, zIndex: 10, backgroundColor: COLORS.surface, borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: COLORS.border },
+  langToggleText:{ fontSize: 13, fontWeight: '700', color: COLORS.textSecondary, letterSpacing: 0.5 },
 });
