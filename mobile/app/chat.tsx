@@ -1121,8 +1121,8 @@ const pcStyles = StyleSheet.create({
   avatar:     { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarText: { fontSize: 18, fontWeight: '800' },
   info:       { flex: 1 },
-  name:       { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 2 },
-  city:       { fontSize: 11, color: COLORS.textMuted, textAlign: 'right', marginBottom: 4 },
+  name:       { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 2 },
+  city:       { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 4 },
   badgeRow:   { flexDirection: 'row', gap: 6, justifyContent: 'flex-end' },
   tier:       { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   tierText:   { fontSize: 10, fontWeight: '700' },
@@ -1134,7 +1134,7 @@ const pcStyles = StyleSheet.create({
   viewBtn:     { backgroundColor: COLORS.accent, borderRadius: 10, paddingVertical: 9, alignItems: 'center' },
   viewBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.bg },
 
-  time: { fontSize: 10, color: COLORS.textMuted, textAlign: 'right', marginTop: 6 },
+  time: { fontSize: 10, color: COLORS.textMuted, textAlign: 'auto', marginTop: 6 },
 });
 
 // ─── Styles ───────────────────────────────────────────────────
@@ -1172,8 +1172,8 @@ const styles = StyleSheet.create({
   bubbleTextTheirs: { color: COLORS.textPrimary },
 
   bubbleTime:       { fontSize: 10, marginTop: 4 },
-  bubbleTimeMine:   { color: 'rgba(201,168,76,0.60)', textAlign: 'right' },
-  bubbleTimeTheirs: { color: COLORS.textMuted, textAlign: 'right' },
+  bubbleTimeMine:   { color: 'rgba(201,168,76,0.60)', textAlign: 'auto' },
+  bubbleTimeTheirs: { color: COLORS.textMuted, textAlign: 'auto' },
 
   // ── Audio bubble ──
   audioBubble: { paddingVertical: 12, paddingHorizontal: 12, minWidth: 180 },
@@ -1280,13 +1280,13 @@ const styles = StyleSheet.create({
   // ── Report modal ──
   reportOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   reportSheet:         { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  reportTitle:         { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 4 },
-  reportSubtitle:      { fontSize: 13, color: COLORS.textMuted, textAlign: 'right', marginBottom: 16 },
+  reportTitle:         { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 4 },
+  reportSubtitle:      { fontSize: 13, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 16 },
   reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   reportOptionSelected:{ backgroundColor: 'rgba(201,168,76,0.05)', borderRadius: 8 },
   reportRadio:         { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: COLORS.border },
   reportRadioSelected: { borderColor: COLORS.accent, backgroundColor: COLORS.accent },
-  reportOptionText:    { flex: 1, fontSize: 14, color: COLORS.textSecondary, textAlign: 'right' },
+  reportOptionText:    { flex: 1, fontSize: 14, color: COLORS.textSecondary, textAlign: 'auto' },
   reportOptionTextSelected: { color: COLORS.textPrimary, fontWeight: '600' },
   reportBtns:          { flexDirection: 'row', gap: 12, marginTop: 24 },
   reportCancelBtn:     { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },

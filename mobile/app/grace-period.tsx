@@ -305,9 +305,9 @@ const styles = StyleSheet.create({
   providerAvatar:     { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
   providerAvatarText: { fontSize: 20, fontWeight: '700', color: COLORS.bg },
   providerInfo:       { flex: 1 },
-  providerName:       { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right' },
-  providerAmt:        { fontSize: 18, fontWeight: '700', color: COLORS.accent, textAlign: 'right', marginTop: 2 },
-  providerStatus:     { fontSize: 11, color: COLORS.textMuted, textAlign: 'right' },
+  providerName:       { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto' },
+  providerAmt:        { fontSize: 18, fontWeight: '700', color: COLORS.accent, textAlign: 'auto', marginTop: 2 },
+  providerStatus:     { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto' },
 
   ringWrap:     { alignItems: 'center', justifyContent: 'center', marginBottom: 32, width: 180, height: 180 },
   ringOuter:    { position: 'absolute' },

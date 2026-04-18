@@ -543,7 +543,7 @@ const styles = StyleSheet.create({
     padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)',
   },
   savingsIcon: { fontSize: 22 },
-  savingsText: { fontSize: 13, color: COLORS.accent, fontWeight: '600', flex: 1, textAlign: 'right' },
+  savingsText: { fontSize: 13, color: COLORS.accent, fontWeight: '600', flex: 1, textAlign: 'auto' },
 
   planCard: {
     backgroundColor: COLORS.surface, borderRadius: 20,
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C1A0E', borderRadius: 12,
     padding: 12, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)',
   },
-  discountBreakdownText: { fontSize: 12, color: COLORS.accent, textAlign: 'right', fontWeight: '600' },
+  discountBreakdownText: { fontSize: 12, color: COLORS.accent, textAlign: 'auto', fontWeight: '600' },
 
   selector: {
     width: 22, height: 22, borderRadius: 11,

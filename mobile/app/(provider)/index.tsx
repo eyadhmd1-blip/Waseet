@@ -20,6 +20,7 @@ import { FREQ_VISITS_PER_MONTH } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
 import { calcUrgentPremium, calcContractTotal, sanitizeAmount } from '../../src/utils/pricing';
+import { flexRow, alignEnd, selfStart, me } from '../../src/utils/rtl';
 
 const CONTRACT_COLOR = '#10B981';
 const CONTRACT_DIM   = '#10B98122';
@@ -79,15 +80,15 @@ const urgentStyles = StyleSheet.create({
 
   // Accept modal
   acceptSheet:     { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 44 },
-  acceptTitle:     { fontSize: 20, fontWeight: '800', color: '#EF4444', textAlign: 'right', marginBottom: 4 },
-  acceptSubtitle:  { fontSize: 14, color: COLORS.textMuted, textAlign: 'right', marginBottom: 20 },
+  acceptTitle:     { fontSize: 20, fontWeight: '800', color: '#EF4444', textAlign: 'auto', marginBottom: 4 },
+  acceptSubtitle:  { fontSize: 14, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 20 },
   acceptRow:       { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   acceptLabel:     { fontSize: 13, color: COLORS.textMuted },
   acceptValue:     { fontSize: 13, color: COLORS.textPrimary, fontWeight: '600' },
   acceptPriceTip:  { backgroundColor: '#064E3B', borderRadius: 12, padding: 14, marginTop: 16, marginBottom: 8 },
-  acceptPriceTipText: { fontSize: 13, color: '#6EE7B7', textAlign: 'right', lineHeight: 20 },
+  acceptPriceTipText: { fontSize: 13, color: '#6EE7B7', textAlign: 'auto', lineHeight: 20 },
   acceptCommitment:{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#450A0A', borderRadius: 10, padding: 12, marginTop: 12, marginBottom: 20 },
-  acceptCommitText:{ fontSize: 12, color: '#FCA5A5', textAlign: 'right', flex: 1, lineHeight: 18 },
+  acceptCommitText:{ fontSize: 12, color: '#FCA5A5', textAlign: 'auto', flex: 1, lineHeight: 18 },
   acceptBtns:      { flexDirection: 'row', gap: 12 },
   acceptCancel:    { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
   acceptCancelText:{ fontSize: 15, color: COLORS.textSecondary },
@@ -130,9 +131,9 @@ const cStyles = StyleSheet.create({
   card:     { width: 190, backgroundColor: CONTRACT_DIM, borderRadius: 16, padding: 14, marginEnd: 10, borderWidth: 2, borderColor: CONTRACT_COLOR },
   badge:    { backgroundColor: CONTRACT_COLOR, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 8 },
   badgeText:{ fontSize: 10, fontWeight: '800', color: '#fff' },
-  title:    { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 4, lineHeight: 20 },
-  freq:     { fontSize: 12, color: CONTRACT_COLOR, fontWeight: '600', textAlign: 'right', marginBottom: 4 },
-  city:     { fontSize: 12, color: COLORS.textMuted, textAlign: 'right', marginBottom: 10 },
+  title:    { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 4, lineHeight: 20 },
+  freq:     { fontSize: 12, color: CONTRACT_COLOR, fontWeight: '600', textAlign: 'auto', marginBottom: 4 },
+  city:     { fontSize: 12, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 10 },
   footer:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   bids:     { fontSize: 11, color: COLORS.textMuted },
   bidBtn:   { backgroundColor: CONTRACT_COLOR, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
@@ -656,7 +657,7 @@ const MAX_CARDS = 30;
 export default function ProviderFeed() {
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
   const [provider, setProvider]     = useState<(Provider & { user: User }) | null>(null);
   const [requests, setRequests]     = useState<RequestWithMeta[]>([]);
   const [loading, setLoading]       = useState(true);
@@ -1038,38 +1039,32 @@ export default function ProviderFeed() {
       {/* ── Pending commitment banner ─────────────────────────── */}
       {pendingCommit && (
         <TouchableOpacity
-          style={[
-            styles.commitBanner,
-            pendingCommit.is_urgent && styles.commitBannerUrgent,
-          ]}
+          style={[styles.commitBanner, pendingCommit.is_urgent && styles.commitBannerUrgent, { flexDirection: flexRow(isRTL) }]}
           onPress={() => router.push({ pathname: '/provider-confirm', params: { job_id: pendingCommit.job_id } } as any)}
           activeOpacity={0.85}
         >
           <View style={{ flex: 1 }}>
-            <Text style={[styles.commitBannerTitle, pendingCommit.is_urgent && styles.commitBannerTitleUrgent]}>
+            <Text style={[styles.commitBannerTitle, pendingCommit.is_urgent && styles.commitBannerTitleUrgent, { textAlign: ta }]}>
               {pendingCommit.is_urgent ? t('providerFeed.commitBannerUrgentTitle') : t('providerFeed.commitBannerNormal')}
             </Text>
-            <Text style={styles.commitBannerSub} numberOfLines={1}>{pendingCommit.title}</Text>
+            <Text style={[styles.commitBannerSub, { textAlign: ta }]} numberOfLines={1}>{pendingCommit.title}</Text>
           </View>
           <Text style={[styles.commitBannerArrow, pendingCommit.is_urgent && { color: '#F87171' }]}>
-            {I18nManager.isRTL ? '←' : '→'}
+            {isRTL ? '←' : '→'}
           </Text>
         </TouchableOpacity>
       )}
 
       {/* ── Header ────────────────────────────────────────────── */}
       <Animated.View
-        style={[
-          styles.header,
-          { opacity: headerOp, transform: [{ translateY: headerY }] },
-        ]}
+        style={[styles.header, { opacity: headerOp, transform: [{ translateY: headerY }], flexDirection: flexRow(isRTL) }]}
       >
         <View style={{ flex: 1 }}>
           <Text style={[styles.greeting, { textAlign: ta }]}>
             {t('providerFeed.greeting', { name: provider?.user?.full_name?.split(' ')[0] })}
           </Text>
           {tierMeta && (
-            <View style={[styles.tierBadge, { backgroundColor: tierMeta.color + '22' }]}>
+            <View style={[styles.tierBadge, { backgroundColor: tierMeta.color + '22', flexDirection: flexRow(isRTL), alignSelf: selfStart(isRTL) }]}>
               <Text style={[styles.tierText, { color: tierMeta.color }]}>{tierMeta.label_ar}</Text>
               <Text style={styles.tierScore}>⭐ {provider?.score?.toFixed(1)}</Text>
               <Text style={styles.tierJobs}> · {t('providerFeed.lifetimeJobsBadge', { count: provider?.lifetime_jobs })}</Text>
@@ -1077,10 +1072,12 @@ export default function ProviderFeed() {
           )}
         </View>
 
-        <View style={{ alignItems: 'flex-end', gap: 8 }}>
+        <View style={{ alignItems: alignEnd(isRTL), gap: 8 }}>
           {/* Live feed indicator */}
-          <View style={styles.liveRow}>
-            <Text style={styles.liveText}>{t('providerFeed.live')}</Text>
+          <View style={[styles.liveRow, { flexDirection: flexRow(isRTL) }]}>
+            <Text style={[styles.liveText, me(4, isRTL)]}>
+              {t('providerFeed.live')}
+            </Text>
             <LiveDot />
           </View>
 
@@ -1335,21 +1332,19 @@ export default function ProviderFeed() {
             <Text style={[urgentStyles.acceptTitle, { textAlign: ta }]}>{t('providerFeed.urgentAcceptTitle')}</Text>
             <Text style={[urgentStyles.acceptSubtitle, { textAlign: ta }]}>{urgentModal.target?.title}</Text>
 
-            <View style={urgentStyles.acceptRow}>
+            <View style={[urgentStyles.acceptRow, { flexDirection: flexRow(isRTL) }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentServiceLabel')}</Text>
               <Text style={urgentStyles.acceptValue}>
-                {lang === 'ar'
-                  ? (urgentModal.target?.category?.name_ar ?? urgentModal.target?.category_slug)
-                  : (urgentModal.target?.category?.name_ar ?? urgentModal.target?.category_slug)}
+                {urgentModal.target?.category?.name_ar ?? urgentModal.target?.category_slug}
               </Text>
             </View>
-            <View style={urgentStyles.acceptRow}>
+            <View style={[urgentStyles.acceptRow, { flexDirection: flexRow(isRTL) }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentCityLabel')}</Text>
               <Text style={urgentStyles.acceptValue}>{urgentModal.target?.city}</Text>
             </View>
-            <View style={urgentStyles.acceptRow}>
+            <View style={[urgentStyles.acceptRow, { flexDirection: flexRow(isRTL) }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentDescLabel')}</Text>
-              <Text style={[urgentStyles.acceptValue, { flex: 0.65 }]} numberOfLines={3}>
+              <Text style={[urgentStyles.acceptValue, { flex: 0.65, textAlign: ta }]} numberOfLines={3}>
                 {urgentModal.target?.description}
               </Text>
             </View>
@@ -1504,9 +1499,9 @@ const styles = StyleSheet.create({
   // ── Pending commit banner
   commitBanner:           { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0C4A6E', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(56,189,248,0.25)', gap: 10 },
   commitBannerUrgent:     { backgroundColor: '#450A0A', borderBottomColor: 'rgba(239,68,68,0.3)' },
-  commitBannerTitle:      { fontSize: 13, fontWeight: '800', color: '#7DD3FC', textAlign: 'right' },
+  commitBannerTitle:      { fontSize: 13, fontWeight: '800', color: '#7DD3FC', textAlign: 'auto' },
   commitBannerTitleUrgent:{ color: '#FCA5A5' },
-  commitBannerSub:        { fontSize: 11, color: '#475569', textAlign: 'right', marginTop: 2 },
+  commitBannerSub:        { fontSize: 11, color: '#475569', textAlign: 'auto', marginTop: 2 },
   commitBannerArrow:      { fontSize: 18, color: '#38BDF8', fontWeight: '700' },
 
   // ── Header
@@ -1518,7 +1513,7 @@ const styles = StyleSheet.create({
     paddingTop: HEADER_PAD,
     paddingBottom: 12,
   },
-  greeting:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 6 },
+  greeting:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 6 },
   tierBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
   tierText:   { fontSize: 12, fontWeight: '700' },
   tierScore:  { fontSize: 12, color: COLORS.textSecondary },
@@ -1534,7 +1529,7 @@ const styles = StyleSheet.create({
   creditsBadgeText: { fontSize: 12, fontWeight: '700', color: COLORS.accent },
 
   creditCostHint:     { backgroundColor: 'rgba(201,168,76,0.08)', borderRadius: 8, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: 'rgba(201,168,76,0.20)' },
-  creditCostHintText: { fontSize: 12, color: COLORS.accent, textAlign: 'right', fontWeight: '600' },
+  creditCostHintText: { fontSize: 12, color: COLORS.accent, textAlign: 'auto', fontWeight: '600' },
 
   // ── Filter
   filterScroll: { paddingHorizontal: 16, paddingBottom: 12, flexGrow: 0 },
@@ -1552,11 +1547,11 @@ const styles = StyleSheet.create({
   cardTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   cardCat:    { fontSize: 12, color: COLORS.textMuted },
   cardTime:   { fontSize: 12, color: COLORS.textMuted },
-  cardTitle:  { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 8 },
-  cardDesc:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'right', lineHeight: 20, marginBottom: 12 },
+  cardTitle:  { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 8 },
+  cardDesc:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'auto', lineHeight: 20, marginBottom: 12 },
 
   blurContainer: { marginBottom: 12, position: 'relative' },
-  blurText:      { fontSize: 13, color: COLORS.textSecondary, textAlign: 'right', lineHeight: 20 },
+  blurText:      { fontSize: 13, color: COLORS.textSecondary, textAlign: 'auto', lineHeight: 20 },
   blurOverlay:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: COLORS.surface, opacity: 0.88, borderRadius: 6 },
 
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -1576,10 +1571,10 @@ const styles = StyleSheet.create({
   // ── Modals
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   modalSheet:   { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  modalTitle:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 4 },
-  modalSubtitle:{ fontSize: 14, color: COLORS.textMuted, textAlign: 'right', marginBottom: 16 },
-  modalAiHint:  { fontSize: 13, color: COLORS.accent, textAlign: 'right', marginBottom: 16, fontWeight: '600' },
-  modalLabel:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'right', marginBottom: 8, marginTop: 12 },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 4 },
+  modalSubtitle:{ fontSize: 14, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 16 },
+  modalAiHint:  { fontSize: 13, color: COLORS.accent, textAlign: 'auto', marginBottom: 16, fontWeight: '600' },
+  modalLabel:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'auto', marginBottom: 8, marginTop: 12 },
   modalInput:   { backgroundColor: COLORS.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.textPrimary, fontSize: 15, borderWidth: 1, borderColor: COLORS.border },
   modalBtns:    { flexDirection: 'row', gap: 12, marginTop: 20 },
   modalCancel:      { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
@@ -1615,7 +1610,7 @@ const cBidStyles = StyleSheet.create({
   header:     { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
   badge:      { backgroundColor: CONTRACT_DIM, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: CONTRACT_COLOR },
   summary:    { backgroundColor: CONTRACT_DIM, borderRadius: 10, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
-  summaryText:{ fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600', textAlign: 'right' },
+  summaryText:{ fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600', textAlign: 'auto' },
   totalBox:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: CONTRACT_DIM, borderRadius: 10, padding: 12, marginVertical: 8, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
   totalLabel: { fontSize: 13, color: COLORS.textMuted },
   totalValue: { fontSize: 18, fontWeight: '800', color: CONTRACT_COLOR },

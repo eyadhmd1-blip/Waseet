@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: 14, color: COLORS.textPrimary, lineHeight: 20 },
   bubbleTime: { fontSize: 10, marginTop: 6 },
   timeLeft:   { color: COLORS.textMuted },
-  timeRight:  { color: 'rgba(201,168,76,0.6)', textAlign: 'right' },
+  timeRight:  { color: 'rgba(201,168,76,0.6)', textAlign: 'auto' },
 
   ratingBox:     { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginTop: 8, borderWidth: 1, borderColor: '#15803D', alignItems: 'center' },
   ratingTitle:   { fontSize: 14, fontWeight: '700', color: '#86EFAC', textAlign: 'center', marginBottom: 12 },
