@@ -9,6 +9,7 @@ import { JORDAN_CITIES } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { COLORS } from '../../src/constants/theme';
 
 type Role = 'client' | 'provider';
 
@@ -124,28 +125,28 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:     { flex: 1, backgroundColor: '#0F172A' },
+  container:     { flex: 1, backgroundColor: COLORS.bg },
   content:       { padding: 24, paddingTop: HEADER_PAD },
-  title:         { fontSize: 28, fontWeight: '700', color: '#F1F5F9', marginBottom: 32 },
-  label:         { fontSize: 14, color: '#94A3B8', marginBottom: 10, marginTop: 20 },
+  title:         { fontSize: 28, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 32 },
+  label:         { fontSize: 14, color: COLORS.textSecondary, marginBottom: 10, marginTop: 20 },
   roleRow:       { flexDirection: 'row', gap: 12 },
-  roleBtn:       { flex: 1, backgroundColor: '#1E293B', borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: '#334155' },
-  roleBtnActive: { borderColor: '#F59E0B', backgroundColor: '#1C1A0E' },
+  roleBtn:       { flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  roleBtnActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
   roleIcon:      { fontSize: 28, marginBottom: 8 },
-  roleText:      { fontSize: 14, fontWeight: '600', color: '#94A3B8', textAlign: 'center' },
-  roleTextActive:{ color: '#F59E0B' },
-  roleSubText:   { fontSize: 12, color: '#475569', marginTop: 4 },
+  roleText:      { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary, textAlign: 'center' },
+  roleTextActive:{ color: COLORS.accent },
+  roleSubText:   { fontSize: 12, color: COLORS.textMuted, marginTop: 4 },
   input: {
-    backgroundColor: '#1E293B', borderRadius: 12, paddingHorizontal: 16,
-    paddingVertical: 14, color: '#F1F5F9', fontSize: 16,
-    borderWidth: 1, borderColor: '#334155',
+    backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 16,
+    paddingVertical: 14, color: COLORS.textPrimary, fontSize: 16,
+    borderWidth: 1, borderColor: COLORS.border,
   },
   cityScroll:    { marginBottom: 8 },
-  cityChip:      { backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: '#334155' },
-  cityChipActive:{ borderColor: '#F59E0B', backgroundColor: '#1C1A0E' },
-  cityText:      { color: '#94A3B8', fontSize: 14 },
-  cityTextActive:{ color: '#F59E0B' },
-  btn:           { backgroundColor: '#F59E0B', borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 32 },
-  btnDisabled:   { backgroundColor: '#334155' },
-  btnText:       { fontSize: 17, fontWeight: '700', color: '#0F172A' },
+  cityChip:      { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: COLORS.border },
+  cityChipActive:{ borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
+  cityText:      { color: COLORS.textSecondary, fontSize: 14 },
+  cityTextActive:{ color: COLORS.accent },
+  btn:           { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 32 },
+  btnDisabled:   { backgroundColor: COLORS.border },
+  btnText:       { fontSize: 17, fontWeight: '700', color: COLORS.bg },
 });

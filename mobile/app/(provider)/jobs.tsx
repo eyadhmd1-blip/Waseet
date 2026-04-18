@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   doneBtnText:  { fontSize: 15, fontWeight: '700', color: '#86EFAC' },
   btnDisabled:  { backgroundColor: COLORS.border },
 
-  waitingBox:      { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#78350F', alignItems: 'center', gap: 10 },
+  waitingBox:      { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', alignItems: 'center', gap: 10 },
   waitingText:     { fontSize: 13, color: '#FCD34D', textAlign: 'center' },
   enterCodeBtn:    { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 8 },
   enterCodeBtnText:{ fontSize: 13, fontWeight: '700', color: COLORS.bg },

@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
   catIcon:       { fontSize: 30, marginBottom: 8 },
   catName:       { fontSize: 12, color: COLORS.textSecondary, textAlign: 'center' },
 
-  selectedCatBadge: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#78350F', marginBottom: 20 },
+  selectedCatBadge: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginBottom: 20 },
   selectedCatText:  { fontSize: 15, color: COLORS.accent, fontWeight: '600' },
   changeCat:        { fontSize: 13, color: COLORS.textMuted },
 

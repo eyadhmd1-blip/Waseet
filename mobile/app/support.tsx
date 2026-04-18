@@ -223,7 +223,7 @@ const styles = StyleSheet.create({
   faqQ:      { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, lineHeight: 20 },
   faqA:      { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: COLORS.border },
 
-  contactNote:      { backgroundColor: COLORS.accentDim, borderRadius: 14, padding: 16, marginTop: 12, borderWidth: 1, borderColor: '#78350F', alignItems: 'center' },
+  contactNote:      { backgroundColor: COLORS.accentDim, borderRadius: 14, padding: 16, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
   contactNoteText:  { fontSize: 13, color: '#FCD34D', lineHeight: 20, marginBottom: 14 },
   openTicketBtn:    { backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
   openTicketBtnText:{ fontSize: 14, fontWeight: '700', color: COLORS.bg },

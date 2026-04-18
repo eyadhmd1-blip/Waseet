@@ -1114,7 +1114,7 @@ import { HEADER_PAD } from '../src/utils/layout';
 
 const pcStyles = StyleSheet.create({
   card:       { borderRadius: 16, padding: 14, maxWidth: SCREEN_W * 0.78, minWidth: 220, borderWidth: 1 },
-  cardMine:   { backgroundColor: '#1C1A0E', borderColor: '#78350F', alignSelf: 'flex-end' },
+  cardMine:   { backgroundColor: '#1C1A0E', borderColor: 'rgba(201,168,76,0.30)', alignSelf: 'flex-end' },
   cardTheirs: { backgroundColor: COLORS.surface, borderColor: COLORS.border, alignSelf: 'flex-start' },
 
   header:     { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginBottom: 10 },
@@ -1172,23 +1172,23 @@ const styles = StyleSheet.create({
   bubbleTextTheirs: { color: COLORS.textPrimary },
 
   bubbleTime:       { fontSize: 10, marginTop: 4 },
-  bubbleTimeMine:   { color: '#78350F', textAlign: 'right' },
+  bubbleTimeMine:   { color: 'rgba(201,168,76,0.60)', textAlign: 'right' },
   bubbleTimeTheirs: { color: COLORS.textMuted, textAlign: 'right' },
 
   // ── Audio bubble ──
   audioBubble: { paddingVertical: 12, paddingHorizontal: 12, minWidth: 180 },
   audioInner:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   playBtn:     { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  playBtnMine: { backgroundColor: '#78350F' },
+  playBtnMine: { backgroundColor: 'rgba(201,168,76,0.35)' },
   playBtnTheirs:{ backgroundColor: COLORS.border },
   playBtnIcon: { fontSize: 14 },
   audioWave:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2 },
   waveBar:     { width: 3, borderRadius: 2 },
-  waveBarMine: { backgroundColor: '#78350F' },
+  waveBarMine: { backgroundColor: 'rgba(201,168,76,0.50)' },
   waveBarTheirs:{ backgroundColor: COLORS.border },
   waveBarPlaying:{ backgroundColor: COLORS.bg },
   audioDuration:      { fontSize: 11, fontWeight: '600' },
-  audioDurationMine:  { color: '#78350F' },
+  audioDurationMine:  { color: 'rgba(201,168,76,0.70)' },
   audioDurationTheirs:{ color: COLORS.textMuted },
 
   // ── Image / Video bubble ──
@@ -1215,7 +1215,7 @@ const styles = StyleSheet.create({
   locationLabelMine:   { color: COLORS.bg },
   locationLabelTheirs: { color: COLORS.textPrimary },
   locationTap:         { fontSize: 11, marginBottom: 4 },
-  locationTapMine:     { color: '#78350F' },
+  locationTapMine:     { color: 'rgba(201,168,76,0.60)' },
   locationTapTheirs:   { color: COLORS.accent },
 
   // ── Input bar ──
@@ -1272,8 +1272,8 @@ const styles = StyleSheet.create({
   uploadingText: { fontSize: 13, color: COLORS.textMuted },
   closedBar:     { paddingVertical: 16, backgroundColor: COLORS.surface, borderTopWidth: 1, borderTopColor: COLORS.border, alignItems: 'center', gap: 10 },
   closedBarText: { fontSize: 13, color: COLORS.textMuted },
-  rateBtn:       { backgroundColor: '#F59E0B', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
-  rateBtnText:   { fontSize: 13, fontWeight: '700', color: '#0F172A' },
+  rateBtn:       { backgroundColor: COLORS.accent, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
+  rateBtnText:   { fontSize: 13, fontWeight: '700', color: COLORS.bg },
 
   voiceHint: { fontSize: 10, color: COLORS.textMuted, textAlign: 'center', paddingBottom: 4, backgroundColor: COLORS.surface },
 
@@ -1283,7 +1283,7 @@ const styles = StyleSheet.create({
   reportTitle:         { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'right', marginBottom: 4 },
   reportSubtitle:      { fontSize: 13, color: COLORS.textMuted, textAlign: 'right', marginBottom: 16 },
   reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  reportOptionSelected:{ backgroundColor: 'rgba(245,158,11,0.05)', borderRadius: 8 },
+  reportOptionSelected:{ backgroundColor: 'rgba(201,168,76,0.05)', borderRadius: 8 },
   reportRadio:         { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: COLORS.border },
   reportRadioSelected: { borderColor: COLORS.accent, backgroundColor: COLORS.accent },
   reportOptionText:    { flex: 1, fontSize: 14, color: COLORS.textSecondary, textAlign: 'right' },

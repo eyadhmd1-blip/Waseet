@@ -489,7 +489,7 @@ const styles = StyleSheet.create({
   confirmLabel: { fontSize: 13, color: COLORS.textMuted, flex: 0.35 },
   confirmValue: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '600', flex: 0.65, textAlign: 'right' },
 
-  priceSummary:      { backgroundColor: '#1C1A0E', borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 12, borderWidth: 1, borderColor: '#78350F' },
+  priceSummary:      { backgroundColor: '#1C1A0E', borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
   priceSummaryTitle: { fontSize: 12, color: COLORS.textMuted, marginBottom: 10 },
   priceRow:          { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   priceBase:         { fontSize: 13, color: COLORS.textSecondary },

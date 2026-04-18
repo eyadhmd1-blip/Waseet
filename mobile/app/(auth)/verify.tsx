@@ -8,6 +8,7 @@ import { supabase } from '../../src/lib/supabase';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD, rs } from '../../src/utils/layout';
+import { COLORS } from '../../src/constants/theme';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 // 6 boxes, 48px total horizontal padding, small natural gaps
@@ -155,20 +156,20 @@ export default function VerifyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: '#0F172A' },
+  container:  { flex: 1, backgroundColor: COLORS.bg },
   back:       { padding: 24, paddingTop: HEADER_PAD },
-  backText:   { fontSize: 24, color: '#94A3B8', transform: [{ scaleX: -1 }] },
+  backText:   { fontSize: 24, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
   content:    { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
-  title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: '#F1F5F9', marginBottom: 8 },
-  subtitle:   { fontSize: rs(15, 13, 17), color: '#64748B', marginBottom: 40 },
+  title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
+  subtitle:   { fontSize: rs(15, 13, 17), color: COLORS.textMuted, marginBottom: 40 },
   otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
   otpInput: {
     width: OTP_BOX_SIZE, height: OTP_BOX_SIZE + 8, borderRadius: 12,
-    backgroundColor: '#1E293B', borderWidth: 1, borderColor: '#334155',
-    fontSize: rs(24, 18, 28), fontWeight: '700', color: '#F1F5F9',
+    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
+    fontSize: rs(24, 18, 28), fontWeight: '700', color: COLORS.textPrimary,
   },
-  otpFilled:  { borderColor: '#F59E0B' },
-  btn:        { backgroundColor: '#F59E0B', borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  btnDisabled:{ backgroundColor: '#334155' },
-  btnText:    { fontSize: rs(17, 15, 19), fontWeight: '700', color: '#0F172A' },
+  otpFilled:  { borderColor: COLORS.accent },
+  btn:        { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  btnDisabled:{ backgroundColor: COLORS.border },
+  btnText:    { fontSize: rs(17, 15, 19), fontWeight: '700', color: COLORS.bg },
 });

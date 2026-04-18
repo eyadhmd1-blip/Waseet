@@ -624,7 +624,7 @@ export default function ClientHome() {
 // ─── Status color helpers ─────────────────────────────────────
 const STATUS_COLORS: Record<string, { backgroundColor: string }> = {
   open:        { backgroundColor: '#0C4A6E' },
-  in_progress: { backgroundColor: '#78350F' },
+  in_progress: { backgroundColor: '#7C3500' },
   completed:   { backgroundColor: '#14532D' },
   cancelled:   { backgroundColor: '#3B0764' },
 };
@@ -662,11 +662,11 @@ const styles = StyleSheet.create({
   ctaBanner: {
     backgroundColor: '#1C1A0E', borderRadius: 16, padding: 16,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    borderWidth: 1, borderColor: '#78350F', overflow: 'hidden',
+    borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', overflow: 'hidden',
   },
   ctaTitle: { fontSize: 15, fontWeight: '700', color: COLORS.accent, textAlign: 'right', marginBottom: 3 },
-  ctaSub:   { fontSize: 11, color: '#92400E', textAlign: 'right' },
-  shimmer:  { position: 'absolute', top: 0, bottom: 0, width: Math.round(SCREEN_WIDTH * 0.2), backgroundColor: 'rgba(245,158,11,0.10)', borderRadius: 16 },
+  ctaSub:   { fontSize: 11, color: COLORS.textMuted, textAlign: 'right' },
+  shimmer:  { position: 'absolute', top: 0, bottom: 0, width: Math.round(SCREEN_WIDTH * 0.2), backgroundColor: 'rgba(201,168,76,0.10)', borderRadius: 16 },
 
   // Row 2: urgent + recurring mini side by side
   bannerRow2:     { flexDirection: 'row', gap: 10, alignItems: 'stretch' },

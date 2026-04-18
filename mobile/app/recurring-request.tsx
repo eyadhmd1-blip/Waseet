@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   durationSub:      { fontSize: 10, color: COLORS.textMuted, textAlign: 'center', marginBottom: 6 },
   durationTextActive: { color: CONTRACT_COLOR },
   durationSubActive:  { color: CONTRACT_COLOR + 'AA' },
-  discountBadge:    { backgroundColor: '#78350F', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  discountBadge:    { backgroundColor: COLORS.accentDim, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
   discountText:     { fontSize: 9, color: '#FCD34D', fontWeight: '700' },
 
   visitSummaryCard:  { marginHorizontal: 16, marginBottom: 20, backgroundColor: CONTRACT_DIM, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },

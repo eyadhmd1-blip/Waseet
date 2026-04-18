@@ -329,13 +329,13 @@ const styles = StyleSheet.create({
 
   bubble:      { maxWidth: '80%', borderRadius: 16, padding: 12 },
   bubbleAdmin: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderTopLeftRadius: 4 },
-  bubbleUser:  { backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.25)', borderTopRightRadius: 4 },
+  bubbleUser:  { backgroundColor: 'rgba(201,168,76,0.12)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', borderTopRightRadius: 4 },
 
   adminLabel: { fontSize: 11, fontWeight: '700', color: '#38BDF8', marginBottom: 4 },
   bubbleText: { fontSize: 14, color: COLORS.textPrimary, lineHeight: 20 },
   bubbleTime: { fontSize: 10, marginTop: 6 },
   timeLeft:   { color: COLORS.textMuted },
-  timeRight:  { color: 'rgba(245,158,11,0.6)', textAlign: 'right' },
+  timeRight:  { color: 'rgba(201,168,76,0.6)', textAlign: 'right' },
 
   ratingBox:     { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginTop: 8, borderWidth: 1, borderColor: '#15803D', alignItems: 'center' },
   ratingTitle:   { fontSize: 14, fontWeight: '700', color: '#86EFAC', textAlign: 'center', marginBottom: 12 },

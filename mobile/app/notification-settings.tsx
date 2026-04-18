@@ -510,10 +510,10 @@ const st = StyleSheet.create({
   quietSummary:        { marginTop: 14, backgroundColor: COLORS.bg, borderRadius: 10, padding: 10, alignItems: 'center' },
   quietSummaryText:    { fontSize: 12, color: COLORS.textMuted },
 
-  aiBadge: { alignItems: 'center', gap: 12, backgroundColor: COLORS.accentDim, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#78350F', marginTop: 20, marginBottom: 8 },
+  aiBadge: { alignItems: 'center', gap: 12, backgroundColor: COLORS.accentDim, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginTop: 20, marginBottom: 8 },
   aiIcon:  { fontSize: 28 },
   aiTitle: { fontSize: 14, fontWeight: '700', color: COLORS.accent, marginBottom: 3 },
-  aiSub:   { fontSize: 12, color: '#92400E', lineHeight: 18 },
+  aiSub:   { fontSize: 12, color: COLORS.textMuted, lineHeight: 18 },
 
   saveBtn:     { backgroundColor: COLORS.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
   saveBtnText: { fontSize: 16, fontWeight: '800', color: COLORS.bg },

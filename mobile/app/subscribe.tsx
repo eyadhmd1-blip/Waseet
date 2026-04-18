@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   savingsBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: '#1C1A0E', borderRadius: 14,
-    padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#78350F',
+    padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)',
   },
   savingsIcon: { fontSize: 22 },
   savingsText: { fontSize: 13, color: COLORS.accent, fontWeight: '600', flex: 1, textAlign: 'right' },
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
 
   discountBreakdownBanner: {
     backgroundColor: '#1C1A0E', borderRadius: 12,
-    padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#78350F',
+    padding: 12, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)',
   },
   discountBreakdownText: { fontSize: 12, color: COLORS.accent, textAlign: 'right', fontWeight: '600' },
 

@@ -397,14 +397,14 @@ const styles = StyleSheet.create({
   emptyIcon: { fontSize: 40, marginBottom: 10 },
   emptyText: { fontSize: 14, color: COLORS.textMuted },
 
-  subBanner:      { marginHorizontal: 16, backgroundColor: COLORS.accentDim, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: '#78350F' },
+  subBanner:      { marginHorizontal: 16, backgroundColor: COLORS.accentDim, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
   subBannerTitle: { fontSize: 16, fontWeight: '700', color: COLORS.accent, marginBottom: 6 },
-  subBannerSub:   { fontSize: 13, color: '#92400E', lineHeight: 20 },
+  subBannerSub:   { fontSize: 13, color: COLORS.textMuted, lineHeight: 20 },
 });
 
 const kpiStyles = StyleSheet.create({
   card:       { width: '47%', backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
-  cardAccent: { borderColor: '#78350F', backgroundColor: COLORS.accentDim },
+  cardAccent: { borderColor: 'rgba(201,168,76,0.30)', backgroundColor: COLORS.accentDim },
   icon:       { fontSize: 24, marginBottom: 8 },
   value:      { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
   valueAccent:{ color: COLORS.accent },
