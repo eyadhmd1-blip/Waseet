@@ -122,7 +122,14 @@ Deno.serve(async (req) => {
 
         const priceId = data.items?.[0]?.price?.id;
         // custom_data.tier takes precedence (set at checkout passthrough)
-        const tier = (data.custom_data?.tier ?? PRICE_TO_TIER[priceId] ?? "basic") as string;
+        const tierFromPrice = priceId ? PRICE_TO_TIER[priceId] : undefined;
+        const tier = (data.custom_data?.tier ?? tierFromPrice) as string | undefined;
+
+        if (!tier) {
+          // Unknown price ID — log and skip rather than silently activating wrong tier
+          console.warn(`[paddle-webhook] Unknown priceId "${priceId}" for provider ${providerId}. Add to PRICE_TO_TIER map.`);
+          break;
+        }
 
         // Load provider for discount computation
         const { data: providerRow } = await supabaseAdmin
