@@ -179,9 +179,16 @@ export default function RootLayout() {
             .eq('id', u.id)
             .single()
             .then(({ data }) => {
-              if (!data)                     router.replace('/(auth)/onboarding' as any);
-              else if (!data.phone_verified) router.replace('/verify-phone' as any);
-              else                           setRole(data.role); // triggers guard again with real role
+              if (!data) {
+                // Only redirect if the user is NOT already at a valid role destination.
+                // If they just finished onboarding and navigated to /(provider) or
+                // /(client), a stale re-query race must not bounce them back out.
+                if (!inClient && !inProvider) router.replace('/(auth)/onboarding' as any);
+              } else if (!data.phone_verified) {
+                router.replace('/verify-phone' as any);
+              } else {
+                setRole(data.role); // triggers guard again with real role
+              }
             });
         });
       }

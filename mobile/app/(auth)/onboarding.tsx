@@ -493,6 +493,13 @@ export default function OnboardingScreen() {
 
       // Sync planChoice state so handleExplore routes correctly
       if (planOverride !== undefined) setPlanChoice(planOverride);
+
+      // Force onAuthStateChange to re-fire so _layout.tsx picks up the new
+      // users row and sets role = 'provider'/'client' before the user taps
+      // "Explore App". Without this, the route guard still sees role='onboarding'
+      // and may race-redirect back to the onboarding screen.
+      await supabase.auth.refreshSession();
+
       setDone(true);
     } catch (err: any) {
       Alert.alert(t('common.error'), err?.message ?? t('common.error'));
