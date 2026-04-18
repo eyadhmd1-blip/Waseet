@@ -1,13 +1,14 @@
 import 'intl-pluralrules';   // polyfill — must be first import
 import { useEffect, useState, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, View, Text, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import { I18nextProvider } from 'react-i18next';
 import { supabase } from '../src/lib/supabase';
-import { ROUTES } from '../src/constants/theme';
+import { ROUTES, COLORS } from '../src/constants/theme';
+import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
 import { initI18n } from '../src/i18n';
 import i18nInstance from '../src/i18n';
 
@@ -48,7 +49,7 @@ async function registerPushToken(userId: string) {
       .from('push_tokens')
       .upsert(
         { user_id: userId, token, platform: 'expo', updated_at: new Date().toISOString() },
-        { onConflict: 'user_id' },
+        { onConflict: 'user_id,token' },
       );
   } catch { /* non-blocking */ }
 }
@@ -66,6 +67,7 @@ export default function RootLayout() {
   const [i18nReady, setI18nReady] = useState(false);
   // appKey increments when language changes, remounting the entire navigator
   const [appKey, setAppKey]     = useState(0);
+  const { isOnline }            = useNetworkStatus();
 
   const router   = useRouter();
   const segments = useSegments();
@@ -78,7 +80,12 @@ export default function RootLayout() {
 
   // ── Listen for language changes → remount navigator ─────────
   useEffect(() => {
-    const handler = () => setAppKey(k => k + 1);
+    const handler = () => {
+      // Remove all realtime channels before remounting so old subscriptions
+      // don't linger as zombie connections after screens unmount.
+      supabase.removeAllChannels();
+      setAppKey(k => k + 1);
+    };
     i18nInstance.on('languageChanged', handler);
     return () => { i18nInstance.off('languageChanged', handler); };
   }, []);
@@ -201,6 +208,11 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
     <I18nextProvider i18n={i18nInstance}>
+      {!isOnline && (
+        <View style={offlineStyles.banner}>
+          <Text style={offlineStyles.text}>⚠ لا يوجد اتصال بالإنترنت</Text>
+        </View>
+      )}
       <Stack key={appKey} screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)"                  />
         <Stack.Screen name="(client)"                />
@@ -228,3 +240,11 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const offlineStyles = StyleSheet.create({
+  banner: {
+    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 9999,
+    backgroundColor: '#7F1D1D', paddingVertical: 8, alignItems: 'center',
+  },
+  text: { color: '#FCA5A5', fontSize: 13, fontWeight: '600' },
+});

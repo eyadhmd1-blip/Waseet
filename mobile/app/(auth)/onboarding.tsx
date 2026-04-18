@@ -3,7 +3,7 @@
 // Steps: 1-Role → 2-Info → [3-Services (provider)] → [4-Plan (provider)] → 5-Done
 // ============================================================
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, Alert, Animated, Dimensions,
@@ -379,8 +379,16 @@ export default function OnboardingScreen() {
   const [bio, setBio]                 = useState('');
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [planChoice, setPlanChoice]   = useState<PlanChoice>('trial');
-  const [trialUsed]                   = useState(false); // could fetch from DB if needed
+  const [trialUsed, setTrialUsed]     = useState(false);
   const [saving, setSaving]           = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from('providers').select('trial_used').eq('id', user.id).single()
+        .then(({ data }) => { if (data?.trial_used) setTrialUsed(true); });
+    });
+  }, []);
   const [done, setDone]               = useState(false);
 
   // Steps: client = [1,2,5]  provider = [1,2,3,4,5]
@@ -495,8 +503,7 @@ export default function OnboardingScreen() {
 
   const handleExplore = () => {
     if (role === 'provider' && planChoice !== 'trial' && planChoice !== null) {
-      // Paid plan chosen → go to subscribe screen first
-      router.replace('/subscribe' as any);
+      router.replace(`/subscribe?tier=${planChoice}` as any);
     } else {
       router.replace(role === 'provider' ? '/(provider)' : '/(client)');
     }

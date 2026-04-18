@@ -38,6 +38,8 @@ export default function LoginScreen() {
           Alert.alert(t('common.error'), 'رقم الهاتف غير صالح. أدخل رقماً أردنياً صحيحاً.');
         } else if (errCode === 'RATE_LIMITED' || errCode === 'TOO_MANY_REQUESTS') {
           Alert.alert(t('common.error'), 'تجاوزت الحد المسموح. انتظر قليلاً وأعد المحاولة.');
+        } else if (errCode === 'DAILY_LIMIT_EXCEEDED') {
+          Alert.alert(t('common.error'), 'تجاوزت الحد اليومي لإرسال الرموز. حاول مجدداً غداً.');
         } else {
           Alert.alert(t('common.error'), 'فشل إرسال رمز التحقق. تحقق من اتصالك بالإنترنت.');
         }

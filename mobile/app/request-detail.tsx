@@ -22,6 +22,7 @@ type BidWithProvider = Bid & {
     reputation_tier: string;
     badge_verified: boolean;
     lifetime_jobs: number;
+    is_available: boolean;
     user: { full_name: string; city: string };
   };
 };
@@ -79,7 +80,7 @@ export default function RequestDetail() {
         .select(`
           *,
           provider:providers(
-            id, score, reputation_tier, badge_verified, lifetime_jobs,
+            id, score, reputation_tier, badge_verified, lifetime_jobs, is_available,
             user:users(full_name, city)
           )
         `)
@@ -89,7 +90,7 @@ export default function RequestDetail() {
     ]);
 
     if (reqData)  setRequest(reqData);
-    if (bidsData) setBids(bidsData as BidWithProvider[]);
+    if (bidsData) setBids((bidsData as BidWithProvider[]).filter(b => b.provider?.is_available !== false));
     setLoading(false);
   }, [id]);
 

@@ -2,14 +2,17 @@ import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TAB_BASE_OPTIONS, TAB_BAR_BASE_STYLE } from '../../src/constants/theme';
+import { useLanguage } from '../../src/hooks/useLanguage';
 
 export default function ClientLayout() {
   const insets = useSafeAreaInsets();
+  const { isRTL } = useLanguage();
   const tabBarStyle = {
     ...TAB_BAR_BASE_STYLE,
     height:        56 + insets.bottom,
     paddingBottom: insets.bottom + 4,
     paddingTop:    4,
+    flexDirection: (isRTL ? 'row-reverse' : 'row') as 'row' | 'row-reverse',
   };
 
   return (
