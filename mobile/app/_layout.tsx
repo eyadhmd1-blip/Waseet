@@ -144,6 +144,11 @@ export default function RootLayout() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // ── Hide splash only after both auth + i18n are ready ────────
+  useEffect(() => {
+    if (role !== undefined && i18nReady) SplashScreen.hideAsync();
+  }, [role, i18nReady]);
+
   // ── Route guard ───────────────────────────────────────────────
   useEffect(() => {
     // role === undefined means auth check hasn't completed yet — keep splash visible
@@ -188,8 +193,6 @@ export default function RootLayout() {
       if (role === 'provider' && inClient)   router.replace('/(provider)');
     }
 
-    // Hide splash only after routing is decided — no flash of wrong screen
-    SplashScreen.hideAsync();
   }, [role, segments]);
 
   // Don't render until i18n is initialised (prevents flash of untranslated content)
