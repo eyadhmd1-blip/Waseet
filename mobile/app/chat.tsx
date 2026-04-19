@@ -267,7 +267,7 @@ export default function ChatScreen() {
 
       // Read file as base64 and upload to Supabase Storage
       const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: 'base64' as any,
       });
       const fileName = `${myId}/${Date.now()}.m4a`;
       const byteArray = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
@@ -443,7 +443,7 @@ export default function ChatScreen() {
 
       const fileName  = `${myId}/${Date.now()}.${ext}`;
       const base64    = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: 'base64' as any,
       });
       const byteArray = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
 
@@ -516,7 +516,7 @@ export default function ChatScreen() {
         p_provider_id: providerId,
         p_shared_by:   myId,
         p_channel:     'chat',
-      }).catch(() => {});
+      }).then(() => {});
 
     } catch {
       Alert.alert(t('common.error'), t('chat.errSendProfile'));
@@ -559,7 +559,7 @@ export default function ChatScreen() {
               p_provider_id: pid,
               p_shared_by:   myId,
               p_channel:     'other',
-            }).catch(() => {});
+            }).then(() => {});
           },
         },
       ]
@@ -961,7 +961,7 @@ export default function ChatScreen() {
             style={styles.mediaBtn}
             onLongPress={startRecording}
             onPressOut={() => {
-              if (recordState === 'recording') stopAndSendRecording();
+              if ((recordState as string) === 'recording') stopAndSendRecording();
             }}
             delayLongPress={200}
           >
@@ -1056,16 +1056,16 @@ function ProfileCardBubble({
       .select('id, score, reputation_tier, badge_verified, lifetime_jobs, username, user:users(full_name, city)')
       .eq('id', message.shared_provider_id)
       .single()
-      .then(({ data }) => { if (data) setProv(data as ProviderSnap); });
+      .then(({ data }) => { if (data) setProv(data as unknown as ProviderSnap); });
   }, [message.shared_provider_id]);
-
-  const tierColor = prov
-    ? (TIER_META_COLORS[prov.reputation_tier] ?? '#94A3B8')
-    : '#94A3B8';
 
   const TIER_META_COLORS: Record<string, string> = {
     new: '#94A3B8', rising: '#60A5FA', trusted: '#34D399', expert: '#FBBF24', elite: '#F472B6',
   };
+
+  const tierColor = prov
+    ? (TIER_META_COLORS[prov.reputation_tier] ?? '#94A3B8')
+    : '#94A3B8';
   return (
     <View style={[pcStyles.card, isMine ? pcStyles.cardMine : pcStyles.cardTheirs]}>
       {/* Header */}

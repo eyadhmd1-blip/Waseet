@@ -119,7 +119,7 @@ function ShareSheet({
           p_provider_id: providerId,
           p_shared_by:   myId,
           p_channel:     channel,
-        }).catch(() => {});
+        }).then(() => {});
       }
 
       const msg = t('chat.recommendMsg', { name: providerName, link: deepLink });
@@ -229,7 +229,7 @@ export default function ProviderPublicProfile() {
       if (port) setPortfolio(port as PortfolioItem[]);
       setIsSaved(!!saved);
 
-      supabase.rpc('increment_profile_view', { p_provider_id: provider_id }).catch(() => {});
+      supabase.rpc('increment_profile_view', { p_provider_id: provider_id }).then(() => {});
 
       Animated.parallel([
         Animated.timing(headerOp, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),

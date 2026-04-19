@@ -48,7 +48,7 @@ async function uploadToStorage(
     : (ext === 'png' ? 'image/png' : 'image/jpeg');
 
   const fileName  = `${userId}/${Date.now()}_${suffix}.${ext}`;
-  const base64    = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+  const base64    = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
   const byteArray = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
 
   const { error } = await supabase.storage
