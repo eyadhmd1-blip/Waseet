@@ -69,7 +69,8 @@ export default function RequestDetail() {
 
   const load = useCallback(async () => {
     if (!id) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
     if (user) setMyId(user.id);
 
     const [{ data: reqData }, { data: bidsData }] = await Promise.all([

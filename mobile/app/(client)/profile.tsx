@@ -43,8 +43,9 @@ export default function ClientProfile() {
   const [saving, setSaving]       = useState(false);
 
   const load = useCallback(async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
+    if (!authUser) { setLoading(false); return; }
 
     const [{ data: profile }, { data: reqData }] = await Promise.all([
       supabase

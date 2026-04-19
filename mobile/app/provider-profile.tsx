@@ -194,7 +194,8 @@ export default function ProviderPublicProfile() {
   const load = useCallback(async () => {
     if (!provider_id) return;
 
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
     if (authUser) {
       setMyId(authUser.id);
       const { data: u } = await supabase.from('users').select('role').eq('id', authUser.id).single();

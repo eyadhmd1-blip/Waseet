@@ -265,8 +265,9 @@ export default function PortfolioScreen() {
   const fabPulse = useRef(new Animated.Value(1)).current;
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
+    if (!user) { setLoading(false); return; }
 
     const { data } = await supabase
       .from('portfolio_items')

@@ -100,8 +100,9 @@ export default function NotificationSettingsScreen() {
   ];
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
+    if (!user) { setLoading(false); return; }
 
     const { data } = await supabase
       .from('notification_preferences')
@@ -126,7 +127,8 @@ export default function NotificationSettingsScreen() {
 
   const loadHistory = useCallback(async () => {
     setHistLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
     if (!user) { setHistLoading(false); return; }
 
     const { data } = await supabase
@@ -148,7 +150,8 @@ export default function NotificationSettingsScreen() {
 
   const save = async () => {
     setSaving(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
     if (!user) { setSaving(false); return; }
 
     const { error } = await supabase

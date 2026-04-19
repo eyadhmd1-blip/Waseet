@@ -247,7 +247,8 @@ export default function UrgentRequestScreen() {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
       if (!user) return;
 
       const expiresAt = new Date(Date.now() + URGENT_MINUTES * 60 * 1000).toISOString();

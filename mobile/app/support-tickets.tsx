@@ -74,7 +74,8 @@ export default function SupportTicketsScreen() {
   };
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
     if (!user) { setLoading(false); return; }
 
     let q = supabase

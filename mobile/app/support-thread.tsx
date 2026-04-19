@@ -76,7 +76,8 @@ export default function SupportThreadScreen() {
   };
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
     if (user) currentUserIdRef.current = user.id;
 
     const [{ data: ticketData }, { data: msgs }] = await Promise.all([
@@ -122,8 +123,9 @@ export default function SupportThreadScreen() {
   // ── Send message ──────────────────────────────────────────────
   const handleSend = async () => {
     if (!body.trim() || sending) return;
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
+    if (!user) { setLoading(false); return; }
 
     setSending(true);
     const { error } = await supabase.from('support_messages').insert({

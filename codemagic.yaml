@@ -51,6 +51,15 @@ workflows:
       - name: Install dependencies
         script: npm ci --prefer-offline
 
+      - name: Write .env.local
+        script: |
+          cat > .env.local <<EOF
+          EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
+          EXPO_PUBLIC_PROJECT_ID=$EXPO_PUBLIC_PROJECT_ID
+          EOF
+          echo "✓ .env.local written"
+
       - name: Expo prebuild Android
         script: npx expo prebuild --clean --platform android --non-interactive
 
@@ -143,6 +152,15 @@ workflows:
     scripts:
       - name: Install dependencies
         script: npm ci --prefer-offline
+
+      - name: Write .env.local
+        script: |
+          cat > .env.local <<EOF
+          EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
+          EXPO_PUBLIC_PROJECT_ID=$EXPO_PUBLIC_PROJECT_ID
+          EOF
+          echo "✓ .env.local written"
 
       - name: Expo prebuild iOS
         script: npx expo prebuild --clean --platform ios --non-interactive
