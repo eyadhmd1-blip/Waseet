@@ -142,7 +142,16 @@ export default function ClientProfile() {
     );
   }
 
-  if (!user) return null;
+  if (!user) return (
+    <View style={styles.center}>
+      <Text style={{ color: colors.textSecondary, marginBottom: 16, fontSize: 15 }}>
+        {t('common.error')}
+      </Text>
+      <TouchableOpacity onPress={load} style={{ backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12 }}>
+        <Text style={{ color: '#fff', fontWeight: '700' }}>{t('common.retry') ?? 'إعادة المحاولة'}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   const memberSince = new Date(user.created_at).toLocaleDateString(lang === 'ar' ? 'ar-JO' : 'en-GB', {
     month: 'long', year: 'numeric',
