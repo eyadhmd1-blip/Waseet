@@ -5,25 +5,32 @@ import { logAudit } from '../lib/audit';
 import { revalidatePath } from 'next/cache';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
-const EXPO_PUSH_BATCH = 100; // Expo recommends max 100 per request
+const EXPO_PUSH_BATCH = 100;
 
 async function sendExpoPush(
   title: string,
   body:  string,
   userIds: string[],
-): Promise<number> {
-  if (userIds.length === 0) return 0;
+): Promise<{ tokenCount: number; expoErrors: string[] }> {
+  if (userIds.length === 0) return { tokenCount: 0, expoErrors: [] };
 
-  // Fetch all push tokens for these users
-  const { data: rows } = await supabaseAdmin
+  const { data: rows, error: dbErr } = await supabaseAdmin
     .from('push_tokens')
     .select('token')
     .in('user_id', userIds);
 
-  const tokens = (rows ?? []).map((r: any) => r.token as string).filter(Boolean);
-  if (tokens.length === 0) return 0;
+  if (dbErr) {
+    console.error('[push] DB error fetching tokens:', dbErr.message);
+    return { tokenCount: 0, expoErrors: [dbErr.message] };
+  }
 
-  // Send in batches of 100
+  const tokens = (rows ?? []).map((r: any) => r.token as string).filter(Boolean);
+  console.log(`[push] Found ${tokens.length} tokens for ${userIds.length} users`);
+
+  if (tokens.length === 0) return { tokenCount: 0, expoErrors: [] };
+
+  const expoErrors: string[] = [];
+
   for (let i = 0; i < tokens.length; i += EXPO_PUSH_BATCH) {
     const batch = tokens.slice(i, i + EXPO_PUSH_BATCH).map(token => ({
       to:    token,
@@ -33,14 +40,25 @@ async function sendExpoPush(
       data:  { type: 'admin_broadcast' },
     }));
 
-    await fetch(EXPO_PUSH_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body:    JSON.stringify(batch),
-    });
+    try {
+      const res  = await fetch(EXPO_PUSH_URL, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body:    JSON.stringify(batch),
+      });
+      const json = await res.json() as { data?: { status: string; message?: string }[] };
+      const batchErrors = (json.data ?? [])
+        .filter(r => r.status === 'error')
+        .map(r => r.message ?? 'unknown error');
+      expoErrors.push(...batchErrors);
+      console.log(`[push] Expo batch ${i / EXPO_PUSH_BATCH + 1}: sent ${batch.length}, errors: ${batchErrors.length}`);
+    } catch (err: any) {
+      console.error('[push] Expo fetch error:', err?.message);
+      expoErrors.push(err?.message ?? 'fetch failed');
+    }
   }
 
-  return tokens.length;
+  return { tokenCount: tokens.length, expoErrors };
 }
 
 export async function sendBroadcast(params: {
@@ -59,46 +77,33 @@ export async function sendBroadcast(params: {
       .select('user_id')
       .eq('is_subscribed', true)
       .eq('is_active', true);
-
     ids = (subProviders ?? []).map((p: any) => p.user_id);
   } else {
     let query = supabaseAdmin.from('users').select('id');
-
-    if (segment === 'clients') {
-      query = query.eq('role', 'client');
-    } else if (segment === 'providers') {
-      query = query.eq('role', 'provider');
-    }
-
-    if (city) {
-      query = query.eq('city', city);
-    }
-
+    if (segment === 'clients')   query = query.eq('role', 'client');
+    if (segment === 'providers') query = query.eq('role', 'provider');
+    if (city)                    query = query.eq('city', city);
     const { data: users } = await query;
     ids = (users ?? []).map((u: any) => u.id);
   }
 
-  if (ids.length === 0) return { sent: 0 };
+  console.log(`[broadcast] segment=${segment} users=${ids.length}`);
+  if (ids.length === 0) return { sent: 0, tokens: 0, errors: [] };
 
   // 1. Insert in-app notifications
-  const rows = ids.map((uid: string) => ({
-    user_id: uid,
-    title,
-    body,
-    type: 'admin_broadcast',
-  }));
+  const rows = ids.map((uid: string) => ({ user_id: uid, title, body, type: 'admin_broadcast' }));
   await supabaseAdmin.from('notifications').insert(rows);
 
-  // 2. Send device push notifications via Expo
-  await sendExpoPush(title, body, ids);
+  // 2. Send device push notifications
+  const { tokenCount, expoErrors } = await sendExpoPush(title, body, ids);
 
   await logAudit({
     action:       'broadcast_notification',
     target_type:  'system',
     target_label: title,
-    metadata:     { segment, city: city ?? null, sent: ids.length },
+    metadata:     { segment, city: city ?? null, users: ids.length, tokens: tokenCount, errors: expoErrors.length },
   });
 
   revalidatePath('/notifications');
-  return { sent: ids.length };
+  return { sent: ids.length, tokens: tokenCount, errors: expoErrors };
 }
