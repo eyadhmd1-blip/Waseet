@@ -1,6 +1,6 @@
 import 'intl-pluralrules';   // polyfill — must be first import
 import { useEffect, useState, useRef } from 'react';
-import { Platform, View, Text } from 'react-native';
+import { Platform, View, Text, StatusBar } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
@@ -69,7 +69,7 @@ function RootLayoutInner() {
   // appKey increments when language changes, remounting the entire navigator
   const [appKey, setAppKey]     = useState(0);
   const { isOnline }            = useNetworkStatus();
-  const { colors }              = useTheme();
+  const { colors, isDark }      = useTheme();
 
   const router   = useRouter();
   const segments = useSegments();
@@ -217,6 +217,10 @@ function RootLayoutInner() {
   return (
     <SafeAreaProvider>
     <I18nextProvider i18n={i18nInstance}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.bg}
+      />
       {!isOnline && (
         <View style={[offlineBanner, { backgroundColor: colors.errorBg }]}>
           <Text style={{ color: colors.errorSoft, fontSize: 13, fontWeight: '600' }}>

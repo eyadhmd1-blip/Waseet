@@ -367,6 +367,7 @@
     "inProgress": "In Progress",
     "completed": "Completed",
     "language": "Language",
+    "theme": "Theme",
     "arabic": "العربية",
     "english": "English",
     "langChangeTitle": "Language Changed",

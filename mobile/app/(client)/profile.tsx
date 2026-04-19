@@ -26,7 +26,7 @@ type Stats = {
 // ─── Component ────────────────────────────────────────────────
 
 export default function ClientProfile() {
-  const { colors } = useTheme();
+  const { colors, theme, setTheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { contentPad } = useInsets();
   const router = useRouter();
@@ -255,6 +255,29 @@ export default function ClientProfile() {
         <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.language')}</Text>
         <Text style={styles.notifBtnBadge}>{lang === 'ar' ? t('profile.arabic') : t('profile.english')}</Text>
       </TouchableOpacity>
+
+      {/* ── Theme picker ── */}
+      <View style={styles.notifBtn}>
+        <Text style={styles.notifBtnIcon}>🎨</Text>
+        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.theme')}</Text>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          {(['dark', 'light', 'system'] as const).map(opt => (
+            <TouchableOpacity
+              key={opt}
+              onPress={() => setTheme(opt)}
+              style={{
+                paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+                backgroundColor: theme === opt ? colors.accent : colors.surface,
+                borderWidth: 1, borderColor: theme === opt ? colors.accent : colors.border,
+              }}
+            >
+              <Text style={{ fontSize: 12, color: theme === opt ? colors.bg : colors.textSecondary, fontWeight: '600' }}>
+                {opt === 'dark' ? 'داكن' : opt === 'light' ? 'فاتح' : 'تلقائي'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
       {/* ── Recurring contracts ── */}
       <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/recurring-request')}>

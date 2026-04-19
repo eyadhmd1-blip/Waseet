@@ -75,8 +75,8 @@ const PLAN_FEATURE_KEYS: Record<string, { key: string; included: boolean }[]> = 
 
 // ─── Animated check icon ─────────────────────────────────────
 function CheckIcon({ included }: { included: boolean }) {
-  const featureStyles = useMemo(() => createFeatureStyles(colors), [colors]);
   const { colors } = useTheme();
+  const featureStyles = useMemo(() => createFeatureStyles(colors), [colors]);
   return (
     <View style={[
       featureStyles.check,
