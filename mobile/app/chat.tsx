@@ -92,33 +92,37 @@ export default function ChatScreen() {
   // ── Load ─────────────────────────────────────────────────────
 
   const load = useCallback(async () => {
-    if (!job_id) return;
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setLoading(false); return; }
-    setMyId(user.id);
+    try {
+      if (!job_id) return;
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setLoading(false); return; }
+      setMyId(user.id);
 
-    const [{ data: jobData }, { data: msgData }] = await Promise.all([
-      supabase
-        .from('jobs')
-        .select(`
-          id, status, client_id, client_rating,
-          request:requests(title),
-          client:users!jobs_client_id_fkey(full_name),
-          provider:providers!jobs_provider_id_fkey(user:users(full_name))
-        `)
-        .eq('id', job_id)
-        .single(),
-      supabase
-        .from('messages')
-        .select('*')
-        .eq('job_id', job_id)
-        .order('created_at', { ascending: true }),
-    ]);
+      const [{ data: jobData }, { data: msgData }] = await Promise.all([
+        supabase
+          .from('jobs')
+          .select(`
+            id, status, client_id, client_rating,
+            request:requests(title),
+            client:users!jobs_client_id_fkey(full_name),
+            provider:providers!jobs_provider_id_fkey(user:users(full_name))
+          `)
+          .eq('id', job_id)
+          .single(),
+        supabase
+          .from('messages')
+          .select('*')
+          .eq('job_id', job_id)
+          .order('created_at', { ascending: true }),
+      ]);
 
-    if (jobData) setJob(jobData as unknown as JobMeta);
-    if (msgData) setMessages(msgData as Message[]);
-    setLoading(false);
+      if (jobData) setJob(jobData as unknown as JobMeta);
+      if (msgData) setMessages(msgData as Message[]);
+  
+    } finally {
+      setLoading(false);
+    }
   }, [job_id]);
 
   useEffect(() => { load(); }, [load]);

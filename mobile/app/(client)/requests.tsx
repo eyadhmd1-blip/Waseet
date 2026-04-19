@@ -48,21 +48,25 @@ export default function ClientRequests() {
   };
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setLoading(false); return; }
 
-    let query = supabase
-      .from('requests')
-      .select('*, category:service_categories(name_ar, name_en, icon), bids_count:bids(count)')
-      .eq('client_id', user.id)
-      .order('created_at', { ascending: false });
+      let query = supabase
+        .from('requests')
+        .select('*, category:service_categories(name_ar, name_en, icon), bids_count:bids(count)')
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (filter !== 'all') query = query.eq('status', filter);
+      if (filter !== 'all') query = query.eq('status', filter);
 
-    const { data } = await query;
-    if (data) setRequests(data);
-    setLoading(false);
+      const { data } = await query;
+      if (data) setRequests(data);
+  
+    } finally {
+      setLoading(false);
+    }
   }, [filter]);
 
   useEffect(() => { load(); }, [load]);

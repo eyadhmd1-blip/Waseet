@@ -192,50 +192,54 @@ export default function ProviderPublicProfile() {
   const bodyOp   = useRef(new Animated.Value(0)).current;
 
   const load = useCallback(async () => {
-    if (!provider_id) return;
+    try {
+      if (!provider_id) return;
 
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const authUser = _ses?.user;
-    if (authUser) {
-      setMyId(authUser.id);
-      const { data: u } = await supabase.from('users').select('role').eq('id', authUser.id).single();
-      setMyRole(u?.role ?? null);
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const authUser = _ses?.user;
+      if (authUser) {
+        setMyId(authUser.id);
+        const { data: u } = await supabase.from('users').select('role').eq('id', authUser.id).single();
+        setMyRole(u?.role ?? null);
+      }
+
+      const [{ data: prov }, { data: port }, { data: saved }] = await Promise.all([
+        supabase
+          .from('providers')
+          .select('*, user:users(*)')
+          .eq('id', provider_id)
+          .single(),
+        supabase
+          .from('portfolio_items')
+          .select('*')
+          .eq('provider_id', provider_id)
+          .order('created_at', { ascending: false })
+          .limit(12),
+        authUser
+          ? supabase
+              .from('saved_providers')
+              .select('id')
+              .eq('client_id', authUser.id)
+              .eq('provider_id', provider_id)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      if (prov) setProvider(prov as Provider & { user: User });
+      if (port) setPortfolio(port as PortfolioItem[]);
+      setIsSaved(!!saved);
+
+      supabase.rpc('increment_profile_view', { p_provider_id: provider_id }).catch(() => {});
+
+      Animated.parallel([
+        Animated.timing(headerOp, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),
+        Animated.timing(headerY,  { toValue: 0, duration: 500, delay: 100, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(bodyOp,   { toValue: 1, duration: 500, delay: 280, useNativeDriver: true }),
+      ]).start();
+  
+    } finally {
+      setLoading(false);
     }
-
-    const [{ data: prov }, { data: port }, { data: saved }] = await Promise.all([
-      supabase
-        .from('providers')
-        .select('*, user:users(*)')
-        .eq('id', provider_id)
-        .single(),
-      supabase
-        .from('portfolio_items')
-        .select('*')
-        .eq('provider_id', provider_id)
-        .order('created_at', { ascending: false })
-        .limit(12),
-      authUser
-        ? supabase
-            .from('saved_providers')
-            .select('id')
-            .eq('client_id', authUser.id)
-            .eq('provider_id', provider_id)
-            .maybeSingle()
-        : Promise.resolve({ data: null }),
-    ]);
-
-    if (prov) setProvider(prov as Provider & { user: User });
-    if (port) setPortfolio(port as PortfolioItem[]);
-    setIsSaved(!!saved);
-    setLoading(false);
-
-    supabase.rpc('increment_profile_view', { p_provider_id: provider_id }).catch(() => {});
-
-    Animated.parallel([
-      Animated.timing(headerOp, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),
-      Animated.timing(headerY,  { toValue: 0, duration: 500, delay: 100, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(bodyOp,   { toValue: 1, duration: 500, delay: 280, useNativeDriver: true }),
-    ]).start();
   }, [provider_id]);
 
   useEffect(() => { load(); }, [load]);

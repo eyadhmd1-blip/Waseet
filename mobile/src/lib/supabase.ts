@@ -2,8 +2,12 @@ import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseUrl =
+  process.env.EXPO_PUBLIC_SUPABASE_URL ??
+  'https://bkbjsstxhvdnqcmpuulf.supabase.co';
+const supabaseAnonKey =
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ??
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrYmpzc3R4aHZkbnFjbXB1dWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMjY3ODcsImV4cCI6MjA5MTgwMjc4N30.-B_KTG1LYlKBlNCWjQhLKYfkp5lXN4xhIm1oMYhHsE4';
 
 // expo-secure-store v14+ enforces a 2048-byte value limit on iOS.
 // Supabase session JSON (access_token + refresh_token + user metadata) routinely

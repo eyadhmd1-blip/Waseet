@@ -74,21 +74,25 @@ export default function SupportTicketsScreen() {
   };
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setLoading(false); return; }
 
-    let q = supabase
-      .from('support_tickets')
-      .select('id, category, priority, status, subject, rating, opened_at, resolved_at')
-      .eq('user_id', user.id)
-      .order('opened_at', { ascending: false });
+      let q = supabase
+        .from('support_tickets')
+        .select('id, category, priority, status, subject, rating, opened_at, resolved_at')
+        .eq('user_id', user.id)
+        .order('opened_at', { ascending: false });
 
-    if (filter !== 'all') q = q.eq('status', filter);
+      if (filter !== 'all') q = q.eq('status', filter);
 
-    const { data } = await q.limit(50);
-    if (data) setTickets(data as Ticket[]);
-    setLoading(false);
+      const { data } = await q.limit(50);
+      if (data) setTickets(data as Ticket[]);
+  
+    } finally {
+      setLoading(false);
+    }
   }, [filter]);
 
   useEffect(() => { load(); }, [load]);

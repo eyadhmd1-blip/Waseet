@@ -68,34 +68,38 @@ export default function RequestDetail() {
   const [submittingReport, setSubmittingReport] = useState(false);
 
   const load = useCallback(async () => {
-    if (!id) return;
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (user) setMyId(user.id);
+    try {
+      if (!id) return;
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (user) setMyId(user.id);
 
-    const [{ data: reqData }, { data: bidsData }] = await Promise.all([
-      supabase
-        .from('requests')
-        .select('*, category:service_categories(name_ar, name_en, icon)')
-        .eq('id', id)
-        .single(),
-      supabase
-        .from('bids')
-        .select(`
-          *,
-          provider:providers(
-            id, score, reputation_tier, badge_verified, lifetime_jobs, is_available,
-            user:users(full_name, city)
-          )
-        `)
-        .eq('request_id', id)
-        .order('amount', { ascending: true })
-        .limit(20),
-    ]);
+      const [{ data: reqData }, { data: bidsData }] = await Promise.all([
+        supabase
+          .from('requests')
+          .select('*, category:service_categories(name_ar, name_en, icon)')
+          .eq('id', id)
+          .single(),
+        supabase
+          .from('bids')
+          .select(`
+            *,
+            provider:providers(
+              id, score, reputation_tier, badge_verified, lifetime_jobs, is_available,
+              user:users(full_name, city)
+            )
+          `)
+          .eq('request_id', id)
+          .order('amount', { ascending: true })
+          .limit(20),
+      ]);
 
-    if (reqData)  setRequest(reqData);
-    if (bidsData) setBids((bidsData as BidWithProvider[]).filter(b => b.provider?.is_available !== false));
-    setLoading(false);
+      if (reqData)  setRequest(reqData);
+      if (bidsData) setBids((bidsData as BidWithProvider[]).filter(b => b.provider?.is_available !== false));
+  
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
