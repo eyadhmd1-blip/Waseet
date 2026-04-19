@@ -621,7 +621,8 @@ function createStyles(colors: AppColors) {
   reportSubmitBtn:     { flex: 1, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   reportSubmitDisabled:{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   reportSubmitText:    { fontSize: 14, fontWeight: '700', color: '#FFF' },
-});
+  });
+}
 
 function createBidStyles(colors: AppColors) {
   return StyleSheet.create({
@@ -648,5 +649,4 @@ function createBidStyles(colors: AppColors) {
   acceptBtn:    { flex: 1, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
   acceptBtnText:{ fontSize: 14, fontWeight: '700', color: colors.bg },
   });
-}
 }

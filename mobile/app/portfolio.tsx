@@ -32,10 +32,10 @@ const GROUP_COLORS: Record<string, string> = {
   car_services: '#EF4444',
 };
 
-const getCatColor = (slug?: string) => {
-  if (!slug) return colors.textMuted;
+const getCatColor = (slug?: string, fallback = '#94A3B8') => {
+  if (!slug) return fallback;
   const cat = ALL_CATEGORIES.find(c => c.slug === slug);
-  return GROUP_COLORS[cat?.group_slug ?? ''] ?? colors.textMuted;
+  return GROUP_COLORS[cat?.group_slug ?? ''] ?? fallback;
 };
 
 const getCatName = (slug?: string, lang?: string) => {
@@ -153,7 +153,7 @@ function PortfolioCard({
   }, []);
 
   const thumb    = item.media_urls[0];
-  const catColor = getCatColor(item.category_slug);
+  const catColor = getCatColor(item.category_slug, colors.textMuted);
   const catName  = getCatName(item.category_slug, lang);
 
   const typeIcon: Record<string, string> = {
@@ -249,8 +249,9 @@ type LightboxState =
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function PortfolioScreen() {
-  const st = useMemo(() => createSt(colors), [colors]);
   const { colors } = useTheme();
+  const st = useMemo(() => createSt(colors), [colors]);
+  const baStyles = useMemo(() => createBaStyles(colors), [colors]);
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();

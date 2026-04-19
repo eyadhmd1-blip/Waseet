@@ -124,8 +124,8 @@ function createUbSt(colors: AppColors) {
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function PortfolioAddScreen() {
-  const st = useMemo(() => createSt(colors), [colors]);
   const { colors } = useTheme();
+  const st = useMemo(() => createSt(colors), [colors]);
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();

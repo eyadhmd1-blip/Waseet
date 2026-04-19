@@ -31,7 +31,7 @@ const TYPE_ICON: Record<string, string> = {
 };
 
 export default function ProviderProfile() {
-  const { colors } = useTheme();
+  const { colors, theme, setTheme } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
@@ -483,6 +483,29 @@ export default function ProviderProfile() {
         <Text style={styles.notifBtnIcon}>🌐</Text>
         <Text style={styles.notifBtnText}>{t('profile.language')}</Text>
       </TouchableOpacity>
+
+      {/* ── Theme picker ── */}
+      <View style={styles.notifBtn}>
+        <Text style={styles.notifBtnIcon}>🎨</Text>
+        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.theme')}</Text>
+        <View style={{ flexDirection: 'row', gap: 6 }}>
+          {(['dark', 'light', 'system'] as const).map(opt => (
+            <TouchableOpacity
+              key={opt}
+              onPress={() => setTheme(opt)}
+              style={{
+                paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+                backgroundColor: theme === opt ? colors.accent : colors.surface,
+                borderWidth: 1, borderColor: theme === opt ? colors.accent : colors.border,
+              }}
+            >
+              <Text style={{ fontSize: 12, color: theme === opt ? colors.bg : colors.textSecondary, fontWeight: '600' }}>
+                {opt === 'dark' ? 'داكن' : opt === 'light' ? 'فاتح' : 'تلقائي'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
       {/* ── Share public profile ── */}
       <TouchableOpacity

@@ -61,8 +61,8 @@ const QUIET_END_OPTIONS   = [6, 7, 8, 9];
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function NotificationSettingsScreen() {
-  const st = useMemo(() => createSt(colors), [colors]);
   const { colors } = useTheme();
+  const st = useMemo(() => createSt(colors), [colors]);
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
@@ -435,8 +435,8 @@ function NotifToggle({
   value: boolean; onChange: (v: boolean) => void; disabled: boolean;
   ta: 'left' | 'right';
 }) {
-  const toggleSt = useMemo(() => createToggleSt(colors), [colors]);
   const { colors } = useTheme();
+  const toggleSt = useMemo(() => createToggleSt(colors), [colors]);
   return (
     <View style={[toggleSt.row, {}]}>
       <Text style={toggleSt.icon}>{icon}</Text>
