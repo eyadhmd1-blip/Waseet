@@ -1113,7 +1113,7 @@ export default function ProviderFeed() {
         <View style={{ alignItems: alignEnd(isRTL), gap: 8 }}>
           {/* Live feed indicator */}
           <View style={[styles.liveRow, { flexDirection: flexRow(isRTL) }]}>
-            <Text style={[styles.liveText, me(4, isRTL)]}>
+            <Text style={[styles.liveText, me(4, isRTL) as any]}>
               {t('providerFeed.live')}
             </Text>
             <LiveDot />

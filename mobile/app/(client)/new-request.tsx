@@ -140,7 +140,7 @@ export default function NewRequestScreen() {
     }
 
     if (notifId) {
-      supabase.rpc('mark_notification_converted', { notif_id: notifId }).catch(() => {});
+      supabase.rpc('mark_notification_converted', { notif_id: notifId }).then(() => {});
     }
 
     Alert.alert(t('newRequest.successDone'), t('newRequest.successTitle'), [
