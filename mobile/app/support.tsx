@@ -3,17 +3,18 @@
 // Entry point: FAQ accordion + quick ticket actions + stats
 // ============================================================
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 interface FaqItem {
   id: string;
@@ -34,6 +35,9 @@ export default function SupportScreen() {
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [faq,       setFaq]       = useState<FaqItem[]>([]);
   const [summary,   setSummary]   = useState<TicketSummary>({ open: 0, in_review: 0, total: 0 });
@@ -71,7 +75,7 @@ export default function SupportScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -186,45 +190,47 @@ export default function SupportScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText: { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+    topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+    backBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    backText: { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    topTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
 
-  content: { padding: 16, paddingBottom: 48 },
+    content: { padding: 16, paddingBottom: 48 },
 
-  hero:      { alignItems: 'center', paddingVertical: 24 },
-  heroIcon:  { fontSize: 48, marginBottom: 10 },
-  heroTitle: { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
-  heroSub:   { fontSize: 14, color: COLORS.textMuted },
+    hero:      { alignItems: 'center', paddingVertical: 24 },
+    heroIcon:  { fontSize: 48, marginBottom: 10 },
+    heroTitle: { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+    heroSub:   { fontSize: 14, color: colors.textMuted },
 
-  actionsRow:      { flexDirection: 'row', gap: 12, marginBottom: 16 },
-  actionCard:      { flex: 1, backgroundColor: COLORS.surface, borderRadius: 16, padding: 18, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 8 },
-  actionIcon:      { fontSize: 28 },
-  actionLabel:     { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
-  actionBadge:     { position: 'absolute', top: 8, left: 8, backgroundColor: COLORS.accent, borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
-  actionBadgeText: { fontSize: 11, fontWeight: '700', color: COLORS.bg },
+    actionsRow:      { flexDirection: 'row', gap: 12, marginBottom: 16 },
+    actionCard:      { flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 18, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 8 },
+    actionIcon:      { fontSize: 28 },
+    actionLabel:     { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+    actionBadge:     { position: 'absolute', top: 8, left: 8, backgroundColor: colors.accent, borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+    actionBadgeText: { fontSize: 11, fontWeight: '700', color: colors.bg },
 
-  summaryBar:     { flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border },
-  summaryItem:    { flex: 1, alignItems: 'center' },
-  summaryVal:     { fontSize: 22, fontWeight: '700', color: '#38BDF8' },
-  summaryLbl:     { fontSize: 11, color: COLORS.textMuted, marginTop: 3 },
-  summaryDivider: { width: 1, backgroundColor: COLORS.border },
+    summaryBar:     { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: colors.border },
+    summaryItem:    { flex: 1, alignItems: 'center' },
+    summaryVal:     { fontSize: 22, fontWeight: '700', color: '#38BDF8' },
+    summaryLbl:     { fontSize: 11, color: colors.textMuted, marginTop: 3 },
+    summaryDivider: { width: 1, backgroundColor: colors.border },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10 },
+    sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
 
-  faqItem:   { backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
-  faqHeader: { alignItems: 'center', gap: 10 },
-  faqArrow:  { fontSize: 10, color: COLORS.textMuted, width: 14 },
-  faqQ:      { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, lineHeight: 20 },
-  faqA:      { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: COLORS.border },
+    faqItem:   { backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
+    faqHeader: { alignItems: 'center', gap: 10 },
+    faqArrow:  { fontSize: 10, color: colors.textMuted, width: 14 },
+    faqQ:      { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20 },
+    faqA:      { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
 
-  contactNote:      { backgroundColor: COLORS.accentDim, borderRadius: 14, padding: 16, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
-  contactNoteText:  { fontSize: 13, color: '#FCD34D', lineHeight: 20, marginBottom: 14 },
-  openTicketBtn:    { backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
-  openTicketBtnText:{ fontSize: 14, fontWeight: '700', color: COLORS.bg },
-});
+    contactNote:      { backgroundColor: colors.accentDim, borderRadius: 14, padding: 16, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
+    contactNoteText:  { fontSize: 13, color: '#FCD34D', lineHeight: 20, marginBottom: 14 },
+    openTicketBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
+    openTicketBtnText:{ fontSize: 14, fontWeight: '700', color: colors.bg },
+  });
+}

@@ -3,17 +3,18 @@
 // List of user's tickets, filterable by status
 // ============================================================
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 interface Ticket {
   id: string;
@@ -44,6 +45,9 @@ export default function SupportTicketsScreen() {
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [tickets,    setTickets]  = useState<Ticket[]>([]);
   const [loading,    setLoading]  = useState(true);
@@ -160,7 +164,7 @@ export default function SupportTicketsScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={COLORS.accent} />
+          <ActivityIndicator color={colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -170,7 +174,7 @@ export default function SupportTicketsScreen() {
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
@@ -190,39 +194,41 @@ export default function SupportTicketsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText: { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  newBtn:   { fontSize: 14, fontWeight: '700', color: COLORS.accent },
+    topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+    backBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    backText: { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    topTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+    newBtn:   { fontSize: 14, fontWeight: '700', color: colors.accent },
 
-  filterRow:      { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 10, gap: 8, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  chip:           { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: COLORS.border },
-  chipActive:     { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  chipText:       { fontSize: 13, color: COLORS.textMuted, fontWeight: '600' },
-  chipTextActive: { color: COLORS.accent },
+    filterRow:      { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 10, gap: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
+    chip:           { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
+    chipActive:     { borderColor: colors.accent, backgroundColor: colors.accentDim },
+    chipText:       { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
+    chipTextActive: { color: colors.accent },
 
-  list: { padding: 16, paddingBottom: 48 },
+    list: { padding: 16, paddingBottom: 48 },
 
-  ticketCard:      { backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border },
-  ticketHead:      { justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  statusBadge:     { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 },
-  statusText:      { fontSize: 12, fontWeight: '700' },
-  ticketMeta:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  ticketDate:      { fontSize: 11, color: COLORS.textMuted },
-  ticketCat:       { fontSize: 16 },
-  ticketSubj:      { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, lineHeight: 20 },
-  ticketRating:    { fontSize: 14, marginTop: 6 },
-  urgentPill:      { alignSelf: 'flex-start', marginTop: 6, backgroundColor: 'rgba(239,68,68,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  urgentPillText:  { fontSize: 11, color: '#F87171', fontWeight: '700' },
+    ticketCard:      { backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border },
+    ticketHead:      { justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    statusBadge:     { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 },
+    statusText:      { fontSize: 12, fontWeight: '700' },
+    ticketMeta:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    ticketDate:      { fontSize: 11, color: colors.textMuted },
+    ticketCat:       { fontSize: 16 },
+    ticketSubj:      { fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20 },
+    ticketRating:    { fontSize: 14, marginTop: 6 },
+    urgentPill:      { alignSelf: 'flex-start', marginTop: 6, backgroundColor: 'rgba(239,68,68,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+    urgentPillText:  { fontSize: 11, color: '#F87171', fontWeight: '700' },
 
-  empty:       { alignItems: 'center', paddingTop: HEADER_PAD },
-  emptyIcon:   { fontSize: 48, marginBottom: 12 },
-  emptyText:   { fontSize: 16, color: COLORS.textMuted, marginBottom: 20 },
-  emptyBtn:    { backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24 },
-  emptyBtnText:{ fontSize: 14, fontWeight: '700', color: COLORS.bg },
-});
+    empty:       { alignItems: 'center', paddingTop: HEADER_PAD },
+    emptyIcon:   { fontSize: 48, marginBottom: 12 },
+    emptyText:   { fontSize: 16, color: colors.textMuted, marginBottom: 20 },
+    emptyBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24 },
+    emptyBtnText:{ fontSize: 14, fontWeight: '700', color: colors.bg },
+  });
+}

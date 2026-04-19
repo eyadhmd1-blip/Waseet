@@ -1,14 +1,15 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Switch, ActivityIndicator, Alert, Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS }   from '../src/constants/theme';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -60,6 +61,8 @@ const QUIET_END_OPTIONS   = [6, 7, 8, 9];
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function NotificationSettingsScreen() {
+  const st = useMemo(() => createSt(colors), [colors]);
+  const { colors } = useTheme();
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
@@ -168,7 +171,7 @@ export default function NotificationSettingsScreen() {
   if (loading) {
     return (
       <View style={st.center}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -224,8 +227,8 @@ export default function NotificationSettingsScreen() {
             <Switch
               value={prefs.enabled}
               onValueChange={v => patch('enabled', v)}
-              trackColor={{ false: COLORS.border, true: COLORS.accent + '88' }}
-              thumbColor={prefs.enabled ? COLORS.accent : COLORS.textMuted}
+              trackColor={{ false: colors.border, true: colors.accent + '88' }}
+              thumbColor={prefs.enabled ? colors.accent : colors.textMuted}
             />
           </View>
 
@@ -290,7 +293,7 @@ export default function NotificationSettingsScreen() {
                 ]}>
                   {prefs.max_per_week === opt.value && <View style={st.radioDot} />}
                 </View>
-                <Text style={[st.radioLabel, !prefs.enabled && { color: COLORS.textMuted }, { textAlign: ta }]}>
+                <Text style={[st.radioLabel, !prefs.enabled && { color: colors.textMuted }, { textAlign: ta }]}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -368,7 +371,7 @@ export default function NotificationSettingsScreen() {
             disabled={saving}
           >
             {saving
-              ? <ActivityIndicator color={COLORS.bg} size="small" />
+              ? <ActivityIndicator color={colors.bg} size="small" />
               : <Text style={st.saveBtnText}>{t('notifSettings.saveBtn')}</Text>
             }
           </TouchableOpacity>
@@ -381,7 +384,7 @@ export default function NotificationSettingsScreen() {
         >
           {histLoading ? (
             <View style={st.center}>
-              <ActivityIndicator color={COLORS.accent} />
+              <ActivityIndicator color={colors.accent} />
             </View>
           ) : history.length === 0 ? (
             <View style={st.emptyHistory}>
@@ -432,108 +435,115 @@ function NotifToggle({
   value: boolean; onChange: (v: boolean) => void; disabled: boolean;
   ta: 'left' | 'right';
 }) {
+  const toggleSt = useMemo(() => createToggleSt(colors), [colors]);
+  const { colors } = useTheme();
   return (
     <View style={[toggleSt.row, {}]}>
       <Text style={toggleSt.icon}>{icon}</Text>
       <View style={toggleSt.info}>
-        <Text style={[toggleSt.title, disabled && { color: COLORS.textMuted }, { textAlign: ta }]}>{title}</Text>
+        <Text style={[toggleSt.title, disabled && { color: colors.textMuted }, { textAlign: ta }]}>{title}</Text>
         <Text style={[toggleSt.sub, { textAlign: ta }]}>{sub}</Text>
       </View>
       <Switch
         value={value && !disabled}
         onValueChange={onChange}
         disabled={disabled}
-        trackColor={{ false: COLORS.border, true: COLORS.accent + '88' }}
-        thumbColor={value && !disabled ? COLORS.accent : COLORS.textMuted}
+        trackColor={{ false: colors.border, true: colors.accent + '88' }}
+        thumbColor={value && !disabled ? colors.accent : colors.textMuted}
       />
     </View>
   );
 }
 
-const toggleSt = StyleSheet.create({
+function createToggleSt(colors: AppColors) {
+  return StyleSheet.create({
   row:   { alignItems: 'center', paddingVertical: 12, gap: 12 },
   icon:  { fontSize: 22, width: 32, textAlign: 'center' },
   info:  { flex: 1 },
-  title: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 2 },
-  sub:   { fontSize: 11, color: COLORS.textMuted, lineHeight: 16 },
-});
+  title: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
+  sub:   { fontSize: 11, color: colors.textMuted, lineHeight: 16 },
+  });
+}
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: COLORS.border, marginHorizontal: -16 }} />;
+  const { colors } = useTheme();
+  return <View style={{ height: 1, backgroundColor: colors.border, marginHorizontal: -16 }} />;
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const st = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createSt(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll:    { padding: 16, paddingBottom: 48 },
 
-  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
   backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backIcon:    { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center' },
+  backIcon:    { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
 
-  tabs:          { flexDirection: 'row', margin: 16, backgroundColor: COLORS.surface, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: COLORS.border },
+  tabs:          { flexDirection: 'row', margin: 16, backgroundColor: colors.surface, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: colors.border },
   tab:           { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10 },
-  tabActive:     { backgroundColor: COLORS.bg },
-  tabText:       { fontSize: 13, color: COLORS.textMuted, fontWeight: '600' },
-  tabTextActive: { color: COLORS.textPrimary },
+  tabActive:     { backgroundColor: colors.bg },
+  tabText:       { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
+  tabTextActive: { color: colors.textPrimary },
 
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textMuted, marginBottom: 8, marginTop: 16 },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 8, marginTop: 16 },
 
-  card:         { backgroundColor: COLORS.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: COLORS.border },
+  card:         { backgroundColor: colors.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.border },
   cardDisabled: { opacity: 0.5 },
 
-  masterCard:  { backgroundColor: COLORS.surface, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  masterCard:  { backgroundColor: colors.surface, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   masterLeft:  { alignItems: 'center', gap: 14 },
   masterIcon:  { fontSize: 28 },
-  masterTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 2 },
-  masterSub:   { fontSize: 12, color: COLORS.textMuted },
+  masterTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
+  masterSub:   { fontSize: 12, color: colors.textMuted },
 
   radioRow:          { alignItems: 'center', gap: 12, paddingVertical: 12 },
-  radioCircle:       { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  radioCircleActive: { borderColor: COLORS.accent },
-  radioDot:          { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.accent },
-  radioLabel:        { flex: 1, fontSize: 14, color: COLORS.textPrimary },
+  radioCircle:       { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  radioCircleActive: { borderColor: colors.accent },
+  radioDot:          { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
+  radioLabel:        { flex: 1, fontSize: 14, color: colors.textPrimary },
 
-  quietDesc:           { fontSize: 12, color: COLORS.textMuted, marginBottom: 14 },
+  quietDesc:           { fontSize: 12, color: colors.textMuted, marginBottom: 14 },
   quietRow:            { alignItems: 'flex-start', gap: 8 },
   quietCol:            { flex: 1 },
-  quietLabel:          { fontSize: 11, color: COLORS.textMuted, textAlign: 'center', marginBottom: 8 },
+  quietLabel:          { fontSize: 11, color: colors.textMuted, textAlign: 'center', marginBottom: 8 },
   quietChips:          { gap: 6 },
-  quietChip:           { backgroundColor: COLORS.bg, borderRadius: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, marginBottom: 4 },
-  quietChipActive:     { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  quietChipText:       { fontSize: 12, color: COLORS.textSecondary, fontWeight: '600' },
-  quietChipTextActive: { color: COLORS.accent },
-  quietArrow:          { paddingTop: 36, fontSize: 18, color: COLORS.textMuted },
-  quietSummary:        { marginTop: 14, backgroundColor: COLORS.bg, borderRadius: 10, padding: 10, alignItems: 'center' },
-  quietSummaryText:    { fontSize: 12, color: COLORS.textMuted },
+  quietChip:           { backgroundColor: colors.bg, borderRadius: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.border, marginBottom: 4 },
+  quietChipActive:     { borderColor: colors.accent, backgroundColor: colors.accentDim },
+  quietChipText:       { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
+  quietChipTextActive: { color: colors.accent },
+  quietArrow:          { paddingTop: 36, fontSize: 18, color: colors.textMuted },
+  quietSummary:        { marginTop: 14, backgroundColor: colors.bg, borderRadius: 10, padding: 10, alignItems: 'center' },
+  quietSummaryText:    { fontSize: 12, color: colors.textMuted },
 
-  aiBadge: { alignItems: 'center', gap: 12, backgroundColor: COLORS.accentDim, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginTop: 20, marginBottom: 8 },
+  aiBadge: { alignItems: 'center', gap: 12, backgroundColor: colors.accentDim, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginTop: 20, marginBottom: 8 },
   aiIcon:  { fontSize: 28 },
-  aiTitle: { fontSize: 14, fontWeight: '700', color: COLORS.accent, marginBottom: 3 },
-  aiSub:   { fontSize: 12, color: COLORS.textMuted, lineHeight: 18 },
+  aiTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 3 },
+  aiSub:   { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
 
-  saveBtn:     { backgroundColor: COLORS.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
-  saveBtnText: { fontSize: 16, fontWeight: '800', color: COLORS.bg },
+  saveBtn:     { backgroundColor: colors.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
+  saveBtnText: { fontSize: 16, fontWeight: '800', color: colors.bg },
 
   // ── History ──
   emptyHistory:     { alignItems: 'center', paddingVertical: 60 },
   emptyHistoryIcon: { fontSize: 60, marginBottom: 16 },
-  emptyHistoryText: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
-  emptyHistorySub:  { fontSize: 14, color: COLORS.textMuted, textAlign: 'center' },
+  emptyHistoryText: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+  emptyHistorySub:  { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
 
-  histCard:         { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border, position: 'relative' },
-  histCardUnread:   { borderColor: COLORS.accent + '44' },
+  histCard:         { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: colors.border, position: 'relative' },
+  histCardUnread:   { borderColor: colors.accent + '44' },
   histTop:          { justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  histTime:         { fontSize: 11, color: COLORS.textMuted },
+  histTime:         { fontSize: 11, color: colors.textMuted },
   histBadges:       { flexDirection: 'row', gap: 6 },
-  histTypeBadge:    { backgroundColor: COLORS.bg, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  histTypeText:     { fontSize: 10, color: COLORS.textSecondary, fontWeight: '600' },
+  histTypeBadge:    { backgroundColor: colors.bg, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
+  histTypeText:     { fontSize: 10, color: colors.textSecondary, fontWeight: '600' },
   histConvertBadge: { backgroundColor: '#064E3B', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
   histConvertText:  { fontSize: 10, color: '#10B981', fontWeight: '700' },
-  histTitle:        { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  histBody:         { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
-  unreadDot:        { position: 'absolute', top: 16, width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.accent },
-});
+  histTitle:        { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  histBody:         { fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
+  unreadDot:        { position: 'absolute', top: 16, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent },
+  });
+}

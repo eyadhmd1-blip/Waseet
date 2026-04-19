@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput,
   TouchableOpacity, KeyboardAvoidingView, Platform,
@@ -13,7 +13,6 @@ import * as Location       from 'expo-location';
 import * as FileSystem     from 'expo-file-system';
 import * as ImagePicker    from 'expo-image-picker';
 import { supabase }        from '../src/lib/supabase';
-import { COLORS }          from '../src/constants/theme';
 import { useLanguage }     from '../src/hooks/useLanguage';
 import type { Message }    from '../src/types';
 
@@ -49,6 +48,8 @@ function formatTime(iso: string, locale: string) {
 // ─── Component ────────────────────────────────────────────────
 
 export default function ChatScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
@@ -775,7 +776,7 @@ export default function ChatScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -934,7 +935,7 @@ export default function ChatScreen() {
         </View>
       ) : recordState === 'uploading' || mediaUploading ? (
         <View style={[styles.uploadingBar, { paddingBottom: contentPad }]}>
-          <ActivityIndicator color={COLORS.accent} size="small" />
+          <ActivityIndicator color={colors.accent} size="small" />
           <Text style={styles.uploadingText}>
             {mediaUploading ? t('chat.uploadingFile') : t('chat.sendingAudio')}
           </Text>
@@ -986,7 +987,7 @@ export default function ChatScreen() {
           <TextInput
             style={styles.input}
             placeholder={t('chat.typePlaceholder')}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={text}
             onChangeText={setText}
             textAlign="right"
@@ -1001,7 +1002,7 @@ export default function ChatScreen() {
             disabled={!text.trim() || sending}
           >
             {sending
-              ? <ActivityIndicator color={COLORS.bg} size="small" />
+              ? <ActivityIndicator color={colors.bg} size="small" />
               : <Text style={styles.sendBtnText}>{t('chat.sendBtn')}</Text>
             }
           </TouchableOpacity>
@@ -1037,6 +1038,8 @@ function ProfileCardBubble({
   isMine: boolean;
   onView: () => void;
 }) {
+  const { colors } = useTheme();
+  const pcStyles = useMemo(() => createPcStyles(colors), [colors]);
   const { t, lang } = useLanguage();
   const locale = lang === 'ar' ? 'ar-JO' : 'en-GB';
   const [prov, setProv] = useState<ProviderSnap | null>(null);
@@ -1084,7 +1087,7 @@ function ProfileCardBubble({
               </View>
             </>
           ) : (
-            <ActivityIndicator color={COLORS.accent} size="small" />
+            <ActivityIndicator color={colors.accent} size="small" />
           )}
         </View>
       </View>
@@ -1111,85 +1114,90 @@ function ProfileCardBubble({
 import { TIER_META } from '../src/constants/categories';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
-const pcStyles = StyleSheet.create({
-  card:       { borderRadius: 16, padding: 14, maxWidth: SCREEN_W * 0.78, minWidth: 220, borderWidth: 1 },
-  cardMine:   { backgroundColor: '#1C1A0E', borderColor: 'rgba(201,168,76,0.30)', alignSelf: 'flex-end' },
-  cardTheirs: { backgroundColor: COLORS.surface, borderColor: COLORS.border, alignSelf: 'flex-start' },
+function createPcStyles(colors: AppColors) {
+  return StyleSheet.create({
+    card:       { borderRadius: 16, padding: 14, maxWidth: SCREEN_W * 0.78, minWidth: 220, borderWidth: 1 },
+    cardMine:   { backgroundColor: '#1C1A0E', borderColor: 'rgba(201,168,76,0.30)', alignSelf: 'flex-end' },
+    cardTheirs: { backgroundColor: colors.surface, borderColor: colors.border, alignSelf: 'flex-start' },
 
   header:     { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginBottom: 10 },
   avatar:     { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarText: { fontSize: 18, fontWeight: '800' },
   info:       { flex: 1 },
-  name:       { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 2 },
-  city:       { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 4 },
+  name:       { fontSize: 14, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 2 },
+  city:       { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginBottom: 4 },
   badgeRow:   { flexDirection: 'row', gap: 6, justifyContent: 'flex-end' },
   tier:       { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   tierText:   { fontSize: 10, fontWeight: '700' },
   verified:   { fontSize: 10, color: '#7DD3FC', fontWeight: '700' },
 
   statsRow: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end', marginBottom: 10 },
-  stat:     { fontSize: 12, color: COLORS.textSecondary },
+  stat:     { fontSize: 12, color: colors.textSecondary },
 
-  viewBtn:     { backgroundColor: COLORS.accent, borderRadius: 10, paddingVertical: 9, alignItems: 'center' },
-  viewBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.bg },
+  viewBtn:     { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 9, alignItems: 'center' },
+  viewBtnText: { fontSize: 12, fontWeight: '700', color: colors.bg },
 
-  time: { fontSize: 10, color: COLORS.textMuted, textAlign: 'auto', marginTop: 6 },
-});
+  time: { fontSize: 10, color: colors.textMuted, textAlign: 'auto', marginTop: 6 },
+  });
+}
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 12 },
+  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 },
   backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText:    { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
+  backText:    { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
   headerInfo:  { flex: 1 },
-  headerTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
-  headerSub:   { fontSize: 12, color: COLORS.textMuted, textAlign: 'center', marginTop: 2 },
+  headerTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
+  headerSub:   { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 2 },
 
   listContent: { padding: 16, paddingBottom: 8, flexGrow: 1, justifyContent: 'flex-end' },
 
   emptyChat:     { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60 },
   emptyChatIcon: { fontSize: 48, marginBottom: 12 },
-  emptyChatText: { fontSize: 16, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 6 },
-  emptyChatSub:  { fontSize: 13, color: COLORS.textMuted },
+  emptyChatText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: 6 },
+  emptyChatSub:  { fontSize: 13, color: colors.textMuted },
 
-  timeLabel: { fontSize: 11, color: COLORS.textMuted, textAlign: 'center', marginVertical: 10 },
+  timeLabel: { fontSize: 11, color: colors.textMuted, textAlign: 'center', marginVertical: 10 },
 
   bubbleRow:       { marginBottom: 4, flexDirection: 'row' },
   bubbleRowMine:   { justifyContent: 'flex-end' },
   bubbleRowTheirs: { justifyContent: 'flex-start' },
 
   bubble:       { maxWidth: '78%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
-  bubbleMine:   { backgroundColor: COLORS.accent, borderBottomRightRadius: 4 },
-  bubbleTheirs: { backgroundColor: COLORS.surface, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: COLORS.border },
+  bubbleMine:   { backgroundColor: colors.accent, borderBottomRightRadius: 4 },
+  bubbleTheirs: { backgroundColor: colors.surface, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.border },
 
   bubbleText:       { fontSize: 15, lineHeight: 22 },
-  bubbleTextMine:   { color: COLORS.bg },
-  bubbleTextTheirs: { color: COLORS.textPrimary },
+  bubbleTextMine:   { color: colors.bg },
+  bubbleTextTheirs: { color: colors.textPrimary },
 
   bubbleTime:       { fontSize: 10, marginTop: 4 },
   bubbleTimeMine:   { color: 'rgba(201,168,76,0.60)', textAlign: 'auto' },
-  bubbleTimeTheirs: { color: COLORS.textMuted, textAlign: 'auto' },
+  bubbleTimeTheirs: { color: colors.textMuted, textAlign: 'auto' },
 
   // ── Audio bubble ──
   audioBubble: { paddingVertical: 12, paddingHorizontal: 12, minWidth: 180 },
   audioInner:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
   playBtn:     { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   playBtnMine: { backgroundColor: 'rgba(201,168,76,0.35)' },
-  playBtnTheirs:{ backgroundColor: COLORS.border },
+  playBtnTheirs:{ backgroundColor: colors.border },
   playBtnIcon: { fontSize: 14 },
   audioWave:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 2 },
   waveBar:     { width: 3, borderRadius: 2 },
   waveBarMine: { backgroundColor: 'rgba(201,168,76,0.50)' },
-  waveBarTheirs:{ backgroundColor: COLORS.border },
-  waveBarPlaying:{ backgroundColor: COLORS.bg },
+  waveBarTheirs:{ backgroundColor: colors.border },
+  waveBarPlaying:{ backgroundColor: colors.bg },
   audioDuration:      { fontSize: 11, fontWeight: '600' },
   audioDurationMine:  { color: 'rgba(201,168,76,0.70)' },
-  audioDurationTheirs:{ color: COLORS.textMuted },
+  audioDurationTheirs:{ color: colors.textMuted },
 
   // ── Image / Video bubble ──
   mediaBubble:      { maxWidth: '72%', borderRadius: 16, overflow: 'hidden', padding: 0 },
@@ -1210,13 +1218,13 @@ const styles = StyleSheet.create({
   locationBubble:      { paddingVertical: 12, paddingHorizontal: 12, minWidth: 200 },
   locationMapPreview:  { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.15)', borderRadius: 10, padding: 8, marginBottom: 8 },
   locationMapPin:      { fontSize: 22 },
-  locationMapCoords:   { fontSize: 10, color: COLORS.textMuted, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' },
+  locationMapCoords:   { fontSize: 10, color: colors.textMuted, fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' },
   locationLabel:       { fontSize: 13, fontWeight: '600', marginBottom: 4, lineHeight: 18 },
-  locationLabelMine:   { color: COLORS.bg },
-  locationLabelTheirs: { color: COLORS.textPrimary },
+  locationLabelMine:   { color: colors.bg },
+  locationLabelTheirs: { color: colors.textPrimary },
   locationTap:         { fontSize: 11, marginBottom: 4 },
   locationTapMine:     { color: 'rgba(201,168,76,0.60)' },
-  locationTapTheirs:   { color: COLORS.accent },
+  locationTapTheirs:   { color: colors.accent },
 
   // ── Input bar ──
   inputBar: {
@@ -1225,27 +1233,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface,
     gap: 6,
   },
   input: {
     flex: 1,
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.bg,
     borderRadius: 22,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    color: COLORS.textPrimary,
+    color: colors.textPrimary,
     fontSize: 15,
     maxHeight: 120,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
-  sendBtn:         { backgroundColor: COLORS.accent, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 10, minWidth: 60, alignItems: 'center', justifyContent: 'center' },
-  sendBtnDisabled: { backgroundColor: COLORS.border },
-  sendBtnText:     { fontSize: 13, fontWeight: '700', color: COLORS.bg },
+  sendBtn:         { backgroundColor: colors.accent, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 10, minWidth: 60, alignItems: 'center', justifyContent: 'center' },
+  sendBtnDisabled: { backgroundColor: colors.border },
+  sendBtnText:     { fontSize: 13, fontWeight: '700', color: colors.bg },
 
-  mediaBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: COLORS.bg, borderWidth: 1, borderColor: COLORS.border },
+  mediaBtn:     { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border },
   mediaBtnIcon: { fontSize: 18 },
 
   // ── Recording HUD ──
@@ -1264,34 +1272,35 @@ const styles = StyleSheet.create({
   recordingInfo:   { flexDirection: 'row', alignItems: 'center', gap: 8 },
   recordingDot:    { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' },
   recordingDuration:{ fontSize: 18, fontWeight: '700', color: '#F1F5F9', fontVariant: ['tabular-nums'] },
-  sendRecordBtn:   { backgroundColor: COLORS.accent, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
-  sendRecordText:  { fontSize: 13, fontWeight: '700', color: COLORS.bg },
+  sendRecordBtn:   { backgroundColor: colors.accent, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12 },
+  sendRecordText:  { fontSize: 13, fontWeight: '700', color: colors.bg },
 
   // ── Uploading / closed bar ──
-  uploadingBar:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, backgroundColor: COLORS.surface, borderTopWidth: 1, borderTopColor: COLORS.border },
-  uploadingText: { fontSize: 13, color: COLORS.textMuted },
-  closedBar:     { paddingVertical: 16, backgroundColor: COLORS.surface, borderTopWidth: 1, borderTopColor: COLORS.border, alignItems: 'center', gap: 10 },
-  closedBarText: { fontSize: 13, color: COLORS.textMuted },
-  rateBtn:       { backgroundColor: COLORS.accent, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
-  rateBtnText:   { fontSize: 13, fontWeight: '700', color: COLORS.bg },
+  uploadingBar:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 16, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border },
+  uploadingText: { fontSize: 13, color: colors.textMuted },
+  closedBar:     { paddingVertical: 16, backgroundColor: colors.surface, borderTopWidth: 1, borderTopColor: colors.border, alignItems: 'center', gap: 10 },
+  closedBarText: { fontSize: 13, color: colors.textMuted },
+  rateBtn:       { backgroundColor: colors.accent, paddingHorizontal: 20, paddingVertical: 8, borderRadius: 20 },
+  rateBtnText:   { fontSize: 13, fontWeight: '700', color: colors.bg },
 
-  voiceHint: { fontSize: 10, color: COLORS.textMuted, textAlign: 'center', paddingBottom: 4, backgroundColor: COLORS.surface },
+  voiceHint: { fontSize: 10, color: colors.textMuted, textAlign: 'center', paddingBottom: 4, backgroundColor: colors.surface },
 
   // ── Report modal ──
   reportOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  reportSheet:         { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  reportTitle:         { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 4 },
-  reportSubtitle:      { fontSize: 13, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 16 },
-  reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  reportSheet:         { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
+  reportTitle:         { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 4 },
+  reportSubtitle:      { fontSize: 13, color: colors.textMuted, textAlign: 'auto', marginBottom: 16 },
+  reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: colors.border },
   reportOptionSelected:{ backgroundColor: 'rgba(201,168,76,0.05)', borderRadius: 8 },
-  reportRadio:         { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: COLORS.border },
-  reportRadioSelected: { borderColor: COLORS.accent, backgroundColor: COLORS.accent },
-  reportOptionText:    { flex: 1, fontSize: 14, color: COLORS.textSecondary, textAlign: 'auto' },
-  reportOptionTextSelected: { color: COLORS.textPrimary, fontWeight: '600' },
+  reportRadio:         { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: colors.border },
+  reportRadioSelected: { borderColor: colors.accent, backgroundColor: colors.accent },
+  reportOptionText:    { flex: 1, fontSize: 14, color: colors.textSecondary, textAlign: 'auto' },
+  reportOptionTextSelected: { color: colors.textPrimary, fontWeight: '600' },
   reportBtns:          { flexDirection: 'row', gap: 12, marginTop: 24 },
-  reportCancelBtn:     { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
-  reportCancelText:    { fontSize: 14, color: COLORS.textMuted },
+  reportCancelBtn:     { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
+  reportCancelText:    { fontSize: 14, color: colors.textMuted },
   reportSubmitBtn:     { flex: 1, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  reportSubmitDisabled:{ backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  reportSubmitDisabled:{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   reportSubmitText:    { fontSize: 14, fontWeight: '700', color: '#FFF' },
-});
+  });
+}

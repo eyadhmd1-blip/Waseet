@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, ActivityIndicator, Alert, Animated, Dimensions,
@@ -8,12 +8,13 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem  from 'expo-file-system';
 import { supabase }     from '../src/lib/supabase';
-import { COLORS }       from '../src/constants/theme';
 import { CATEGORY_GROUPS } from '../src/constants/categories';
 import type { PortfolioItemType } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
 
@@ -66,6 +67,7 @@ async function uploadToStorage(
 // ─── Step Dots ────────────────────────────────────────────────
 
 function StepDots({ current }: { current: number }) {
+  const { colors } = useTheme();
   return (
     <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 28 }}>
       {[1, 2, 3].map(n => (
@@ -75,7 +77,7 @@ function StepDots({ current }: { current: number }) {
             width:  n === current ? 24 : 8,
             height: 8,
             borderRadius: 4,
-            backgroundColor: n === current ? COLORS.accent : (n < current ? COLORS.accent + '55' : COLORS.border),
+            backgroundColor: n === current ? colors.accent : (n < current ? colors.accent + '55' : colors.border),
           }}
         />
       ))}
@@ -88,6 +90,8 @@ function StepDots({ current }: { current: number }) {
 function UploadBox({
   label, uri, onPress, icon, changeLabel, style,
 }: { label: string; uri: string | null; onPress: () => void; icon: string; changeLabel: string; style?: object }) {
+  const { colors } = useTheme();
+  const ubSt = useMemo(() => createUbSt(colors), [colors]);
   return (
     <TouchableOpacity style={[ubSt.box, style]} onPress={onPress} activeOpacity={0.8}>
       {uri ? (
@@ -107,17 +111,21 @@ function UploadBox({
   );
 }
 
-const ubSt = StyleSheet.create({
-  box:           { borderWidth: 2, borderColor: COLORS.border, borderStyle: 'dashed', borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surface, overflow: 'hidden', minHeight: 160 },
+function createUbSt(colors: AppColors) {
+  return StyleSheet.create({
+  box:           { borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed', borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, overflow: 'hidden', minHeight: 160 },
   icon:          { fontSize: 44, marginBottom: 10 },
-  label:         { fontSize: 14, color: COLORS.textMuted, fontWeight: '600', textAlign: 'center' },
+  label:         { fontSize: 14, color: colors.textMuted, fontWeight: '600', textAlign: 'center' },
   changeOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.6)', paddingVertical: 8, alignItems: 'center' },
   changeText:    { color: '#fff', fontSize: 12, fontWeight: '700' },
-});
+  });
+}
 
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function PortfolioAddScreen() {
+  const st = useMemo(() => createSt(colors), [colors]);
+  const { colors } = useTheme();
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
@@ -267,7 +275,7 @@ export default function PortfolioAddScreen() {
                 <Text style={[st.typeEmoji, { textAlign: ta }]}>{opt.emoji}</Text>
                 <Text style={[st.typeTitle, selected && st.typeTitleSelected, { textAlign: ta }]}>{t(titleKey)}</Text>
                 <Text style={[st.typeDesc, { textAlign: ta }]}>{t(descKey)}</Text>
-                {selected && <View style={st.typeCheckmark}><Text style={{ fontSize: 14, color: COLORS.bg }}>✓</Text></View>}
+                {selected && <View style={st.typeCheckmark}><Text style={{ fontSize: 14, color: colors.bg }}>✓</Text></View>}
               </TouchableOpacity>
             </Animated.View>
           );
@@ -361,16 +369,16 @@ export default function PortfolioAddScreen() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.catScroll}>
         {CATEGORY_GROUPS.map(group =>
           group.categories.map(cat => {
-            const color    = GROUP_COLORS[cat.group_slug] ?? COLORS.accent;
+            const color    = GROUP_COLORS[cat.group_slug] ?? colors.accent;
             const selected = catSlug === cat.slug;
             const name     = lang === 'ar' ? cat.name_ar : (cat.name_en ?? cat.name_ar);
             return (
               <TouchableOpacity
                 key={cat.slug}
-                style={[st.catChip, { borderColor: color + (selected ? 'ff' : '44'), backgroundColor: selected ? color + '22' : COLORS.surface }]}
+                style={[st.catChip, { borderColor: color + (selected ? 'ff' : '44'), backgroundColor: selected ? color + '22' : colors.surface }]}
                 onPress={() => setCatSlug(selected ? null : cat.slug)}
               >
-                <Text style={[st.catChipText, { color: selected ? color : COLORS.textSecondary }]}>{name}</Text>
+                <Text style={[st.catChipText, { color: selected ? color : colors.textSecondary }]}>{name}</Text>
               </TouchableOpacity>
             );
           })
@@ -381,7 +389,7 @@ export default function PortfolioAddScreen() {
       <TextInput
         style={st.descInput}
         placeholder={t('portfolioAdd.descPlaceholder')}
-        placeholderTextColor={COLORS.textMuted}
+        placeholderTextColor={colors.textMuted}
         value={description}
         onChangeText={v => setDescription(v.slice(0, 200))}
         textAlign={ta}
@@ -396,7 +404,7 @@ export default function PortfolioAddScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: COLORS.bg }}
+      style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={st.header}>
@@ -441,7 +449,7 @@ export default function PortfolioAddScreen() {
           >
             {submitting ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <ActivityIndicator color={COLORS.bg} size="small" />
+                <ActivityIndicator color={colors.bg} size="small" />
                 <Text style={st.nextBtnText}>{t('portfolioAdd.uploadingBtn')}</Text>
               </View>
             ) : (
@@ -456,45 +464,47 @@ export default function PortfolioAddScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const st = StyleSheet.create({
-  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+function createSt(colors: AppColors) {
+  return StyleSheet.create({
+  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backIcon:    { fontSize: 20, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center' },
+  backIcon:    { fontSize: 20, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
 
   scroll:  { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 32 },
-  footer:  { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 24, paddingTop: 12, borderTopWidth: 1, borderTopColor: COLORS.border, backgroundColor: COLORS.bg },
+  footer:  { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 24, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg },
 
-  stepTitle: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 6 },
-  stepSub:   { fontSize: 14, color: COLORS.textMuted, lineHeight: 22, marginBottom: 28 },
+  stepTitle: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 6 },
+  stepSub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22, marginBottom: 28 },
 
   typeGrid:          { gap: 12 },
-  typeCard:          { backgroundColor: COLORS.surface, borderRadius: 20, padding: 20, borderWidth: 2, borderColor: COLORS.border },
-  typeCardSelected:  { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
+  typeCard:          { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 2, borderColor: colors.border },
+  typeCardSelected:  { borderColor: colors.accent, backgroundColor: colors.accentDim },
   typeEmoji:         { fontSize: 32, marginBottom: 10 },
-  typeTitle:         { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 4 },
-  typeTitleSelected: { color: COLORS.accent },
-  typeDesc:          { fontSize: 13, color: COLORS.textMuted, lineHeight: 20 },
-  typeCheckmark:     { position: 'absolute', top: 16, left: 16, width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
+  typeTitle:         { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 },
+  typeTitleSelected: { color: colors.accent },
+  typeDesc:          { fontSize: 13, color: colors.textMuted, lineHeight: 20 },
+  typeCheckmark:     { position: 'absolute', top: 16, left: 16, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
 
   singleBox:      { height: 220 },
   baRow:          { flexDirection: 'row', alignItems: 'center', gap: 0 },
   baColumn:       { flex: 1 },
   baBox:          { height: 180 },
-  baLabel:        { fontSize: 13, fontWeight: '800', color: COLORS.textSecondary, textAlign: 'center', marginBottom: 8 },
+  baLabel:        { fontSize: 13, fontWeight: '800', color: colors.textSecondary, textAlign: 'center', marginBottom: 8 },
   baArrow:        { paddingHorizontal: 6, paddingTop: 28 },
-  baArrowText:    { fontSize: 20, color: COLORS.accent },
+  baArrowText:    { fontSize: 20, color: colors.accent },
   videoBadge:     { marginTop: 12, backgroundColor: '#064E3B', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#10B981' },
   videoBadgeText: { color: '#10B981', fontWeight: '700', fontSize: 13 },
 
-  fieldLabel:  { fontSize: 14, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 12 },
+  fieldLabel:  { fontSize: 14, fontWeight: '700', color: colors.textSecondary, marginBottom: 12 },
   catScroll:   { gap: 8, paddingVertical: 4 },
   catChip:     { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1.5 },
   catChipText: { fontSize: 13, fontWeight: '600' },
-  descInput:   { backgroundColor: COLORS.surface, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.textPrimary, fontSize: 14, lineHeight: 22, minHeight: 120, textAlignVertical: 'top' },
-  charCount:   { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginTop: 6 },
+  descInput:   { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 14, lineHeight: 22, minHeight: 120, textAlignVertical: 'top' },
+  charCount:   { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginTop: 6 },
 
-  nextBtn:         { backgroundColor: COLORS.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center' },
-  nextBtnDisabled: { backgroundColor: COLORS.border },
-  nextBtnText:     { fontSize: 16, fontWeight: '800', color: COLORS.bg },
-});
+  nextBtn:         { backgroundColor: colors.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center' },
+  nextBtnDisabled: { backgroundColor: colors.border },
+  nextBtnText:     { fontSize: 16, fontWeight: '800', color: colors.bg },
+  });
+}

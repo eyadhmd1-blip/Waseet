@@ -5,19 +5,22 @@
 // Realtime: auto-advances when provider commits.
 // ============================================================
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, Animated, Easing,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { useLanguage } from '../src/hooks/useLanguage';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const GRACE_SECONDS = 60;
 
 export default function GracePeriodScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const { t } = useLanguage();
   const params = useLocalSearchParams<{
@@ -158,7 +161,7 @@ export default function GracePeriodScreen() {
     return m > 0 ? `${m}:${sec}` : `${s}`;
   };
 
-  const ringColor = isUrgent ? '#EF4444' : secondsLeft <= 10 ? '#EF4444' : COLORS.accent;
+  const ringColor = isUrgent ? '#EF4444' : secondsLeft <= 10 ? '#EF4444' : colors.accent;
   const ringSize  = 180;
   const strokeW   = 10;
 
@@ -201,7 +204,7 @@ export default function GracePeriodScreen() {
             }
           </Text>
           <View style={styles.waitingIndicator}>
-            <ActivityIndicator color={COLORS.accent} />
+            <ActivityIndicator color={colors.accent} />
             <Text style={styles.waitingText}>{t('gracePeriod.waitingProvider')}</Text>
           </View>
           <Text style={styles.lockedNote}>{t('gracePeriod.lockedNote')}</Text>
@@ -277,7 +280,7 @@ export default function GracePeriodScreen() {
           disabled={undoing}
         >
           {undoing
-            ? <ActivityIndicator color={COLORS.textPrimary} size="small" />
+            ? <ActivityIndicator color={colors.textPrimary} size="small" />
             : <Text style={styles.undoBtnText}>{t('gracePeriod.undo')}</Text>
           }
         </TouchableOpacity>
@@ -293,28 +296,29 @@ export default function GracePeriodScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container:        { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center', padding: 24 },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container:        { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', padding: 24 },
   containerUrgent:  { backgroundColor: '#0D0303' },
 
   header:     { alignItems: 'center', marginBottom: 28 },
-  headerTitle:{ fontSize: 20, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center', marginBottom: 8 },
-  headerSub:  { fontSize: 14, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20 },
+  headerTitle:{ fontSize: 20, fontWeight: '800', color: colors.textPrimary, textAlign: 'center', marginBottom: 8 },
+  headerSub:  { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 20 },
 
-  providerChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 16, padding: 14, marginBottom: 28, width: '100%', borderWidth: 1, borderColor: COLORS.border, gap: 12 },
-  providerAvatar:     { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
-  providerAvatarText: { fontSize: 20, fontWeight: '700', color: COLORS.bg },
+  providerChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 16, padding: 14, marginBottom: 28, width: '100%', borderWidth: 1, borderColor: colors.border, gap: 12 },
+  providerAvatar:     { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  providerAvatarText: { fontSize: 20, fontWeight: '700', color: colors.bg },
   providerInfo:       { flex: 1 },
-  providerName:       { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto' },
-  providerAmt:        { fontSize: 18, fontWeight: '700', color: COLORS.accent, textAlign: 'auto', marginTop: 2 },
-  providerStatus:     { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto' },
+  providerName:       { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto' },
+  providerAmt:        { fontSize: 18, fontWeight: '700', color: colors.accent, textAlign: 'auto', marginTop: 2 },
+  providerStatus:     { fontSize: 11, color: colors.textMuted, textAlign: 'auto' },
 
   ringWrap:     { alignItems: 'center', justifyContent: 'center', marginBottom: 32, width: 180, height: 180 },
   ringOuter:    { position: 'absolute' },
   ringProgress: { position: 'absolute' },
   ringCenter:   { alignItems: 'center' },
   ringTime:     { fontSize: 48, fontWeight: '900' },
-  ringLabel:    { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
+  ringLabel:    { fontSize: 13, color: colors.textMuted, marginTop: 4 },
 
   undoBtn:       { backgroundColor: 'rgba(248,113,113,0.12)', borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, borderWidth: 1, borderColor: 'rgba(248,113,113,0.3)', marginBottom: 12, width: '100%', alignItems: 'center' },
   undoBtnText:   { fontSize: 16, fontWeight: '700', color: '#F87171' },
@@ -323,21 +327,22 @@ const styles = StyleSheet.create({
   urgentNote:     { backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 12, padding: 14, marginBottom: 12, width: '100%', borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)' },
   urgentNoteText: { fontSize: 13, color: '#FCA5A5', textAlign: 'center' },
 
-  homeBtn:       { backgroundColor: COLORS.surface, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 24, borderWidth: 1, borderColor: COLORS.border, width: '100%', alignItems: 'center' },
-  homeBtnText:   { fontSize: 14, color: COLORS.textSecondary, fontWeight: '600' },
+  homeBtn:       { backgroundColor: colors.surface, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 24, borderWidth: 1, borderColor: colors.border, width: '100%', alignItems: 'center' },
+  homeBtnText:   { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
 
   lockedBox:      { alignItems: 'center', width: '100%' },
   lockedIcon:     { fontSize: 56, marginBottom: 16 },
-  lockedTitle:    { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 10, textAlign: 'center' },
-  lockedSub:      { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  lockedTitle:    { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 10, textAlign: 'center' },
+  lockedSub:      { fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   waitingIndicator:{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
-  waitingText:    { fontSize: 14, color: COLORS.textSecondary },
-  lockedNote:     { fontSize: 12, color: COLORS.textMuted, textAlign: 'center', marginBottom: 24, lineHeight: 18 },
+  waitingText:    { fontSize: 14, color: colors.textSecondary },
+  lockedNote:     { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 24, lineHeight: 18 },
 
   confirmedBox:   { alignItems: 'center', width: '100%' },
   confirmedIcon:  { fontSize: 56, marginBottom: 16 },
   confirmedTitle: { fontSize: 24, fontWeight: '800', color: '#4ADE80', marginBottom: 10, textAlign: 'center' },
-  confirmedSub:   { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 28 },
-  chatBtn:        { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, marginBottom: 12, width: '100%', alignItems: 'center' },
-  chatBtnText:    { fontSize: 16, fontWeight: '700', color: COLORS.bg },
-});
+  confirmedSub:   { fontSize: 15, color: colors.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 28 },
+  chatBtn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, marginBottom: 12, width: '100%', alignItems: 'center' },
+  chatBtnText:    { fontSize: 16, fontWeight: '700', color: colors.bg },
+  });
+}

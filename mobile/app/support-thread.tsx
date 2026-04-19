@@ -3,17 +3,18 @@
 // Chat-style message thread + reply input + rating
 // ============================================================
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 interface Ticket {
   id: string;
@@ -46,6 +47,9 @@ export default function SupportThreadScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, ta, lang } = useLanguage();
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [ticket,            setTicket]            = useState<Ticket | null>(null);
   const [messages,          setMessages]          = useState<SupportMessage[]>([]);
@@ -151,7 +155,7 @@ export default function SupportThreadScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -237,7 +241,7 @@ export default function SupportThreadScreen() {
                 <TextInput
                   style={styles.ratingInput}
                   placeholder={t('supportThread.ratingPlaceholder')}
-                  placeholderTextColor={COLORS.textMuted}
+                  placeholderTextColor={colors.textMuted}
                   value={ratingNote}
                   onChangeText={setRatingNote}
                   textAlign={ta}
@@ -248,7 +252,7 @@ export default function SupportThreadScreen() {
                   disabled={ratingSubmitting}
                 >
                   {ratingSubmitting
-                    ? <ActivityIndicator color={COLORS.bg} size="small" />
+                    ? <ActivityIndicator color={colors.bg} size="small" />
                     : <Text style={styles.ratingBtnText}>{t('supportThread.ratingBtn')}</Text>
                   }
                 </TouchableOpacity>
@@ -276,14 +280,14 @@ export default function SupportThreadScreen() {
             disabled={!body.trim() || sending}
           >
             {sending
-              ? <ActivityIndicator color={COLORS.bg} size="small" />
+              ? <ActivityIndicator color={colors.bg} size="small" />
               : <Text style={styles.sendBtnText}>{t('supportThread.sendBtn')}</Text>
             }
           </TouchableOpacity>
           <TextInput
             style={styles.inputField}
             placeholder={t('supportThread.inputPlaceholder')}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={body}
             onChangeText={setBody}
             textAlign={ta}
@@ -303,59 +307,61 @@ export default function SupportThreadScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
-  errorText: { fontSize: 16, color: COLORS.textMuted, marginBottom: 16 },
-  backBtnLg:     { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
-  backBtnLgText: { color: COLORS.textSecondary, fontSize: 14, fontWeight: '600' },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
+    center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+    errorText: { fontSize: 16, color: colors.textMuted, marginBottom: 16 },
+    backBtnLg:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
+    backBtnLgText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
 
-  topBar:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 10 },
-  backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText:  { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  topCenter: { flex: 1, alignItems: 'center' },
-  topTitle:  { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  topStatus: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+    topBar:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 10 },
+    backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    backText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    topCenter: { flex: 1, alignItems: 'center' },
+    topTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+    topStatus: { fontSize: 11, fontWeight: '600', marginTop: 2 },
 
-  messages:        { flex: 1 },
-  messagesContent: { padding: 16, paddingBottom: 24, gap: 8 },
+    messages:        { flex: 1 },
+    messagesContent: { padding: 16, paddingBottom: 24, gap: 8 },
 
-  emptyMsgs:     { alignItems: 'center', paddingVertical: 40 },
-  emptyMsgsText: { fontSize: 14, color: COLORS.textMuted },
+    emptyMsgs:     { alignItems: 'center', paddingVertical: 40 },
+    emptyMsgsText: { fontSize: 14, color: colors.textMuted },
 
-  bubbleWrap:  { },
-  bubbleLeft:  { alignItems: 'flex-start' },
-  bubbleRight: { alignItems: 'flex-end' },
+    bubbleWrap:  { },
+    bubbleLeft:  { alignItems: 'flex-start' },
+    bubbleRight: { alignItems: 'flex-end' },
 
-  bubble:      { maxWidth: '80%', borderRadius: 16, padding: 12 },
-  bubbleAdmin: { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, borderTopLeftRadius: 4 },
-  bubbleUser:  { backgroundColor: 'rgba(201,168,76,0.12)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', borderTopRightRadius: 4 },
+    bubble:      { maxWidth: '80%', borderRadius: 16, padding: 12 },
+    bubbleAdmin: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderTopLeftRadius: 4 },
+    bubbleUser:  { backgroundColor: 'rgba(201,168,76,0.12)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', borderTopRightRadius: 4 },
 
-  adminLabel: { fontSize: 11, fontWeight: '700', color: '#38BDF8', marginBottom: 4 },
-  bubbleText: { fontSize: 14, color: COLORS.textPrimary, lineHeight: 20 },
-  bubbleTime: { fontSize: 10, marginTop: 6 },
-  timeLeft:   { color: COLORS.textMuted },
-  timeRight:  { color: 'rgba(201,168,76,0.6)', textAlign: 'auto' },
+    adminLabel: { fontSize: 11, fontWeight: '700', color: '#38BDF8', marginBottom: 4 },
+    bubbleText: { fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
+    bubbleTime: { fontSize: 10, marginTop: 6 },
+    timeLeft:   { color: colors.textMuted },
+    timeRight:  { color: 'rgba(201,168,76,0.6)', textAlign: 'auto' },
 
-  ratingBox:     { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginTop: 8, borderWidth: 1, borderColor: '#15803D', alignItems: 'center' },
-  ratingTitle:   { fontSize: 14, fontWeight: '700', color: '#86EFAC', textAlign: 'center', marginBottom: 12 },
-  starsRow:      { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  star:          { fontSize: 28, opacity: 0.3 },
-  starActive:    { opacity: 1 },
-  ratingInput:   { backgroundColor: COLORS.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, color: COLORS.textPrimary, fontSize: 13, borderWidth: 1, borderColor: COLORS.border, width: '100%', marginBottom: 10 },
-  ratingBtn:     { backgroundColor: COLORS.accent, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 24 },
-  ratingBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.bg },
+    ratingBox:     { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginTop: 8, borderWidth: 1, borderColor: '#15803D', alignItems: 'center' },
+    ratingTitle:   { fontSize: 14, fontWeight: '700', color: '#86EFAC', textAlign: 'center', marginBottom: 12 },
+    starsRow:      { flexDirection: 'row', gap: 8, marginBottom: 12 },
+    star:          { fontSize: 28, opacity: 0.3 },
+    starActive:    { opacity: 1 },
+    ratingInput:   { backgroundColor: colors.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, color: colors.textPrimary, fontSize: 13, borderWidth: 1, borderColor: colors.border, width: '100%', marginBottom: 10 },
+    ratingBtn:     { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 24 },
+    ratingBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
 
-  ratedBox:  { backgroundColor: COLORS.surface, borderRadius: 12, padding: 14, marginTop: 8, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  ratedText: { fontSize: 14, color: COLORS.textPrimary },
-  ratedNote: { fontSize: 13, color: COLORS.textMuted, marginTop: 4, textAlign: 'center' },
+    ratedBox:  { backgroundColor: colors.surface, borderRadius: 12, padding: 14, marginTop: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+    ratedText: { fontSize: 14, color: colors.textPrimary },
+    ratedNote: { fontSize: 13, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
 
-  inputBar:        { alignItems: 'flex-end', padding: 12, borderTopWidth: 1, borderTopColor: COLORS.border, gap: 8 },
-  inputField:      { flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: COLORS.textPrimary, fontSize: 14, maxHeight: 100, borderWidth: 1, borderColor: COLORS.border },
-  sendBtn:         { backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 },
-  sendBtnDisabled: { backgroundColor: COLORS.border },
-  sendBtnText:     { fontSize: 14, fontWeight: '700', color: COLORS.bg },
+    inputBar:        { alignItems: 'flex-end', padding: 12, borderTopWidth: 1, borderTopColor: colors.border, gap: 8 },
+    inputField:      { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: colors.textPrimary, fontSize: 14, maxHeight: 100, borderWidth: 1, borderColor: colors.border },
+    sendBtn:         { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 },
+    sendBtnDisabled: { backgroundColor: colors.border },
+    sendBtnText:     { fontSize: 14, fontWeight: '700', color: colors.bg },
 
-  resolvedBar:     { padding: 14, borderTopWidth: 1, borderTopColor: COLORS.border, alignItems: 'center', backgroundColor: 'rgba(20,83,45,0.2)' },
-  resolvedBarText: { fontSize: 13, color: '#86EFAC', fontWeight: '600' },
-});
+    resolvedBar:     { padding: 14, borderTopWidth: 1, borderTopColor: colors.border, alignItems: 'center', backgroundColor: 'rgba(20,83,45,0.2)' },
+    resolvedBarText: { fontSize: 13, color: '#86EFAC', fontWeight: '600' },
+  });
+}

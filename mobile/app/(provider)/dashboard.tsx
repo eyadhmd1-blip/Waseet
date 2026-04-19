@@ -1,15 +1,16 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
 import { TIER_META } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -51,6 +52,8 @@ function capitalize(s: string): string {
 // ─── Component ────────────────────────────────────────────────
 
 export default function ProviderDashboard() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
     const { headerPad } = useInsets();
   const { t, ta, lang } = useLanguage();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
@@ -136,7 +139,7 @@ export default function ProviderDashboard() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -151,7 +154,7 @@ export default function ProviderDashboard() {
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
       {/* ── Header ── */}
       <View style={styles.header}>
@@ -334,6 +337,8 @@ function KpiCard({
   sub: string;
   accent?: boolean;
 }) {
+  const { colors } = useTheme();
+  const kpiStyles = useMemo(() => createKpiStyles(colors), [colors]);
   const { ta } = useLanguage();
   return (
     <View style={[kpiStyles.card, accent && kpiStyles.cardAccent, { alignItems: ta === 'right' ? 'flex-end' : 'flex-start' }]}>
@@ -347,67 +352,71 @@ function KpiCard({
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   content:   { paddingBottom: 48 },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
   header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 16 },
-  headerTitle:  { fontSize: 24, fontWeight: '700', color: COLORS.textPrimary },
-  periodToggle: { flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 10, padding: 3, borderWidth: 1, borderColor: COLORS.border },
+  headerTitle:  { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+  periodToggle: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 10, padding: 3, borderWidth: 1, borderColor: colors.border },
   periodBtn:         { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  periodBtnActive:   { backgroundColor: COLORS.accent },
-  periodBtnText:     { fontSize: 12, color: COLORS.textMuted, fontWeight: '600' },
-  periodBtnTextActive:{ color: COLORS.bg },
+  periodBtnActive:   { backgroundColor: colors.accent },
+  periodBtnText:     { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  periodBtnTextActive:{ color: colors.bg },
 
   identityStrip: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, marginBottom: 20, flexWrap: 'wrap' },
   tierPill:      { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5 },
   tierPillText:  { fontSize: 12, fontWeight: '700' },
-  score:         { fontSize: 14, color: COLORS.textSecondary, fontWeight: '600' },
-  lifetimeJobs:  { fontSize: 13, color: COLORS.textMuted },
+  score:         { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
+  lifetimeJobs:  { fontSize: 13, color: colors.textMuted },
   verifiedBadge: { backgroundColor: '#0C4A6E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 },
   verifiedText:  { fontSize: 11, color: '#7DD3FC', fontWeight: '600' },
 
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10, marginBottom: 24 },
 
   section:      { paddingHorizontal: 16, marginBottom: 24 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
 
-  chartCard:  { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
+  chartCard:  { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
   chartEmpty: { alignItems: 'center', paddingVertical: 28 },
-  chartEmptyText: { fontSize: 14, color: COLORS.textMuted },
+  chartEmptyText: { fontSize: 14, color: colors.textMuted },
   chartBars:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 110, paddingTop: 20 },
   barCol:     { flex: 1, alignItems: 'center', gap: 6 },
-  barValue:   { fontSize: 10, color: COLORS.accent, fontWeight: '700', height: 14 },
-  barTrack:   { width: 24, height: 72, backgroundColor: COLORS.bg, borderRadius: 6, justifyContent: 'flex-end', overflow: 'hidden' },
-  barFill:    { width: '100%', backgroundColor: COLORS.accent, borderRadius: 6, minHeight: 4 },
-  barFillEmpty:{ backgroundColor: COLORS.border },
-  barLabel:   { fontSize: 10, color: COLORS.textMuted },
+  barValue:   { fontSize: 10, color: colors.accent, fontWeight: '700', height: 14 },
+  barTrack:   { width: 24, height: 72, backgroundColor: colors.bg, borderRadius: 6, justifyContent: 'flex-end', overflow: 'hidden' },
+  barFill:    { width: '100%', backgroundColor: colors.accent, borderRadius: 6, minHeight: 4 },
+  barFillEmpty:{ backgroundColor: colors.border },
+  barLabel:   { fontSize: 10, color: colors.textMuted },
 
-  jobRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
+  jobRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
   jobLeft:   { flex: 1, marginEnd: 12 },
-  jobTitle:  { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 4 },
-  jobDate:   { fontSize: 11, color: COLORS.textMuted },
+  jobTitle:  { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 4 },
+  jobDate:   { fontSize: 11, color: colors.textMuted },
   jobRight:  { alignItems: 'flex-end' },
   ratingRow: { flexDirection: 'row', gap: 1 },
   ratingStar:{ fontSize: 13 },
-  noRating:  { fontSize: 11, color: COLORS.textMuted },
+  noRating:  { fontSize: 11, color: colors.textMuted },
 
-  emptyBox:  { alignItems: 'center', paddingVertical: 32, backgroundColor: COLORS.surface, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border },
+  emptyBox:  { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   emptyIcon: { fontSize: 40, marginBottom: 10 },
-  emptyText: { fontSize: 14, color: COLORS.textMuted },
+  emptyText: { fontSize: 14, color: colors.textMuted },
 
-  subBanner:      { marginHorizontal: 16, backgroundColor: COLORS.accentDim, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
-  subBannerTitle: { fontSize: 16, fontWeight: '700', color: COLORS.accent, marginBottom: 6 },
-  subBannerSub:   { fontSize: 13, color: COLORS.textMuted, lineHeight: 20 },
-});
+  subBanner:      { marginHorizontal: 16, backgroundColor: colors.accentDim, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
+  subBannerTitle: { fontSize: 16, fontWeight: '700', color: colors.accent, marginBottom: 6 },
+  subBannerSub:   { fontSize: 13, color: colors.textMuted, lineHeight: 20 },
+  });
+}
 
-const kpiStyles = StyleSheet.create({
-  card:       { width: '47%', backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
-  cardAccent: { borderColor: 'rgba(201,168,76,0.30)', backgroundColor: COLORS.accentDim },
+function createKpiStyles(colors: AppColors) {
+  return StyleSheet.create({
+  card:       { width: '47%', backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
+  cardAccent: { borderColor: 'rgba(201,168,76,0.30)', backgroundColor: colors.accentDim },
   icon:       { fontSize: 24, marginBottom: 8 },
-  value:      { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  valueAccent:{ color: COLORS.accent },
-  label:      { fontSize: 12, color: COLORS.textSecondary, marginBottom: 2 },
-  sub:        { fontSize: 10, color: COLORS.textMuted },
-});
+  value:      { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  valueAccent:{ color: colors.accent },
+  label:      { fontSize: 12, color: colors.textSecondary, marginBottom: 2 },
+  sub:        { fontSize: 10, color: colors.textMuted },
+  });
+}

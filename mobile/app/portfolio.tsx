@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
   ActivityIndicator, Alert, Animated, Dimensions, PanResponder,
@@ -7,12 +7,13 @@ import {
 import { useRouter } from 'expo-router';
 import { Video, ResizeMode } from 'expo-av';
 import { supabase }          from '../src/lib/supabase';
-import { COLORS }            from '../src/constants/theme';
 import { ALL_CATEGORIES }    from '../src/constants/categories';
 import type { PortfolioItem } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const { width: W, height: H } = Dimensions.get('window');
 const COLS   = 2;
@@ -32,9 +33,9 @@ const GROUP_COLORS: Record<string, string> = {
 };
 
 const getCatColor = (slug?: string) => {
-  if (!slug) return COLORS.textMuted;
+  if (!slug) return colors.textMuted;
   const cat = ALL_CATEGORIES.find(c => c.slug === slug);
-  return GROUP_COLORS[cat?.group_slug ?? ''] ?? COLORS.textMuted;
+  return GROUP_COLORS[cat?.group_slug ?? ''] ?? colors.textMuted;
 };
 
 const getCatName = (slug?: string, lang?: string) => {
@@ -48,6 +49,8 @@ const getCatName = (slug?: string, lang?: string) => {
 function BeforeAfterViewer({
   before, after, onClose,
 }: { before: string; after: string; onClose: () => void }) {
+  const { colors } = useTheme();
+  const baStyles = useMemo(() => createBaStyles(colors), [colors]);
   const { t } = useLanguage();
   const divX = useRef(new Animated.Value(W / 2)).current;
 
@@ -113,7 +116,8 @@ function BeforeAfterViewer({
   );
 }
 
-const baStyles = StyleSheet.create({
+function createBaStyles(colors: AppColors) {
+  return StyleSheet.create({
   labelLeft:    { position: 'absolute', top: 60, left: 16, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
   labelRight:   { position: 'absolute', top: 60, right: 16, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
   labelText:    { color: '#fff', fontWeight: '800', fontSize: 13 },
@@ -121,7 +125,8 @@ const baStyles = StyleSheet.create({
   hintText:     { color: 'rgba(255,255,255,0.55)', fontSize: 12 },
   closeBtn:     { position: 'absolute', top: 54, right: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
   closeBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
-});
+  });
+}
 
 // ─── Portfolio Card ───────────────────────────────────────────
 
@@ -133,6 +138,8 @@ function PortfolioCard({
   onPress: () => void;
   onLongPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const cardSt = useMemo(() => createCardSt(colors), [colors]);
   const { t, lang } = useLanguage();
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -212,9 +219,10 @@ function PortfolioCard({
   );
 }
 
-const cardSt = StyleSheet.create({
-  card:            { borderRadius: 18, overflow: 'hidden', backgroundColor: COLORS.surface },
-  videoPlaceholder:{ alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surface },
+function createCardSt(colors: AppColors) {
+  return StyleSheet.create({
+  card:            { borderRadius: 18, overflow: 'hidden', backgroundColor: colors.surface },
+  videoPlaceholder:{ alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
   gradBot:         { position: 'absolute', bottom: 0, left: 0, right: 0, height: 90, backgroundColor: 'rgba(0,0,0,0.65)' },
   topRow:          { position: 'absolute', top: 10, left: 10, right: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   typeBadge:       { backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 4 },
@@ -227,7 +235,8 @@ const cardSt = StyleSheet.create({
   viewsNum:        { fontSize: 11, color: '#fff', fontWeight: '600' },
   baHint:          { position: 'absolute', top: '48%', left: 0, right: 0, alignItems: 'center' },
   baHintText:      { fontSize: 11, color: 'rgba(255,255,255,0.7)', backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
-});
+  });
+}
 
 // ─── Lightbox ─────────────────────────────────────────────────
 
@@ -240,6 +249,8 @@ type LightboxState =
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function PortfolioScreen() {
+  const st = useMemo(() => createSt(colors), [colors]);
+  const { colors } = useTheme();
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
@@ -317,7 +328,7 @@ export default function PortfolioScreen() {
   if (loading) {
     return (
       <View style={st.center}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -341,7 +352,7 @@ export default function PortfolioScreen() {
         contentContainerStyle={st.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         ListHeaderComponent={
           <>
@@ -448,6 +459,8 @@ export default function PortfolioScreen() {
 // ─── Stat Card ────────────────────────────────────────────────
 
 function StatCard({ label, value, icon, accent }: { label: string; value: string; icon: string; accent?: boolean }) {
+  const { colors } = useTheme();
+  const stCard = useMemo(() => createStCard(colors), [colors]);
   return (
     <View style={[stCard.box, accent && stCard.accentBox]}>
       <Text style={stCard.icon}>{icon}</Text>
@@ -457,40 +470,44 @@ function StatCard({ label, value, icon, accent }: { label: string; value: string
   );
 }
 
-const stCard = StyleSheet.create({
-  box:         { flex: 1, backgroundColor: COLORS.surface, borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  accentBox:   { borderColor: COLORS.accent + '44', backgroundColor: COLORS.accentDim },
+function createStCard(colors: AppColors) {
+  return StyleSheet.create({
+  box:         { flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  accentBox:   { borderColor: colors.accent + '44', backgroundColor: colors.accentDim },
   icon:        { fontSize: 20, marginBottom: 6 },
-  value:       { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 2 },
-  accentValue: { color: COLORS.accent },
-  label:       { fontSize: 11, color: COLORS.textMuted, textAlign: 'center' },
-});
+  value:       { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 2 },
+  accentValue: { color: colors.accent },
+  label:       { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
+  });
+}
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const st = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: COLORS.bg },
-  center:      { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+function createSt(colors: AppColors) {
+  return StyleSheet.create({
+  container:   { flex: 1, backgroundColor: colors.bg },
+  center:      { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backIcon:    { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: COLORS.textPrimary, textAlign: 'center' },
+  backIcon:    { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
 
   listContent: { padding: PAD, paddingBottom: 120 },
   row:         { gap: GAP, marginBottom: GAP },
 
   statsRow:  { flexDirection: 'row', gap: 10, marginBottom: 24 },
-  gridLabel: { fontSize: 13, color: COLORS.textMuted, marginBottom: 12, fontWeight: '600' },
+  gridLabel: { fontSize: 13, color: colors.textMuted, marginBottom: 12, fontWeight: '600' },
 
   empty:        { alignItems: 'center', paddingVertical: 64, paddingHorizontal: 32 },
   emptyIcon:    { fontSize: 72, marginBottom: 20 },
-  emptyTitle:   { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 10 },
-  emptySub:     { fontSize: 14, color: COLORS.textMuted, lineHeight: 22, marginBottom: 28 },
-  emptyBtn:     { backgroundColor: COLORS.accent, borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
-  emptyBtnText: { fontSize: 15, fontWeight: '800', color: COLORS.bg },
+  emptyTitle:   { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 10 },
+  emptySub:     { fontSize: 14, color: colors.textMuted, lineHeight: 22, marginBottom: 28 },
+  emptyBtn:     { backgroundColor: colors.accent, borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
+  emptyBtnText: { fontSize: 15, fontWeight: '800', color: colors.bg },
 
   fab:      { position: 'absolute', bottom: Platform.OS === 'ios' ? 40 : 24, right: 20, left: 20 },
-  fabInner: { backgroundColor: COLORS.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center', shadowColor: COLORS.accent, shadowOpacity: 0.5, shadowRadius: 16, elevation: 10 },
-  fabText:  { fontSize: 16, fontWeight: '800', color: COLORS.bg },
-});
+  fabInner: { backgroundColor: colors.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center', shadowColor: colors.accent, shadowOpacity: 0.5, shadowRadius: 16, elevation: 10 },
+  fabText:  { fontSize: 16, fontWeight: '800', color: colors.bg },
+  });
+}

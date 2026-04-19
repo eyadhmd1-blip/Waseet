@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, Alert,
@@ -9,7 +9,8 @@ import { JORDAN_CITIES } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
-import { COLORS } from '../../src/constants/theme';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 type Role = 'client' | 'provider';
 
@@ -17,10 +18,13 @@ export default function RegisterScreen() {
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, isRTL } = useLanguage();
+  const { colors } = useTheme();
   const [role, setRole]         = useState<Role>('client');
   const [fullName, setFullName] = useState('');
   const [city, setCity]         = useState('');
   const [loading, setLoading]   = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const handleRegister = async () => {
     if (!fullName.trim() || !city) {
@@ -124,29 +128,31 @@ export default function RegisterScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container:     { flex: 1, backgroundColor: COLORS.bg },
-  content:       { padding: 24, paddingTop: HEADER_PAD },
-  title:         { fontSize: 28, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 32 },
-  label:         { fontSize: 14, color: COLORS.textSecondary, marginBottom: 10, marginTop: 20 },
-  roleRow:       { flexDirection: 'row', gap: 12 },
-  roleBtn:       { flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  roleBtnActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  roleIcon:      { fontSize: 28, marginBottom: 8 },
-  roleText:      { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary, textAlign: 'center' },
-  roleTextActive:{ color: COLORS.accent },
-  roleSubText:   { fontSize: 12, color: COLORS.textMuted, marginTop: 4 },
-  input: {
-    backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 16,
-    paddingVertical: 14, color: COLORS.textPrimary, fontSize: 16,
-    borderWidth: 1, borderColor: COLORS.border,
-  },
-  cityScroll:    { marginBottom: 8 },
-  cityChip:      { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: COLORS.border },
-  cityChipActive:{ borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  cityText:      { color: COLORS.textSecondary, fontSize: 14 },
-  cityTextActive:{ color: COLORS.accent },
-  btn:           { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 32 },
-  btnDisabled:   { backgroundColor: COLORS.border },
-  btnText:       { fontSize: 17, fontWeight: '700', color: COLORS.bg },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container:     { flex: 1, backgroundColor: colors.bg },
+    content:       { padding: 24, paddingTop: HEADER_PAD },
+    title:         { fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginBottom: 32 },
+    label:         { fontSize: 14, color: colors.textSecondary, marginBottom: 10, marginTop: 20 },
+    roleRow:       { flexDirection: 'row', gap: 12 },
+    roleBtn:       { flex: 1, backgroundColor: colors.surface, borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+    roleBtnActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },
+    roleIcon:      { fontSize: 28, marginBottom: 8 },
+    roleText:      { fontSize: 14, fontWeight: '600', color: colors.textSecondary, textAlign: 'center' },
+    roleTextActive:{ color: colors.accent },
+    roleSubText:   { fontSize: 12, color: colors.textMuted, marginTop: 4 },
+    input: {
+      backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16,
+      paddingVertical: 14, color: colors.textPrimary, fontSize: 16,
+      borderWidth: 1, borderColor: colors.border,
+    },
+    cityScroll:    { marginBottom: 8 },
+    cityChip:      { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
+    cityChipActive:{ borderColor: colors.accent, backgroundColor: colors.accentDim },
+    cityText:      { color: colors.textSecondary, fontSize: 14 },
+    cityTextActive:{ color: colors.accent },
+    btn:           { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 32 },
+    btnDisabled:   { backgroundColor: colors.border },
+    btnText:       { fontSize: 17, fontWeight: '700', color: colors.bg },
+  });
+}

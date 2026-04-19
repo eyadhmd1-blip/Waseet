@@ -4,14 +4,13 @@
 // Shows contract info, bids (for client), visit log, actions
 // ============================================================
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import {
   RecurringContract, ContractBid, ContractVisit,
   FREQ_VISITS_PER_MONTH,
@@ -19,6 +18,8 @@ import {
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const CONTRACT_COLOR = '#10B981';
 const CONTRACT_DIM   = '#10B98122';
@@ -31,6 +32,8 @@ const VISIT_STATUS_COLOR: Record<string, string> = {
 };
 
 export default function ContractDetailScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
     const { headerPad } = useInsets();
   const router = useRouter();
   const { contract_id } = useLocalSearchParams<{ contract_id: string }>();
@@ -175,7 +178,7 @@ export default function ContractDetailScreen() {
   if (!contract) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: COLORS.textMuted }}>{t('contractDetail.notFound')}</Text>
+        <Text style={{ color: colors.textMuted }}>{t('contractDetail.notFound')}</Text>
       </View>
     );
   }
@@ -371,6 +374,8 @@ export default function ContractDetailScreen() {
 // ─── Sub-components ───────────────────────────────────────────
 
 function InfoChip({ label, icon }: { label: string; icon: string }) {
+  const { colors } = useTheme();
+  const chip = useMemo(() => createChip(colors), [colors]);
   return (
     <View style={chip.wrap}>
       <Text style={chip.icon}>{icon}</Text>
@@ -378,13 +383,17 @@ function InfoChip({ label, icon }: { label: string; icon: string }) {
     </View>
   );
 }
-const chip = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: COLORS.border, gap: 4 },
+function createChip(colors: AppColors) {
+  return StyleSheet.create({
+  wrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.bg, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: colors.border, gap: 4 },
   icon: { fontSize: 12 },
-  text: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '600' },
-});
+  text: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
+  });
+}
 
 function DetailRow({ label, value, ta }: { label: string; value: string; ta: 'left' | 'right' }) {
+  const { colors } = useTheme();
+  const dr = useMemo(() => createDr(colors), [colors]);
   return (
     <View style={[dr.row, {}]}>
       <Text style={[dr.label, { textAlign: ta }]}>{label}</Text>
@@ -392,11 +401,13 @@ function DetailRow({ label, value, ta }: { label: string; value: string; ta: 'le
     </View>
   );
 }
-const dr = StyleSheet.create({
-  row:   { justifyContent: 'space-between', alignItems: 'center', paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  label: { fontSize: 13, color: COLORS.textMuted },
-  value: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '500', flex: 1, marginHorizontal: 8 },
-});
+function createDr(colors: AppColors) {
+  return StyleSheet.create({
+  row:   { justifyContent: 'space-between', alignItems: 'center', paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border },
+  label: { fontSize: 13, color: colors.textMuted },
+  value: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', flex: 1, marginHorizontal: 8 },
+  });
+}
 
 function BidCard({
   bid, totalVisits, onAccept, accepting,
@@ -406,6 +417,8 @@ function BidCard({
   onAccept: () => void;
   accepting: boolean;
 }) {
+  const { colors } = useTheme();
+  const bc = useMemo(() => createBc(colors), [colors]);
   const { t, ta } = useLanguage();
   const provName = (bid.provider?.user as any)?.full_name ?? t('contractDetail.defaultProviderName');
   const total    = (bid.price_per_visit * totalVisits).toFixed(0);
@@ -443,24 +456,26 @@ function BidCard({
     </View>
   );
 }
-const bc = StyleSheet.create({
-  card:          { backgroundColor: COLORS.surface, borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border },
+function createBc(colors: AppColors) {
+  return StyleSheet.create({
+  card:          { backgroundColor: colors.surface, borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border },
   top:           { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   avatar:        { width: 40, height: 40, borderRadius: 20, backgroundColor: CONTRACT_DIM, alignItems: 'center', justifyContent: 'center' },
   avatarText:    { fontSize: 18, fontWeight: '700', color: CONTRACT_COLOR },
   nameRow:       { alignItems: 'center', gap: 6, marginBottom: 2 },
-  name:          { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  name:          { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   verified:      { fontSize: 12, color: '#7DD3FC', backgroundColor: '#0C4A6E', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
-  score:         { fontSize: 12, color: COLORS.textMuted },
+  score:         { fontSize: 12, color: colors.textMuted },
   priceWrap:     { alignItems: 'flex-end' },
   price:         { fontSize: 20, fontWeight: '800', color: CONTRACT_COLOR },
-  priceSub:      { fontSize: 10, color: COLORS.textMuted },
-  note:          { fontSize: 13, color: COLORS.textSecondary, marginBottom: 10, lineHeight: 20 },
+  priceSub:      { fontSize: 10, color: colors.textMuted },
+  note:          { fontSize: 13, color: colors.textSecondary, marginBottom: 10, lineHeight: 20 },
   bottom:        { alignItems: 'center', justifyContent: 'space-between' },
-  total:         { fontSize: 12, color: COLORS.textMuted },
+  total:         { fontSize: 12, color: colors.textMuted },
   acceptBtn:     { backgroundColor: CONTRACT_COLOR, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8 },
   acceptBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
-});
+  });
+}
 
 function VisitRow({
   visit, isLast, statusLabel, locale, ta,
@@ -471,6 +486,8 @@ function VisitRow({
   locale: string;
   ta: 'left' | 'right';
 }) {
+  const { colors } = useTheme();
+  const vr = useMemo(() => createVr(colors), [colors]);
   const { t } = useLanguage();
   const color = VISIT_STATUS_COLOR[visit.status];
   const date  = new Date(visit.scheduled_at).toLocaleDateString(locale, {
@@ -500,72 +517,76 @@ function VisitRow({
     </View>
   );
 }
-const vr = StyleSheet.create({
+function createVr(colors: AppColors) {
+  return StyleSheet.create({
   row:          { flexDirection: 'row', gap: 12, marginBottom: 0 },
   timelineLeft: { alignItems: 'center', width: 20 },
   dot:          { width: 12, height: 12, borderRadius: 6, marginTop: 4 },
-  line:         { flex: 1, width: 2, backgroundColor: COLORS.border, marginTop: 4 },
+  line:         { flex: 1, width: 2, backgroundColor: colors.border, marginTop: 4 },
   content:      { flex: 1, paddingBottom: 16 },
   top:          { justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   status:       { fontSize: 13, fontWeight: '600' },
-  date:         { fontSize: 12, color: COLORS.textMuted },
-  rating:       { fontSize: 13, color: COLORS.textMuted },
+  date:         { fontSize: 12, color: colors.textMuted },
+  rating:       { fontSize: 13, color: colors.textMuted },
   postponed:    { fontSize: 12, color: '#FBBF24', marginTop: 2 },
-});
+  });
+}
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  root:   { flex: 1, backgroundColor: COLORS.bg },
-  center: { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  root:   { flex: 1, backgroundColor: colors.bg },
+  center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
   header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: HEADER_PAD, paddingHorizontal: 16, paddingBottom: 16 },
-  backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border },
-  backIcon:    { fontSize: 18, color: COLORS.textSecondary },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary },
+  backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
+  backIcon:    { fontSize: 18, color: colors.textSecondary },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
 
   heroCard:     { marginHorizontal: 16, marginBottom: 16, backgroundColor: CONTRACT_DIM, borderRadius: 20, padding: 16, borderWidth: 2, borderColor: CONTRACT_COLOR },
   heroTop:      { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 },
   heroIconWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: CONTRACT_COLOR, alignItems: 'center', justifyContent: 'center' },
   heroIcon:     { fontSize: 22 },
-  heroTitle:    { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 4 },
-  heroCity:     { fontSize: 13, color: COLORS.textMuted },
+  heroTitle:    { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 },
+  heroCity:     { fontSize: 13, color: colors.textMuted },
 
-  statusBadge:       { backgroundColor: COLORS.bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.border },
+  statusBadge:       { backgroundColor: colors.bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: colors.border },
   statusBadgeActive: { borderColor: CONTRACT_COLOR, backgroundColor: CONTRACT_DIM },
-  statusText:        { fontSize: 11, color: COLORS.textSecondary, fontWeight: '600' },
+  statusText:        { fontSize: 11, color: colors.textSecondary, fontWeight: '600' },
 
   chipRow:    { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 12 },
 
   progressWrap: { marginTop: 4, marginBottom: 4 },
-  progressBg:   { height: 6, backgroundColor: COLORS.bg, borderRadius: 3, marginBottom: 6, overflow: 'hidden' },
+  progressBg:   { height: 6, backgroundColor: colors.bg, borderRadius: 3, marginBottom: 6, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: CONTRACT_COLOR, borderRadius: 3 },
-  progressText: { fontSize: 12, color: COLORS.textMuted },
+  progressText: { fontSize: 12, color: colors.textMuted },
 
-  priceBox:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8, backgroundColor: COLORS.bg, borderRadius: 12, padding: 10 },
+  priceBox:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8, backgroundColor: colors.bg, borderRadius: 12, padding: 10 },
   priceValue: { fontSize: 18, fontWeight: '800', color: CONTRACT_COLOR },
-  priceLabel: { fontSize: 11, color: COLORS.textMuted },
-  priceSep:   { fontSize: 18, color: COLORS.border },
+  priceLabel: { fontSize: 11, color: colors.textMuted },
+  priceSep:   { fontSize: 18, color: colors.border },
 
   section:      { paddingHorizontal: 16, marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
   bidCount:     { color: CONTRACT_COLOR },
 
-  detailCard:  { backgroundColor: COLORS.surface, borderRadius: 16, paddingHorizontal: 14, borderWidth: 1, borderColor: COLORS.border },
-  descBlock:   { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  descText:    { fontSize: 14, color: COLORS.textPrimary, lineHeight: 22 },
+  detailCard:  { backgroundColor: colors.surface, borderRadius: 16, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.border },
+  descBlock:   { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+  descText:    { fontSize: 14, color: colors.textPrimary, lineHeight: 22 },
 
-  emptyBids:     { backgroundColor: COLORS.surface, borderRadius: 14, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  emptyBidsText: { fontSize: 16, color: COLORS.textMuted, marginBottom: 6 },
-  emptyBidsSub:  { fontSize: 13, color: COLORS.textMuted },
+  emptyBids:     { backgroundColor: colors.surface, borderRadius: 14, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  emptyBidsText: { fontSize: 16, color: colors.textMuted, marginBottom: 6 },
+  emptyBidsSub:  { fontSize: 13, color: colors.textMuted },
 
-  acceptedCard:        { backgroundColor: COLORS.surface, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: CONTRACT_COLOR },
+  acceptedCard:        { backgroundColor: colors.surface, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: CONTRACT_COLOR },
   acceptedAvatar:      { width: 44, height: 44, borderRadius: 22, backgroundColor: CONTRACT_DIM, alignItems: 'center', justifyContent: 'center' },
   acceptedAvatarText:  { fontSize: 20, fontWeight: '700', color: CONTRACT_COLOR },
-  acceptedName:        { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
+  acceptedName:        { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
   acceptedPrice:       { fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600' },
   verifiedBadge:       { backgroundColor: '#0C4A6E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   verifiedBadgeText:   { fontSize: 12, color: '#7DD3FC', fontWeight: '600' },
 
   timeline: { paddingLeft: 4 },
-});
+  });
+}

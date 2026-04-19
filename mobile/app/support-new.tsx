@@ -3,17 +3,18 @@
 // Category → Priority → Subject + Description → Submit
 // ============================================================
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const CATEGORY_KEYS = [
   { key: 'payment',  icon: '💳' },
@@ -31,6 +32,9 @@ export default function SupportNewScreen() {
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta } = useLanguage();
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [category,   setCategory] = useState<CategoryKey | null>(null);
   const [priority,   setPriority] = useState<Priority>('normal');
@@ -142,7 +146,7 @@ export default function SupportNewScreen() {
         <TextInput
           style={styles.input}
           placeholder={t('supportNew.subjectPlaceholder')}
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={subject}
           onChangeText={setSubject}
           textAlign={ta}
@@ -155,7 +159,7 @@ export default function SupportNewScreen() {
         <TextInput
           style={[styles.input, styles.textarea]}
           placeholder={t('supportNew.descPlaceholder')}
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={desc}
           onChangeText={setDesc}
           textAlign={ta}
@@ -172,7 +176,7 @@ export default function SupportNewScreen() {
           disabled={!canSubmit || submitting}
         >
           {submitting
-            ? <ActivityIndicator color={COLORS.bg} />
+            ? <ActivityIndicator color={colors.bg} />
             : <Text style={styles.submitBtnText}>{t('supportNew.submitBtn')}</Text>
           }
         </TouchableOpacity>
@@ -186,38 +190,40 @@ export default function SupportNewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
 
-  topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText: { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+    topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+    backBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    backText: { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    topTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
 
-  content: { padding: 16, paddingBottom: 48 },
+    content: { padding: 16, paddingBottom: 48 },
 
-  label: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary, marginTop: 20, marginBottom: 10 },
+    label: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginTop: 20, marginBottom: 10 },
 
-  catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  catCard:       { width: '30%', backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, gap: 6 },
-  catCardActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  catIcon:       { fontSize: 24 },
-  catLabel:      { fontSize: 12, fontWeight: '600', color: COLORS.textMuted, textAlign: 'center' },
-  catLabelActive:{ color: COLORS.accent },
+    catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    catCard:       { width: '30%', backgroundColor: colors.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6 },
+    catCardActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },
+    catIcon:       { fontSize: 24 },
+    catLabel:      { fontSize: 12, fontWeight: '600', color: colors.textMuted, textAlign: 'center' },
+    catLabelActive:{ color: colors.accent },
 
-  priorityRow:       { flexDirection: 'row', gap: 12 },
-  priorityBtn:       { flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  priorityBtnActive: { borderColor: '#38BDF8', backgroundColor: 'rgba(56,189,248,0.08)' },
-  priorityBtnUrgent: { borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.08)' },
-  priorityBtnText:   { fontSize: 14, fontWeight: '700', color: COLORS.textMuted },
+    priorityRow:       { flexDirection: 'row', gap: 12 },
+    priorityBtn:       { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+    priorityBtnActive: { borderColor: '#38BDF8', backgroundColor: 'rgba(56,189,248,0.08)' },
+    priorityBtnUrgent: { borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.08)' },
+    priorityBtnText:   { fontSize: 14, fontWeight: '700', color: colors.textMuted },
 
-  input:     { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.textPrimary, fontSize: 14, borderWidth: 1, borderColor: COLORS.border },
-  textarea:  { minHeight: 120, textAlignVertical: 'top', paddingTop: 12 },
-  charCount: { fontSize: 11, color: COLORS.textMuted, marginTop: 4 },
+    input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border },
+    textarea:  { minHeight: 120, textAlignVertical: 'top', paddingTop: 12 },
+    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
 
-  submitBtn:         { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
-  submitBtnDisabled: { backgroundColor: COLORS.border },
-  submitBtnText:     { fontSize: 16, fontWeight: '700', color: COLORS.bg },
+    submitBtn:         { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
+    submitBtnDisabled: { backgroundColor: colors.border },
+    submitBtnText:     { fontSize: 16, fontWeight: '700', color: colors.bg },
 
-  footNote: { fontSize: 12, color: COLORS.textMuted, marginTop: 14, lineHeight: 18 },
-});
+    footNote: { fontSize: 12, color: colors.textMuted, marginTop: 14, lineHeight: 18 },
+  });
+}

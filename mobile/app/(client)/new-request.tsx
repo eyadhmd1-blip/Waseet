@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
@@ -6,12 +6,13 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
 import { CATEGORY_GROUPS, JORDAN_CITIES } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceCategory } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 type Step = 1 | 2 | 3;
 
@@ -25,7 +26,10 @@ export default function NewRequestScreen() {
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
+  const { colors } = useTheme();
   const { category: preselectedCategory, notif_id: notifId } = useLocalSearchParams<{ category?: string; notif_id?: string }>();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [step, setStep]               = useState<Step>(preselectedCategory ? 2 : 1);
   const [selectedCat, setSelectedCat] = useState<ServiceCategory | null>(
@@ -212,7 +216,7 @@ export default function NewRequestScreen() {
           <TextInput
             style={[styles.input, { textAlign: ta }]}
             placeholder={t('newRequest.titlePlaceholder')}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={setTitle}
             maxLength={80}
@@ -222,7 +226,7 @@ export default function NewRequestScreen() {
           <TextInput
             style={[styles.input, styles.inputMultiline, { textAlign: ta }]}
             placeholder={t('newRequest.descPlaceholder')}
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={description}
             onChangeText={setDescription}
             multiline
@@ -250,7 +254,7 @@ export default function NewRequestScreen() {
           <View style={styles.imageRow}>
             {images.map((uri, i) => (
               <View key={i} style={styles.imagePlaceholder}>
-                <Text style={{ color: COLORS.textMuted, fontSize: 11 }}>{i + 1}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 11 }}>{i + 1}</Text>
                 <TouchableOpacity onPress={() => setImages(prev => prev.filter((_, idx) => idx !== i))}>
                   <Text style={{ color: '#EF4444', fontSize: 18, marginTop: 4 }}>✕</Text>
                 </TouchableOpacity>
@@ -258,7 +262,7 @@ export default function NewRequestScreen() {
             ))}
             {images.length < 4 && (
               <TouchableOpacity style={styles.addImageBtn} onPress={pickImages}>
-                <Text style={{ fontSize: 28, color: COLORS.textMuted }}>+</Text>
+                <Text style={{ fontSize: 28, color: colors.textMuted }}>+</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -281,7 +285,7 @@ export default function NewRequestScreen() {
             <Text style={styles.priceLabel}>{t('newRequest.aiPrice')}</Text>
             {aiLoading ? (
               <View style={styles.priceLoading}>
-                <ActivityIndicator color={COLORS.accent} />
+                <ActivityIndicator color={colors.accent} />
                 <Text style={styles.priceLoadingText}>{t('newRequest.aiAnalyzing')}</Text>
               </View>
             ) : aiPrice ? (
@@ -309,7 +313,7 @@ export default function NewRequestScreen() {
             disabled={submitting}
           >
             {submitting
-              ? <ActivityIndicator color={COLORS.bg} />
+              ? <ActivityIndicator color={colors.bg} />
               : <Text style={styles.btnText}>{t('newRequest.submit')}</Text>
             }
           </TouchableOpacity>
@@ -319,7 +323,7 @@ export default function NewRequestScreen() {
   );
 }
 
-function Row({ label, value, multiline }: { label: string; value: string; multiline?: boolean; isRTL?: boolean }) {
+function Row({ label, value, multiline, colors: _colors }: { label: string; value: string; multiline?: boolean; isRTL?: boolean; colors?: AppColors }) {
   return (
     <View style={rowStyles.row}>
       <Text style={rowStyles.label}>{label}</Text>
@@ -328,66 +332,70 @@ function Row({ label, value, multiline }: { label: string; value: string; multil
   );
 }
 
+// Row uses static styles since it doesn't have access to theme context here
+// and colors don't change for border/text values in this sub-component
 const rowStyles = StyleSheet.create({
-  row:   { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  label: { fontSize: 13, color: COLORS.textMuted, flex: 0.4 },
-  value: { fontSize: 13, color: COLORS.textPrimary, flex: 0.6 },
+  row:   { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1B3568' },
+  label: { fontSize: 13, color: '#3A5C80', flex: 0.4 },
+  value: { fontSize: 13, color: '#EEF4FF', flex: 0.6 },
 });
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
 
-  topBar:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn:       { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText:      { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle:      { flex: 1, fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center' },
-  stepIndicator: { flexDirection: 'row', gap: 6 },
-  stepDot:       { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.border },
-  stepDotActive: { backgroundColor: COLORS.accent },
+    topBar:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+    backBtn:       { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    backText:      { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    topTitle:      { flex: 1, fontSize: 17, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
+    stepIndicator: { flexDirection: 'row', gap: 6 },
+    stepDot:       { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
+    stepDotActive: { backgroundColor: colors.accent },
 
-  scrollContent: { padding: 20, paddingBottom: 40 },
+    scrollContent: { padding: 20, paddingBottom: 40 },
 
-  groupScroll:         { marginBottom: 20 },
-  groupChip:           { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: COLORS.border },
-  groupChipActive:     { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  groupChipText:       { color: COLORS.textSecondary, fontSize: 13 },
-  groupChipTextActive: { color: COLORS.accent },
+    groupScroll:         { marginBottom: 20 },
+    groupChip:           { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
+    groupChipActive:     { borderColor: colors.accent, backgroundColor: colors.accentDim },
+    groupChipText:       { color: colors.textSecondary, fontSize: 13 },
+    groupChipTextActive: { color: colors.accent },
 
-  catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  catCard:       { width: '30%', backgroundColor: COLORS.surface, borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  catCardActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  catIcon:       { fontSize: 30, marginBottom: 8 },
-  catName:       { fontSize: 12, color: COLORS.textSecondary, textAlign: 'center' },
+    catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    catCard:       { width: '30%', backgroundColor: colors.surface, borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+    catCardActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },
+    catIcon:       { fontSize: 30, marginBottom: 8 },
+    catName:       { fontSize: 12, color: colors.textSecondary, textAlign: 'center' },
 
-  selectedCatBadge: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginBottom: 20 },
-  selectedCatText:  { fontSize: 15, color: COLORS.accent, fontWeight: '600' },
-  changeCat:        { fontSize: 13, color: COLORS.textMuted },
+    selectedCatBadge: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginBottom: 20 },
+    selectedCatText:  { fontSize: 15, color: colors.accent, fontWeight: '600' },
+    changeCat:        { fontSize: 13, color: colors.textMuted },
 
-  label:     { fontSize: 13, color: COLORS.textSecondary, marginBottom: 8, marginTop: 16 },
-  input:     { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.textPrimary, fontSize: 15, borderWidth: 1, borderColor: COLORS.border },
-  inputMultiline: { height: 120, textAlignVertical: 'top', paddingTop: 14 },
-  charCount: { fontSize: 11, color: COLORS.textMuted, marginTop: 4 },
+    label:     { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16 },
+    input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
+    inputMultiline: { height: 120, textAlignVertical: 'top', paddingTop: 14 },
+    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
 
-  cityScroll:    { marginBottom: 8 },
-  cityChip:      { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: COLORS.border },
-  cityChipActive:{ borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  cityText:      { color: COLORS.textSecondary, fontSize: 13 },
-  cityTextActive:{ color: COLORS.accent },
+    cityScroll:    { marginBottom: 8 },
+    cityChip:      { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
+    cityChipActive:{ borderColor: colors.accent, backgroundColor: colors.accentDim },
+    cityText:      { color: colors.textSecondary, fontSize: 13 },
+    cityTextActive:{ color: colors.accent },
 
-  imageRow:    { flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginBottom: 8 },
-  imagePlaceholder: { width: 80, height: 80, backgroundColor: COLORS.surface, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  addImageBtn: { width: 80, height: 80, backgroundColor: COLORS.surface, borderRadius: 10, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+    imageRow:    { flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginBottom: 8 },
+    imagePlaceholder: { width: 80, height: 80, backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+    addImageBtn: { width: 80, height: 80, backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
 
-  priceCard:       { backgroundColor: COLORS.surface, borderRadius: 16, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
-  priceLabel:      { fontSize: 13, color: COLORS.textMuted, marginBottom: 10 },
-  priceValue:      { fontSize: 28, fontWeight: '700', color: COLORS.accent },
-  priceNA:         { fontSize: 15, color: COLORS.textSecondary },
-  priceLoading:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  priceLoadingText:{ fontSize: 14, color: COLORS.textMuted },
+    priceCard:       { backgroundColor: colors.surface, borderRadius: 16, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
+    priceLabel:      { fontSize: 13, color: colors.textMuted, marginBottom: 10 },
+    priceValue:      { fontSize: 28, fontWeight: '700', color: colors.accent },
+    priceNA:         { fontSize: 15, color: colors.textSecondary },
+    priceLoading:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    priceLoadingText:{ fontSize: 14, color: colors.textMuted },
 
-  summaryCard: { backgroundColor: COLORS.surface, borderRadius: 16, paddingHorizontal: 16, marginBottom: 28, borderWidth: 1, borderColor: COLORS.border },
+    summaryCard: { backgroundColor: colors.surface, borderRadius: 16, paddingHorizontal: 16, marginBottom: 28, borderWidth: 1, borderColor: colors.border },
 
-  btn:        { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
-  btnDisabled:{ backgroundColor: COLORS.border },
-  btnText:    { fontSize: 17, fontWeight: '700', color: COLORS.bg },
-});
+    btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+    btnDisabled:{ backgroundColor: colors.border },
+    btnText:    { fontSize: 17, fontWeight: '700', color: colors.bg },
+  });
+}

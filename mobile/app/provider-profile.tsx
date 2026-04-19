@@ -4,7 +4,7 @@
 // Shows full public info + portfolio + share/save CTAs
 // ============================================================
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Share, Alert, Animated, Easing,
@@ -12,12 +12,13 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { TIER_META, CATEGORY_GROUPS } from '../src/constants/categories';
 import type { Provider, User, PortfolioItem, ShareChannel } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
 const THUMB_SIZE   = (W - 40 - 8) / 3;
@@ -35,6 +36,8 @@ function capitalize(s: string) {
 // ─── Stat pill ───────────────────────────────────────────────
 
 function StatPill({ icon, value, label }: { icon: string; value: string; label: string }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.statPill}>
       <Text style={styles.statIcon}>{icon}</Text>
@@ -47,6 +50,8 @@ function StatPill({ icon, value, label }: { icon: string; value: string; label: 
 // ─── Portfolio thumbnail ──────────────────────────────────────
 
 function PortfolioThumb({ item }: { item: PortfolioItem }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const thumb = item.item_type === 'video' ? null : item.media_urls[0];
   return (
     <View style={[styles.portfolioThumb, { width: THUMB_SIZE, height: THUMB_SIZE }]}>
@@ -85,6 +90,8 @@ function ShareSheet({
   myId: string | null;
   onClose: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta } = useLanguage();
   const slideY  = useRef(new Animated.Value(400)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -164,6 +171,8 @@ function ShareSheet({
 // ─── Main Screen ─────────────────────────────────────────────
 
 export default function ProviderPublicProfile() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
     const { headerPad } = useInsets();
   const router = useRouter();
   const { provider_id } = useLocalSearchParams<{ provider_id: string }>();
@@ -245,7 +254,7 @@ export default function ProviderPublicProfile() {
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator color={COLORS.accent} size="large" /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
   if (!provider) {
     return (
@@ -342,7 +351,7 @@ export default function ProviderPublicProfile() {
               disabled={savingToggle}
             >
               {savingToggle
-                ? <ActivityIndicator color={isSaved ? COLORS.bg : COLORS.accent} size="small" />
+                ? <ActivityIndicator color={isSaved ? colors.bg : colors.accent} size="small" />
                 : <Text style={[styles.saveBtnText, isSaved && styles.saveBtnTextActive]}>
                     {isSaved ? t('providerProfile.saved') : t('providerProfile.saveProvider')}
                   </Text>
@@ -415,85 +424,87 @@ export default function ProviderPublicProfile() {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
-  errorText: { fontSize: 16, color: COLORS.textMuted, marginBottom: 16 },
-  backPill:  { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
-  backPillText: { fontSize: 14, fontWeight: '700', color: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  errorText: { fontSize: 16, color: colors.textMuted, marginBottom: 16 },
+  backPill:  { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
+  backPillText: { fontSize: 14, fontWeight: '700', color: colors.bg },
 
-  topBar:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  topBar:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
   topBackBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  topBackText:  { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle:     { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  topBackText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+  topTitle:     { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   shareIconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
 
   content: { padding: 16, paddingBottom: 60 },
 
-  heroCard: { backgroundColor: COLORS.surface, borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: COLORS.border },
+  heroCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: colors.border },
   heroTop:  { flexDirection: 'row', gap: 14, alignItems: 'flex-start', marginBottom: 16 },
   avatar:   { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 30, fontWeight: '800' },
   heroInfo: { flex: 1, gap: 4 },
-  heroName: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
-  heroCity: { fontSize: 13, color: COLORS.textMuted },
+  heroName: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
+  heroCity: { fontSize: 13, color: colors.textMuted },
 
   badgeRow:        { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
   tierPill:        { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   tierPillText:    { fontSize: 11, fontWeight: '700' },
   verifiedPill:    { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#0C4A6E' },
   verifiedPillText:{ fontSize: 11, fontWeight: '700', color: '#7DD3FC' },
-  recommendedPill: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: COLORS.accentDim, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
+  recommendedPill: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: colors.accentDim, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
   recommendedPillText: { fontSize: 11, fontWeight: '700', color: '#FCD34D' },
 
   statsRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
-  statPill: { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, padding: 10, alignItems: 'center', gap: 2, borderWidth: 1, borderColor: COLORS.border },
+  statPill: { flex: 1, backgroundColor: colors.bg, borderRadius: 12, padding: 10, alignItems: 'center', gap: 2, borderWidth: 1, borderColor: colors.border },
   statIcon: { fontSize: 16 },
-  statValue:{ fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  statLabel:{ fontSize: 9, color: COLORS.textMuted, textAlign: 'center' },
+  statValue:{ fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  statLabel:{ fontSize: 9, color: colors.textMuted, textAlign: 'center' },
 
-  bio: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22, marginBottom: 12 },
+  bio: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, marginBottom: 12 },
 
   catsRow:     { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  catChip:     { backgroundColor: COLORS.bg, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: COLORS.border },
-  catChipText: { fontSize: 11, color: COLORS.textSecondary },
+  catChip:     { backgroundColor: colors.bg, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: colors.border },
+  catChipText: { fontSize: 11, color: colors.textSecondary },
 
   actionRow:       { flexDirection: 'row', gap: 8, marginBottom: 20, flexWrap: 'wrap' },
-  saveBtn:         { flex: 1, minWidth: 100, backgroundColor: COLORS.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  saveBtnActive:   { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  saveBtnText:     { fontSize: 13, fontWeight: '700', color: COLORS.accent },
-  saveBtnTextActive:{ color: COLORS.bg },
-  shareBtn:        { flex: 1, minWidth: 80, backgroundColor: COLORS.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  shareBtnText:    { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
-  requestBtn:      { flex: 1, minWidth: 100, backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  requestBtnText:  { fontSize: 13, fontWeight: '700', color: COLORS.bg },
+  saveBtn:         { flex: 1, minWidth: 100, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  saveBtnActive:   { backgroundColor: colors.accent, borderColor: colors.accent },
+  saveBtnText:     { fontSize: 13, fontWeight: '700', color: colors.accent },
+  saveBtnTextActive:{ color: colors.bg },
+  shareBtn:        { flex: 1, minWidth: 80, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  shareBtnText:    { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
+  requestBtn:      { flex: 1, minWidth: 100, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+  requestBtnText:  { fontSize: 13, fontWeight: '700', color: colors.bg },
 
   section:       { marginBottom: 20 },
-  sectionTitle:  { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 12 },
+  sectionTitle:  { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
   portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  portfolioThumb:{ borderRadius: 10, overflow: 'hidden', backgroundColor: COLORS.surface },
-  videoThumbBg:  { alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surface },
+  portfolioThumb:{ borderRadius: 10, overflow: 'hidden', backgroundColor: colors.surface },
+  videoThumbBg:  { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
   thumbBadge:    { position: 'absolute', top: 4, right: 4, backgroundColor: '#00000088', borderRadius: 4, paddingHorizontal: 4, paddingVertical: 2 },
   thumbBadgeText:{ fontSize: 9 },
   thumbViews:    { position: 'absolute', bottom: 4, left: 4, backgroundColor: '#00000088', borderRadius: 4, paddingHorizontal: 4, paddingVertical: 1 },
   thumbViewsText:{ fontSize: 9, color: '#fff' },
 
-  referralCard:    { backgroundColor: COLORS.accentDim, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center', gap: 8 },
-  referralTitle:   { fontSize: 17, fontWeight: '800', color: COLORS.accent, textAlign: 'center' },
-  referralSub:     { fontSize: 13, color: COLORS.textMuted, textAlign: 'center', lineHeight: 20 },
-  referralBtn:     { backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24, marginTop: 4 },
-  referralBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.bg },
-  referralProgress:{ backgroundColor: COLORS.bg, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
-  referralProgressText: { fontSize: 12, color: COLORS.textMuted },
+  referralCard:    { backgroundColor: colors.accentDim, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center', gap: 8 },
+  referralTitle:   { fontSize: 17, fontWeight: '800', color: colors.accent, textAlign: 'center' },
+  referralSub:     { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 20 },
+  referralBtn:     { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24, marginTop: 4 },
+  referralBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
+  referralProgress:{ backgroundColor: colors.bg, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
+  referralProgressText: { fontSize: 12, color: colors.textMuted },
 
   sheetBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
-  shareSheet:    { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 24, paddingBottom: 48, paddingTop: 12 },
-  sheetHandle:   { width: 40, height: 4, backgroundColor: COLORS.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
-  sheetTitle:    { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
-  sheetLink:     { fontSize: 12, color: COLORS.textMuted, marginBottom: 20, fontFamily: 'monospace' },
+  shareSheet:    { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 24, paddingBottom: 48, paddingTop: 12 },
+  sheetHandle:   { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  sheetTitle:    { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  sheetLink:     { fontSize: 12, color: colors.textMuted, marginBottom: 20, fontFamily: 'monospace' },
 
   channelRow:   { flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap', gap: 12 },
   channelBtn:   { alignItems: 'center', gap: 6, minWidth: 56 },
-  channelIcon:  { width: 52, height: 52, backgroundColor: COLORS.bg, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border },
-  channelLabel: { fontSize: 11, color: COLORS.textMuted, textAlign: 'center' },
-});
+  channelIcon:  { width: 52, height: 52, backgroundColor: colors.bg, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
+  channelLabel: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
+  });
+}

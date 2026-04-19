@@ -1,15 +1,16 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Modal, TextInput,
   Alert,
 } from 'react-native';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Job } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 type JobTab = 'active' | 'completed';
 
@@ -19,6 +20,8 @@ type JobWithMeta = Job & {
 };
 
 export default function ProviderJobs() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   useInsets();
   const { t, ta, lang } = useLanguage();
   const [tab, setTab]             = useState<JobTab>('active');
@@ -142,7 +145,7 @@ export default function ProviderJobs() {
           disabled={sendingCode}
         >
           {sendingCode
-            ? <ActivityIndicator color={COLORS.bg} size="small" />
+            ? <ActivityIndicator color={colors.bg} size="small" />
             : <Text style={styles.doneBtnText}>{t('profile.jobsDoneConfirm')}</Text>
           }
         </TouchableOpacity>
@@ -199,7 +202,7 @@ export default function ProviderJobs() {
       </View>
 
       {loading ? (
-        <View style={styles.center}><ActivityIndicator color={COLORS.accent} /></View>
+        <View style={styles.center}><ActivityIndicator color={colors.accent} /></View>
       ) : (
         <FlatList
           data={jobs}
@@ -208,7 +211,7 @@ export default function ProviderJobs() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
@@ -259,7 +262,7 @@ export default function ProviderJobs() {
                 disabled={codeInput.join('').length < 6 || confirmLoading}
               >
                 {confirmLoading
-                  ? <ActivityIndicator color={COLORS.bg} size="small" />
+                  ? <ActivityIndicator color={colors.bg} size="small" />
                   : <Text style={styles.modalConfirmText}>{t('profile.confirmModal.confirm')}</Text>
                 }
               </TouchableOpacity>
@@ -271,54 +274,56 @@ export default function ProviderJobs() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: COLORS.textPrimary },
+  headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
 
-  tabRow:        { flexDirection: 'row', marginHorizontal: 20, backgroundColor: COLORS.surface, borderRadius: 12, padding: 4, marginBottom: 16 },
+  tabRow:        { flexDirection: 'row', marginHorizontal: 20, backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginBottom: 16 },
   tabBtn:        { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
-  tabBtnActive:  { backgroundColor: COLORS.bg },
-  tabText:       { fontSize: 14, color: COLORS.textSecondary },
-  tabTextActive: { color: COLORS.textPrimary, fontWeight: '700' },
+  tabBtnActive:  { backgroundColor: colors.bg },
+  tabText:       { fontSize: 14, color: colors.textSecondary },
+  tabTextActive: { color: colors.textPrimary, fontWeight: '700' },
 
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
 
-  card:       { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
-  cardTitle:  { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  cardMeta:   { fontSize: 12, color: COLORS.textMuted, marginBottom: 4 },
-  clientName: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 14 },
+  card:       { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+  cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
+  clientName: { fontSize: 13, color: colors.textSecondary, marginBottom: 14 },
 
   doneBtn:      { backgroundColor: '#14532D', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#15803D' },
   doneBtnText:  { fontSize: 15, fontWeight: '700', color: '#86EFAC' },
-  btnDisabled:  { backgroundColor: COLORS.border },
+  btnDisabled:  { backgroundColor: colors.border },
 
   waitingBox:      { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', alignItems: 'center', gap: 10 },
   waitingText:     { fontSize: 13, color: '#FCD34D', textAlign: 'center' },
-  enterCodeBtn:    { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 8 },
-  enterCodeBtnText:{ fontSize: 13, fontWeight: '700', color: COLORS.bg },
+  enterCodeBtn:    { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 8 },
+  enterCodeBtnText:{ fontSize: 13, fontWeight: '700', color: colors.bg },
 
   completedBadge:     { alignSelf: 'flex-end', backgroundColor: '#14532D', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
   completedBadgeText: { fontSize: 11, color: '#86EFAC', fontWeight: '600' },
   ratingRow:          { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 8, marginBottom: 4 },
-  reviewText:         { fontSize: 12, color: COLORS.textSecondary, marginStart: 8, flex: 1 },
-  confirmedAt:        { fontSize: 11, color: COLORS.textMuted, marginTop: 6 },
+  reviewText:         { fontSize: 12, color: colors.textSecondary, marginStart: 8, flex: 1 },
+  confirmedAt:        { fontSize: 11, color: colors.textMuted, marginTop: 6 },
 
   empty:     { alignItems: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 16, color: COLORS.textMuted },
+  emptyText: { fontSize: 16, color: colors.textMuted },
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
-  modalSheet:   { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
-  modalTitle:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
-  modalSub:     { fontSize: 13, color: COLORS.textMuted, lineHeight: 20, marginBottom: 28 },
+  modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+  modalSub:     { fontSize: 13, color: colors.textMuted, lineHeight: 20, marginBottom: 28 },
   codeRow:      { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28 },
-  codeBox:      { width: 48, height: 60, borderRadius: 12, backgroundColor: COLORS.bg, borderWidth: 1, borderColor: COLORS.border, fontSize: 24, fontWeight: '700', color: COLORS.textPrimary },
-  codeBoxFilled:{ borderColor: COLORS.accent },
+  codeBox:      { width: 48, height: 60, borderRadius: 12, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+  codeBoxFilled:{ borderColor: colors.accent },
   modalBtns:       { flexDirection: 'row', gap: 12 },
-  modalCancel:     { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  modalCancelText: { fontSize: 15, color: COLORS.textSecondary },
-  modalConfirm:    { flex: 2, backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  modalConfirmText:{ fontSize: 15, fontWeight: '700', color: COLORS.bg },
-});
+  modalCancel:     { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  modalCancelText: { fontSize: 15, color: colors.textSecondary },
+  modalConfirm:    { flex: 2, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  modalConfirmText:{ fontSize: 15, fontWeight: '700', color: colors.bg },
+  });
+}

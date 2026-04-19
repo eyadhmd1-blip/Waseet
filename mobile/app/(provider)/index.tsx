@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
 import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceRequest, Provider, User, RecurringContract } from '../../src/types';
@@ -21,6 +20,8 @@ import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
 import { calcUrgentPremium, calcContractTotal, sanitizeAmount } from '../../src/utils/pricing';
 import { flexRow, alignEnd, selfStart, me } from '../../src/utils/rtl';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 const CONTRACT_COLOR = '#10B981';
 const CONTRACT_DIM   = '#10B98122';
@@ -40,6 +41,8 @@ type RequestWithMeta = ServiceRequest & {
 // ─── Urgent Countdown ────────────────────────────────────────
 
 function UrgentCountdown({ expiresAt }: { expiresAt: string }) {
+  const { colors } = useTheme();
+  const urgentStyles = useMemo(() => createUrgentStyles(colors), [colors]);
   const [remaining, setRemaining] = useState(() =>
     Math.max(0, new Date(expiresAt).getTime() - Date.now())
   );
@@ -64,7 +67,8 @@ function UrgentCountdown({ expiresAt }: { expiresAt: string }) {
   );
 }
 
-const urgentStyles = StyleSheet.create({
+function createUrgentStyles(colors: AppColors) {
+  return StyleSheet.create({
   urgentCard:           { borderColor: '#EF4444', borderWidth: 2, backgroundColor: '#1A0808' },
   urgentTopBar:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   urgentBadge:          { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#DC2626', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
@@ -79,22 +83,23 @@ const urgentStyles = StyleSheet.create({
   acceptBtnText:  { fontSize: 13, fontWeight: '800', color: '#fff' },
 
   // Accept modal
-  acceptSheet:     { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 44 },
+  acceptSheet:     { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 44 },
   acceptTitle:     { fontSize: 20, fontWeight: '800', color: '#EF4444', textAlign: 'auto', marginBottom: 4 },
-  acceptSubtitle:  { fontSize: 14, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 20 },
-  acceptRow:       { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  acceptLabel:     { fontSize: 13, color: COLORS.textMuted },
-  acceptValue:     { fontSize: 13, color: COLORS.textPrimary, fontWeight: '600' },
+  acceptSubtitle:  { fontSize: 14, color: colors.textMuted, textAlign: 'auto', marginBottom: 20 },
+  acceptRow:       { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
+  acceptLabel:     { fontSize: 13, color: colors.textMuted },
+  acceptValue:     { fontSize: 13, color: colors.textPrimary, fontWeight: '600' },
   acceptPriceTip:  { backgroundColor: '#064E3B', borderRadius: 12, padding: 14, marginTop: 16, marginBottom: 8 },
   acceptPriceTipText: { fontSize: 13, color: '#6EE7B7', textAlign: 'auto', lineHeight: 20 },
   acceptCommitment:{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#450A0A', borderRadius: 10, padding: 12, marginTop: 12, marginBottom: 20 },
   acceptCommitText:{ fontSize: 12, color: '#FCA5A5', textAlign: 'auto', flex: 1, lineHeight: 18 },
   acceptBtns:      { flexDirection: 'row', gap: 12 },
-  acceptCancel:    { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  acceptCancelText:{ fontSize: 15, color: COLORS.textSecondary },
+  acceptCancel:    { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  acceptCancelText:{ fontSize: 15, color: colors.textSecondary },
   acceptConfirm:   { flex: 2, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   acceptConfirmText:{ fontSize: 15, fontWeight: '800', color: '#fff' },
-});
+  });
+}
 
 // ─── Contract Mini Card (horizontal scroll) ──────────────────
 
@@ -105,6 +110,8 @@ function ContractMiniCard({
   contract: RecurringContract;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const cStyles = useMemo(() => createCStyles(colors), [colors]);
   const { t } = useLanguage();
   const totalVisits = FREQ_VISITS_PER_MONTH[contract.frequency] * contract.duration_months;
   const freqKey = `providerFeed.freq${contract.frequency.charAt(0).toUpperCase() + contract.frequency.slice(1)}` as any;
@@ -127,18 +134,20 @@ function ContractMiniCard({
   );
 }
 
-const cStyles = StyleSheet.create({
+function createCStyles(colors: AppColors) {
+  return StyleSheet.create({
   card:     { width: 190, backgroundColor: CONTRACT_DIM, borderRadius: 16, padding: 14, marginEnd: 10, borderWidth: 2, borderColor: CONTRACT_COLOR },
   badge:    { backgroundColor: CONTRACT_COLOR, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start', marginBottom: 8 },
   badgeText:{ fontSize: 10, fontWeight: '800', color: '#fff' },
-  title:    { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 4, lineHeight: 20 },
+  title:    { fontSize: 14, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 4, lineHeight: 20 },
   freq:     { fontSize: 12, color: CONTRACT_COLOR, fontWeight: '600', textAlign: 'auto', marginBottom: 4 },
-  city:     { fontSize: 12, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 10 },
+  city:     { fontSize: 12, color: colors.textMuted, textAlign: 'auto', marginBottom: 10 },
   footer:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  bids:     { fontSize: 11, color: COLORS.textMuted },
+  bids:     { fontSize: 11, color: colors.textMuted },
   bidBtn:   { backgroundColor: CONTRACT_COLOR, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
   bidBtnText: { fontSize: 12, fontWeight: '700', color: '#fff' },
-});
+  });
+}
 
 // ─── Live Indicator ──────────────────────────────────────────
 
@@ -250,6 +259,8 @@ function BidButton({
   locked: boolean;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useLanguage();
   const scale = useRef(new Animated.Value(1)).current;
 
@@ -288,6 +299,8 @@ function UpsellModal({
   onClose: () => void;
   onSubscribe: (tier: string) => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const rocketY   = useRef(new Animated.Value(0)).current;
   const sheetY    = useRef(new Animated.Value(500)).current;
   const sheetOp   = useRef(new Animated.Value(0)).current;
@@ -384,6 +397,9 @@ function RequestCard({
   onBidPress: () => void;
   onUrgentAccept: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const urgentStyles = useMemo(() => createUrgentStyles(colors), [colors]);
   const { t, lang } = useLanguage();
   const bidsCount = item.bids_count?.[0]?.count ?? 0;
   const isNew     = Date.now() - new Date(item.created_at).getTime() < 60 * 60 * 1000;
@@ -497,6 +513,8 @@ function DemoRequestCard({
   onBidPress: () => void;
   onSkip: () => void;
 }) {
+  const { colors } = useTheme();
+  const demoStyles = useMemo(() => createDemoStyles(colors), [colors]);
   const { t, ta } = useLanguage();
 
   if (demo.status === 'submitted') {
@@ -557,7 +575,8 @@ function DemoRequestCard({
   );
 }
 
-const demoStyles = StyleSheet.create({
+function createDemoStyles(colors: AppColors) {
+  return StyleSheet.create({
   card: {
     backgroundColor: DEMO_DIM, borderRadius: 16, margin: 16, marginBottom: 0,
     padding: 16, borderWidth: 1.5, borderColor: DEMO_BORDER,
@@ -567,9 +586,9 @@ const demoStyles = StyleSheet.create({
   badgeText:   { fontSize: 11, fontWeight: '800', color: '#fff' },
   skipText:    { fontSize: 12, color: '#475569' },
   title:       { fontSize: 18, fontWeight: '700', color: '#F1F5F9', marginBottom: 6 },
-  desc:        { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 10 },
+  desc:        { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginBottom: 10 },
   metaRow:     { flexDirection: 'row', gap: 14, marginBottom: 12 },
-  metaText:    { fontSize: 12, color: COLORS.textMuted },
+  metaText:    { fontSize: 12, color: colors.textMuted },
   infoBox: {
     backgroundColor: DEMO_SOFT, borderRadius: 10, padding: 12,
     marginBottom: 14, borderWidth: 1, borderColor: DEMO_BORDER,
@@ -590,13 +609,16 @@ const demoStyles = StyleSheet.create({
   completedBid:   { fontSize: 13, color: '#6EE7B7', marginBottom: 10 },
   realCTABtn:     { borderWidth: 1, borderColor: DEMO_BORDER, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
   realCTAText:    { fontSize: 13, color: DEMO_TEXT, fontWeight: '600' },
-});
+  });
+}
 
 // ─── Demo Success Modal ───────────────────────────────────────
 
 function DemoSuccessModal({
   visible, credits, onClose,
 }: { visible: boolean; credits: number; onClose: () => void }) {
+  const { colors } = useTheme();
+  const demoSuccessStyles = useMemo(() => createDemoSuccessStyles(colors), [colors]);
   const { t, ta } = useLanguage();
   const steps = [
     t('providerFeed.demoSuccessStep1'),
@@ -636,25 +658,32 @@ function DemoSuccessModal({
   );
 }
 
-const demoSuccessStyles = StyleSheet.create({
-  overlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
-  sheet:       { backgroundColor: COLORS.bg, borderRadius: 20, padding: 28, width: '100%', borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
-  emoji:       { fontSize: 56, marginBottom: 16 },
-  title:       { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 20, width: '100%' },
-  stepsBox:    { backgroundColor: COLORS.surface, borderRadius: 14, padding: 16, marginBottom: 14, width: '100%' },
-  stepsTitle:  { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10, width: '100%' },
-  step:        { fontSize: 13, color: COLORS.textSecondary, lineHeight: 22, width: '100%' },
-  creditsBox:  { backgroundColor: '#052E16', borderRadius: 10, padding: 12, marginBottom: 20, width: '100%', borderWidth: 1, borderColor: '#16A34A' },
-  creditsText: { fontSize: 13, color: '#6EE7B7', width: '100%' },
-  ctaBtn:      { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignItems: 'center', width: '100%' },
-  ctaBtnText:  { fontSize: 16, fontWeight: '700', color: COLORS.bg },
-});
+function createDemoSuccessStyles(colors: AppColors) {
+  return StyleSheet.create({
+    overlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
+    sheet:       { backgroundColor: colors.bg, borderRadius: 20, padding: 28, width: '100%', borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
+    emoji:       { fontSize: 56, marginBottom: 16 },
+    title:       { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 20, width: '100%' },
+    stepsBox:    { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 14, width: '100%' },
+    stepsTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, width: '100%' },
+    step:        { fontSize: 13, color: colors.textSecondary, lineHeight: 22, width: '100%' },
+    creditsBox:  { backgroundColor: '#052E16', borderRadius: 10, padding: 12, marginBottom: 20, width: '100%', borderWidth: 1, borderColor: '#16A34A' },
+    creditsText: { fontSize: 13, color: '#6EE7B7', width: '100%' },
+    ctaBtn:      { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignItems: 'center', width: '100%' },
+    ctaBtnText:  { fontSize: 16, fontWeight: '700', color: colors.bg },
+  });
+}
 
 // ─── Main Screen ──────────────────────────────────────────────
 
 const MAX_CARDS = 30;
 
 export default function ProviderFeed() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+  const urgentStyles = useMemo(() => createUrgentStyles(colors), [colors]);
+  const demoBidStyles = useMemo(() => createDemoBidStyles(colors), [colors]);
+  const cBidStyles = useMemo(() => createCBidStyles(colors), [colors]);
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang, isRTL } = useLanguage();
@@ -1030,7 +1059,7 @@ export default function ProviderFeed() {
   const tierMeta = provider ? TIER_META[provider.reputation_tier] : null;
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator color={COLORS.accent} size="large" /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
 
   return (
@@ -1166,7 +1195,7 @@ export default function ProviderFeed() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -1218,7 +1247,7 @@ export default function ProviderFeed() {
             <TextInput
               style={styles.modalInput}
               placeholder="0.00"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               value={bidModal.amount}
               onChangeText={text => setBidModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
@@ -1229,7 +1258,7 @@ export default function ProviderFeed() {
             <TextInput
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={bidModal.note}
               onChangeText={text => setBidModal(prev => ({ ...prev, note: text }))}
               textAlign={ta}
@@ -1246,7 +1275,7 @@ export default function ProviderFeed() {
                 disabled={!bidModal.amount || bidModal.loading}
               >
                 {bidModal.loading
-                  ? <ActivityIndicator color={COLORS.bg} size="small" />
+                  ? <ActivityIndicator color={colors.bg} size="small" />
                   : <Text style={styles.modalSubmitText}>{t('providerFeed.sendBid')}</Text>
                 }
               </TouchableOpacity>
@@ -1275,7 +1304,7 @@ export default function ProviderFeed() {
             <TextInput
               style={styles.modalInput}
               placeholder="0.00"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               value={contractModal.amount}
               onChangeText={text => setContractModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
@@ -1293,7 +1322,7 @@ export default function ProviderFeed() {
             <TextInput
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.contractNotePlaceholder')}
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={contractModal.note}
               onChangeText={text => setContractModal(prev => ({ ...prev, note: text }))}
               textAlign={ta}
@@ -1432,7 +1461,7 @@ export default function ProviderFeed() {
             <TextInput
               style={styles.modalInput}
               placeholder="0.00"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               value={demoModal.amount}
               onChangeText={text => setDemoModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
@@ -1443,7 +1472,7 @@ export default function ProviderFeed() {
             <TextInput
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={demoModal.note}
               onChangeText={text => setDemoModal(prev => ({ ...prev, note: text }))}
               textAlign={ta}
@@ -1480,7 +1509,8 @@ export default function ProviderFeed() {
   );
 }
 
-const demoBidStyles = StyleSheet.create({
+function createDemoBidStyles(_colors: AppColors) {
+  return StyleSheet.create({
   header:     { marginBottom: 4 },
   badge:      { backgroundColor: DEMO_COLOR, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 8 },
   badgeText:  { fontSize: 11, fontWeight: '800', color: '#fff' },
@@ -1488,13 +1518,15 @@ const demoBidStyles = StyleSheet.create({
   freeText:   { fontSize: 12, color: DEMO_TEXT, lineHeight: 18 },
   submitBtn:  { flex: 2, backgroundColor: DEMO_COLOR, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   submitBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-});
+  });
+}
 
 // ─── Styles ──────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
   // ── Pending commit banner
   commitBanner:           { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0C4A6E', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(56,189,248,0.25)', gap: 10 },
@@ -1513,107 +1545,109 @@ const styles = StyleSheet.create({
     paddingTop: HEADER_PAD,
     paddingBottom: 12,
   },
-  greeting:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 6 },
+  greeting:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 6 },
   tierBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
   tierText:   { fontSize: 12, fontWeight: '700' },
-  tierScore:  { fontSize: 12, color: COLORS.textSecondary },
-  tierJobs:   { fontSize: 11, color: COLORS.textMuted },
+  tierScore:  { fontSize: 12, color: colors.textSecondary },
+  tierJobs:   { fontSize: 11, color: colors.textMuted },
 
   liveRow:   { flexDirection: 'row', alignItems: 'center' },
   liveText:  { fontSize: 11, color: '#22C55E', fontWeight: '600' },
 
-  upgradeBtn:     { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, shadowColor: COLORS.accent, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 },
-  upgradeBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.bg },
+  upgradeBtn:     { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, shadowColor: colors.accent, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 5 },
+  upgradeBtnText: { fontSize: 12, fontWeight: '700', color: colors.bg },
 
   creditsBadge:     { backgroundColor: 'rgba(201,168,76,0.12)', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
-  creditsBadgeText: { fontSize: 12, fontWeight: '700', color: COLORS.accent },
+  creditsBadgeText: { fontSize: 12, fontWeight: '700', color: colors.accent },
 
   creditCostHint:     { backgroundColor: 'rgba(201,168,76,0.08)', borderRadius: 8, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: 'rgba(201,168,76,0.20)' },
-  creditCostHintText: { fontSize: 12, color: COLORS.accent, textAlign: 'auto', fontWeight: '600' },
+  creditCostHintText: { fontSize: 12, color: colors.accent, textAlign: 'auto', fontWeight: '600' },
 
   // ── Filter
   filterScroll: { paddingHorizontal: 16, paddingBottom: 12, flexGrow: 0 },
-  filterChip:          { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, marginEnd: 8, borderWidth: 1, borderColor: COLORS.border },
-  filterChipActive:    { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  filterChipText:      { color: COLORS.textSecondary, fontSize: 12 },
-  filterChipTextActive:{ color: COLORS.accent, fontWeight: '600' },
+  filterChip:          { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 7, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
+  filterChipActive:    { borderColor: colors.accent, backgroundColor: colors.accentDim },
+  filterChipText:      { color: colors.textSecondary, fontSize: 12 },
+  filterChipTextActive:{ color: colors.accent, fontWeight: '600' },
 
   // ── List
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
 
   // ── Cards
-  card:       { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
+  card:       { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   cardLocked: { opacity: 0.82 },
   cardTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  cardCat:    { fontSize: 12, color: COLORS.textMuted },
-  cardTime:   { fontSize: 12, color: COLORS.textMuted },
-  cardTitle:  { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 8 },
-  cardDesc:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'auto', lineHeight: 20, marginBottom: 12 },
+  cardCat:    { fontSize: 12, color: colors.textMuted },
+  cardTime:   { fontSize: 12, color: colors.textMuted },
+  cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 8 },
+  cardDesc:   { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', lineHeight: 20, marginBottom: 12 },
 
   blurContainer: { marginBottom: 12, position: 'relative' },
-  blurText:      { fontSize: 13, color: COLORS.textSecondary, textAlign: 'auto', lineHeight: 20 },
-  blurOverlay:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: COLORS.surface, opacity: 0.88, borderRadius: 6 },
+  blurText:      { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', lineHeight: 20 },
+  blurOverlay:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surface, opacity: 0.88, borderRadius: 6 },
 
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cardLeft:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  cardCity:   { fontSize: 12, color: COLORS.textMuted },
-  bidsCount:  { fontSize: 12, color: COLORS.textSecondary },
-  aiPrice:    { fontSize: 13, color: COLORS.accent, fontWeight: '600' },
+  cardCity:   { fontSize: 12, color: colors.textMuted },
+  bidsCount:  { fontSize: 12, color: colors.textSecondary },
+  aiPrice:    { fontSize: 13, color: colors.accent, fontWeight: '600' },
 
-  bidBtn:           { backgroundColor: COLORS.accent, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8 },
-  bidBtnLocked:     { backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-  bidBtnText:       { fontSize: 13, fontWeight: '700', color: COLORS.bg },
-  bidBtnTextLocked: { color: COLORS.textMuted },
+  bidBtn:           { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8 },
+  bidBtnLocked:     { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  bidBtnText:       { fontSize: 13, fontWeight: '700', color: colors.bg },
+  bidBtnTextLocked: { color: colors.textMuted },
 
   empty:     { alignItems: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 16, color: COLORS.textMuted },
+  emptyText: { fontSize: 16, color: colors.textMuted },
 
   // ── Modals
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
-  modalSheet:   { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  modalTitle:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 4 },
-  modalSubtitle:{ fontSize: 14, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 16 },
-  modalAiHint:  { fontSize: 13, color: COLORS.accent, textAlign: 'auto', marginBottom: 16, fontWeight: '600' },
-  modalLabel:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'auto', marginBottom: 8, marginTop: 12 },
-  modalInput:   { backgroundColor: COLORS.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.textPrimary, fontSize: 15, borderWidth: 1, borderColor: COLORS.border },
+  modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 4 },
+  modalSubtitle:{ fontSize: 14, color: colors.textMuted, textAlign: 'auto', marginBottom: 16 },
+  modalAiHint:  { fontSize: 13, color: colors.accent, textAlign: 'auto', marginBottom: 16, fontWeight: '600' },
+  modalLabel:   { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', marginBottom: 8, marginTop: 12 },
+  modalInput:   { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
   modalBtns:    { flexDirection: 'row', gap: 12, marginTop: 20 },
-  modalCancel:      { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  modalCancelText:  { fontSize: 15, color: COLORS.textSecondary },
-  modalSubmit:      { flex: 2, backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  modalSubmitText:  { fontSize: 15, fontWeight: '700', color: COLORS.bg },
-  btnDisabled:      { backgroundColor: COLORS.border },
+  modalCancel:      { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  modalCancelText:  { fontSize: 15, color: colors.textSecondary },
+  modalSubmit:      { flex: 2, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  modalSubmitText:  { fontSize: 15, fontWeight: '700', color: colors.bg },
+  btnDisabled:      { backgroundColor: colors.border },
 
-  upsellSheet:      { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
+  upsellSheet:      { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, alignItems: 'center' },
   upsellIcon:       { fontSize: 52, marginBottom: 12 },
-  upsellTitle:      { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center', marginBottom: 8 },
-  upsellSub:        { fontSize: 14, color: COLORS.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  upsellTitle:      { fontSize: 20, fontWeight: '700', color: colors.textPrimary, textAlign: 'center', marginBottom: 8 },
+  upsellSub:        { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   planRow:          { flexDirection: 'row', gap: 10, marginBottom: 24 },
-  planCard:         { flex: 1, backgroundColor: COLORS.bg, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  planCardHighlight:{ borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  planBestTag:      { fontSize: 10, color: COLORS.accent, fontWeight: '700', marginBottom: 4 },
-  planPrice:        { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  planLabel:        { fontSize: 12, color: COLORS.textSecondary, marginBottom: 2 },
-  planDetail:       { fontSize: 11, color: COLORS.textMuted },
+  planCard:         { flex: 1, backgroundColor: colors.bg, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  planCardHighlight:{ borderColor: colors.accent, backgroundColor: colors.accentDim },
+  planBestTag:      { fontSize: 10, color: colors.accent, fontWeight: '700', marginBottom: 4 },
+  planPrice:        { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  planLabel:        { fontSize: 12, color: colors.textSecondary, marginBottom: 2 },
+  planDetail:       { fontSize: 11, color: colors.textMuted },
   upsellCloseBtn:   { paddingVertical: 12 },
-  upsellCloseBtnText:{ fontSize: 14, color: COLORS.textMuted },
+  upsellCloseBtnText:{ fontSize: 14, color: colors.textMuted },
 
   // ── Contracts section
   contractSection: { marginBottom: 4 },
   contractHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 8 },
   contractHeaderTitle: { fontSize: 16, fontWeight: '700', color: CONTRACT_COLOR },
-  contractHeaderSub:   { fontSize: 12, color: COLORS.textMuted },
+  contractHeaderSub:   { fontSize: 12, color: colors.textMuted },
   contractScroll:  { flexGrow: 0 },
-});
-
+  });
+}
 // ── Contract bid modal styles
-const cBidStyles = StyleSheet.create({
+function createCBidStyles(colors: AppColors) {
+  return StyleSheet.create({
   header:     { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
   badge:      { backgroundColor: CONTRACT_DIM, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: CONTRACT_COLOR },
   summary:    { backgroundColor: CONTRACT_DIM, borderRadius: 10, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
   summaryText:{ fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600', textAlign: 'auto' },
   totalBox:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: CONTRACT_DIM, borderRadius: 10, padding: 12, marginVertical: 8, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
-  totalLabel: { fontSize: 13, color: COLORS.textMuted },
+  totalLabel: { fontSize: 13, color: colors.textMuted },
   totalValue: { fontSize: 18, fontWeight: '800', color: CONTRACT_COLOR },
   submitBtn:  { flex: 2, backgroundColor: CONTRACT_COLOR, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   submitBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-});
+  });
+}

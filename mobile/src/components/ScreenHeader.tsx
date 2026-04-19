@@ -14,7 +14,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useInsets } from '../hooks/useInsets';
 import { useLanguage } from '../hooks/useLanguage';
-import { COLORS } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { flexRow, textStart } from '../utils/rtl';
 
 interface ScreenHeaderProps {
@@ -33,18 +33,20 @@ export function ScreenHeader({
   title,
   onBack,
   right,
-  bg = COLORS.bg,
+  bg,
   borderBottom = true,
 }: ScreenHeaderProps) {
   const { headerPad } = useInsets();
   const { isRTL }     = useLanguage();
+  const { colors }    = useTheme();
 
+  const resolvedBg = bg ?? colors.bg;
   const ta = textStart(isRTL);
 
   const containerStyle = [
     styles.container,
-    { paddingTop: headerPad, backgroundColor: bg },
-    borderBottom && styles.border,
+    { paddingTop: headerPad, backgroundColor: resolvedBg },
+    borderBottom && { borderBottomWidth: 1, borderBottomColor: colors.border },
   ];
 
   // ── Tab greeting variant ──────────────────────────────────
@@ -52,24 +54,19 @@ export function ScreenHeader({
     return (
       <View style={containerStyle}>
         <View style={[styles.row, { flexDirection: flexRow(isRTL) }]}>
-          {/* Greeting block — always on the start (leading) edge */}
           <View style={styles.greetingBlock}>
-            <Text style={[styles.greeting, { textAlign: ta }]} numberOfLines={1}>
+            <Text style={[styles.greeting, { textAlign: ta, color: colors.textPrimary }]} numberOfLines={1}>
               {greeting}
             </Text>
             {sub ? (
-              <Text style={[styles.sub, { textAlign: ta }]} numberOfLines={1}>
+              <Text style={[styles.sub, { textAlign: ta, color: colors.textMuted }]} numberOfLines={1}>
                 {sub}
               </Text>
             ) : null}
           </View>
-
-          {/* Action element — always on the end (trailing) edge */}
           {right ? <View style={styles.actionSlot}>{right}</View> : null}
         </View>
-
-        {/* Gold accent divider */}
-        <View style={styles.accentLine} />
+        <View style={[styles.accentLine, { backgroundColor: colors.accent }]} />
       </View>
     );
   }
@@ -78,27 +75,22 @@ export function ScreenHeader({
   return (
     <View style={containerStyle}>
       <View style={[styles.row, { flexDirection: flexRow(isRTL) }]}>
-        {/* Back button — leading edge */}
         {onBack ? (
           <TouchableOpacity
             style={styles.navBtn}
             onPress={onBack}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Text style={styles.backIcon}>{isRTL ? '→' : '←'}</Text>
+            <Text style={[styles.backIcon, { color: colors.accent }]}>{isRTL ? '→' : '←'}</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.navBtn} />
         )}
-
-        {/* Title — centred */}
         {title ? (
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>{title}</Text>
         ) : (
           <View style={{ flex: 1 }} />
         )}
-
-        {/* Right action — trailing edge */}
         {right ? (
           <View style={styles.actionSlot}>{right}</View>
         ) : (
@@ -111,73 +103,53 @@ export function ScreenHeader({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.bg,
     paddingHorizontal: 20,
     paddingBottom: 0,
   },
-
   row: {
     alignItems:     'center',
     justifyContent: 'space-between',
     paddingBottom:  14,
   },
-
-  border: {
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-
-  // ── Greeting variant
   greetingBlock: {
     flex: 1,
   },
   greeting: {
-    fontSize:   22,
-    fontWeight: '800',
-    color:      COLORS.textPrimary,
+    fontSize:      22,
+    fontWeight:    '800',
     letterSpacing: -0.3,
   },
   sub: {
-    fontSize:  13,
-    color:     COLORS.textMuted,
-    marginTop: 3,
+    fontSize:   13,
+    marginTop:  3,
     fontWeight: '500',
   },
   accentLine: {
-    height:          2,
-    width:           40,
-    backgroundColor: COLORS.accent,
-    borderRadius:    2,
-    marginBottom:    10,
-    // stays on start edge; marginStart isn't reliable without I18nManager,
-    // so we use alignSelf and let the parent column handle direction
-    alignSelf:       'flex-start',
+    height:        2,
+    width:         40,
+    borderRadius:  2,
+    marginBottom:  10,
+    alignSelf:     'flex-start',
   },
-
-  // ── Stack variant
   navBtn: {
-    width:           44,
-    height:          44,
-    alignItems:      'center',
-    justifyContent:  'center',
+    width:          44,
+    height:         44,
+    alignItems:     'center',
+    justifyContent: 'center',
   },
   backIcon: {
-    fontSize: 22,
-    color:    COLORS.accent,
+    fontSize:   22,
     fontWeight: '600',
   },
   title: {
     flex:       1,
     fontSize:   17,
     fontWeight: '700',
-    color:      COLORS.textPrimary,
     textAlign:  'center',
   },
-
-  // ── Shared
   actionSlot: {
-    flexShrink: 0,
-    alignItems: 'center',
+    flexShrink:     0,
+    alignItems:     'center',
     justifyContent: 'center',
   },
 });

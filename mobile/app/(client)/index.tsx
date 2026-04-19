@@ -3,20 +3,21 @@
 // Categories: Smart Tab Browser (group tabs + 3-col grid)
 // ============================================================
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, Animated, Easing,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
 import { CATEGORY_GROUPS, ALL_CATEGORIES } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { User, ServiceRequest } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD, SCREEN_WIDTH, rs } from '../../src/utils/layout';
 import { me, flexRow } from '../../src/utils/rtl';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -55,6 +56,8 @@ const POPULAR_ITEMS = POPULAR_SLUGS.map(slug => {
 });
 
 function QuickAccessRow({ onPress }: { onPress: (slug: string) => void }) {
+  const { colors } = useTheme();
+  const qStyles = useMemo(() => createQStyles(colors), [colors]);
   const { t } = useLanguage();
   const popular = POPULAR_ITEMS.map(p => ({
     slug: p.slug,
@@ -85,19 +88,21 @@ function QuickAccessRow({ onPress }: { onPress: (slug: string) => void }) {
   );
 }
 
-const qStyles = StyleSheet.create({
+function createQStyles(colors: AppColors) {
+  return StyleSheet.create({
   section: { marginBottom: 20 },
-  label:   { fontSize: 13, fontWeight: '600', color: COLORS.textMuted, textAlign: 'auto', paddingHorizontal: 20, marginBottom: 10 },
+  label:   { fontSize: 13, fontWeight: '600', color: colors.textMuted, textAlign: 'auto', paddingHorizontal: 20, marginBottom: 10 },
   scroll:  { paddingHorizontal: 20, gap: 8 },
   pill:    {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: COLORS.surface, borderRadius: 22,
+    backgroundColor: colors.surface, borderRadius: 22,
     paddingHorizontal: 14, paddingVertical: 9,
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: colors.border,
   },
   pillIcon: { fontSize: 15 },
-  pillName: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '600' },
+  pillName: { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
 });
+}
 
 // ─── Group Tab Bar ────────────────────────────────────────────
 
@@ -108,6 +113,8 @@ function GroupTabBar({
   activeGroup: string;
   onSelect: (slug: string) => void;
 }) {
+  const { colors } = useTheme();
+  const tabStyles = useMemo(() => createTabStyles(colors), [colors]);
   const { t } = useLanguage();
   return (
     <ScrollView
@@ -117,7 +124,7 @@ function GroupTabBar({
       style={tabStyles.scroll}
     >
       {CATEGORY_GROUPS.map(g => {
-        const color    = GROUP_COLORS[g.slug] ?? COLORS.accent;
+        const color    = GROUP_COLORS[g.slug] ?? colors.accent;
         const isActive = activeGroup === g.slug;
         return (
           <TouchableOpacity
@@ -140,19 +147,21 @@ function GroupTabBar({
   );
 }
 
-const tabStyles = StyleSheet.create({
+function createTabStyles(colors: AppColors) {
+  return StyleSheet.create({
   scroll:  { flexGrow: 0, marginBottom: 16 },
   content: { paddingHorizontal: 20, gap: 8 },
   tab: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: COLORS.surface, borderRadius: 22,
+    backgroundColor: colors.surface, borderRadius: 22,
     paddingHorizontal: 14, paddingVertical: 9,
-    borderWidth: 1.5, borderColor: COLORS.border,
+    borderWidth: 1.5, borderColor: colors.border,
   },
   tabIcon:       { fontSize: 14 },
-  tabText:       { fontSize: 13, color: COLORS.textSecondary, fontWeight: '600' },
+  tabText:       { fontSize: 13, color: colors.textSecondary, fontWeight: '600' },
   tabTextActive: { color: '#fff' },
 });
+}
 
 // ─── Category Card (3-per-row) ────────────────────────────────
 
@@ -169,6 +178,8 @@ function CategoryCard({
   color: string;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const ccStyles = useMemo(() => createCcStyles(colors), [colors]);
   const scale      = anim.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0.75, 1.05, 1] });
   const opacity    = anim;
   const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [22, 0] });
@@ -190,7 +201,8 @@ function CategoryCard({
   );
 }
 
-const ccStyles = StyleSheet.create({
+function createCcStyles(colors: AppColors) {
+  return StyleSheet.create({
   wrap:       { width: '31%' },
   card: {
     borderRadius: 16, paddingTop: 16, paddingBottom: 14, paddingHorizontal: 6,
@@ -198,8 +210,9 @@ const ccStyles = StyleSheet.create({
   },
   iconBubble: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   icon:       { fontSize: 24 },
-  name:       { fontSize: 12, color: COLORS.textPrimary, textAlign: 'center', fontWeight: '600', lineHeight: 16 },
+  name:       { fontSize: 12, color: colors.textPrimary, textAlign: 'center', fontWeight: '600', lineHeight: 16 },
 });
+}
 
 // ─── Tab Category Browser ─────────────────────────────────────
 
@@ -214,10 +227,12 @@ function TabCategoryBrowser({
   onGroupChange: (slug: string) => void;
   onCategoryPress: (slug: string) => void;
 }) {
+  const { colors } = useTheme();
+  const tbStyles = useMemo(() => createTbStyles(colors), [colors]);
   const { t } = useLanguage();
   const groupIndex = CATEGORY_GROUPS.findIndex(g => g.slug === activeGroup);
   const group      = CATEGORY_GROUPS[groupIndex];
-  const color      = GROUP_COLORS[activeGroup] ?? COLORS.accent;
+  const color      = GROUP_COLORS[activeGroup] ?? colors.accent;
   const activeAnims = anims[groupIndex] ?? [];
 
   return (
@@ -257,19 +272,23 @@ function TabCategoryBrowser({
   );
 }
 
-const tbStyles = StyleSheet.create({
+function createTbStyles(colors: AppColors) {
+  return StyleSheet.create({
   container:     { marginBottom: 24, paddingHorizontal: 20 },
   headerRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  sectionTitle:  { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+  sectionTitle:  { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
   groupCount:    { fontSize: 13, fontWeight: '600' },
   activeLabel:   { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, alignSelf: 'flex-end', marginBottom: 12, borderWidth: 1 },
   activeLabelText: { fontSize: 13, fontWeight: '700' },
   grid:          { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
 });
+}
 
 // ─── Urgent Countdown (inline on request cards) ──────────────
 
 function UrgentCountdownInline({ expiresAt }: { expiresAt: string }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const target = new Date(expiresAt).getTime();
   const [remaining, setRemaining] = useState(() => Math.max(0, target - Date.now()));
 
@@ -300,6 +319,8 @@ function UrgentCountdownInline({ expiresAt }: { expiresAt: string }) {
 // ─── Urgent Banner ───────────────────────────────────────────
 
 function UrgentBanner({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useLanguage();
   const pulse = useRef(new Animated.Value(1)).current;
   const glow  = useRef(new Animated.Value(0)).current;
@@ -342,6 +363,8 @@ function UrgentBanner({ onPress }: { onPress: () => void }) {
 // ─── CTA Banner ──────────────────────────────────────────────
 
 function CtaBanner({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useLanguage();
   const shimmerX = useRef(new Animated.Value(-120)).current;
   useEffect(() => {
@@ -373,6 +396,8 @@ function CtaBanner({ onPress }: { onPress: () => void }) {
 // ─── Recurring Banner ─────────────────────────────────────────
 
 function RecurringBanner({ onPress }: { onPress: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <TouchableOpacity style={styles.recurringBanner} onPress={onPress} activeOpacity={0.85}>
       <View style={{ flex: 1 }}>
@@ -392,6 +417,8 @@ const MAX_PER_GROUP = 10;
 const TOTAL_GROUPS  = CATEGORY_GROUPS.length;
 
 export default function ClientHome() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, isRTL } = useLanguage();
@@ -506,7 +533,7 @@ export default function ClientHome() {
   const goToRecurring = () => router.push('/recurring-request');
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator color={COLORS.accent} size="large" /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
 
   return (
@@ -543,7 +570,7 @@ export default function ClientHome() {
         style={styles.scroll}
         contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
         {/* ── Search bar ── */}
         <Animated.View style={{ opacity: searchOp, transform: [{ translateY: searchY }] }}>
@@ -649,10 +676,11 @@ const STATUS_COLORS: Record<string, { backgroundColor: string }> = {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   content:   { paddingBottom: 24 },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
   // Scroll wrapper
   scroll: { flex: 1 },
@@ -661,9 +689,9 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop:        HEADER_PAD,
-    backgroundColor:   COLORS.bg,
+    backgroundColor:   colors.bg,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: colors.border,
   },
   headerRow: {
     alignItems:     'center',
@@ -673,25 +701,25 @@ const styles = StyleSheet.create({
   headerAccent: {
     height:          2,
     width:           40,
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
     borderRadius:    2,
     marginBottom:    10,
   },
-  greeting: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3 },
-  city:     { fontSize: 13, color: COLORS.textMuted, marginTop: 3, fontWeight: '500' },
+  greeting: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.3 },
+  city:     { fontSize: 13, color: colors.textMuted, marginTop: 3, fontWeight: '500' },
   notifBtn: {
-    width: 44, height: 44, backgroundColor: COLORS.surface, borderRadius: 12,
-    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border,
+    width: 44, height: 44, backgroundColor: colors.surface, borderRadius: 12,
+    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border,
   },
 
   // Search
   searchBar: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginHorizontal: 20, backgroundColor: COLORS.surface, borderRadius: 12,
+    marginHorizontal: 20, backgroundColor: colors.surface, borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 14,
-    borderWidth: 1, borderColor: COLORS.border, marginBottom: 14,
+    borderWidth: 1, borderColor: colors.border, marginBottom: 14,
   },
-  searchPlaceholder: { fontSize: 14, color: COLORS.textMuted },
+  searchPlaceholder: { fontSize: 14, color: colors.textMuted },
 
   // Banners
   bannerWrap:  { marginHorizontal: 20, marginBottom: 24, gap: 10 },
@@ -700,8 +728,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', overflow: 'hidden',
   },
-  ctaTitle: { fontSize: 15, fontWeight: '700', color: COLORS.accent, textAlign: 'auto', marginBottom: 3 },
-  ctaSub:   { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto' },
+  ctaTitle: { fontSize: 15, fontWeight: '700', color: colors.accent, textAlign: 'auto', marginBottom: 3 },
+  ctaSub:   { fontSize: 11, color: colors.textMuted, textAlign: 'auto' },
   shimmer:  { position: 'absolute', top: 0, bottom: 0, width: Math.round(SCREEN_WIDTH * 0.2), backgroundColor: 'rgba(201,168,76,0.10)', borderRadius: 16 },
 
   // Row 2: urgent + recurring mini side by side
@@ -732,30 +760,31 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: 20, marginBottom: 12, marginTop: 4,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto' },
-  seeAll:       { fontSize: 13, color: COLORS.accent },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto' },
+  seeAll:       { fontSize: 13, color: colors.accent },
 
   // Request cards
   requestCard: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginHorizontal: 20, backgroundColor: COLORS.surface, borderRadius: 14,
-    padding: 16, marginBottom: 10, borderWidth: 1, borderColor: COLORS.border,
+    marginHorizontal: 20, backgroundColor: colors.surface, borderRadius: 14,
+    padding: 16, marginBottom: 10, borderWidth: 1, borderColor: colors.border,
   },
   requestLeft:       { flex: 1 },
   requestTitleRow:   { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', marginBottom: 4 },
-  requestTitle:      { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'auto', flexShrink: 1 },
-  requestMeta:       { fontSize: 12, color: COLORS.textMuted, textAlign: 'auto' },
+  requestTitle:      { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto', flexShrink: 1 },
+  requestMeta:       { fontSize: 12, color: colors.textMuted, textAlign: 'auto' },
   requestCardUrgent: { borderColor: '#7F1D1D', borderWidth: 1.5, backgroundColor: '#1A0808' },
   urgentTag:         { fontSize: 10, fontWeight: '800', color: '#EF4444', backgroundColor: '#450A0A', borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 },
   urgentCountdown:   { fontSize: 11, color: '#FCA5A5', textAlign: 'auto', marginTop: 3 },
-  urgentExpired:     { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginTop: 3 },
+  urgentExpired:     { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginTop: 3 },
 
   statusBadge:  { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  statusText:   { fontSize: 11, fontWeight: '600', color: COLORS.textPrimary },
+  statusText:   { fontSize: 11, fontWeight: '600', color: colors.textPrimary },
 
   // Empty
   emptyBox:   { alignItems: 'center', paddingTop: 40, paddingHorizontal: 40 },
   emptyIcon:  { fontSize: 48, marginBottom: 12 },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
-  emptySub:   { fontSize: 14, color: COLORS.textMuted, textAlign: 'center', lineHeight: 22 },
-});
+  emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+  emptySub:   { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
+  });
+}

@@ -1,16 +1,17 @@
-import { StyleSheet } from 'react-native';
+// ============================================================
+// theme.ts — App-wide design tokens
+//
+// COLORS is kept as the dark palette for any legacy module-level
+// usage. All new code should use useTheme() from ThemeContext.
+// ============================================================
 
-export const COLORS = {
-  bg:            '#060E28',
-  surface:       '#0C1C45',
-  border:        '#1B3568',
-  textPrimary:   '#EEF4FF',
-  textSecondary: '#7DAFD6',
-  textMuted:     '#3A5C80',
-  accent:        '#C9A84C',
-  gold2:         '#E8C96A',
-  accentDim:     '#18120A',
-};
+import type { AppColors } from './colors';
+import { darkColors } from './colors';
+
+// Re-export for backward compatibility with any module-level
+// StyleSheet.create that hasn't been migrated yet.
+// Phase 1 migration replaces these usages with useTheme().
+export const COLORS = darkColors;
 
 export const ROUTES = {
   AUTH:     '(auth)',
@@ -18,9 +19,30 @@ export const ROUTES = {
   PROVIDER: '(provider)',
 } as const;
 
-// Base style shared between both tab layouts.
-// height / paddingBottom are set dynamically with useSafeAreaInsets()
-// in each _layout.tsx so the bar always clears the home indicator.
+// ── Tab bar factories (accept live colors from useTheme) ──────
+
+export function makeTabBarStyle(colors: AppColors, insetBottom: number) {
+  return {
+    backgroundColor: colors.bg,
+    borderTopColor:  colors.border,
+    borderTopWidth:  1  as const,
+    height:          56 + insetBottom,
+    paddingBottom:   insetBottom + 4,
+    paddingTop:      4  as const,
+  };
+}
+
+export function makeTabOptions(colors: AppColors) {
+  return {
+    headerShown:             false,
+    tabBarActiveTintColor:   colors.accent,
+    tabBarInactiveTintColor: colors.textMuted,
+    tabBarLabelStyle:        { fontSize: 11, fontWeight: '600' as const },
+  };
+}
+
+// Legacy static exports — used by tab layouts until they are migrated.
+// Will be removed once makeTabBarStyle / makeTabOptions are wired in.
 export const TAB_BAR_BASE_STYLE = {
   backgroundColor: COLORS.bg,
   borderTopColor:  COLORS.border,
@@ -34,5 +56,4 @@ export const TAB_BASE_OPTIONS = {
   tabBarLabelStyle:        { fontSize: 11, fontWeight: '600' as const },
 };
 
-// Legacy export — layouts will import TAB_BASE_OPTIONS instead.
 export const TAB_SCREEN_OPTIONS = TAB_BASE_OPTIONS;

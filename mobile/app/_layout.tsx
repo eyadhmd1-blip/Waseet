@@ -1,14 +1,15 @@
 import 'intl-pluralrules';   // polyfill — must be first import
 import { useEffect, useState, useRef } from 'react';
-import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Platform, View, Text } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import { I18nextProvider } from 'react-i18next';
 import { supabase } from '../src/lib/supabase';
-import { ROUTES, COLORS } from '../src/constants/theme';
+import { ROUTES } from '../src/constants/theme';
 import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
+import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { initI18n } from '../src/i18n';
 import i18nInstance from '../src/i18n';
 
@@ -62,12 +63,13 @@ async function markNotifOpened(notifId: string) {
 
 // ── Root layout ───────────────────────────────────────────────
 
-export default function RootLayout() {
+function RootLayoutInner() {
   const [role, setRole]         = useState<'client' | 'provider' | null | undefined>(undefined);
   const [i18nReady, setI18nReady] = useState(false);
   // appKey increments when language changes, remounting the entire navigator
   const [appKey, setAppKey]     = useState(0);
   const { isOnline }            = useNetworkStatus();
+  const { colors }              = useTheme();
 
   const router   = useRouter();
   const segments = useSegments();
@@ -216,8 +218,10 @@ export default function RootLayout() {
     <SafeAreaProvider>
     <I18nextProvider i18n={i18nInstance}>
       {!isOnline && (
-        <View style={offlineStyles.banner}>
-          <Text style={offlineStyles.text}>⚠ لا يوجد اتصال بالإنترنت</Text>
+        <View style={[offlineBanner, { backgroundColor: colors.errorBg }]}>
+          <Text style={{ color: colors.errorSoft, fontSize: 13, fontWeight: '600' }}>
+            ⚠ لا يوجد اتصال بالإنترنت
+          </Text>
         </View>
       )}
       <Stack key={appKey} screenOptions={{ headerShown: false }}>
@@ -248,10 +252,15 @@ export default function RootLayout() {
   );
 }
 
-const offlineStyles = StyleSheet.create({
-  banner: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 9999,
-    backgroundColor: '#7F1D1D', paddingVertical: 8, alignItems: 'center',
-  },
-  text: { color: '#FCA5A5', fontSize: 13, fontWeight: '600' },
-});
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <RootLayoutInner />
+    </ThemeProvider>
+  );
+}
+
+const offlineBanner: import('react-native').ViewStyle = {
+  position: 'absolute', top: 0, left: 0, right: 0, zIndex: 9999,
+  paddingVertical: 8, alignItems: 'center',
+};
