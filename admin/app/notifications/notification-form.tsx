@@ -18,7 +18,7 @@ export function NotificationForm() {
   const [segment,  setSegment]  = useState<'all' | 'clients' | 'providers' | 'subscribed_providers'>('all');
   const [city,     setCity]     = useState('');
   const [loading,  setLoading]  = useState(false);
-  const [result,   setResult]   = useState<{ sent: number } | null>(null);
+  const [result,   setResult]   = useState<{ sent: number; tokens: number; errors: string[] } | null>(null);
   const [error,    setError]    = useState('');
 
   async function handleSend() {
@@ -110,10 +110,17 @@ export function NotificationForm() {
       )}
 
       {result && (
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-right">
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 text-right space-y-1">
           <p className="text-emerald-400 text-sm font-semibold">
-            تم الإرسال بنجاح — وصل إلى {result.sent} مستخدم
+            تم الإرسال — {result.sent} مستخدم مستهدف
           </p>
+          <p className="text-slate-400 text-xs">
+            📱 أجهزة لديها token: {result.tokens}
+            {result.tokens === 0 && ' — لا توجد أجهزة مسجّلة بعد'}
+          </p>
+          {result.errors.length > 0 && (
+            <p className="text-amber-400 text-xs">⚠️ أخطاء Expo: {result.errors.length}</p>
+          )}
         </div>
       )}
 
