@@ -88,41 +88,45 @@ export default function ContractDetailScreen() {
   };
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const authUser = _ses?.user;
-    if (!authUser || !contract_id) return;
-    setMyId(authUser.id);
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const authUser = _ses?.user;
+      if (!authUser || !contract_id) return;
+      setMyId(authUser.id);
 
-    const [
-      { data: contractData },
-      { data: bidsData },
-      { data: visitsData },
-      { data: roleData },
-    ] = await Promise.all([
-      supabase
-        .from('recurring_contracts')
-        .select('*, client:client_id(full_name, city)')
-        .eq('id', contract_id)
-        .single(),
-      supabase
-        .from('contract_bids')
-        .select('*, provider:provider_id(score, reputation_tier, badge_verified, user:users(full_name, city))')
-        .eq('contract_id', contract_id)
-        .order('created_at', { ascending: false }),
-      supabase
-        .from('contract_visits')
-        .select('*')
-        .eq('contract_id', contract_id)
-        .order('scheduled_at', { ascending: true }),
-      supabase.from('users').select('role').eq('id', authUser.id).single(),
-    ]);
+      const [
+        { data: contractData },
+        { data: bidsData },
+        { data: visitsData },
+        { data: roleData },
+      ] = await Promise.all([
+        supabase
+          .from('recurring_contracts')
+          .select('*, client:client_id(full_name, city)')
+          .eq('id', contract_id)
+          .single(),
+        supabase
+          .from('contract_bids')
+          .select('*, provider:provider_id(score, reputation_tier, badge_verified, user:users(full_name, city))')
+          .eq('contract_id', contract_id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('contract_visits')
+          .select('*')
+          .eq('contract_id', contract_id)
+          .order('scheduled_at', { ascending: true }),
+        supabase.from('users').select('role').eq('id', authUser.id).single(),
+      ]);
 
-    if (contractData) setContract(contractData as RecurringContract);
-    if (bidsData)     setBids(bidsData as ContractBid[]);
-    if (visitsData)   setVisits(visitsData as ContractVisit[]);
-    if (roleData)     setMyRole(roleData.role as 'client' | 'provider');
+      if (contractData) setContract(contractData as RecurringContract);
+      if (bidsData)     setBids(bidsData as ContractBid[]);
+      if (visitsData)   setVisits(visitsData as ContractVisit[]);
+      if (roleData)     setMyRole(roleData.role as 'client' | 'provider');
 
-    setLoading(false);
+  
+    } finally {
+      setLoading(false);
+    }
   }, [contract_id]);
 
   useEffect(() => { load(); }, [load]);

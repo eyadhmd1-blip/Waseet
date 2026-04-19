@@ -100,29 +100,33 @@ export default function NotificationSettingsScreen() {
   ];
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setLoading(false); return; }
 
-    const { data } = await supabase
-      .from('notification_preferences')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
+      const { data } = await supabase
+        .from('notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
 
-    if (data) {
-      setPrefs({
-        enabled:          data.enabled          ?? DEFAULTS.enabled,
-        seasonal:         data.seasonal         ?? DEFAULTS.seasonal,
-        lifecycle:        data.lifecycle        ?? DEFAULTS.lifecycle,
-        behavioral:       data.behavioral       ?? DEFAULTS.behavioral,
-        win_back:         data.win_back         ?? DEFAULTS.win_back,
-        quiet_hour_start: data.quiet_hour_start ?? DEFAULTS.quiet_hour_start,
-        quiet_hour_end:   data.quiet_hour_end   ?? DEFAULTS.quiet_hour_end,
-        max_per_week:     data.max_per_week     ?? DEFAULTS.max_per_week,
-      });
+      if (data) {
+        setPrefs({
+          enabled:          data.enabled          ?? DEFAULTS.enabled,
+          seasonal:         data.seasonal         ?? DEFAULTS.seasonal,
+          lifecycle:        data.lifecycle        ?? DEFAULTS.lifecycle,
+          behavioral:       data.behavioral       ?? DEFAULTS.behavioral,
+          win_back:         data.win_back         ?? DEFAULTS.win_back,
+          quiet_hour_start: data.quiet_hour_start ?? DEFAULTS.quiet_hour_start,
+          quiet_hour_end:   data.quiet_hour_end   ?? DEFAULTS.quiet_hour_end,
+          max_per_week:     data.max_per_week     ?? DEFAULTS.max_per_week,
+        });
+      }
+  
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   const loadHistory = useCallback(async () => {

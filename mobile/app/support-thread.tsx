@@ -76,28 +76,32 @@ export default function SupportThreadScreen() {
   };
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (user) currentUserIdRef.current = user.id;
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (user) currentUserIdRef.current = user.id;
 
-    const [{ data: ticketData }, { data: msgs }] = await Promise.all([
-      supabase
-        .from('support_tickets')
-        .select('id, category, priority, status, subject, rating, rating_note, opened_at')
-        .eq('id', id)
-        .single(),
-      supabase
-        .from('support_messages')
-        .select('id, sender_id, is_admin, body, created_at')
-        .eq('ticket_id', id)
-        .order('created_at', { ascending: true }),
-    ]);
+      const [{ data: ticketData }, { data: msgs }] = await Promise.all([
+        supabase
+          .from('support_tickets')
+          .select('id, category, priority, status, subject, rating, rating_note, opened_at')
+          .eq('id', id)
+          .single(),
+        supabase
+          .from('support_messages')
+          .select('id, sender_id, is_admin, body, created_at')
+          .eq('ticket_id', id)
+          .order('created_at', { ascending: true }),
+      ]);
 
-    if (ticketData) setTicket(ticketData as Ticket);
-    if (msgs)       setMessages(msgs as SupportMessage[]);
-    setLoading(false);
+      if (ticketData) setTicket(ticketData as Ticket);
+      if (msgs)       setMessages(msgs as SupportMessage[]);
 
-    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: false }), 100);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: false }), 100);
+  
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
 
   useEffect(() => { load(); }, [load]);

@@ -89,36 +89,40 @@ export default function SavedProvidersScreen() {
   ).current;
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setLoading(false); return; }
 
-    const { data } = await supabase
-      .from('saved_providers')
-      .select(`
-        *,
-        provider:providers(
-          id, score, reputation_tier, badge_verified, lifetime_jobs,
-          categories, username,
-          user:users(full_name, city)
+      const { data } = await supabase
+        .from('saved_providers')
+        .select(`
+          *,
+          provider:providers(
+            id, score, reputation_tier, badge_verified, lifetime_jobs,
+            categories, username,
+            user:users(full_name, city)
+          )
+        `)
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(MAX_CARDS);
+
+      if (data) setSaved(data as SavedProvider[]);
+
+      Animated.timing(headerOp, { toValue: 1, duration: 400, useNativeDriver: true }).start();
+      const n = Math.min(data?.length ?? 0, MAX_CARDS);
+      cardAnims.slice(0, n).forEach(a => a.setValue(0));
+      Animated.stagger(
+        50,
+        cardAnims.slice(0, n).map(a =>
+          Animated.spring(a, { toValue: 1, tension: 90, friction: 10, useNativeDriver: true })
         )
-      `)
-      .eq('client_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(MAX_CARDS);
-
-    if (data) setSaved(data as SavedProvider[]);
-    setLoading(false);
-
-    Animated.timing(headerOp, { toValue: 1, duration: 400, useNativeDriver: true }).start();
-    const n = Math.min(data?.length ?? 0, MAX_CARDS);
-    cardAnims.slice(0, n).forEach(a => a.setValue(0));
-    Animated.stagger(
-      50,
-      cardAnims.slice(0, n).map(a =>
-        Animated.spring(a, { toValue: 1, tension: 90, friction: 10, useNativeDriver: true })
-      )
-    ).start();
+      ).start();
+  
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);

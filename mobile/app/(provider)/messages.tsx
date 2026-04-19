@@ -45,23 +45,27 @@ export default function ProviderMessages() {
   };
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setLoading(false); return; }
 
-    const { data } = await supabase
-      .from('jobs')
-      .select(`
-        id, status, created_at,
-        request:requests(title, category_slug),
-        client:users!jobs_client_id_fkey(full_name)
-      `)
-      .eq('provider_id', user.id)
-      .in('status', ['active', 'completed', 'disputed'])
-      .order('created_at', { ascending: false });
+      const { data } = await supabase
+        .from('jobs')
+        .select(`
+          id, status, created_at,
+          request:requests(title, category_slug),
+          client:users!jobs_client_id_fkey(full_name)
+        `)
+        .eq('provider_id', user.id)
+        .in('status', ['active', 'completed', 'disputed'])
+        .order('created_at', { ascending: false });
 
-    if (data) setJobs(data as unknown as ConversationJob[]);
-    setLoading(false);
+      if (data) setJobs(data as unknown as ConversationJob[]);
+  
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);

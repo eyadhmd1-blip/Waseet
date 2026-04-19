@@ -178,22 +178,26 @@ export default function ClientHome() {
   }, []);
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const authUser = _ses?.user;
-    if (!authUser) { setLoading(false); return; }
-    const [{ data: profile }, { data: recent }] = await Promise.all([
-      supabase.from('users').select('*').eq('id', authUser.id).single(),
-      supabase.from('requests')
-        .select('*, category:service_categories(name_ar, icon)')
-        .eq('client_id', authUser.id)
-        .order('created_at', { ascending: false })
-        .limit(5)
-        .returns<(ServiceRequest & { category?: { name_ar: string; icon: string } })[]>(),
-    ]);
-    if (profile) setUser(profile);
-    if (recent)  setRequests(recent);
-    setLoading(false);
-    runEntrance();
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const authUser = _ses?.user;
+      if (!authUser) { setLoading(false); return; }
+      const [{ data: profile }, { data: recent }] = await Promise.all([
+        supabase.from('users').select('*').eq('id', authUser.id).single(),
+        supabase.from('requests')
+          .select('*, category:service_categories(name_ar, icon)')
+          .eq('client_id', authUser.id)
+          .order('created_at', { ascending: false })
+          .limit(5)
+          .returns<(ServiceRequest & { category?: { name_ar: string; icon: string } })[]>(),
+      ]);
+      if (profile) setUser(profile);
+      if (recent)  setRequests(recent);
+      runEntrance();
+  
+    } finally {
+      setLoading(false);
+    }
   }, [runEntrance]);
 
   useEffect(() => { load(); }, [load]);

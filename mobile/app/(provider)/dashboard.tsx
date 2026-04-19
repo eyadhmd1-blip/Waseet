@@ -65,50 +65,54 @@ export default function ProviderDashboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const authUser = _ses?.user;
-    if (!authUser) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const authUser = _ses?.user;
+      if (!authUser) { setLoading(false); return; }
 
-    const cutoff7  = daysAgoISO(7);
-    const cutoff30 = daysAgoISO(30);
+      const cutoff7  = daysAgoISO(7);
+      const cutoff30 = daysAgoISO(30);
 
-    const [
-      { data: providerData },
-      { data: analytics30 },
-      { data: analytics7 },
-      { data: jobs },
-    ] = await Promise.all([
-      supabase
-        .from('providers')
-        .select('*, user:users(*)')
-        .eq('id', authUser.id)
-        .single(),
-      supabase
-        .from('provider_analytics')
-        .select('date, views, bids_placed, bids_won, jobs_done, earnings_est')
-        .eq('provider_id', authUser.id)
-        .gte('date', cutoff30)
-        .order('date', { ascending: true }),
-      supabase
-        .from('provider_analytics')
-        .select('date, views, bids_placed, bids_won, jobs_done, earnings_est')
-        .eq('provider_id', authUser.id)
-        .gte('date', cutoff7)
-        .order('date', { ascending: true }),
-      supabase
-        .from('jobs')
-        .select('id, confirmed_at, client_rating, client_review, request:requests(title)')
-        .eq('provider_id', authUser.id)
-        .eq('status', 'completed')
-        .order('confirmed_at', { ascending: false })
-        .limit(5),
-    ]);
+      const [
+        { data: providerData },
+        { data: analytics30 },
+        { data: analytics7 },
+        { data: jobs },
+      ] = await Promise.all([
+        supabase
+          .from('providers')
+          .select('*, user:users(*)')
+          .eq('id', authUser.id)
+          .single(),
+        supabase
+          .from('provider_analytics')
+          .select('date, views, bids_placed, bids_won, jobs_done, earnings_est')
+          .eq('provider_id', authUser.id)
+          .gte('date', cutoff30)
+          .order('date', { ascending: true }),
+        supabase
+          .from('provider_analytics')
+          .select('date, views, bids_placed, bids_won, jobs_done, earnings_est')
+          .eq('provider_id', authUser.id)
+          .gte('date', cutoff7)
+          .order('date', { ascending: true }),
+        supabase
+          .from('jobs')
+          .select('id, confirmed_at, client_rating, client_review, request:requests(title)')
+          .eq('provider_id', authUser.id)
+          .eq('status', 'completed')
+          .order('confirmed_at', { ascending: false })
+          .limit(5),
+      ]);
 
-    if (providerData) setProvider(providerData as Provider & { user: User });
-    if (analytics30)  setAnalytics(analytics30 as AnalyticsRow[]);
-    if (analytics7)   setWeekRows(analytics7   as AnalyticsRow[]);
-    if (jobs)         setRecentJobs(jobs        as unknown as RecentJob[]);
-    setLoading(false);
+      if (providerData) setProvider(providerData as Provider & { user: User });
+      if (analytics30)  setAnalytics(analytics30 as AnalyticsRow[]);
+      if (analytics7)   setWeekRows(analytics7   as AnalyticsRow[]);
+      if (jobs)         setRecentJobs(jobs        as unknown as RecentJob[]);
+  
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);

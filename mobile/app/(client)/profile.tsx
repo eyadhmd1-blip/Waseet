@@ -43,34 +43,38 @@ export default function ClientProfile() {
   const [saving, setSaving]       = useState(false);
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const authUser = _ses?.user;
-    if (!authUser) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const authUser = _ses?.user;
+      if (!authUser) { setLoading(false); return; }
 
-    const [{ data: profile }, { data: reqData }] = await Promise.all([
-      supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single(),
-      supabase
-        .from('requests')
-        .select('status')
-        .eq('client_id', authUser.id),
-    ]);
+      const [{ data: profile }, { data: reqData }] = await Promise.all([
+        supabase
+          .from('users')
+          .select('*')
+          .eq('id', authUser.id)
+          .single(),
+        supabase
+          .from('requests')
+          .select('status')
+          .eq('client_id', authUser.id),
+      ]);
 
-    if (profile) {
-      setUser(profile);
-      setEditName(profile.full_name);
-      setEditCity(profile.city);
+      if (profile) {
+        setUser(profile);
+        setEditName(profile.full_name);
+        setEditCity(profile.city);
+      }
+
+      if (reqData) {
+        const { total, open, in_progress, completed } = calcStatusCounts(reqData);
+        setStats({ total, open, in_progress, completed });
+      }
+
+  
+    } finally {
+      setLoading(false);
     }
-
-    if (reqData) {
-      const { total, open, in_progress, completed } = calcStatusCounts(reqData);
-      setStats({ total, open, in_progress, completed });
-    }
-
-    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);

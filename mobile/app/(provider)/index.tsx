@@ -768,40 +768,44 @@ export default function ProviderFeed() {
   }, []);
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const authUser = _ses?.user;
-    if (!authUser) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const authUser = _ses?.user;
+      if (!authUser) { setLoading(false); return; }
 
-    // All four queries run in parallel — no waterfall
-    const [
-      { data: providerData },
-      { data: requestsData },
-      { data: contractsData },
-      { data: demoData },
-    ] = await Promise.all([
-      supabase.from('providers').select('*, user:users(*)').eq('id', authUser.id).single(),
-      supabase
-        .from('requests')
-        .select('*, category:service_categories(name_ar, icon), bids_count:bids(count)')
-        .eq('status', 'open')
-        .order('is_urgent',  { ascending: false })
-        .order('created_at', { ascending: false })
-        .limit(40),
-      supabase
-        .from('public_contract_feed')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20),
-      supabase.rpc('get_provider_demo', { p_provider_id: authUser.id }),
-    ]);
+      // All four queries run in parallel — no waterfall
+      const [
+        { data: providerData },
+        { data: requestsData },
+        { data: contractsData },
+        { data: demoData },
+      ] = await Promise.all([
+        supabase.from('providers').select('*, user:users(*)').eq('id', authUser.id).single(),
+        supabase
+          .from('requests')
+          .select('*, category:service_categories(name_ar, icon), bids_count:bids(count)')
+          .eq('status', 'open')
+          .order('is_urgent',  { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(40),
+        supabase
+          .from('public_contract_feed')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase.rpc('get_provider_demo', { p_provider_id: authUser.id }),
+      ]);
 
-    if (providerData)  setProvider(providerData);
-    if (requestsData)  setRequests(requestsData);
-    if (contractsData) setContracts(contractsData as RecurringContract[]);
-    if (demoData)      setDemoStatus(demoData as DemoStatus);
+      if (providerData)  setProvider(providerData);
+      if (requestsData)  setRequests(requestsData);
+      if (contractsData) setContracts(contractsData as RecurringContract[]);
+      if (demoData)      setDemoStatus(demoData as DemoStatus);
 
-    setLoading(false);
-    runEntranceAnims(requestsData?.length ?? 0);
+      runEntranceAnims(requestsData?.length ?? 0);
+  
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);

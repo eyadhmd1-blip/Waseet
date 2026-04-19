@@ -47,31 +47,35 @@ export default function ProviderProfile() {
   const [savingCats, setSavingCats]         = useState(false);
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const authUser = _ses?.user;
-    if (!authUser) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const authUser = _ses?.user;
+      if (!authUser) { setLoading(false); return; }
 
-    const [{ data: provData }, { data: portData }] = await Promise.all([
-      supabase
-        .from('providers')
-        .select('*, user:users(*)')
-        .eq('id', authUser.id)
-        .single(),
-      supabase
-        .from('portfolio_items')
-        .select('*')
-        .eq('provider_id', authUser.id)
-        .order('created_at', { ascending: false })
-        .limit(9),
-    ]);
+      const [{ data: provData }, { data: portData }] = await Promise.all([
+        supabase
+          .from('providers')
+          .select('*, user:users(*)')
+          .eq('id', authUser.id)
+          .single(),
+        supabase
+          .from('portfolio_items')
+          .select('*')
+          .eq('provider_id', authUser.id)
+          .order('created_at', { ascending: false })
+          .limit(9),
+      ]);
 
-    if (provData) {
-      setProvider(provData);
-      setIsAvailable(provData.is_available ?? true);
-      setUrgentEnabled(provData.urgent_enabled ?? true);
+      if (provData) {
+        setProvider(provData);
+        setIsAvailable(provData.is_available ?? true);
+        setUrgentEnabled(provData.urgent_enabled ?? true);
+      }
+      if (portData) setPortfolioItems(portData as PortfolioItem[]);
+  
+    } finally {
+      setLoading(false);
     }
-    if (portData) setPortfolioItems(portData as PortfolioItem[]);
-    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);

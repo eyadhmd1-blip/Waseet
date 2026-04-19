@@ -273,34 +273,38 @@ export default function SubscribeScreen() {
   };
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const authUser = _ses?.user;
-    if (!authUser) { setLoading(false); return; }
-    const { data } = await supabase
-      .from('providers')
-      .select('*, user:users(*)')
-      .eq('id', authUser.id)
-      .single();
-    if (data) {
-      setProvider(data);
-      // Default to pro; if trial already used skip trial tier
-      const defaultTier = data.trial_used ? 'pro' : (params.tier ?? 'pro');
-      setSelectedTier(defaultTier);
-    }
-    setLoading(false);
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const authUser = _ses?.user;
+      if (!authUser) { setLoading(false); return; }
+      const { data } = await supabase
+        .from('providers')
+        .select('*, user:users(*)')
+        .eq('id', authUser.id)
+        .single();
+      if (data) {
+        setProvider(data);
+        // Default to pro; if trial already used skip trial tier
+        const defaultTier = data.trial_used ? 'pro' : (params.tier ?? 'pro');
+        setSelectedTier(defaultTier);
+      }
 
-    Animated.parallel([
-      Animated.timing(headerOp, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),
-      Animated.timing(headerY,  { toValue: 0, duration: 500, delay: 100, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start();
-    Animated.parallel([
-      Animated.timing(cardsOp, { toValue: 1, duration: 600, delay: 300, useNativeDriver: true }),
-      Animated.timing(cardsY,  { toValue: 0, duration: 600, delay: 300, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start();
-    Animated.parallel([
-      Animated.timing(ctaOp, { toValue: 1, duration: 500, delay: 700, useNativeDriver: true }),
-      Animated.timing(ctaY,  { toValue: 0, duration: 500, delay: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start();
+      Animated.parallel([
+        Animated.timing(headerOp, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),
+        Animated.timing(headerY,  { toValue: 0, duration: 500, delay: 100, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]).start();
+      Animated.parallel([
+        Animated.timing(cardsOp, { toValue: 1, duration: 600, delay: 300, useNativeDriver: true }),
+        Animated.timing(cardsY,  { toValue: 0, duration: 600, delay: 300, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]).start();
+      Animated.parallel([
+        Animated.timing(ctaOp, { toValue: 1, duration: 500, delay: 700, useNativeDriver: true }),
+        Animated.timing(ctaY,  { toValue: 0, duration: 500, delay: 700, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]).start();
+  
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { load(); }, [load]);

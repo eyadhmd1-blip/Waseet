@@ -37,19 +37,23 @@ export default function ProviderJobs() {
   const inputRefs = useRef<TextInput[]>([]);
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setLoading(false); return; }
 
-    const { data } = await supabase
-      .from('jobs')
-      .select('*, request:requests(title, category_slug, city), client:users!jobs_client_id_fkey(full_name, phone)')
-      .eq('provider_id', user.id)
-      .eq('status', tab === 'active' ? 'active' : 'completed')
-      .order('created_at', { ascending: false });
+      const { data } = await supabase
+        .from('jobs')
+        .select('*, request:requests(title, category_slug, city), client:users!jobs_client_id_fkey(full_name, phone)')
+        .eq('provider_id', user.id)
+        .eq('status', tab === 'active' ? 'active' : 'completed')
+        .order('created_at', { ascending: false });
 
-    if (data) setJobs(data);
-    setLoading(false);
+      if (data) setJobs(data);
+  
+    } finally {
+      setLoading(false);
+    }
   }, [tab]);
 
   useEffect(() => { load(); }, [load]);

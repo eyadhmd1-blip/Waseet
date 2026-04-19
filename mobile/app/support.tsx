@@ -45,30 +45,34 @@ export default function SupportScreen() {
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
 
-    const [{ data: faqData }, { data: tickets }] = await Promise.all([
-      supabase
-        .from('support_faq')
-        .select('id, question_ar, answer_ar, question_en, answer_en, category')
-        .order('sort_order', { ascending: true })
-        .limit(10),
-      user
-        ? supabase
-            .from('support_tickets')
-            .select('status')
-            .eq('user_id', user.id)
-        : Promise.resolve({ data: [] }),
-    ]);
+      const [{ data: faqData }, { data: tickets }] = await Promise.all([
+        supabase
+          .from('support_faq')
+          .select('id, question_ar, answer_ar, question_en, answer_en, category')
+          .order('sort_order', { ascending: true })
+          .limit(10),
+        user
+          ? supabase
+              .from('support_tickets')
+              .select('status')
+              .eq('user_id', user.id)
+          : Promise.resolve({ data: [] }),
+      ]);
 
-    if (faqData) setFaq(faqData as FaqItem[]);
-    if (tickets) {
-      const open      = (tickets as any[]).filter(t => t.status === 'open').length;
-      const in_review = (tickets as any[]).filter(t => t.status === 'in_review').length;
-      setSummary({ open, in_review, total: (tickets as any[]).length });
+      if (faqData) setFaq(faqData as FaqItem[]);
+      if (tickets) {
+        const open      = (tickets as any[]).filter(t => t.status === 'open').length;
+        const in_review = (tickets as any[]).filter(t => t.status === 'in_review').length;
+        setSummary({ open, in_review, total: (tickets as any[]).length });
+      }
+  
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);

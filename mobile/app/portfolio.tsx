@@ -265,18 +265,22 @@ export default function PortfolioScreen() {
   const fabPulse = useRef(new Animated.Value(1)).current;
 
   const load = useCallback(async () => {
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setLoading(false); return; }
+    try {
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setLoading(false); return; }
 
-    const { data } = await supabase
-      .from('portfolio_items')
-      .select('*')
-      .eq('provider_id', user.id)
-      .order('created_at', { ascending: false });
+      const { data } = await supabase
+        .from('portfolio_items')
+        .select('*')
+        .eq('provider_id', user.id)
+        .order('created_at', { ascending: false });
 
-    if (data) setItems(data as PortfolioItem[]);
-    setLoading(false);
+      if (data) setItems(data as PortfolioItem[]);
+  
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
