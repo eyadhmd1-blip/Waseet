@@ -47,8 +47,9 @@ export default function ProviderProfile() {
   const [savingCats, setSavingCats]         = useState(false);
 
   const load = useCallback(async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
+    if (!authUser) { setLoading(false); return; }
 
     const [{ data: provData }, { data: portData }] = await Promise.all([
       supabase
@@ -83,13 +84,15 @@ export default function ProviderProfile() {
 
   const toggleAvailable = async (val: boolean) => {
     setIsAvailable(val);
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
     if (authUser) supabase.from('providers').update({ is_available: val }).eq('id', authUser.id).then(() => {});
   };
 
   const toggleUrgent = async (val: boolean) => {
     setUrgentEnabled(val);
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
     if (authUser) supabase.from('providers').update({ urgent_enabled: val }).eq('id', authUser.id).then(() => {});
   };
 
@@ -111,7 +114,8 @@ export default function ProviderProfile() {
 
   const saveCategories = async () => {
     setSavingCats(true);
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
     if (!authUser) { setSavingCats(false); return; }
 
     const { error } = await supabase

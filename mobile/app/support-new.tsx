@@ -48,7 +48,8 @@ export default function SupportNewScreen() {
     if (!canSubmit) return;
     setSubmit(true);
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
     if (!user) { setSubmit(false); return; }
 
     const { data, error } = await supabase

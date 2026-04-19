@@ -273,8 +273,9 @@ export default function SubscribeScreen() {
   };
 
   const load = useCallback(async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
+    if (!authUser) { setLoading(false); return; }
     const { data } = await supabase
       .from('providers')
       .select('*, user:users(*)')

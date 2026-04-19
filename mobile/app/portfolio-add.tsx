@@ -212,7 +212,8 @@ export default function PortfolioAddScreen() {
     setSubmitting(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
       if (!user) throw new Error('not authenticated');
 
       let media_urls: string[] = [];

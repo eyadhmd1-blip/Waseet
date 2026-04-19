@@ -65,8 +65,9 @@ export default function ProviderDashboard() {
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
+    if (!authUser) { setLoading(false); return; }
 
     const cutoff7  = daysAgoISO(7);
     const cutoff30 = daysAgoISO(30);

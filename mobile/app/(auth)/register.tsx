@@ -33,7 +33,8 @@ export default function RegisterScreen() {
     }
 
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
     if (!user) { setLoading(false); return; }
 
     const { error } = await supabase.from('users').insert({

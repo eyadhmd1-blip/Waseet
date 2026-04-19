@@ -768,8 +768,9 @@ export default function ProviderFeed() {
   }, []);
 
   const load = useCallback(async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    if (!authUser) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
+    if (!authUser) { setLoading(false); return; }
 
     // All four queries run in parallel — no waterfall
     const [
@@ -892,8 +893,9 @@ export default function ProviderFeed() {
       Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
       return;
     }
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
+    if (!user) { setLoading(false); return; }
 
     setDemoModal(prev => ({ ...prev, loading: true }));
     const { data, error } = await supabase.rpc('submit_demo_bid', {
@@ -917,7 +919,8 @@ export default function ProviderFeed() {
     const target = urgentModal.target;
     if (!target) return;
     setUrgentModal(prev => ({ ...prev, loading: true }));
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
 
     // Use centralized pricing utility
     const { min: premiumMin } = calcUrgentPremium(
@@ -975,7 +978,8 @@ export default function ProviderFeed() {
     }
 
     setBidModal(prev => ({ ...prev, loading: true }));
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
     const creditCost = target.is_urgent ? CREDIT_COST.urgent : CREDIT_COST.normal;
 
     const { data: rpcResult, error } = await supabase.rpc('submit_bid_with_credits', {
@@ -1015,7 +1019,8 @@ export default function ProviderFeed() {
     }
 
     setContractModal(prev => ({ ...prev, loading: true }));
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
 
     const { data: creditResult, error: creditError } = await supabase.rpc('submit_bid_with_credits', {
       p_request_id:  target.id,

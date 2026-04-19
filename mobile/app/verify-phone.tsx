@@ -30,7 +30,8 @@ export default function VerifyPhoneScreen() {
   // Load current user's phone on mount
   useEffect(() => {
     (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
       if (!user?.phone) return;
       // Strip +962 prefix for display
       const display = user.phone.replace(/^\+962/, '0');

@@ -136,7 +136,8 @@ export default function RecurringRequestScreen() {
   };
 
   const handleSubmit = async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
     if (!authUser || !selectedCat) return;
 
     setSubmitting(true);

@@ -45,7 +45,8 @@ export default function SupportScreen() {
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
 
     const [{ data: faqData }, { data: tickets }] = await Promise.all([
       supabase

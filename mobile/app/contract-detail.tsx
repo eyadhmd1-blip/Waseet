@@ -88,7 +88,8 @@ export default function ContractDetailScreen() {
   };
 
   const load = useCallback(async () => {
-    const { data: { user: authUser } } = await supabase.auth.getUser();
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
     if (!authUser || !contract_id) return;
     setMyId(authUser.id);
 
