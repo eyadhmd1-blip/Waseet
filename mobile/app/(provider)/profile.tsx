@@ -6,13 +6,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
-import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, REP_DISCOUNT } from '../../src/constants/categories';
+import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, CATEGORY_GROUPS, REP_DISCOUNT } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User, PortfolioItem } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
 import { calcLoyaltyProgress } from '../../src/utils/pricing';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
 const MINI_CELL    = (W - 32 - 8) / 3; // 3 cols, 16px side padding, 4px gaps
@@ -30,6 +31,8 @@ const TYPE_ICON: Record<string, string> = {
 };
 
 export default function ProviderProfile() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
   const { t, ta } = useLanguage();
@@ -126,7 +129,7 @@ export default function ProviderProfile() {
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator color={COLORS.accent} size="large" /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
 
   if (!provider) return null;
@@ -156,7 +159,7 @@ export default function ProviderProfile() {
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
       {/* ── Avatar + Name + Tier ── */}
       <View style={styles.heroCard}>
@@ -402,7 +405,7 @@ export default function ProviderProfile() {
                 onPress={saveCategories}
                 disabled={savingCats}
               >
-                <Text style={[styles.modalSave, savingCats && { color: COLORS.textMuted }]}>
+                <Text style={[styles.modalSave, savingCats && { color: colors.textMuted }]}>
                   {savingCats ? t('common.loading') : t('common.save')}
                 </Text>
               </TouchableOpacity>
@@ -445,7 +448,7 @@ export default function ProviderProfile() {
             <Switch
               value={isAvailable}
               onValueChange={toggleAvailable}
-              trackColor={{ false: COLORS.border, true: '#16A34A' }}
+              trackColor={{ false: colors.border, true: '#16A34A' }}
               thumbColor="#fff"
             />
             <View style={styles.availTextWrap}>
@@ -461,7 +464,7 @@ export default function ProviderProfile() {
               <Switch
                 value={urgentEnabled}
                 onValueChange={toggleUrgent}
-                trackColor={{ false: COLORS.border, true: '#DC2626' }}
+                trackColor={{ false: colors.border, true: '#DC2626' }}
                 thumbColor="#fff"
               />
               <View style={styles.availTextWrap}>
@@ -513,6 +516,8 @@ export default function ProviderProfile() {
 }
 
 function StatBox({ label, value }: { label: string; value: string }) {
+  const { colors } = useTheme();
+  const statStyles = useMemo(() => createStatStyles(colors), [colors]);
   return (
     <View style={statStyles.box}>
       <Text style={statStyles.value}>{value}</Text>
@@ -521,22 +526,25 @@ function StatBox({ label, value }: { label: string; value: string }) {
   );
 }
 
-const statStyles = StyleSheet.create({
-  box:   { flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  value: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  label: { fontSize: 11, color: COLORS.textMuted, textAlign: 'center' },
-});
+function createStatStyles(colors: AppColors) {
+  return StyleSheet.create({
+    box:   { flex: 1, backgroundColor: colors.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+    value: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+    label: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
+  });
+}
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   content:   { paddingBottom: 24 },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
   heroCard:   { alignItems: 'center', paddingTop: HEADER_PAD, paddingBottom: 24, paddingHorizontal: 20 },
-  avatar:     { width: 80, height: 80, borderRadius: 40, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  avatarText: { fontSize: 32, fontWeight: '700', color: COLORS.bg },
-  name:       { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  city:       { fontSize: 14, color: COLORS.textMuted, marginBottom: 12 },
+  avatar:     { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  avatarText: { fontSize: 32, fontWeight: '700', color: colors.bg },
+  name:       { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  city:       { fontSize: 14, color: colors.textMuted, marginBottom: 12 },
   tierPill:   { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6, marginBottom: 8 },
   tierPillText:{ fontSize: 13, fontWeight: '700' },
   verifiedBadge:{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#0C4A6E', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4 },
@@ -548,92 +556,93 @@ const styles = StyleSheet.create({
   sectionHeader:{ marginBottom: 12 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
   sectionEmoji: { fontSize: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto' },
-  sectionLink:  { fontSize: 13, color: COLORS.accent, fontWeight: '600' },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto' },
+  sectionLink:  { fontSize: 13, color: colors.accent, fontWeight: '600' },
 
   // ── Portfolio mini grid ──
   portfolioMiniStats: { flexDirection: 'row', gap: 16, justifyContent: 'flex-end', marginBottom: 10 },
-  portfolioMiniStat:  { fontSize: 12, color: COLORS.textMuted },
+  portfolioMiniStat:  { fontSize: 12, color: colors.textMuted },
 
   miniGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  miniCell:    { borderRadius: 10, overflow: 'hidden', backgroundColor: COLORS.surface },
+  miniCell:    { borderRadius: 10, overflow: 'hidden', backgroundColor: colors.surface },
   miniTypeBadge: { position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 6, paddingHorizontal: 4, paddingVertical: 2 },
   miniVideoPlaceholder: { alignItems: 'center', justifyContent: 'center' },
-  miniAddCell: { borderWidth: 2, borderColor: COLORS.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
-  miniAddIcon: { fontSize: 22, color: COLORS.accent, fontWeight: '700' },
-  miniAddText: { fontSize: 10, color: COLORS.textMuted, marginTop: 2 },
+  miniAddCell: { borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
+  miniAddIcon: { fontSize: 22, color: colors.accent, fontWeight: '700' },
+  miniAddText: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
 
   portfolioViewAll:     { marginTop: 12, alignItems: 'center' },
-  portfolioViewAllText: { fontSize: 13, color: COLORS.accent, fontWeight: '600' },
+  portfolioViewAllText: { fontSize: 13, color: colors.accent, fontWeight: '600' },
 
-  portfolioEmpty:       { backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed', gap: 6 },
+  portfolioEmpty:       { backgroundColor: colors.surface, borderRadius: 20, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', gap: 6 },
   portfolioEmptyIcon:   { fontSize: 40, marginBottom: 4 },
-  portfolioEmptyTitle:  { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  portfolioEmptySub:    { fontSize: 12, color: COLORS.textMuted },
-  portfolioEmptyBtn:    { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 9, marginTop: 4 },
-  portfolioEmptyBtnText:{ fontSize: 13, fontWeight: '700', color: COLORS.bg },
+  portfolioEmptyTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  portfolioEmptySub:    { fontSize: 12, color: colors.textMuted },
+  portfolioEmptyBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 9, marginTop: 4 },
+  portfolioEmptyBtnText:{ fontSize: 13, fontWeight: '700', color: colors.bg },
 
   // ── Loyalty ──
-  loyaltyCard:   { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
+  loyaltyCard:   { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
   loyaltyHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  loyaltyNext:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'auto', flex: 1 },
-  loyaltyCount:  { fontSize: 13, color: COLORS.accent, fontWeight: '700' },
-  progressBg:    { height: 8, backgroundColor: COLORS.bg, borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
-  progressFill:  { height: '100%', backgroundColor: COLORS.accent, borderRadius: 4 },
-  loyaltyReward: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center' },
+  loyaltyNext:   { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', flex: 1 },
+  loyaltyCount:  { fontSize: 13, color: colors.accent, fontWeight: '700' },
+  progressBg:    { height: 8, backgroundColor: colors.bg, borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
+  progressFill:  { height: '100%', backgroundColor: colors.accent, borderRadius: 4 },
+  loyaltyReward: { fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
 
   // ── Subscription ──
-  subCard:       { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
+  subCard:       { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
   subHeader:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  subTier:       { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  subEnds:       { fontSize: 12, color: COLORS.textMuted },
-  subPrice:      { fontSize: 22, fontWeight: '700', color: COLORS.accent },
-  discountBanner:{ backgroundColor: COLORS.accentDim, borderRadius: 10, padding: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
-  discountText:  { fontSize: 13, color: COLORS.accent, textAlign: 'center' },
+  subTier:       { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  subEnds:       { fontSize: 12, color: colors.textMuted },
+  subPrice:      { fontSize: 22, fontWeight: '700', color: colors.accent },
+  discountBanner:{ backgroundColor: colors.accentDim, borderRadius: 10, padding: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
+  discountText:  { fontSize: 13, color: colors.accent, textAlign: 'center' },
   creditsBadge:     { backgroundColor: 'rgba(201,168,76,0.10)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, marginTop: 10, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
-  creditsBadgeText: { fontSize: 13, fontWeight: '700', color: COLORS.accent, textAlign: 'auto' },
+  creditsBadgeText: { fontSize: 13, fontWeight: '700', color: colors.accent, textAlign: 'auto' },
   winDiscountText:  { fontSize: 13, color: '#86EFAC', marginTop: 8, textAlign: 'auto' },
   repDiscountText:  { fontSize: 13, color: '#7DD3FC', marginTop: 4, textAlign: 'auto' },
 
-  noSubCard:    { backgroundColor: COLORS.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', gap: 12 },
-  noSubText:    { fontSize: 14, color: COLORS.textMuted },
-  subscribeBtn: { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
-  subscribeBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.bg },
+  noSubCard:    { backgroundColor: colors.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.border, alignItems: 'center', gap: 12 },
+  noSubText:    { fontSize: 14, color: colors.textMuted },
+  subscribeBtn: { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
+  subscribeBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
 
   // ── Categories ──
   catsWrap:            { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  catChip:             { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: COLORS.border },
-  catChipSelected:     { backgroundColor: COLORS.accentDim, borderColor: COLORS.accent },
-  catChipText:         { fontSize: 13, color: COLORS.textPrimary },
-  catChipTextSelected: { color: COLORS.accent, fontWeight: '600' },
-  maxCatsNote:         { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginTop: 6 },
-  addCatsHint:         { backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed', alignItems: 'center' },
-  addCatsHintText:     { fontSize: 13, color: COLORS.textMuted },
+  catChip:             { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.border },
+  catChipSelected:     { backgroundColor: colors.accentDim, borderColor: colors.accent },
+  catChipText:         { fontSize: 13, color: colors.textPrimary },
+  catChipTextSelected: { color: colors.accent, fontWeight: '600' },
+  maxCatsNote:         { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginTop: 6 },
+  addCatsHint:         { backgroundColor: colors.surface, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center' },
+  addCatsHintText:     { fontSize: 13, color: colors.textMuted },
   catGroup:            { marginBottom: 16 },
-  catGroupLabel:       { fontSize: 13, color: COLORS.textMuted, fontWeight: '600', textAlign: 'auto', marginBottom: 8 },
+  catGroupLabel:       { fontSize: 13, color: colors.textMuted, fontWeight: '600', textAlign: 'auto', marginBottom: 8 },
 
   // ── Category modal ──
   modalOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalSheet:    { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
-  modalHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  modalTitle:    { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
-  modalCancel:   { fontSize: 14, color: COLORS.textMuted },
-  modalSave:     { fontSize: 14, fontWeight: '700', color: COLORS.accent },
-  modalSubtitle: { fontSize: 12, color: COLORS.textSecondary, textAlign: 'center', paddingVertical: 8, paddingHorizontal: 20 },
+  modalSheet:    { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
+  modalHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+  modalTitle:    { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  modalCancel:   { fontSize: 14, color: colors.textMuted },
+  modalSave:     { fontSize: 14, fontWeight: '700', color: colors.accent },
+  modalSubtitle: { fontSize: 12, color: colors.textSecondary, textAlign: 'center', paddingVertical: 8, paddingHorizontal: 20 },
   modalScroll:   { paddingHorizontal: 20, paddingTop: 8 },
 
-  notifBtn:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 8, marginBottom: 8, backgroundColor: COLORS.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderColor: COLORS.border },
+  notifBtn:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 8, marginBottom: 8, backgroundColor: colors.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border },
   notifBtnIcon:  { fontSize: 18 },
-  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'auto' },
-  notifBtnArrow: { fontSize: 16, color: COLORS.textMuted },
+  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto' },
+  notifBtnArrow: { fontSize: 16, color: colors.textMuted },
 
   signOutBtn:  { marginHorizontal: 16, marginTop: 8, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#7F1D1D' },
   signOutText: { fontSize: 15, color: '#FCA5A5' },
 
-  availCard:      { backgroundColor: COLORS.surface, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
+  availCard:      { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
   availRow:       { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
-  availRowBorder: { borderTopWidth: 1, borderTopColor: COLORS.border },
+  availRowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
   availTextWrap:  { flex: 1 },
-  availLabel:     { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 2 },
-  availSub:       { fontSize: 12, color: COLORS.textMuted, textAlign: 'auto' },
-});
+  availLabel:     { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto', marginBottom: 2 },
+  availSub:       { fontSize: 12, color: colors.textMuted, textAlign: 'auto' },
+  });
+}

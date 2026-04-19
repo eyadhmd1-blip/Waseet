@@ -3,7 +3,7 @@
 // Steps: 1-Role → 2-Info → [3-Services (provider)] → [4-Plan (provider)] → 5-Done
 // ============================================================
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, Alert, Animated, Dimensions,
@@ -14,7 +14,8 @@ import { JORDAN_CITIES, CATEGORY_GROUPS, SUBSCRIPTION_PLANS } from '../../src/co
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD, rs } from '../../src/utils/layout';
-import { COLORS } from '../../src/constants/theme';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +33,8 @@ type PlanChoice = 'trial' | 'basic' | 'pro' | 'premium' | null;
 // ── Progress Bar ─────────────────────────────────────────────
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const pct = (current / total) * 100;
   return (
     <View style={styles.progressWrap}>
@@ -53,6 +56,8 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 function Step1Role({
   role, onSelect,
 }: { role: Role; onSelect: (r: Role) => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta } = useLanguage();
   return (
     <View style={styles.stepContent}>
@@ -104,6 +109,8 @@ function Step2Info({
   city: string; setCity: (v: string) => void;
   bio: string; setBio: (v: string) => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta } = useLanguage();
 
   return (
@@ -168,6 +175,8 @@ function Step2Info({
 function Step3Services({
   selectedCats, setSelectedCats,
 }: { selectedCats: string[]; setSelectedCats: (v: string[]) => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta } = useLanguage();
   const [search, setSearch] = useState('');
 
@@ -260,6 +269,8 @@ function Step4Plan({
   onStartFree: () => void;
   saving: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta } = useLanguage();
 
   const creditsDesc: Record<string, string> = {
@@ -345,6 +356,8 @@ function Step4Plan({
 function StepDone({
   role, planChoice, onExplore,
 }: { role: Role; planChoice: PlanChoice; onExplore: () => void }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta } = useLanguage();
 
   const subText = role === 'client'
@@ -368,6 +381,8 @@ function StepDone({
 // ── Main Onboarding Screen ────────────────────────────────────
 
 export default function OnboardingScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
   const { t, ta } = useLanguage();
   const { contentPad } = useInsets();
@@ -599,19 +614,20 @@ export default function OnboardingScreen() {
 
 // ── Styles ────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container:   { flex: 1, backgroundColor: colors.bg },
 
   // Header
   header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12 },
   backBtn:     { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  backBtnText: { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
+  backBtnText: { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
 
   // Progress
   progressWrap:            { flex: 1, flexDirection: 'row', gap: 6, paddingHorizontal: 8 },
   progressSegment:         { flex: 1, height: 4, borderRadius: 2 },
-  progressSegmentActive:   { backgroundColor: COLORS.accent },
-  progressSegmentInactive: { backgroundColor: COLORS.border },
+  progressSegmentActive:   { backgroundColor: colors.accent },
+  progressSegmentInactive: { backgroundColor: colors.border },
 
   // Animated wrapper
   animWrap:  { flex: 1 },
@@ -619,118 +635,119 @@ const styles = StyleSheet.create({
   // Step common
   stepScroll:  { flex: 1 },
   stepContent: { padding: 24, paddingTop: 12 },
-  stepTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
-  stepSub:     { fontSize: rs(14, 12, 16), color: COLORS.textMuted, marginBottom: 28 },
+  stepTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  stepSub:     { fontSize: rs(14, 12, 16), color: colors.textMuted, marginBottom: 28 },
 
   // Role cards
   roleCards:       { gap: 14 },
-  roleCard:        { backgroundColor: COLORS.surface, borderRadius: 16, padding: 20, borderWidth: 1.5, borderColor: COLORS.border },
-  roleCardActive:  { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
+  roleCard:        { backgroundColor: colors.surface, borderRadius: 16, padding: 20, borderWidth: 1.5, borderColor: colors.border },
+  roleCardActive:  { borderColor: colors.accent, backgroundColor: colors.accentDim },
   roleEmoji:       { fontSize: rs(32, 26, 38), marginBottom: 10 },
-  roleCardTitle:   { fontSize: rs(18, 15, 20), fontWeight: '700', color: COLORS.textSecondary, marginBottom: 4 },
-  roleCardTitleActive: { color: COLORS.accent },
-  roleCardSub:     { fontSize: rs(13, 11, 15), color: COLORS.textMuted },
-  roleCheck:       { position: 'absolute', top: 16, left: 16, width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  roleCheckActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
-  roleCheckMark:   { fontSize: 12, color: COLORS.bg, fontWeight: '700' },
+  roleCardTitle:   { fontSize: rs(18, 15, 20), fontWeight: '700', color: colors.textSecondary, marginBottom: 4 },
+  roleCardTitleActive: { color: colors.accent },
+  roleCardSub:     { fontSize: rs(13, 11, 15), color: colors.textMuted },
+  roleCheck:       { position: 'absolute', top: 16, left: 16, width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  roleCheckActive: { backgroundColor: colors.accent, borderColor: colors.accent },
+  roleCheckMark:   { fontSize: 12, color: colors.bg, fontWeight: '700' },
 
   // Fields
-  fieldLabel:      { fontSize: 13, color: COLORS.textSecondary, marginBottom: 8, marginTop: 16 },
+  fieldLabel:      { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16 },
   fieldLabelRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 },
-  fieldLabelOptional: { fontSize: 11, color: COLORS.textMuted },
+  fieldLabelOptional: { fontSize: 11, color: colors.textMuted },
   input: {
-    backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 16,
-    paddingVertical: 14, color: COLORS.textPrimary, fontSize: rs(16, 14, 18),
-    borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16,
+    paddingVertical: 14, color: colors.textPrimary, fontSize: rs(16, 14, 18),
+    borderWidth: 1, borderColor: colors.border,
   },
   inputMulti: {
-    backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 16,
-    paddingVertical: 14, color: COLORS.textPrimary, fontSize: rs(15, 13, 17),
-    borderWidth: 1, borderColor: COLORS.border, minHeight: 100, textAlignVertical: 'top',
+    backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16,
+    paddingVertical: 14, color: colors.textPrimary, fontSize: rs(15, 13, 17),
+    borderWidth: 1, borderColor: colors.border, minHeight: 100, textAlignVertical: 'top',
   },
-  charCount:   { fontSize: 11, color: COLORS.textMuted, textAlign: 'auto', marginTop: 4 },
+  charCount:   { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginTop: 4 },
 
   // City chips
   chipsScroll: { marginBottom: 4 },
-  chip:        { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: COLORS.border },
-  chipActive:  { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  chipText:    { color: COLORS.textSecondary, fontSize: 14 },
-  chipTextActive: { color: COLORS.accent },
+  chip:        { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
+  chipActive:  { borderColor: colors.accent, backgroundColor: colors.accentDim },
+  chipText:    { color: colors.textSecondary, fontSize: 14 },
+  chipTextActive: { color: colors.accent },
 
   // Category grid
   searchInput: {
-    backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 16,
-    paddingVertical: 12, color: COLORS.textPrimary, fontSize: 15,
-    borderWidth: 1, borderColor: COLORS.border, marginBottom: 20,
+    backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16,
+    paddingVertical: 12, color: colors.textPrimary, fontSize: 15,
+    borderWidth: 1, borderColor: colors.border, marginBottom: 20,
   },
-  groupLabel:  { fontSize: 13, color: COLORS.textMuted, marginBottom: 10, marginTop: 4 },
+  groupLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 10, marginTop: 4 },
   catGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
   catCard: {
     width: Math.max(80, Math.floor((width - 48 - 10) / 3)),
-    backgroundColor: COLORS.surface, borderRadius: 12,
+    backgroundColor: colors.surface, borderRadius: 12,
     padding: 12, alignItems: 'center',
-    borderWidth: 1, borderColor: COLORS.border,
+    borderWidth: 1, borderColor: colors.border,
   },
-  catCardActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
+  catCardActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },
   catEmoji:    { fontSize: 22, marginBottom: 6 },
-  catName:     { fontSize: 11, color: COLORS.textSecondary, textAlign: 'center' },
-  catNameActive: { color: COLORS.accent },
+  catName:     { fontSize: 11, color: colors.textSecondary, textAlign: 'center' },
+  catNameActive: { color: colors.accent },
   catCheck: {
     position: 'absolute', top: 6, right: 6,
     width: 16, height: 16, borderRadius: 8,
-    backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center',
+    backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center',
   },
-  catCheckMark: { fontSize: 9, color: COLORS.bg, fontWeight: '700' },
-  selectedBar: { backgroundColor: COLORS.surface, borderRadius: 10, padding: 12, marginTop: 4, borderWidth: 1, borderColor: COLORS.accent },
-  selectedBarText: { color: COLORS.accent, fontSize: 13, textAlign: 'center' },
+  catCheckMark: { fontSize: 9, color: colors.bg, fontWeight: '700' },
+  selectedBar: { backgroundColor: colors.surface, borderRadius: 10, padding: 12, marginTop: 4, borderWidth: 1, borderColor: colors.accent },
+  selectedBarText: { color: colors.accent, fontSize: 13, textAlign: 'center' },
 
   // Trial card
   trialCard: {
-    backgroundColor: COLORS.accentDim, borderRadius: 16, padding: 20,
+    backgroundColor: colors.accentDim, borderRadius: 16, padding: 20,
     borderWidth: 2, borderColor: 'rgba(201,168,76,0.30)', marginBottom: 14,
   },
-  trialCardActive: { borderColor: COLORS.accent },
+  trialCardActive: { borderColor: colors.accent },
   trialTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  trialBadge:  { fontSize: 12, color: COLORS.accent, fontWeight: '700' },
-  trialTitle:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  trialCredits: { fontSize: 15, color: COLORS.gold2, marginBottom: 6, fontWeight: '600' },
-  trialNote:   { fontSize: 12, color: COLORS.textSecondary, marginBottom: 2 },
+  trialBadge:  { fontSize: 12, color: colors.accent, fontWeight: '700' },
+  trialTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+  trialCredits: { fontSize: 15, color: colors.gold2, marginBottom: 6, fontWeight: '600' },
+  trialNote:   { fontSize: 12, color: colors.textSecondary, marginBottom: 2 },
   trialBtn:         { backgroundColor: 'rgba(201,168,76,0.20)', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 14 },
-  trialBtnActive:   { backgroundColor: COLORS.accent },
-  trialBtnDisabled: { backgroundColor: COLORS.border },
-  trialBtnText:     { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  trialBtnActive:   { backgroundColor: colors.accent },
+  trialBtnDisabled: { backgroundColor: colors.border },
+  trialBtnText:     { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
 
   // Paid plan cards
   planCard: {
-    backgroundColor: COLORS.surface, borderRadius: 16, padding: 16,
-    borderWidth: 1.5, borderColor: COLORS.border, marginBottom: 12,
+    backgroundColor: colors.surface, borderRadius: 16, padding: 16,
+    borderWidth: 1.5, borderColor: colors.border, marginBottom: 12,
   },
-  planCardActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  popularBadge: { backgroundColor: COLORS.accent, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-end', marginBottom: 8 },
-  popularBadgeText: { fontSize: 11, fontWeight: '700', color: COLORS.bg },
+  planCardActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },
+  popularBadge: { backgroundColor: colors.accent, borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3, alignSelf: 'flex-end', marginBottom: 8 },
+  popularBadgeText: { fontSize: 11, fontWeight: '700', color: colors.bg },
   planRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   planLeft:    { flex: 1 },
   planRight:   { alignItems: 'flex-end', gap: 4 },
-  planName:    { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  planDesc:    { fontSize: 12, color: COLORS.textMuted, marginBottom: 4 },
-  planCredits: { fontSize: 12, color: COLORS.accent },
-  planPrice:   { fontSize: rs(22, 18, 26), fontWeight: '800', color: COLORS.textPrimary },
-  planCurrency:{ fontSize: 12, color: COLORS.textMuted },
-  planRadio:   { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
-  planRadioActive: { borderColor: COLORS.accent },
-  planRadioDot:{ width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.accent },
+  planName:    { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  planDesc:    { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
+  planCredits: { fontSize: 12, color: colors.accent },
+  planPrice:   { fontSize: rs(22, 18, 26), fontWeight: '800', color: colors.textPrimary },
+  planCurrency:{ fontSize: 12, color: colors.textMuted },
+  planRadio:   { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  planRadioActive: { borderColor: colors.accent },
+  planRadioDot:{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
 
   // Done
   doneContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   doneEmoji:   { fontSize: rs(64, 48, 80), marginBottom: 24 },
-  doneTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: COLORS.textPrimary, marginBottom: 14, textAlign: 'center' },
-  doneSub:     { fontSize: rs(15, 13, 17), color: COLORS.textMuted, textAlign: 'center', lineHeight: 24, marginBottom: 40 },
-  doneBtn:     { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 48, alignItems: 'center' },
-  doneBtnText: { fontSize: rs(17, 15, 19), fontWeight: '700', color: COLORS.bg },
+  doneTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: colors.textPrimary, marginBottom: 14, textAlign: 'center' },
+  doneSub:     { fontSize: rs(15, 13, 17), color: colors.textMuted, textAlign: 'center', lineHeight: 24, marginBottom: 40 },
+  doneBtn:     { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 48, alignItems: 'center' },
+  doneBtnText: { fontSize: rs(17, 15, 19), fontWeight: '700', color: colors.bg },
 
   // Footer CTA — paddingBottom applied dynamically via contentPad
   footer:      { padding: 24, paddingTop: 12, paddingBottom: 24 },
-  nextBtn:     { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  nextBtnDisabled: { backgroundColor: COLORS.border },
-  nextBtnText: { fontSize: rs(17, 15, 19), fontWeight: '700', color: COLORS.bg },
-});
+  nextBtn:     { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+  nextBtnDisabled: { backgroundColor: colors.border },
+  nextBtnText: { fontSize: rs(17, 15, 19), fontWeight: '700', color: colors.bg },
+  });
+}

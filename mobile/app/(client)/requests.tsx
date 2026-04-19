@@ -1,15 +1,16 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceRequest } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 type Filter = 'all' | 'open' | 'in_progress' | 'completed';
 
@@ -24,10 +25,13 @@ export default function ClientRequests() {
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
+  const { colors } = useTheme();
   const [requests, setRequests]   = useState<ServiceRequest[]>([]);
   const [filter, setFilter]       = useState<Filter>('all');
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'all',         label: t('requests.filterAll') },
@@ -75,7 +79,7 @@ export default function ClientRequests() {
   };
 
   const renderItem = ({ item }: { item: ServiceRequest }) => {
-    const colors = STATUS_COLORS[item.status] ?? STATUS_COLORS.open;
+    const itemColors = STATUS_COLORS[item.status] ?? STATUS_COLORS.open;
     const bidsCount = (item as any).bids_count?.[0]?.count ?? 0;
 
     return (
@@ -86,8 +90,8 @@ export default function ClientRequests() {
       >
         <View style={styles.cardHeader}>
           <Text style={[styles.cardTitle, { textAlign: ta, marginEnd: 10 }]}>{item.title}</Text>
-          <View style={[styles.badge, { backgroundColor: colors.bg }]}>
-            <Text style={[styles.badgeText, { color: colors.text }]}>
+          <View style={[styles.badge, { backgroundColor: itemColors.bg }]}>
+            <Text style={[styles.badgeText, { color: itemColors.text }]}>
               {STATUS_LABEL[item.status]}
             </Text>
           </View>
@@ -142,7 +146,7 @@ export default function ClientRequests() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={COLORS.accent} />
+          <ActivityIndicator color={colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -152,7 +156,7 @@ export default function ClientRequests() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
@@ -172,39 +176,41 @@ export default function ClientRequests() {
   );
 }
 
-const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: COLORS.bg },
-  center:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container:  { flex: 1, backgroundColor: colors.bg },
+    center:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: COLORS.textPrimary },
+    header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 12 },
+    headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
 
-  filterRow:       { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 16 },
-  filterTab:       { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-  filterTabActive: { backgroundColor: COLORS.accentDim, borderColor: COLORS.accent },
-  filterText:      { fontSize: 13, color: COLORS.textSecondary },
-  filterTextActive:{ color: COLORS.accent, fontWeight: '600' },
+    filterRow:       { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 16 },
+    filterTab:       { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+    filterTabActive: { backgroundColor: colors.accentDim, borderColor: colors.accent },
+    filterText:      { fontSize: 13, color: colors.textSecondary },
+    filterTextActive:{ color: colors.accent, fontWeight: '600' },
 
-  listContent: { paddingHorizontal: 16, paddingBottom: 32 },
+    listContent: { paddingHorizontal: 16, paddingBottom: 32 },
 
-  card:       { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
-  cardTitle:  { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary, flex: 1, marginLeft: 10 },
-  cardMeta:   { fontSize: 12, color: COLORS.textMuted, marginBottom: 12 },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardDate:   { fontSize: 12, color: COLORS.textMuted },
+    card:       { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
+    cardTitle:  { fontSize: 15, fontWeight: '600', color: colors.textPrimary, flex: 1, marginLeft: 10 },
+    cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 12 },
+    cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    cardDate:   { fontSize: 12, color: colors.textMuted },
 
-  badge:     { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeText: { fontSize: 11, fontWeight: '600' },
+    badge:     { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+    badgeText: { fontSize: 11, fontWeight: '600' },
 
-  bidsBtn:     { backgroundColor: COLORS.accent, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  bidsBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.bg },
+    bidsBtn:     { backgroundColor: colors.accent, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+    bidsBtnText: { fontSize: 12, fontWeight: '700', color: colors.bg },
 
-  aiPrice: { fontSize: 12, color: COLORS.accent, fontWeight: '600' },
+    aiPrice: { fontSize: 12, color: colors.accent, fontWeight: '600' },
 
-  empty:       { alignItems: 'center', paddingTop: HEADER_PAD },
-  emptyIcon:   { fontSize: 48, marginBottom: 12 },
-  emptyTitle:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 20 },
-  emptyBtn:    { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
-  emptyBtnText:{ fontSize: 15, fontWeight: '700', color: COLORS.bg },
-});
+    empty:       { alignItems: 'center', paddingTop: HEADER_PAD },
+    emptyIcon:   { fontSize: 48, marginBottom: 12 },
+    emptyTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 20 },
+    emptyBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 },
+    emptyBtnText:{ fontSize: 15, fontWeight: '700', color: colors.bg },
+  });
+}

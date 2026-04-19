@@ -5,13 +5,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
 import { JORDAN_CITIES } from '../../src/constants/categories';
 import { calcStatusCounts } from '../../src/utils/pricing';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { User } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -25,6 +26,8 @@ type Stats = {
 // ─── Component ────────────────────────────────────────────────
 
 export default function ClientProfile() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang, toggleLanguage } = useLanguage();
@@ -133,7 +136,7 @@ export default function ClientProfile() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -154,7 +157,7 @@ export default function ClientProfile() {
       style={styles.container}
       contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
       {/* ── Hero ── */}
       <View style={styles.heroCard}>
@@ -191,7 +194,7 @@ export default function ClientProfile() {
               value={editName}
               onChangeText={setEditName}
               placeholder={t('auth.fullNamePlaceholder')}
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               maxLength={60}
             />
 
@@ -224,7 +227,7 @@ export default function ClientProfile() {
                 disabled={saving}
               >
                 {saving
-                  ? <ActivityIndicator color={COLORS.bg} size="small" />
+                  ? <ActivityIndicator color={colors.bg} size="small" />
                   : <Text style={styles.saveBtnText}>{t('profile.saveChanges')}</Text>
                 }
               </TouchableOpacity>
@@ -292,6 +295,8 @@ export default function ClientProfile() {
 // ─── Sub-components ───────────────────────────────────────────
 
 function StatBox({ label, value }: { label: string; value: string }) {
+  const { colors } = useTheme();
+  const statStyles = useMemo(() => createStatStyles(colors), [colors]);
   return (
     <View style={statStyles.box}>
       <Text style={statStyles.value}>{value}</Text>
@@ -305,6 +310,8 @@ function InfoRow({
 }: {
   label: string; value: string; valueColor?: string;
 }) {
+  const { colors } = useTheme();
+  const infoStyles = useMemo(() => createInfoStyles(colors), [colors]);
   return (
     <View style={infoStyles.row}>
       <Text style={infoStyles.label}>{label}</Text>
@@ -317,62 +324,68 @@ function InfoRow({
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
   content:   { paddingBottom: 24 },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
+  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
   heroCard:   { alignItems: 'center', paddingTop: HEADER_PAD, paddingBottom: 24, paddingHorizontal: 20 },
-  avatar:     { width: 84, height: 84, borderRadius: 42, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  avatarText: { fontSize: 36, fontWeight: '700', color: COLORS.bg },
-  name:       { fontSize: 24, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 6 },
-  city:       { fontSize: 14, color: COLORS.textMuted, marginBottom: 4 },
-  since:      { fontSize: 12, color: COLORS.textMuted, marginBottom: 16 },
-  editBtn:    { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 8, borderWidth: 1, borderColor: COLORS.border },
-  editBtnText:{ fontSize: 14, color: COLORS.textSecondary, fontWeight: '600' },
+  avatar:     { width: 84, height: 84, borderRadius: 42, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
+  avatarText: { fontSize: 36, fontWeight: '700', color: colors.bg },
+  name:       { fontSize: 24, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  city:       { fontSize: 14, color: colors.textMuted, marginBottom: 4 },
+  since:      { fontSize: 12, color: colors.textMuted, marginBottom: 16 },
+  editBtn:    { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 8, borderWidth: 1, borderColor: colors.border },
+  editBtnText:{ fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
 
   statsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 24 },
 
   section:      { paddingHorizontal: 16, marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
 
-  editCard:    { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: COLORS.border },
-  fieldLabel:  { fontSize: 13, color: COLORS.textMuted, marginBottom: 8 },
-  fieldInput:  { backgroundColor: COLORS.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, color: COLORS.textPrimary, fontSize: 15, borderWidth: 1, borderColor: COLORS.border },
+  editCard:    { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
+  fieldLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 8 },
+  fieldInput:  { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
 
   cityScroll:        { marginBottom: 4 },
-  cityChip:          { backgroundColor: COLORS.bg, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: COLORS.border },
-  cityChipActive:    { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  cityChipText:      { color: COLORS.textSecondary, fontSize: 13 },
-  cityChipTextActive:{ color: COLORS.accent },
+  cityChip:          { backgroundColor: colors.bg, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: colors.border },
+  cityChipActive:    { borderColor: colors.accent, backgroundColor: colors.accentDim },
+  cityChipText:      { color: colors.textSecondary, fontSize: 13 },
+  cityChipTextActive:{ color: colors.accent },
 
   editActions: { flexDirection: 'row', gap: 10, marginTop: 20 },
-  cancelBtn:   { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  cancelBtnText:{ fontSize: 14, color: COLORS.textSecondary },
-  saveBtn:     { flex: 2, backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  saveBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.bg },
-  btnDisabled: { backgroundColor: COLORS.border },
+  cancelBtn:   { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  cancelBtnText:{ fontSize: 14, color: colors.textSecondary },
+  saveBtn:     { flex: 2, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+  saveBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
+  btnDisabled: { backgroundColor: colors.border },
 
-  infoCard:   { backgroundColor: COLORS.surface, borderRadius: 16, paddingHorizontal: 16, borderWidth: 1, borderColor: COLORS.border },
+  infoCard:   { backgroundColor: colors.surface, borderRadius: 16, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border },
 
-  notifBtn:      { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, backgroundColor: COLORS.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: COLORS.border },
+  notifBtn:      { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: colors.border },
   notifBtnIcon:  { fontSize: 18, marginRight: 10 },
-  notifBtnText:  { flex: 1, fontSize: 15, color: COLORS.textPrimary, fontWeight: '500' },
-  notifBtnArrow: { fontSize: 16, color: COLORS.textMuted, marginLeft: 8 },
-  notifBtnBadge: { fontSize: 13, color: COLORS.accent, fontWeight: '600' },
+  notifBtnText:  { flex: 1, fontSize: 15, color: colors.textPrimary, fontWeight: '500' },
+  notifBtnArrow: { fontSize: 16, color: colors.textMuted, marginLeft: 8 },
+  notifBtnBadge: { fontSize: 13, color: colors.accent, fontWeight: '600' },
 
   signOutBtn:  { marginHorizontal: 16, marginTop: 8, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#7F1D1D' },
   signOutText: { fontSize: 15, color: '#FCA5A5', fontWeight: '600' },
-});
+  });
+}
 
-const statStyles = StyleSheet.create({
-  box:   { flex: 1, backgroundColor: COLORS.surface, borderRadius: 14, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  value: { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 4 },
-  label: { fontSize: 10, color: COLORS.textMuted, textAlign: 'center' },
-});
+function createStatStyles(colors: AppColors) {
+  return StyleSheet.create({
+  box:   { flex: 1, backgroundColor: colors.surface, borderRadius: 14, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  value: { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+  label: { fontSize: 10, color: colors.textMuted, textAlign: 'center' },
+  });
+}
 
-const infoStyles = StyleSheet.create({
-  row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  label: { fontSize: 13, color: COLORS.textMuted },
-  value: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '500' },
-});
+function createInfoStyles(colors: AppColors) {
+  return StyleSheet.create({
+  row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
+  label: { fontSize: 13, color: colors.textMuted },
+  value: { fontSize: 14, color: colors.textPrimary, fontWeight: '500' },
+  });
+}

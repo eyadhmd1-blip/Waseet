@@ -4,17 +4,18 @@
 // Params: job_id, provider_name
 // ============================================================
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   TextInput, ActivityIndicator, Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const TAG_KEYS = ['fast', 'excellent', 'affordable', 'professional', 'recommended', 'communication'] as const;
 type TagKey = typeof TAG_KEYS[number];
@@ -23,10 +24,13 @@ export default function RateJobScreen() {
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta } = useLanguage();
+  const { colors } = useTheme();
   const { job_id, provider_name } = useLocalSearchParams<{
     job_id: string;
     provider_name: string;
   }>();
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [rating, setRating]       = useState(0);
   const [hovered, setHovered]     = useState(0);
@@ -149,7 +153,7 @@ export default function RateJobScreen() {
         <TextInput
           style={styles.reviewInput}
           placeholder={t('rateJob.reviewPlaceholder')}
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={review}
           onChangeText={setReview}
           textAlign={ta}
@@ -165,7 +169,7 @@ export default function RateJobScreen() {
           disabled={rating === 0 || submitting}
         >
           {submitting
-            ? <ActivityIndicator color={COLORS.bg} />
+            ? <ActivityIndicator color={colors.bg} />
             : <Text style={styles.submitBtnText}>{t('rateJob.submit')} ✓</Text>
           }
         </TouchableOpacity>
@@ -174,39 +178,41 @@ export default function RateJobScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.bg },
 
-  topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText:  { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  skipText:  { fontSize: 14, color: COLORS.textMuted },
+    topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+    backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    backText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    topTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+    skipText:  { fontSize: 14, color: colors.textMuted },
 
-  content: { flex: 1, padding: 24 },
+    content: { flex: 1, padding: 24 },
 
-  provChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 28, gap: 12, borderWidth: 1, borderColor: COLORS.border },
-  provAvatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
-  provAvatarText: { fontSize: 20, fontWeight: '700', color: COLORS.bg },
-  provName:       { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
-  provSub:        { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+    provChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 28, gap: 12, borderWidth: 1, borderColor: colors.border },
+    provAvatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+    provAvatarText: { fontSize: 20, fontWeight: '700', color: colors.bg },
+    provName:       { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+    provSub:        { fontSize: 12, color: colors.textMuted, marginTop: 2 },
 
-  rateLabel:  { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center', marginBottom: 20 },
-  starsRow:   { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 8 },
-  star:       { fontSize: 40, opacity: 0.25 },
-  starActive: { opacity: 1 },
-  starLabel:  { fontSize: 16, fontWeight: '700', color: COLORS.accent, textAlign: 'center', marginBottom: 20 },
+    rateLabel:  { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'center', marginBottom: 20 },
+    starsRow:   { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 8 },
+    star:       { fontSize: 40, opacity: 0.25 },
+    starActive: { opacity: 1 },
+    starLabel:  { fontSize: 16, fontWeight: '700', color: colors.accent, textAlign: 'center', marginBottom: 20 },
 
-  tagsLabel: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 10 },
-  tagsWrap:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  tag:       { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 1, borderColor: COLORS.border },
-  tagActive: { borderColor: COLORS.accent, backgroundColor: COLORS.accentDim },
-  tagText:   { fontSize: 13, color: COLORS.textMuted, fontWeight: '600' },
-  tagTextActive: { color: COLORS.accent },
+    tagsLabel: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 10 },
+    tagsWrap:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+    tag:       { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 1, borderColor: colors.border },
+    tagActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },
+    tagText:   { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
+    tagTextActive: { color: colors.accent },
 
-  reviewInput:    { backgroundColor: COLORS.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.textPrimary, fontSize: 14, borderWidth: 1, borderColor: COLORS.border, minHeight: 90, textAlignVertical: 'top', marginBottom: 24 },
+    reviewInput:    { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 90, textAlignVertical: 'top', marginBottom: 24 },
 
-  submitBtn:         { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  submitBtnDisabled: { backgroundColor: COLORS.border },
-  submitBtnText:     { fontSize: 16, fontWeight: '700', color: COLORS.bg },
-});
+    submitBtn:         { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+    submitBtnDisabled: { backgroundColor: colors.border },
+    submitBtnText:     { fontSize: 16, fontWeight: '700', color: colors.bg },
+  });
+}

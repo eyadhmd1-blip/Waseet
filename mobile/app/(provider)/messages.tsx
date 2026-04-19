@@ -1,14 +1,15 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { COLORS } from '../../src/constants/theme';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 type ConversationJob = {
   id: string;
@@ -29,9 +30,12 @@ export default function ProviderMessages() {
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
+  const { colors } = useTheme();
   const [jobs, setJobs]             = useState<ConversationJob[]>([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const JOB_STATUS_LABEL: Record<string, string> = {
     active:    t('providerJobs.statusActive'),
@@ -68,7 +72,7 @@ export default function ProviderMessages() {
   }, [load]);
 
   const renderItem = ({ item }: { item: ConversationJob }) => {
-    const colors     = JOB_STATUS_COLORS[item.status] ?? JOB_STATUS_COLORS.active;
+    const itemColors = JOB_STATUS_COLORS[item.status] ?? JOB_STATUS_COLORS.active;
     const clientName = item.client?.full_name ?? '—';
 
     return (
@@ -87,8 +91,8 @@ export default function ProviderMessages() {
         </View>
 
         <View style={styles.cardRight}>
-          <View style={[styles.statusBadge, { backgroundColor: colors.bg }]}>
-            <Text style={[styles.statusText, { color: colors.text }]}>
+          <View style={[styles.statusBadge, { backgroundColor: itemColors.bg }]}>
+            <Text style={[styles.statusText, { color: itemColors.text }]}>
               {JOB_STATUS_LABEL[item.status] ?? item.status}
             </Text>
           </View>
@@ -108,7 +112,7 @@ export default function ProviderMessages() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={COLORS.accent} />
+          <ActivityIndicator color={colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -118,7 +122,7 @@ export default function ProviderMessages() {
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.accent} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
@@ -133,27 +137,29 @@ export default function ProviderMessages() {
   );
 }
 
-const styles = StyleSheet.create({
-  container:   { flex: 1, backgroundColor: COLORS.bg },
-  center:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: COLORS.textPrimary },
-  listContent: { paddingVertical: 8 },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container:   { flex: 1, backgroundColor: colors.bg },
+    center:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+    headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+    listContent: { paddingVertical: 8 },
 
-  card:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: COLORS.border, gap: 12 },
-  avatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: '#7C3AED', alignItems: 'center', justifyContent: 'center' },
-  avatarText: { fontSize: 20, fontWeight: '700', color: '#F5F3FF' },
-  cardInfo:   { flex: 1 },
-  clientName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 3 },
-  jobTitle:   { fontSize: 12, color: COLORS.textMuted },
+    card:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 },
+    avatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: '#7C3AED', alignItems: 'center', justifyContent: 'center' },
+    avatarText: { fontSize: 20, fontWeight: '700', color: '#F5F3FF' },
+    cardInfo:   { flex: 1 },
+    clientName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 3 },
+    jobTitle:   { fontSize: 12, color: colors.textMuted },
 
-  cardRight:   { alignItems: 'flex-end', gap: 6 },
-  statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  statusText:  { fontSize: 10, fontWeight: '700' },
-  cardDate:    { fontSize: 11, color: COLORS.textMuted },
+    cardRight:   { alignItems: 'flex-end', gap: 6 },
+    statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+    statusText:  { fontSize: 10, fontWeight: '700' },
+    cardDate:    { fontSize: 11, color: colors.textMuted },
 
-  empty:      { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
-  emptyIcon:  { fontSize: 56, marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
-  emptySub:   { fontSize: 14, color: COLORS.textMuted, lineHeight: 22 },
-});
+    empty:      { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
+    emptyIcon:  { fontSize: 56, marginBottom: 16 },
+    emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+    emptySub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22 },
+  });
+}

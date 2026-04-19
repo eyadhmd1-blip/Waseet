@@ -3,7 +3,7 @@
 // 2-step fast flow: Category → Details + submit
 // ============================================================
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView,
@@ -11,12 +11,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { CATEGORY_GROUPS } from '../src/constants/categories';
 import type { ServiceCategory } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const URGENT_PREMIUM_PCT = 25;
 const URGENT_MINUTES     = 60;
@@ -30,6 +31,8 @@ const ICON_MAP: Record<string, string> = {
 // ─── Pulsing siren ───────────────────────────────────────────
 
 function SirenIcon() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const scale = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.loop(
@@ -46,6 +49,8 @@ function SirenIcon() {
 // ─── Guarantee badge ─────────────────────────────────────────
 
 function GuaranteeBadge() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useLanguage();
   return (
     <View style={styles.guaranteeBadge}>
@@ -81,6 +86,8 @@ function ConfirmModal({
   onCancel: () => void;
   loading: boolean;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta, lang } = useLanguage();
   const slideY  = useRef(new Animated.Value(400)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -172,6 +179,8 @@ function ConfirmModal({
 // ─── Main Screen ─────────────────────────────────────────────
 
 export default function UrgentRequestScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
     const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
@@ -367,7 +376,7 @@ export default function UrgentRequestScreen() {
             <TextInput
               style={styles.descInput}
               placeholder={t('urgentRequest.descPlaceholder')}
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               value={description}
               onChangeText={setDescription}
               textAlign={ta}
@@ -381,7 +390,7 @@ export default function UrgentRequestScreen() {
             {(aiMin || aiLoading) && (
               <View style={styles.aiPreview}>
                 {aiLoading
-                  ? <ActivityIndicator color={COLORS.accent} size="small" />
+                  ? <ActivityIndicator color={colors.accent} size="small" />
                   : <Text style={[styles.aiPreviewText, { textAlign: ta }]}>
                       {t('urgentRequest.aiPricePreview', { min: aiMin, max: aiMax })}
                       {'  '}
@@ -428,45 +437,46 @@ export default function UrgentRequestScreen() {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
 
   topBar:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#7F1D1D' },
   backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText:  { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
+  backText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
   topCenter: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   sirenEmoji:{ fontSize: 22 },
   topTitle:  { fontSize: 18, fontWeight: '800', color: '#EF4444' },
   stepDots:  { flexDirection: 'row', gap: 6 },
-  stepDot:   { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.border },
+  stepDot:   { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
   stepDotActive: { backgroundColor: '#EF4444' },
 
   scrollContent: { padding: 20, paddingBottom: 48 },
-  stepHint:      { fontSize: 15, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 16 },
+  stepHint:      { fontSize: 15, fontWeight: '600', color: colors.textSecondary, marginBottom: 16 },
 
   groupScroll:         { marginBottom: 16 },
-  groupChip:           { backgroundColor: COLORS.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: COLORS.border },
+  groupChip:           { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
   groupChipActive:     { borderColor: '#EF4444', backgroundColor: '#450A0A' },
-  groupChipText:       { color: COLORS.textSecondary, fontSize: 13 },
+  groupChipText:       { color: colors.textSecondary, fontSize: 13 },
   groupChipTextActive: { color: '#EF4444', fontWeight: '600' },
 
   catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  catCard:       { width: '30%', backgroundColor: COLORS.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
+  catCard:       { width: '30%', backgroundColor: colors.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   catCardActive: { borderColor: '#EF4444', backgroundColor: '#450A0A' },
   catIcon:       { fontSize: 28, marginBottom: 6 },
-  catName:       { fontSize: 11, color: COLORS.textSecondary, textAlign: 'center', fontWeight: '500' },
+  catName:       { fontSize: 11, color: colors.textSecondary, textAlign: 'center', fontWeight: '500' },
 
   catBadge:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#450A0A', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#7F1D1D', marginBottom: 14 },
   catBadgeText:   { fontSize: 15, color: '#FCA5A5', fontWeight: '600' },
-  catBadgeChange: { fontSize: 13, color: COLORS.textMuted },
+  catBadgeChange: { fontSize: 13, color: colors.textMuted },
 
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20, backgroundColor: COLORS.surface, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: COLORS.border },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20, backgroundColor: colors.surface, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: colors.border },
   locationIcon:{ fontSize: 16 },
-  locationText:{ fontSize: 14, color: COLORS.textSecondary, flex: 1 },
+  locationText:{ fontSize: 14, color: colors.textSecondary, flex: 1 },
 
-  fieldLabel: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 8 },
-  descInput:  { backgroundColor: COLORS.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.textPrimary, fontSize: 15, borderWidth: 1, borderColor: '#7F1D1D', textAlignVertical: 'top', height: 120 },
-  charCount:  { fontSize: 11, color: COLORS.textMuted, marginTop: 4, marginBottom: 16 },
+  fieldLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 8 },
+  descInput:  { backgroundColor: colors.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: '#7F1D1D', textAlignVertical: 'top', height: 120 },
+  charCount:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16 },
 
   aiPreview:     { backgroundColor: '#0C4A6E', borderRadius: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: '#0369A1' },
   aiPreviewText: { fontSize: 13, color: '#BAE6FD' },
@@ -479,31 +489,32 @@ const styles = StyleSheet.create({
 
   urgentBtn:     { backgroundColor: '#DC2626', borderRadius: 14, paddingVertical: 17, alignItems: 'center', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 8 },
   urgentBtnText: { fontSize: 17, fontWeight: '800', color: '#fff' },
-  btnDisabled:   { backgroundColor: COLORS.border, shadowOpacity: 0 },
+  btnDisabled:   { backgroundColor: colors.border, shadowOpacity: 0 },
 
   modalBackdrop: { flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
-  confirmSheet:  { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 44 },
-  confirmTitle:  { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary, marginBottom: 20 },
+  confirmSheet:  { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 44 },
+  confirmTitle:  { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 20 },
 
-  confirmRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  confirmLabel: { fontSize: 13, color: COLORS.textMuted, flex: 0.35 },
-  confirmValue: { fontSize: 14, color: COLORS.textPrimary, fontWeight: '600', flex: 0.65, textAlign: 'auto' },
+  confirmRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
+  confirmLabel: { fontSize: 13, color: colors.textMuted, flex: 0.35 },
+  confirmValue: { fontSize: 14, color: colors.textPrimary, fontWeight: '600', flex: 0.65, textAlign: 'auto' },
 
   priceSummary:      { backgroundColor: '#1C1A0E', borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
-  priceSummaryTitle: { fontSize: 12, color: COLORS.textMuted, marginBottom: 10 },
+  priceSummaryTitle: { fontSize: 12, color: colors.textMuted, marginBottom: 10 },
   priceRow:          { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  priceBase:         { fontSize: 13, color: COLORS.textSecondary },
-  priceBaseVal:      { fontSize: 13, color: COLORS.textSecondary },
+  priceBase:         { fontSize: 13, color: colors.textSecondary },
+  priceBaseVal:      { fontSize: 13, color: colors.textSecondary },
   pricePremium:      { fontSize: 13, color: '#FCA5A5' },
   pricePremiumVal:   { fontSize: 13, color: '#FCA5A5' },
-  priceTotalRow:     { borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 8, marginTop: 4 },
-  priceTotalLabel:   { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  priceTotalVal:     { fontSize: 14, fontWeight: '700', color: COLORS.accent },
-  priceNA:           { fontSize: 13, color: COLORS.textMuted },
+  priceTotalRow:     { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8, marginTop: 4 },
+  priceTotalLabel:   { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
+  priceTotalVal:     { fontSize: 14, fontWeight: '700', color: colors.accent },
+  priceNA:           { fontSize: 13, color: colors.textMuted },
 
   confirmBtns:         { flexDirection: 'row', gap: 12, marginTop: 20 },
-  cancelBtn:           { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  cancelBtnText:       { fontSize: 15, color: COLORS.textSecondary },
+  cancelBtn:           { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  cancelBtnText:       { fontSize: 15, color: colors.textSecondary },
   urgentSubmitBtn:     { flex: 2, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   urgentSubmitBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-});
+  });
+}

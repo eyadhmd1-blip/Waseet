@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TextInput,
   TouchableOpacity, Alert, Dimensions,
@@ -8,7 +8,8 @@ import { supabase } from '../../src/lib/supabase';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD, rs } from '../../src/utils/layout';
-import { COLORS } from '../../src/constants/theme';
+import { useTheme } from '../../src/context/ThemeContext';
+import type { AppColors } from '../../src/constants/colors';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 // 6 boxes, 48px total horizontal padding, small natural gaps
@@ -19,9 +20,12 @@ export default function VerifyScreen() {
   const router = useRouter();
   const { phone, dev_code } = useLocalSearchParams<{ phone: string; dev_code?: string }>();
   const { t, ta } = useLanguage();
+  const { colors } = useTheme();
   const [otp, setOtp]         = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const inputs = useRef<TextInput[]>([]);
+
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   // DEV MODE: auto-fill OTP when dev_code is provided by the login screen
   useEffect(() => {
@@ -155,21 +159,23 @@ export default function VerifyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container:  { flex: 1, backgroundColor: COLORS.bg },
-  back:       { padding: 24, paddingTop: HEADER_PAD },
-  backText:   { fontSize: 24, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  content:    { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
-  title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: COLORS.textPrimary, marginBottom: 8 },
-  subtitle:   { fontSize: rs(15, 13, 17), color: COLORS.textMuted, marginBottom: 40 },
-  otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
-  otpInput: {
-    width: OTP_BOX_SIZE, height: OTP_BOX_SIZE + 8, borderRadius: 12,
-    backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
-    fontSize: rs(24, 18, 28), fontWeight: '700', color: COLORS.textPrimary,
-  },
-  otpFilled:  { borderColor: COLORS.accent },
-  btn:        { backgroundColor: COLORS.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-  btnDisabled:{ backgroundColor: COLORS.border },
-  btnText:    { fontSize: rs(17, 15, 19), fontWeight: '700', color: COLORS.bg },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container:  { flex: 1, backgroundColor: colors.bg },
+    back:       { padding: 24, paddingTop: HEADER_PAD },
+    backText:   { fontSize: 24, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    content:    { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
+    title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+    subtitle:   { fontSize: rs(15, 13, 17), color: colors.textMuted, marginBottom: 40 },
+    otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
+    otpInput: {
+      width: OTP_BOX_SIZE, height: OTP_BOX_SIZE + 8, borderRadius: 12,
+      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
+      fontSize: rs(24, 18, 28), fontWeight: '700', color: colors.textPrimary,
+    },
+    otpFilled:  { borderColor: colors.accent },
+    btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+    btnDisabled:{ backgroundColor: colors.border },
+    btnText:    { fontSize: rs(17, 15, 19), fontWeight: '700', color: colors.bg },
+  });
+}

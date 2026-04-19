@@ -3,7 +3,7 @@
 // Provider-facing: plan selection → discount → checkout via Paddle
 // ============================================================
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Animated, Easing, Linking, Alert, ActivityIndicator,
@@ -11,12 +11,13 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { SUBSCRIPTION_PLANS, REP_DISCOUNT } from '../src/constants/categories';
 import type { Provider, User } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -74,23 +75,27 @@ const PLAN_FEATURE_KEYS: Record<string, { key: string; included: boolean }[]> = 
 
 // ─── Animated check icon ─────────────────────────────────────
 function CheckIcon({ included }: { included: boolean }) {
+  const featureStyles = useMemo(() => createFeatureStyles(colors), [colors]);
+  const { colors } = useTheme();
   return (
     <View style={[
       featureStyles.check,
       included ? featureStyles.checkYes : featureStyles.checkNo,
     ]}>
-      <Text style={{ fontSize: 10, fontWeight: '700', color: included ? '#fff' : COLORS.textMuted }}>
+      <Text style={{ fontSize: 10, fontWeight: '700', color: included ? '#fff' : colors.textMuted }}>
         {included ? '✓' : '✕'}
       </Text>
     </View>
   );
 }
 
-const featureStyles = StyleSheet.create({
+function createFeatureStyles(colors: AppColors) {
+  return StyleSheet.create({
   check:    { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   checkYes: { backgroundColor: '#22C55E' },
-  checkNo:  { backgroundColor: COLORS.border },
-});
+  checkNo:  { backgroundColor: colors.border },
+  });
+}
 
 // ─── Plan Card ────────────────────────────────────────────────
 function PlanCard({
@@ -106,6 +111,8 @@ function PlanCard({
   anim: Animated.Value;
   onSelect: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta, lang } = useLanguage();
   const accentColor = PLAN_COLORS[plan.tier];
   const features    = PLAN_FEATURE_KEYS[plan.tier] ?? [];
@@ -115,7 +122,7 @@ function PlanCard({
 
   const scale  = anim.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] });
   const shadow = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 10] });
-  const border = selected ? accentColor : COLORS.border;
+  const border = selected ? accentColor : colors.border;
 
   return (
     <Animated.View style={[
@@ -152,7 +159,7 @@ function PlanCard({
               {!plan.is_trial && discount > 0 && (
                 <Text style={styles.originalPrice}>{plan.price_jod} {t('common.jod')}</Text>
               )}
-              <Text style={[styles.price, { color: selected ? accentColor : COLORS.textPrimary }]}>
+              <Text style={[styles.price, { color: selected ? accentColor : colors.textPrimary }]}>
                 {plan.is_trial ? t('subscribe.trialBadge') : `${finalPrice} ${t('common.jod')}`}
               </Text>
               {!plan.is_trial && <Text style={styles.pricePer}>{t('subscribe.perMonth')}</Text>}
@@ -175,7 +182,7 @@ function PlanCard({
 
           <View style={styles.planRight}>
             <Text style={styles.planIcon}>{PLAN_ICONS[plan.tier]}</Text>
-            <Text style={[styles.planName, { color: selected ? accentColor : COLORS.textPrimary }]}>
+            <Text style={[styles.planName, { color: selected ? accentColor : colors.textPrimary }]}>
               {planName}
             </Text>
             {/* Selection indicator */}
@@ -206,6 +213,8 @@ function PlanCard({
 
 // ─── Savings Banner ───────────────────────────────────────────
 function SavingsBanner({ discount, plan }: { discount: number; plan: typeof SUBSCRIPTION_PLANS[0] }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { t } = useLanguage();
   const pulseOp = useRef(new Animated.Value(0.7)).current;
   useEffect(() => {
@@ -231,6 +240,8 @@ function SavingsBanner({ discount, plan }: { discount: number; plan: typeof SUBS
 
 // ─── Main Screen ──────────────────────────────────────────────
 export default function SubscribeScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const router   = useRouter();
   const params   = useLocalSearchParams<{ tier?: string }>();
   const { t, ta, lang } = useLanguage();
@@ -352,7 +363,7 @@ export default function SubscribeScreen() {
   };
 
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator color={COLORS.accent} size="large" /></View>;
+    return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
 
   const repDiscount    = REP_DISCOUNT[provider?.reputation_tier ?? 'new'] ?? 0;
@@ -472,7 +483,7 @@ export default function SubscribeScreen() {
           activeOpacity={0.85}
         >
           {processing
-            ? <ActivityIndicator color={COLORS.bg} />
+            ? <ActivityIndicator color={colors.bg} />
             : (
               <>
                 <Text style={styles.checkoutBtnText}>
@@ -492,6 +503,8 @@ export default function SubscribeScreen() {
 
 // ─── FAQ Item ─────────────────────────────────────────────────
 function FAQItem({ q, a }: { q: string; a: string }) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { ta } = useLanguage();
   const [open, setOpen] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
@@ -519,21 +532,22 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  center:    { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  center:    { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
 
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
-    backgroundColor: COLORS.bg,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
+    backgroundColor: colors.bg,
   },
   backBtn:      { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  backIcon:     { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
+  backIcon:     { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
   headerCenter: { flex: 1, alignItems: 'center' },
-  headerTitle:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  headerSub:    { fontSize: 12, color: COLORS.textMuted, marginTop: 2 },
+  headerTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+  headerSub:    { fontSize: 12, color: colors.textMuted, marginTop: 2 },
 
   scrollContent: { padding: 16, paddingTop: 12 },
 
@@ -543,14 +557,14 @@ const styles = StyleSheet.create({
     padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)',
   },
   savingsIcon: { fontSize: 22 },
-  savingsText: { fontSize: 13, color: COLORS.accent, fontWeight: '600', flex: 1, textAlign: 'auto' },
+  savingsText: { fontSize: 13, color: colors.accent, fontWeight: '600', flex: 1, textAlign: 'auto' },
 
   planCard: {
-    backgroundColor: COLORS.surface, borderRadius: 20,
+    backgroundColor: colors.surface, borderRadius: 20,
     marginBottom: 14, overflow: 'hidden',
   },
-  popularBadge:  { backgroundColor: COLORS.accent, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-end', borderBottomLeftRadius: 12 },
-  popularText:   { fontSize: 11, fontWeight: '700', color: COLORS.bg },
+  popularBadge:  { backgroundColor: colors.accent, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-end', borderBottomLeftRadius: 12 },
+  popularText:   { fontSize: 11, fontWeight: '700', color: colors.bg },
 
   planHeader: {
     flexDirection: 'row', justifyContent: 'space-between',
@@ -563,9 +577,9 @@ const styles = StyleSheet.create({
   planName: { fontSize: 17, fontWeight: '700' },
 
   priceRow:     { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  originalPrice:{ fontSize: 14, color: COLORS.textMuted, textDecorationLine: 'line-through' },
+  originalPrice:{ fontSize: 14, color: colors.textMuted, textDecorationLine: 'line-through' },
   price:        { fontSize: 32, fontWeight: '800' },
-  pricePer:     { fontSize: 13, color: COLORS.textMuted, marginBottom: 2 },
+  pricePer:     { fontSize: 13, color: colors.textMuted, marginBottom: 2 },
 
   discountTag: {
     backgroundColor: '#14532D', borderRadius: 8,
@@ -574,51 +588,51 @@ const styles = StyleSheet.create({
   discountTagText: { fontSize: 11, fontWeight: '700', color: '#86EFAC' },
 
   creditsHint:   { fontSize: 13, fontWeight: '700', marginTop: 4 },
-  unlimitedNote: { fontSize: 10, color: COLORS.textMuted, marginTop: 2 },
+  unlimitedNote: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
 
   discountBreakdownBanner: {
     backgroundColor: '#1C1A0E', borderRadius: 12,
     padding: 12, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)',
   },
-  discountBreakdownText: { fontSize: 12, color: COLORS.accent, textAlign: 'auto', fontWeight: '600' },
+  discountBreakdownText: { fontSize: 12, color: colors.accent, textAlign: 'auto', fontWeight: '600' },
 
   selector: {
     width: 22, height: 22, borderRadius: 11,
-    borderWidth: 2, borderColor: COLORS.border,
+    borderWidth: 2, borderColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
   },
   selectorDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' },
 
-  divider: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 18 },
+  divider: { height: 1, backgroundColor: colors.border, marginHorizontal: 18 },
 
   featureList: { padding: 18, gap: 10 },
   featureRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'flex-end' },
-  featureText: { fontSize: 13, color: COLORS.textSecondary, flex: 1 },
-  featureTextOff: { color: COLORS.textMuted },
+  featureText: { fontSize: 13, color: colors.textSecondary, flex: 1 },
+  featureTextOff: { color: colors.textMuted },
 
   guaranteesRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 24, marginTop: 4 },
   guaranteeItem: { alignItems: 'center', gap: 4 },
   guaranteeIcon: { fontSize: 22 },
-  guaranteeLabel:{ fontSize: 11, color: COLORS.textMuted },
+  guaranteeLabel:{ fontSize: 11, color: colors.textMuted },
 
   faqSection: { gap: 0 },
-  faqTitle:   { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 12 },
-  faqItem:    { backgroundColor: COLORS.surface, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
+  faqTitle:   { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  faqItem:    { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
   faqRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  faqQ:       { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, flex: 1 },
-  faqArrow:   { fontSize: 16, color: COLORS.textMuted, marginLeft: 8 },
-  faqA:       { fontSize: 12, color: COLORS.textMuted, lineHeight: 19, marginTop: 10 },
+  faqQ:       { fontSize: 13, fontWeight: '600', color: colors.textPrimary, flex: 1 },
+  faqArrow:   { fontSize: 16, color: colors.textMuted, marginLeft: 8 },
+  faqA:       { fontSize: 12, color: colors.textMuted, lineHeight: 19, marginTop: 10 },
 
   ctaBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: COLORS.surface,
-    borderTopWidth: 1, borderTopColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1, borderTopColor: colors.border,
     padding: 16, paddingBottom: 32, gap: 10,
   },
   orderSummary:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderLabel:    { fontSize: 13, color: COLORS.textMuted },
+  orderLabel:    { fontSize: 13, color: colors.textMuted },
   orderPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  orderOriginal: { fontSize: 13, color: COLORS.textMuted, textDecorationLine: 'line-through' },
+  orderOriginal: { fontSize: 13, color: colors.textMuted, textDecorationLine: 'line-through' },
   orderPrice:    { fontSize: 22, fontWeight: '800' },
 
   checkoutBtn: {
@@ -630,4 +644,5 @@ const styles = StyleSheet.create({
   checkoutBtnText: { fontSize: 17, fontWeight: '700', color: '#fff' },
   checkoutBtnSub:  { fontSize: 11, color: 'rgba(255,255,255,0.75)' },
   btnDisabled:     { opacity: 0.6 },
-});
+  });
+}

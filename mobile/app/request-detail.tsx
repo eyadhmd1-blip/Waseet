@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, Modal,
@@ -6,12 +6,13 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Share } from 'react-native';
 import { supabase } from '../src/lib/supabase';
-import { COLORS } from '../src/constants/theme';
 import { TIER_META } from '../src/constants/categories';
 import { useLanguage } from '../src/hooks/useLanguage';
 import type { ServiceRequest, Bid, RequestStatus } from '../src/types';
 import { useInsets } from '../src/hooks/useInsets';
 import { HEADER_PAD } from '../src/utils/layout';
+import { useTheme } from '../src/context/ThemeContext';
+import type { AppColors } from '../src/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -48,6 +49,8 @@ const ICON_MAP: Record<string, string> = {
 // ─── Component ────────────────────────────────────────────────
 
 export default function RequestDetail() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { headerPad } = useInsets();
   const router  = useRouter();
   const { t, ta, lang } = useLanguage();
@@ -169,7 +172,7 @@ export default function RequestDetail() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator color={COLORS.accent} size="large" />
+        <ActivityIndicator color={colors.accent} size="large" />
       </View>
     );
   }
@@ -436,7 +439,7 @@ export default function RequestDetail() {
                 disabled={!!accepting}
               >
                 {accepting
-                  ? <ActivityIndicator color={COLORS.bg} size="small" />
+                  ? <ActivityIndicator color={colors.bg} size="small" />
                   : <Text style={styles.modalConfirmText}>{t('requests.confirmAccept')}</Text>
                 }
               </TouchableOpacity>
@@ -459,6 +462,8 @@ function BidCard({
   onAccept: () => void;
   onReport: () => void;
 }) {
+  const { colors } = useTheme();
+  const bidStyles = useMemo(() => createBidStyles(colors), [colors]);
   const { t, ta } = useLanguage();
   const tier = TIER_META[bid.provider.reputation_tier as keyof typeof TIER_META];
 
@@ -513,131 +518,135 @@ function BidCard({
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.bg },
-  center:    { flex: 1, backgroundColor: COLORS.bg, alignItems: 'center', justifyContent: 'center' },
-  errorText: { fontSize: 16, color: COLORS.textMuted, marginBottom: 20 },
-  backBtn:   { backgroundColor: COLORS.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
-  backBtnText:{ fontSize: 15, fontWeight: '700', color: COLORS.bg },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.bg },
+  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  errorText: { fontSize: 16, color: colors.textMuted, marginBottom: 20 },
+  backBtn:   { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
+  backBtnText:{ fontSize: 15, fontWeight: '700', color: colors.bg },
 
-  topBar:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  topBar:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
   topBackBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  topBackText: { fontSize: 22, color: COLORS.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle:    { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  topBackText: { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+  topTitle:    { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
 
   content: { padding: 16, paddingBottom: 48 },
 
-  requestCard:  { backgroundColor: COLORS.surface, borderRadius: 18, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border },
+  requestCard:  { backgroundColor: colors.surface, borderRadius: 18, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: colors.border },
   cardTopRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   statusBadge:  { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   statusText:   { fontSize: 12, fontWeight: '700' },
-  categoryText: { fontSize: 13, color: COLORS.textMuted },
+  categoryText: { fontSize: 13, color: colors.textMuted },
 
-  requestTitle: { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 10, lineHeight: 28 },
+  requestTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, lineHeight: 28 },
 
   metaRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
-  metaText:  { fontSize: 12, color: COLORS.textMuted },
+  metaText:  { fontSize: 12, color: colors.textMuted },
 
-  divider:   { height: 1, backgroundColor: COLORS.border, marginBottom: 14 },
+  divider:   { height: 1, backgroundColor: colors.border, marginBottom: 14 },
 
-  descLabel: { fontSize: 12, color: COLORS.textMuted, marginBottom: 6 },
-  descText:  { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22 },
+  descLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 6 },
+  descText:  { fontSize: 14, color: colors.textSecondary, lineHeight: 22 },
 
-  aiPriceBox:   { marginTop: 16, backgroundColor: COLORS.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
-  aiPriceLabel: { fontSize: 12, color: COLORS.textMuted, marginBottom: 4 },
-  aiPriceValue: { fontSize: 22, fontWeight: '700', color: COLORS.accent },
+  aiPriceBox:   { marginTop: 16, backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
+  aiPriceLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
+  aiPriceValue: { fontSize: 22, fontWeight: '700', color: colors.accent },
 
   section:      { marginBottom: 20 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 12 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
 
-  noBids:     { alignItems: 'center', paddingVertical: 32, backgroundColor: COLORS.surface, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border },
+  noBids:     { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   noBidsIcon: { fontSize: 40, marginBottom: 10 },
-  noBidsText: { fontSize: 16, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 6 },
-  noBidsSub:  { fontSize: 13, color: COLORS.textMuted },
+  noBidsText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: 6 },
+  noBidsSub:  { fontSize: 13, color: colors.textMuted },
 
-  acceptedCard:      { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#15803D', flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  providerAvatarLg:  { width: 52, height: 52, borderRadius: 26, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
-  providerAvatarTextLg: { fontSize: 22, fontWeight: '700', color: COLORS.bg },
+  acceptedCard:      { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#15803D', flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
+  providerAvatarLg:  { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  providerAvatarTextLg: { fontSize: 22, fontWeight: '700', color: colors.bg },
   acceptedInfo:      { flex: 1, gap: 4 },
-  acceptedName:      { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  acceptedName:      { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
   tierPill:          { alignSelf: 'flex-end', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   tierPillText:      { fontSize: 11, fontWeight: '700' },
   verifiedText:      { fontSize: 12, color: '#7DD3FC' },
   acceptedAmount:    { alignItems: 'center' },
-  acceptedAmountValue:{ fontSize: 22, fontWeight: '700', color: COLORS.accent },
-  acceptedAmountCur: { fontSize: 12, color: COLORS.textMuted },
+  acceptedAmountValue:{ fontSize: 22, fontWeight: '700', color: colors.accent },
+  acceptedAmountCur: { fontSize: 12, color: colors.textMuted },
 
   shareProviderRow:        { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  shareProviderBtn:        { flex: 1, backgroundColor: COLORS.bg, borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  shareProviderBtnAccent:  { backgroundColor: COLORS.accentDim, borderColor: 'rgba(201,168,76,0.30)' },
-  shareProviderBtnText:    { fontSize: 12, color: COLORS.textSecondary, fontWeight: '600' },
-  shareProviderBtnTextAccent: { fontSize: 12, color: COLORS.accent, fontWeight: '700' },
+  shareProviderBtn:        { flex: 1, backgroundColor: colors.bg, borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  shareProviderBtnAccent:  { backgroundColor: colors.accentDim, borderColor: 'rgba(201,168,76,0.30)' },
+  shareProviderBtnText:    { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
+  shareProviderBtnTextAccent: { fontSize: 12, color: colors.accent, fontWeight: '700' },
 
   inProgressNote:     { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
   inProgressNoteText: { fontSize: 13, color: '#FCD34D', lineHeight: 20 },
 
-  closedBox:  { alignItems: 'center', paddingVertical: 32, backgroundColor: COLORS.surface, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, marginBottom: 20 },
+  closedBox:  { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 },
   closedIcon: { fontSize: 40, marginBottom: 10 },
-  closedText: { fontSize: 15, color: COLORS.textSecondary, textAlign: 'center' },
+  closedText: { fontSize: 15, color: colors.textSecondary, textAlign: 'center' },
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   modalSheet:   { backgroundColor: '#0E1E4A', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: 'rgba(201,168,76,0.25)', padding: 24, paddingBottom: 48 },
-  modalTitle:   { fontSize: 20, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 20 },
-  modalProvider:{ fontSize: 15, color: COLORS.textSecondary, marginBottom: 16 },
-  modalAmountRow:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: COLORS.bg, borderRadius: 12, padding: 16, marginBottom: 12 },
-  modalAmountLabel:{ fontSize: 13, color: COLORS.textMuted },
-  modalAmountValue:{ fontSize: 20, fontWeight: '700', color: COLORS.accent },
-  modalNoteBox: { backgroundColor: COLORS.bg, borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
-  modalNoteLabel:{ fontSize: 11, color: COLORS.textMuted, marginBottom: 4 },
-  modalNoteText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 20 },
+  modalProvider:{ fontSize: 15, color: colors.textSecondary, marginBottom: 16 },
+  modalAmountRow:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.bg, borderRadius: 12, padding: 16, marginBottom: 12 },
+  modalAmountLabel:{ fontSize: 13, color: colors.textMuted },
+  modalAmountValue:{ fontSize: 20, fontWeight: '700', color: colors.accent },
+  modalNoteBox: { backgroundColor: colors.bg, borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+  modalNoteLabel:{ fontSize: 11, color: colors.textMuted, marginBottom: 4 },
+  modalNoteText: { fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
   modalWarning: { fontSize: 12, color: '#F87171', lineHeight: 18, marginBottom: 20 },
   modalBtns:    { flexDirection: 'row', gap: 12 },
-  modalCancel:  { flex: 1, backgroundColor: COLORS.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: COLORS.border },
-  modalCancelText:{ fontSize: 15, color: COLORS.textSecondary },
-  modalConfirm: { flex: 2, backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  modalConfirmText:{ fontSize: 15, fontWeight: '700', color: COLORS.bg },
-  btnDisabled:  { backgroundColor: COLORS.border },
+  modalCancel:  { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  modalCancelText:{ fontSize: 15, color: colors.textSecondary },
+  modalConfirm: { flex: 2, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  modalConfirmText:{ fontSize: 15, fontWeight: '700', color: colors.bg },
+  btnDisabled:  { backgroundColor: colors.border },
 
   // ── Report modal ──
   reportOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   reportSheet:         { backgroundColor: '#0E1E4A', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: 'rgba(201,168,76,0.25)', padding: 24, paddingBottom: 40 },
-  reportTitle:         { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'auto', marginBottom: 4 },
-  reportSubtitle:      { fontSize: 13, color: COLORS.textMuted, textAlign: 'auto', marginBottom: 16 },
-  reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  reportTitle:         { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 4 },
+  reportSubtitle:      { fontSize: 13, color: colors.textMuted, textAlign: 'auto', marginBottom: 16 },
+  reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: colors.border },
   reportOptionSelected:{ backgroundColor: 'rgba(201,168,76,0.05)', borderRadius: 8 },
-  reportRadio:         { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: COLORS.border },
-  reportRadioSelected: { borderColor: COLORS.accent, backgroundColor: COLORS.accent },
-  reportOptionText:    { flex: 1, fontSize: 14, color: COLORS.textSecondary, textAlign: 'auto' },
-  reportOptionTextSelected: { color: COLORS.textPrimary, fontWeight: '600' },
+  reportRadio:         { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: colors.border },
+  reportRadioSelected: { borderColor: colors.accent, backgroundColor: colors.accent },
+  reportOptionText:    { flex: 1, fontSize: 14, color: colors.textSecondary, textAlign: 'auto' },
+  reportOptionTextSelected: { color: colors.textPrimary, fontWeight: '600' },
   reportBtns:          { flexDirection: 'row', gap: 12, marginTop: 24 },
-  reportCancelBtn:     { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
-  reportCancelText:    { fontSize: 14, color: COLORS.textMuted },
+  reportCancelBtn:     { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
+  reportCancelText:    { fontSize: 14, color: colors.textMuted },
   reportSubmitBtn:     { flex: 1, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  reportSubmitDisabled:{ backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  reportSubmitDisabled:{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   reportSubmitText:    { fontSize: 14, fontWeight: '700', color: '#FFF' },
 });
 
-const bidStyles = StyleSheet.create({
-  card:        { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
+function createBidStyles(colors: AppColors) {
+  return StyleSheet.create({
+  card:        { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
   providerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  avatar:      { width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' },
-  avatarText:  { fontSize: 18, fontWeight: '700', color: COLORS.bg },
+  avatar:      { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  avatarText:  { fontSize: 18, fontWeight: '700', color: colors.bg },
   providerInfo:{ flex: 1 },
   nameRow:     { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 4 },
-  providerName:{ fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  providerName:{ fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   verified:    { fontSize: 12, color: '#7DD3FC', fontWeight: '700' },
   metaRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'flex-end' },
   tierBadge:   { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
   tierText:    { fontSize: 10, fontWeight: '700' },
-  score:       { fontSize: 12, color: COLORS.textSecondary },
-  jobs:        { fontSize: 12, color: COLORS.textMuted },
+  score:       { fontSize: 12, color: colors.textSecondary },
+  jobs:        { fontSize: 12, color: colors.textMuted },
   amountBox:   { alignItems: 'center', minWidth: 60 },
-  amountValue: { fontSize: 20, fontWeight: '700', color: COLORS.accent },
-  amountCur:   { fontSize: 11, color: COLORS.textMuted },
-  note:        { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 12, paddingHorizontal: 4 },
+  amountValue: { fontSize: 20, fontWeight: '700', color: colors.accent },
+  amountCur:   { fontSize: 11, color: colors.textMuted },
+  note:        { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginBottom: 12, paddingHorizontal: 4 },
   actionRow:    { flexDirection: 'row', gap: 8 },
   reportBtn:    { flex: 0, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#7F1D1D', alignItems: 'center', justifyContent: 'center' },
   reportBtnText:{ fontSize: 12, color: '#FCA5A5' },
-  acceptBtn:    { flex: 1, backgroundColor: COLORS.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  acceptBtnText:{ fontSize: 14, fontWeight: '700', color: COLORS.bg },
-});
+  acceptBtn:    { flex: 1, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+  acceptBtnText:{ fontSize: 14, fontWeight: '700', color: colors.bg },
+  });
+}
+}
