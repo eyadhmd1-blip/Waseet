@@ -83,7 +83,10 @@
     "serviceCount": "{{count}} services",
     "allCategories": "Service Categories",
     "urgentExpired": "Urgent request expired",
-    "urgentRemaining": "⏱️ Remaining"
+    "urgentRemaining": "⏱️ Remaining",
+    "heroSub": "Select service & schedule now",
+    "urgentRequest": "Urgent Request",
+    "urgentSub": "Instant response"
   },
   "requests": {
     "title": "My Requests",

@@ -83,7 +83,10 @@
     "serviceCount": "{{count}} خدمة",
     "allCategories": "تصنيفات الخدمات",
     "urgentExpired": "انتهت مهلة الطارئ",
-    "urgentRemaining": "⏱️ متبقٍّ"
+    "urgentRemaining": "⏱️ متبقٍّ",
+    "heroSub": "حدد الخدمة والموعد الآن",
+    "urgentRequest": "طلب طارئ",
+    "urgentSub": "استجابة فورية"
   },
   "requests": {
     "title": "طلباتي",
