@@ -136,7 +136,16 @@ export default function ProviderProfile() {
     return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
 
-  if (!provider) return null;
+  if (!provider) return (
+    <View style={styles.center}>
+      <Text style={{ color: colors.textSecondary, marginBottom: 16, fontSize: 15 }}>
+        {t('common.error')}
+      </Text>
+      <TouchableOpacity onPress={load} style={{ backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12 }}>
+        <Text style={{ color: '#fff', fontWeight: '700' }}>{t('common.retry') ?? 'إعادة المحاولة'}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   const tierMeta = TIER_META[provider.reputation_tier];
   const plan     = SUBSCRIPTION_PLANS.find(p => p.tier === provider.subscription_tier);
