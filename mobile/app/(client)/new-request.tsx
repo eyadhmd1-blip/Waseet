@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../src/lib/supabase';
 import { CATEGORY_GROUPS, JORDAN_CITIES } from '../../src/constants/categories';
@@ -45,6 +45,25 @@ export default function NewRequestScreen() {
   const [aiPrice, setAiPrice]         = useState<{ min: number; max: number } | null>(null);
   const [aiLoading, setAiLoading]     = useState(false);
   const [submitting, setSubmitting]   = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      setStep(preselectedCategory ? 2 : 1);
+      setSelectedCat(
+        preselectedCategory
+          ? CATEGORY_GROUPS.flatMap(g => g.categories).find(c => c.slug === preselectedCategory) ?? null
+          : null
+      );
+      setActiveGroup('maintenance');
+      setTitle('');
+      setDescription('');
+      setCity('');
+      setImages([]);
+      setAiPrice(null);
+      setAiLoading(false);
+      setSubmitting(false);
+    }, [preselectedCategory])
+  );
 
   const STEP_TITLES: Record<Step, string> = {
     1: t('newRequest.step1'),
