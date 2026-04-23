@@ -32,7 +32,7 @@
     "tagline": "Your trusted local services platform",
     "client": "Client",
     "provider": "Provider",
-    "getStarted": "Get Started",
+    "getStarted": "Start",
     "login": "Log In"
   },
   "auth": {
