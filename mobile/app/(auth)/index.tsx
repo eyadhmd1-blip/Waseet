@@ -224,9 +224,6 @@ export default function WelcomeScreen() {
         <TouchableOpacity style={styles.btnPrimary} onPress={() => router.push('/(auth)/login')} activeOpacity={0.82}>
           <Text style={styles.btnPrimaryText}>{t('welcome.getStarted')}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.btnSecondary} onPress={() => router.push('/(auth)/login')} activeOpacity={0.82}>
-          <Text style={styles.btnSecondaryText}>{t('welcome.login')}</Text>
-        </TouchableOpacity>
       </Animated.View>
     </View>
   );
