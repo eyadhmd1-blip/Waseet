@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import { I18nextProvider } from 'react-i18next';
 import { supabase } from '../src/lib/supabase';
+import { setRoleUpdateHandler } from '../src/lib/authEvents';
 import { ROUTES } from '../src/constants/theme';
 import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
@@ -74,6 +75,12 @@ function RootLayoutInner() {
   const router   = useRouter();
   const segments = useSegments();
   const notifListenerRef = useRef<Notifications.Subscription | null>(null);
+
+  // ── Register direct role-update bridge for onboarding screen ──
+  useEffect(() => {
+    setRoleUpdateHandler((r) => setRole(r as any));
+    return () => setRoleUpdateHandler(() => {});
+  }, []);
 
   // ── Initialise i18n on mount ────────────────────────────────
   useEffect(() => {
@@ -171,25 +178,26 @@ function RootLayoutInner() {
       if (!inAuth) router.replace('/(auth)');
     } else if ((role as string) === 'onboarding') {
       if (!inAuth) {
-        // Don't blindly redirect — provider may have just finished the onboarding form.
-        // Re-query the DB; if a users row now exists, update role and let them through.
-        supabase.auth.getUser().then(({ data: { user: u } }) => {
-          if (!u) { router.replace('/(auth)/onboarding' as any); return; }
+        // Use getSession() (local SecureStore cache — no network call) instead of
+        // getUser() (GoTrue network call that can hang on slow connections and block
+        // the supabase-js HTTP pool, causing all screen load() calls to stall).
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!session) {
+            if (!inClient && !inProvider) router.replace('/(auth)/onboarding' as any);
+            return;
+          }
           supabase
             .from('users')
             .select('role, phone_verified')
-            .eq('id', u.id)
+            .eq('id', session.user.id)
             .single()
             .then(({ data }) => {
               if (!data) {
-                // Only redirect if the user is NOT already at a valid role destination.
-                // If they just finished onboarding and navigated to /(provider) or
-                // /(client), a stale re-query race must not bounce them back out.
                 if (!inClient && !inProvider) router.replace('/(auth)/onboarding' as any);
               } else if (!data.phone_verified) {
                 router.replace('/verify-phone' as any);
               } else {
-                setRole(data.role); // triggers guard again with real role
+                setRole(data.role);
               }
             });
         });

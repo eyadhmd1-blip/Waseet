@@ -810,6 +810,12 @@ export default function ProviderFeed() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Safety net: if load() hangs for any reason, clear the spinner after 12 s
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 12000);
+    return () => clearTimeout(t);
+  }, []);
+
   // ── Realtime: detect incoming job commitment request ─────────
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
