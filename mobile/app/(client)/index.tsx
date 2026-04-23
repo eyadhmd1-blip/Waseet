@@ -202,6 +202,12 @@ export default function ClientHome() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Safety net: if load() hangs for any reason, clear the spinner after 12 s
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 12000);
+    return () => clearTimeout(t);
+  }, []);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();

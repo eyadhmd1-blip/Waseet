@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
+import { notifyRoleUpdate } from '../../src/lib/authEvents';
 import { JORDAN_CITIES, CATEGORY_GROUPS, SUBSCRIPTION_PLANS } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -510,9 +511,12 @@ export default function OnboardingScreen() {
       // Sync planChoice state so handleExplore routes correctly
       if (planOverride !== undefined) setPlanChoice(planOverride);
 
-      // Fire-and-forget: refresh session so _layout.tsx picks up the new users
-      // row via onAuthStateChange. Not awaited — the guard fallback in _layout.tsx
-      // handles the race if this completes after the user taps "Explore App".
+      // Directly signal _layout.tsx with the real role so the route guard
+      // resolves instantly without waiting for onAuthStateChange / refreshSession.
+      notifyRoleUpdate(role);
+
+      // Also refresh session in the background so onAuthStateChange eventually
+      // catches up (push token registration, etc.).
       supabase.auth.refreshSession().catch(() => {});
 
       setDone(true);
