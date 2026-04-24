@@ -6,7 +6,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert,
+  TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
@@ -91,7 +91,10 @@ export default function SupportNewScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       {/* Top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
@@ -187,7 +190,7 @@ export default function SupportNewScreen() {
         </Text>
 
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 

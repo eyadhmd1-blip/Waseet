@@ -170,7 +170,7 @@ export default function NewRequestScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Top bar */}
       <View style={styles.topBar}>

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, TextInput, Alert,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -167,10 +168,15 @@ export default function ClientProfile() {
   ) + '\u202C';
 
   return (
-    <ScrollView
+    <KeyboardAvoidingView
       style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+    <ScrollView
+      style={{ flex: 1 }}
       contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
       {/* ── Hero ── */}
@@ -326,6 +332,7 @@ export default function ClientProfile() {
         <Text style={styles.signOutText}>{t('profile.logout')}</Text>
       </TouchableOpacity>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

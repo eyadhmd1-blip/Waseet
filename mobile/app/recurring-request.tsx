@@ -211,7 +211,7 @@ export default function RecurringRequestScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.root}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* Header */}
       <View style={styles.header}>

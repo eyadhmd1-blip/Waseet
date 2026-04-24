@@ -6,8 +6,8 @@
 
 import { useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
@@ -82,7 +82,10 @@ export default function RateJobScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       {/* Top bar */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.replace('/(client)/requests')} style={styles.backBtn}>
@@ -94,7 +97,12 @@ export default function RateJobScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Provider chip */}
         <View style={styles.provChip}>
           <View style={styles.provAvatar}>
@@ -173,8 +181,8 @@ export default function RateJobScreen() {
             : <Text style={styles.submitBtnText}>{t('rateJob.submit')} ✓</Text>
           }
         </TouchableOpacity>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -188,7 +196,7 @@ function createStyles(colors: AppColors) {
     topTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
     skipText:  { fontSize: 14, color: colors.textMuted },
 
-    content: { flex: 1, padding: 24 },
+    content: { flexGrow: 1, padding: 24 },
 
     provChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 28, gap: 12, borderWidth: 1, borderColor: colors.border },
     provAvatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
