@@ -291,7 +291,7 @@ export default function UrgentRequestScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {/* ── Top bar ── */}
       <View style={styles.topBar}>

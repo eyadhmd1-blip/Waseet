@@ -9,6 +9,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Modal, TextInput,
   Alert, ScrollView, Animated, Easing, Pressable, I18nManager,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -1233,7 +1234,7 @@ export default function ProviderFeed() {
 
       {/* ── Bid Modal ─────────────────────────────────────────── */}
       <Modal visible={!!bidModal.target} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={[styles.modalSheet, { paddingBottom: contentPad }]}>
             <Text style={[styles.modalTitle, { textAlign: ta }]}>{t('providerFeed.submitBid')}</Text>
             <Text style={[styles.modalSubtitle, { textAlign: ta }]}>{bidModal.target?.title}</Text>
@@ -1296,12 +1297,12 @@ export default function ProviderFeed() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Contract Bid Modal ───────────────────────────────── */}
       <Modal visible={!!contractModal.target} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={[styles.modalSheet, { paddingBottom: contentPad }]}>
             <View style={cBidStyles.header}>
               <Text style={cBidStyles.badge}>{t('providerFeed.contractBadge')}</Text>
@@ -1359,7 +1360,7 @@ export default function ProviderFeed() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Upsell Modal (animated) ───────────────────────────── */}
@@ -1444,7 +1445,7 @@ export default function ProviderFeed() {
 
       {/* ── Demo Bid Modal ────────────────────────────────────── */}
       <Modal visible={demoModal.open} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={[styles.modalSheet, { paddingBottom: contentPad }]}>
             {/* Header */}
             <View style={demoBidStyles.header}>
@@ -1510,7 +1511,7 @@ export default function ProviderFeed() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* ── Demo Success Modal ────────────────────────────────── */}

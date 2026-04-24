@@ -6,7 +6,7 @@
 import { useState, useRef, useEffect, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
-  ScrollView, Alert, Animated, Dimensions,
+  ScrollView, Alert, Animated, Dimensions, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -115,7 +115,7 @@ function Step2Info({
   const { t, ta } = useLanguage();
 
   return (
-    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <View style={styles.stepContent}>
         <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step2Title')}</Text>
         <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step2Sub')}</Text>
@@ -215,7 +215,7 @@ function Step3Services({
   };
 
   return (
-    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <View style={styles.stepContent}>
         <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step3Title')}</Text>
         <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step3Sub')}</Text>
@@ -281,7 +281,7 @@ function Step4Plan({
   };
 
   return (
-    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false}>
+    <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <View style={styles.stepContent}>
         <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step4Title')}</Text>
         <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step4Sub')}</Text>
@@ -548,7 +548,10 @@ export default function OnboardingScreen() {
   const canGoBack  = stepIndex > 0;
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       {/* Header */}
       <View style={styles.header}>
         {canGoBack ? (
@@ -613,7 +616,7 @@ export default function OnboardingScreen() {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
