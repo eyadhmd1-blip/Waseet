@@ -280,6 +280,7 @@
     "errCooldown": "You cannot bid for this client right now (24-hour cooldown)",
     "errMaxActiveBids": "You have reached the maximum (5 active bids at a time)",
     "upgradeBtn": "Upgrade Subscription",
+    "renewNow": "Renew Now",
     "errBelowMin": "Minimum bid for this category is {{min}} JOD",
     "errAboveMax": "Maximum bid for this category is {{max}} JOD",
     "demoBadge": "Free Trial",
