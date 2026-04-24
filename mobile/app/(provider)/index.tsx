@@ -28,9 +28,27 @@ const CONTRACT_COLOR = '#10B981';
 const CONTRACT_DIM   = '#10B98122';
 
 const ICON_MAP: Record<string, string> = {
+  // صيانة المنازل
   zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙', 'pen-tool': '✏️',
-  car: '🚗', battery: '🔋', gauge: '⛽', snowflake: '🧊', shield: '🛡️', droplet: '💧',
+  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙',
+  'pen-tool': '✏️', car: '🚗', battery: '🔋', gauge: '⛽', snowflake: '🧊',
+  shield: '🛡️', droplet: '💧',
+  // صيانة المنازل — جديد
+  tile: '🔲', plaster: '🪣', iron: '⚒️', aluminium: '🪟', sofa: '🛋️',
+  gypsum: '🏗️', bricks: '🧱', 'glass-pane': '🔳',
+  // الخدمات الفنية
+  wifi: '📶', cctv: '📹', 'solar-panel': '☀️', 'fire-alarm': '🔔',
+  desktop: '🖥️', laptop: '💻',
+  // الصحة والعناية
+  massage: '💆', nurse: '🏥', haircut: '✂️',
+  // المناسبات والفعاليات
+  photo: '📸', cake: '🎂', party: '🎉',
+  // تصميم وأعمال حرة
+  'code-bracket': '⌨️', 'chart-up': '📈', document: '📝', calculator: '🧮',
+  // الحِرَف اليدوية
+  thread: '🧵', stitch: '🪡', shoe: '👟',
+  // الحيوانات الأليفة
+  paw: '🐾', 'dog-lead': '🦮', stethoscope: '🩺',
 };
 
 type RequestWithMeta = ServiceRequest & {
