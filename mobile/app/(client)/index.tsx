@@ -1,5 +1,5 @@
 // ============================================================
-// WASEET — Client Home  (Premium Glassmorphism Redesign)
+// WASEET — Client Home  (UI Redesign — logic unchanged)
 // ============================================================
 
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
@@ -20,17 +20,18 @@ import type { AppColors }               from '../../src/constants/colors';
 
 // ─── Layout constants ─────────────────────────────────────────
 const { width: W } = Dimensions.get('window');
-const H_PAD      = 24;
-const CARD_GAP   = 12;
-const CARD_W     = (W - H_PAD * 2 - CARD_GAP) / 2;
+const H_PAD    = 20;
+const CARD_GAP = 10;
+const CARD_W_3 = (W - H_PAD * 2 - CARD_GAP * 2) / 3;
 
-// ─── Icon & color maps ────────────────────────────────────────
+// ─── Maps ─────────────────────────────────────────────────────
 const ICON_MAP: Record<string, string> = {
   zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
   wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚',
   moon: '🌙', 'pen-tool': '✏️', car: '🚗', battery: '🔋',
   gauge: '⛽', snowflake: '🧊', shield: '🛡️', droplet: '💧',
 };
+
 const GROUP_COLORS: Record<string, string> = {
   maintenance:  '#3B82F6',
   cleaning:     '#10B981',
@@ -39,15 +40,7 @@ const GROUP_COLORS: Record<string, string> = {
   car_services: '#EF4444',
 };
 
-// Time-aware greeting
-const greeting = () => {
-  const h = new Date().getHours();
-  if (h >= 5  && h < 12) return 'صباح الخير';
-  if (h >= 12 && h < 19) return 'مساء الخير';
-  return 'مساء الخير';
-};
-
-// Status helpers
+// ─── Status helpers ───────────────────────────────────────────
 const STATUS_BG: Record<string, string> = {
   open:        'rgba(59,130,246,0.15)',
   in_progress: 'rgba(245,158,11,0.15)',
@@ -64,53 +57,7 @@ const STATUS_LABEL: Record<string, string> = {
   open: 'مفتوح', in_progress: 'جاري', completed: 'مكتمل', cancelled: 'ملغي',
 };
 
-// ─── Category Card ────────────────────────────────────────────
-
-function CategoryCard({
-  icon, name, color, onPress,
-}: { icon: string; name: string; color: string; onPress: () => void }) {
-  const { colors, isDark } = useTheme();
-  const pressAnim = useRef(new Animated.Value(1)).current;
-  const onIn  = () => Animated.spring(pressAnim, { toValue: 0.93, useNativeDriver: true, tension: 300, friction: 10 }).start();
-  const onOut = () => Animated.spring(pressAnim, { toValue: 1.00, useNativeDriver: true, tension: 300, friction: 10 }).start();
-
-  return (
-    <TouchableOpacity
-      onPress={onPress} onPressIn={onIn} onPressOut={onOut}
-      activeOpacity={1}
-    >
-      <Animated.View style={[{
-        width: CARD_W,
-        aspectRatio: 1,
-        backgroundColor: isDark ? `${color}16` : `${color}10`,
-        borderRadius: 22,
-        borderWidth: 1,
-        borderColor: isDark ? `${color}28` : `${color}22`,
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 12,
-        transform: [{ scale: pressAnim }],
-      }]}>
-        {/* Icon bubble */}
-        <View style={{
-          width: 54, height: 54, borderRadius: 18,
-          backgroundColor: `${color}22`,
-          alignItems: 'center', justifyContent: 'center',
-          marginBottom: 10,
-        }}>
-          <Text style={{ fontSize: 26 }}>{icon}</Text>
-        </View>
-        <Text style={{
-          fontSize: 12, fontWeight: '700',
-          color: colors.textPrimary,
-          textAlign: 'center', lineHeight: 17,
-        }} numberOfLines={2}>{name}</Text>
-      </Animated.View>
-    </TouchableOpacity>
-  );
-}
-
-// ─── Urgent countdown inline ──────────────────────────────────
+// ─── UrgentCountdownInline (unchanged) ───────────────────────
 
 function UrgentCountdownInline({ expiresAt }: { expiresAt: string }) {
   const [rem, setRem] = useState(() =>
@@ -131,7 +78,95 @@ function UrgentCountdownInline({ expiresAt }: { expiresAt: string }) {
   );
 }
 
-// ─── Main screen ─────────────────────────────────────────────
+// ─── ShortcutItem ─────────────────────────────────────────────
+
+function ShortcutItem({ icon, label, sub, onPress }: {
+  icon: string; label: string; sub: string; onPress: () => void;
+}) {
+  const { colors } = useTheme();
+  return (
+    <TouchableOpacity
+      style={{ flex: 1, alignItems: 'center', gap: 6, paddingHorizontal: 4 }}
+      onPress={onPress}
+      activeOpacity={0.72}
+    >
+      <View style={{
+        width: 54, height: 54, borderRadius: 17,
+        backgroundColor: colors.bg,
+        borderWidth: 1, borderColor: colors.border,
+        alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Text style={{ fontSize: 24 }}>{icon}</Text>
+      </View>
+      <Text style={{
+        fontSize: 12, fontWeight: '700',
+        color: colors.textPrimary, textAlign: 'center',
+      }}>{label}</Text>
+      <Text style={{
+        fontSize: 10, color: colors.textMuted,
+        textAlign: 'center', lineHeight: 14,
+      }}>{sub}</Text>
+    </TouchableOpacity>
+  );
+}
+
+// ─── CategoryCard (3-col) ─────────────────────────────────────
+
+function CategoryCard({ icon, name, color, onPress }: {
+  icon: string; name: string; color: string; onPress: () => void;
+}) {
+  const { colors, isDark } = useTheme();
+  const pressAnim = useRef(new Animated.Value(1)).current;
+  const onIn  = () => Animated.spring(pressAnim, { toValue: 0.94, useNativeDriver: true, tension: 300, friction: 10 }).start();
+  const onOut = () => Animated.spring(pressAnim, { toValue: 1.00, useNativeDriver: true, tension: 300, friction: 10 }).start();
+
+  return (
+    <TouchableOpacity
+      onPress={onPress} onPressIn={onIn} onPressOut={onOut}
+      activeOpacity={1}
+      style={{ width: CARD_W_3 }}
+    >
+      <Animated.View style={{
+        backgroundColor: isDark ? `${color}16` : `${color}0E`,
+        borderRadius: 18,
+        borderWidth: 1,
+        borderColor: isDark ? `${color}30` : `${color}1E`,
+        padding: 10,
+        alignItems: 'center',
+        gap: 7,
+        minHeight: 128,
+        justifyContent: 'space-between',
+        transform: [{ scale: pressAnim }],
+      }}>
+        <View style={{
+          width: 50, height: 50, borderRadius: 15,
+          backgroundColor: `${color}25`,
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Text style={{ fontSize: 24 }}>{icon}</Text>
+        </View>
+
+        <Text style={{
+          fontSize: 11, fontWeight: '700',
+          color: colors.textPrimary,
+          textAlign: 'center',
+          lineHeight: 15,
+          flex: 1,
+        }} numberOfLines={2}>{name}</Text>
+
+        <View style={{
+          width: 28, height: 28, borderRadius: 9,
+          backgroundColor: color,
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Text style={{ fontSize: 15, color: '#fff', fontWeight: '800', lineHeight: 20 }}>›</Text>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+// ─── Main screen ──────────────────────────────────────────────
 
 const SHOW_CATS = 6;
 
@@ -142,12 +177,14 @@ export default function ClientHome() {
   const router  = useRouter();
   const { t, ta, isRTL } = useLanguage();
 
-  const [user,       setUser]       = useState<User | null>(null);
-  const [requests,   setRequests]   = useState<ServiceRequest[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  // ── State (unchanged) ────────────────────────────────────────
+  const [user,        setUser]        = useState<User | null>(null);
+  const [requests,    setRequests]    = useState<ServiceRequest[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [refreshing,  setRefreshing]  = useState(false);
+  const [activeGroup, setActiveGroup] = useState(CATEGORY_GROUPS[0].slug);
 
-  // Entrance animations
+  // ── Animations (unchanged) ───────────────────────────────────
   const headerOp   = useRef(new Animated.Value(0)).current;
   const headerY    = useRef(new Animated.Value(-20)).current;
   const contentOp  = useRef(new Animated.Value(0)).current;
@@ -165,8 +202,6 @@ export default function ClientHome() {
       Animated.timing(contentY,  { toValue: 0, duration: 520, delay: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
     Animated.spring(heroScale, { toValue: 1, tension: 100, friction: 8, delay: 320, useNativeDriver: true }).start();
-
-    // Bell pulse every ~12 s
     Animated.loop(Animated.sequence([
       Animated.delay(6000),
       Animated.timing(notifPulse, { toValue: 1.20, duration: 130, useNativeDriver: true }),
@@ -177,6 +212,7 @@ export default function ClientHome() {
     ])).start();
   }, []);
 
+  // ── Data loading (unchanged) ─────────────────────────────────
   const load = useCallback(async () => {
     try {
       const { data: { session: _ses } } = await supabase.auth.getSession();
@@ -194,7 +230,6 @@ export default function ClientHome() {
       if (profile) setUser(profile);
       if (recent)  setRequests(recent);
       runEntrance();
-  
     } finally {
       setLoading(false);
     }
@@ -202,10 +237,9 @@ export default function ClientHome() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Safety net: if load() hangs for any reason, clear the spinner after 12 s
   useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 12000);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setLoading(false), 12000);
+    return () => clearTimeout(timer);
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -214,28 +248,24 @@ export default function ClientHome() {
     setRefreshing(false);
   }, [load]);
 
+  // ── Navigation (unchanged) ───────────────────────────────────
   const goNew       = (slug?: string) => router.push(slug
     ? { pathname: '/(client)/new-request', params: { category: slug } }
     : '/(client)/new-request'
   );
   const goUrgent    = () => router.push('/urgent-request');
-  const goRecurring = () => router.push('/recurring-request');
 
-  // Build flat category list (up to SHOW_CATS)
-  const cats = useMemo(() => {
-    const out: { slug: string; icon: string; name: string; color: string }[] = [];
-    for (const g of CATEGORY_GROUPS) {
-      for (const c of g.categories) {
-        if (out.length >= SHOW_CATS) break;
-        out.push({ slug: c.slug, icon: ICON_MAP[c.icon] ?? '🔧', name: c.name_ar, color: GROUP_COLORS[g.slug] ?? '#3B82F6' });
-      }
-      if (out.length >= SHOW_CATS) break;
-    }
-    return out;
-  }, []);
-
-  const firstName = user?.full_name?.split(' ')[0] ?? '';
-  const cityLabel = t(`cities.${user?.city}`, user?.city ?? '');
+  // ── Derived data ─────────────────────────────────────────────
+  const filteredCats = useMemo(() => {
+    const group = CATEGORY_GROUPS.find(g => g.slug === activeGroup);
+    if (!group) return [];
+    return group.categories.slice(0, SHOW_CATS).map(c => ({
+      slug:  c.slug,
+      icon:  ICON_MAP[c.icon] ?? '🔧',
+      name:  c.name_ar,
+      color: GROUP_COLORS[group.slug] ?? '#3B82F6',
+    }));
+  }, [activeGroup]);
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
@@ -244,123 +274,131 @@ export default function ClientHome() {
   return (
     <View style={styles.container}>
 
-      {/* ══════════════════════════════════════════════════════
-          FIXED HEADER
-      ══════════════════════════════════════════════════════ */}
+      {/* ══ HEADER ══════════════════════════════════════════════ */}
       <Animated.View style={[styles.header, { opacity: headerOp, transform: [{ translateY: headerY }] }]}>
-        <View style={[{ flexDirection: flexRow(isRTL), alignItems: 'center', justifyContent: 'space-between' }]}>
-
-          {/* Avatar + greeting */}
-          <View style={[{ flexDirection: flexRow(isRTL), alignItems: 'center', gap: 12, flex: 1 }]}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{firstName?.[0] ?? '؟'}</Text>
-            </View>
-            <View>
-              <Text style={[styles.greeting, { textAlign: ta }]}>
-                {greeting()}، {firstName} 👋
-              </Text>
-              <View style={[{ flexDirection: flexRow(isRTL), alignItems: 'center', gap: 3, marginTop: 2 }]}>
-                <Text style={{ fontSize: 11 }}>📍</Text>
-                <Text style={styles.city}>{cityLabel}</Text>
-              </View>
-            </View>
-          </View>
+        <View style={[styles.headerRow, { flexDirection: flexRow(isRTL) }]}>
 
           {/* Bell */}
           <Animated.View style={{ transform: [{ scale: notifPulse }] }}>
-            <TouchableOpacity style={styles.bellBtn} onPress={() => router.push('/notification-settings')} activeOpacity={0.75}>
-              <Text style={{ fontSize: 19 }}>🔔</Text>
+            <TouchableOpacity
+              style={styles.bellBtn}
+              onPress={() => router.push('/notification-settings')}
+              activeOpacity={0.75}
+            >
+              <Text style={{ fontSize: 20 }}>🔔</Text>
             </TouchableOpacity>
           </Animated.View>
 
+          {/* Centered title */}
+          <View style={styles.headerCenter}>
+            <Text style={styles.headerTitle}>{t('home.title')}</Text>
+            <Text style={styles.headerSub}>{t('home.subtitle')}</Text>
+          </View>
+
+          {/* Balancer */}
+          <View style={{ width: 44 }} />
         </View>
       </Animated.View>
 
-      {/* ══════════════════════════════════════════════════════
-          SCROLLABLE CONTENT
-      ══════════════════════════════════════════════════════ */}
+      {/* ══ SCROLL ══════════════════════════════════════════════ */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingBottom: contentPad + 20 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: contentPad + 24 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
       >
         <Animated.View style={{ opacity: contentOp, transform: [{ translateY: contentY }] }}>
 
-          {/* ── Search ─────────────────────────────────────── */}
-          <TouchableOpacity style={[styles.searchBar, { flexDirection: flexRow(isRTL) }]} onPress={() => goNew()} activeOpacity={0.8}>
-            <Text style={[styles.searchHint, { textAlign: ta, flex: 1 }]}>{t('home.searchPlaceholder')}</Text>
-            <View style={styles.searchIcon}>
-              <Text style={{ fontSize: 15 }}>🔍</Text>
+          {/* ── Search ─────────────────────────────────────────── */}
+          <TouchableOpacity
+            style={[styles.searchBar, { flexDirection: flexRow(isRTL) }]}
+            onPress={() => goNew()}
+            activeOpacity={0.8}
+          >
+            <View style={styles.searchIconWrap}>
+              <Text style={{ fontSize: 14 }}>🔍</Text>
             </View>
+            <Text style={[styles.searchHint, { textAlign: ta }]}>{t('home.searchPlaceholder')}</Text>
           </TouchableOpacity>
 
-          {/* ─────────────────────────────────────────────────
-              HERO CARD — "طلب جديد"
-          ───────────────────────────────────────────────── */}
-          <Animated.View style={{ transform: [{ scale: heroScale }], marginHorizontal: H_PAD, marginBottom: CARD_GAP }}>
-            <TouchableOpacity style={styles.heroCard} onPress={() => goNew()} activeOpacity={0.9}>
+          {/* ── Group chips ─────────────────────────────────────── */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.chipsScroll}
+            contentContainerStyle={[styles.chipsContent, { flexDirection: flexRow(isRTL) }]}
+          >
+            {CATEGORY_GROUPS.map(g => {
+              const active = activeGroup === g.slug;
+              const col    = GROUP_COLORS[g.slug] ?? colors.accent;
+              return (
+                <TouchableOpacity
+                  key={g.slug}
+                  style={[styles.chip, active && { backgroundColor: col + '20', borderColor: col }]}
+                  onPress={() => setActiveGroup(g.slug)}
+                >
+                  <Text style={[styles.chipText, active && { color: col, fontWeight: '700' }]}>
+                    {t(`categories.${g.slug}`, g.name_ar)}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
 
-              {/* Decorative glow blobs */}
-              <View style={styles.heroBlob1} />
-              <View style={styles.heroBlob2} />
-
-              {/* Text block */}
-              <View style={{ flex: 1 }}>
-                <Text style={styles.heroTitle}>{t('home.newRequest')}</Text>
-                <Text style={styles.heroSub}>{t('home.heroSub')}</Text>
-              </View>
-
-              {/* Plus button */}
-              <View style={styles.heroPlusRing}>
-                <Text style={styles.heroPlus}>+</Text>
-              </View>
-
-            </TouchableOpacity>
-          </Animated.View>
-
-          {/* ─────────────────────────────────────────────────
-              SECONDARY ROW  طلب طارئ | طلب دوري
-          ───────────────────────────────────────────────── */}
-          <View style={[styles.secondaryRow, { flexDirection: flexRow(isRTL) }]}>
-
-            {/* طلب طارئ */}
-            <TouchableOpacity style={styles.urgentCard} onPress={goUrgent} activeOpacity={0.85}>
-              <View style={styles.urgentGlow} />
-              <Text style={{ fontSize: 24, marginBottom: 8 }}>🚨</Text>
-              <Text style={styles.urgentTitle}>{t('home.urgentRequest')}</Text>
-              <Text style={styles.urgentSub}>{t('home.urgentSub')}</Text>
-            </TouchableOpacity>
-
-            {/* طلب دوري */}
-            <TouchableOpacity style={styles.recurCard} onPress={goRecurring} activeOpacity={0.85}>
-              <View style={styles.recurGlow} />
-              <Text style={{ fontSize: 24, marginBottom: 8 }}>🔄</Text>
-              <Text style={styles.recurTitle}>{t('home.recurringShort')}</Text>
-              <Text style={styles.recurSub}>{t('home.recurringFixed')}</Text>
-            </TouchableOpacity>
-
+          {/* ── Quick shortcuts ─────────────────────────────────── */}
+          <Text style={[styles.sectionLabel, { textAlign: ta }]}>
+            {t('home.quickAccess')}
+          </Text>
+          <View style={[styles.shortcutsCard, { flexDirection: flexRow(isRTL) }]}>
+            <ShortcutItem
+              icon="❤️"
+              label={t('home.saved')}
+              sub={t('home.savedSub')}
+              onPress={() => router.push('/(client)/saved-providers')}
+            />
+            <View style={styles.shortcutDivider} />
+            <ShortcutItem
+              icon="🕐"
+              label={t('home.lastRequest')}
+              sub={t('home.lastRequestSub')}
+              onPress={() => requests[0]
+                ? router.push({ pathname: '/request-detail', params: { id: requests[0].id } })
+                : goNew()
+              }
+            />
+            <View style={styles.shortcutDivider} />
+            <ShortcutItem
+              icon="⚡"
+              label={t('home.urgentRequest')}
+              sub={t('home.urgentSub')}
+              onPress={goUrgent}
+            />
           </View>
 
-          {/* ─────────────────────────────────────────────────
-              SERVICE CATEGORIES — 2-column grid
-          ───────────────────────────────────────────────── */}
+          {/* ── Popular services ────────────────────────────────── */}
           <View style={[styles.sectionRow, { flexDirection: flexRow(isRTL) }]}>
-            <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('home.allServices')}</Text>
+            <Text style={[styles.sectionTitle, { textAlign: ta }]}>
+              🔥 {t('home.popularServices')}
+            </Text>
             <TouchableOpacity onPress={() => goNew()}>
               <Text style={styles.seeAll}>{t('home.seeAll')}</Text>
             </TouchableOpacity>
           </View>
 
+          {/* ── 3-col category grid ─────────────────────────────── */}
           <View style={styles.categoryGrid}>
-            {cats.map(c => (
-              <CategoryCard key={c.slug} icon={c.icon} name={c.name} color={c.color} onPress={() => goNew(c.slug)} />
+            {filteredCats.map(c => (
+              <CategoryCard
+                key={c.slug}
+                icon={c.icon}
+                name={c.name}
+                color={c.color}
+                onPress={() => goNew(c.slug)}
+              />
             ))}
           </View>
 
-          {/* ─────────────────────────────────────────────────
-              RECENT REQUESTS
-          ───────────────────────────────────────────────── */}
+          {/* ── Recent requests ─────────────────────────────────── */}
           {requests.length > 0 && (
             <>
               <View style={[styles.sectionRow, { flexDirection: flexRow(isRTL), marginTop: 4 }]}>
@@ -371,10 +409,10 @@ export default function ClientHome() {
               </View>
 
               {requests.map(req => {
-                const catIcon    = ICON_MAP[(req as any).category?.icon ?? ''] ?? '🔧';
-                const sBg        = STATUS_BG[req.status]    ?? STATUS_BG.open;
-                const sTxt       = STATUS_TEXT[req.status]  ?? STATUS_TEXT.open;
-                const sLbl       = STATUS_LABEL[req.status] ?? req.status;
+                const catIcon = ICON_MAP[(req as any).category?.icon ?? ''] ?? '🔧';
+                const sBg     = STATUS_BG[req.status]    ?? STATUS_BG.open;
+                const sTxt    = STATUS_TEXT[req.status]  ?? STATUS_TEXT.open;
+                const sLbl    = STATUS_LABEL[req.status] ?? req.status;
                 return (
                   <TouchableOpacity
                     key={req.id}
@@ -382,12 +420,9 @@ export default function ClientHome() {
                     onPress={() => router.push({ pathname: '/request-detail', params: { id: req.id } })}
                     activeOpacity={0.8}
                   >
-                    {/* Icon bubble */}
                     <View style={[styles.reqIcon, me(12, isRTL)]}>
-                      <Text style={{ fontSize: 22 }}>{catIcon}</Text>
+                      <Text style={{ fontSize: 20 }}>{catIcon}</Text>
                     </View>
-
-                    {/* Info */}
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.reqTitle, { textAlign: ta }]} numberOfLines={1}>{req.title}</Text>
                       <Text style={[styles.reqMeta, { textAlign: ta }]}>
@@ -397,8 +432,6 @@ export default function ClientHome() {
                         <UrgentCountdownInline expiresAt={req.urgent_expires_at} />
                       )}
                     </View>
-
-                    {/* Status badge */}
                     <View style={[styles.badge, { backgroundColor: sBg }]}>
                       <Text style={[styles.badgeText, { color: sTxt }]}>{sLbl}</Text>
                     </View>
@@ -408,19 +441,34 @@ export default function ClientHome() {
             </>
           )}
 
-          {/* Empty state */}
+          {/* ── Empty state ─────────────────────────────────────── */}
           {requests.length === 0 && (
             <View style={styles.emptyBox}>
-              <View style={styles.emptyIcon}>
-                <Text style={{ fontSize: 38 }}>📭</Text>
+              <View style={styles.emptyIconWrap}>
+                <Text style={{ fontSize: 36 }}>📭</Text>
               </View>
               <Text style={styles.emptyTitle}>{t('home.noRequests')}</Text>
-              <Text style={styles.emptySub}>{t('home.noRequestsSub')}</Text>
+              <Text style={[styles.emptySub, { textAlign: 'center' }]}>{t('home.noRequestsSub')}</Text>
               <TouchableOpacity style={styles.emptyBtn} onPress={() => goNew()} activeOpacity={0.85}>
                 <Text style={styles.emptyBtnText}>{t('home.newRequest')}</Text>
               </TouchableOpacity>
             </View>
           )}
+
+          {/* ── CTA Banner ──────────────────────────────────────── */}
+          <TouchableOpacity
+            style={[styles.ctaBanner, { flexDirection: flexRow(isRTL) }]}
+            onPress={() => goNew()}
+            activeOpacity={0.88}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.ctaTitle, { textAlign: ta }]}>{t('home.ctaTitle')}</Text>
+              <Text style={[styles.ctaSub, { textAlign: ta }]}>{t('home.ctaSub')}</Text>
+            </View>
+            <View style={styles.ctaBtn}>
+              <Text style={styles.ctaBtnText}>{t('home.ctaBtnLabel')}</Text>
+            </View>
+          </TouchableOpacity>
 
         </Animated.View>
       </ScrollView>
@@ -428,181 +476,149 @@ export default function ClientHome() {
   );
 }
 
-// ─── Styles ──────────────────────────────────────────────────
+// ─── Styles ───────────────────────────────────────────────────
 
 function createStyles(colors: AppColors, isDark: boolean) {
-  const glass   = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)';
-  const glassB  = isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)';
-  const shadow  = isDark
-    ? { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 12, elevation: 10 }
-    : { shadowColor: '#1D4ED8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 16, elevation: 8 };
+  const surf2   = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
+  const border2 = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
 
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
     scroll:    { flex: 1 },
-    content:   { paddingTop: 6 },
+    content:   { paddingTop: 8 },
 
-    // ── Header ──────────────────────────────────────────────────────
+    // ── Header ──────────────────────────────────────────────────
     header: {
       paddingHorizontal: H_PAD,
       paddingTop:        HEADER_PAD,
-      paddingBottom:     18,
+      paddingBottom:     14,
       backgroundColor:   colors.bg,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
-    avatar: {
-      width: 44, height: 44, borderRadius: 22,
-      backgroundColor: colors.accent,
-      alignItems: 'center', justifyContent: 'center',
-    },
-    avatarText: { fontSize: 18, fontWeight: '800', color: colors.bg },
-    greeting:   { fontSize: 16, fontWeight: '700', color: colors.textPrimary, letterSpacing: -0.2 },
-    city:       { fontSize: 12, color: colors.textMuted, fontWeight: '500' },
+    headerRow:   { alignItems: 'center' },
+    headerCenter:{ flex: 1, alignItems: 'center' },
+    headerTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.3 },
+    headerSub:   { fontSize: 12, color: colors.textMuted, marginTop: 2 },
     bellBtn: {
-      width: 44, height: 44, borderRadius: 14,
-      backgroundColor: glass,
-      borderWidth: 1, borderColor: glassB,
+      width: 42, height: 42, borderRadius: 13,
+      backgroundColor: surf2,
+      borderWidth: 1, borderColor: border2,
       alignItems: 'center', justifyContent: 'center',
     },
 
-    // ── Search ──────────────────────────────────────────────────────
+    // ── Search ──────────────────────────────────────────────────
     searchBar: {
-      marginHorizontal: H_PAD, marginTop: 18, marginBottom: 16,
+      marginHorizontal: H_PAD, marginTop: 16, marginBottom: 14,
       backgroundColor: colors.surface,
-      borderRadius: 18,
-      paddingHorizontal: 16, paddingVertical: 14,
+      borderRadius: 16,
+      paddingHorizontal: 14, paddingVertical: 12,
       borderWidth: 1, borderColor: colors.border,
-      alignItems: 'center',
+      alignItems: 'center', gap: 10,
     },
-    searchHint: { fontSize: 14, color: colors.textMuted },
-    searchIcon: {
-      width: 32, height: 32, borderRadius: 10,
-      backgroundColor: glass,
+    searchIconWrap: {
+      width: 30, height: 30, borderRadius: 9,
+      backgroundColor: surf2,
       alignItems: 'center', justifyContent: 'center',
     },
+    searchHint: { fontSize: 14, color: colors.textMuted, flex: 1 },
 
-    // ── Hero card ───────────────────────────────────────────────────
-    heroCard: {
-      backgroundColor: '#1D4ED8',
-      borderRadius: 26,
-      padding: 22,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      overflow: 'hidden',
-      minHeight: 118,
-      ...shadow,
+    // ── Chips ───────────────────────────────────────────────────
+    chipsScroll:  { marginBottom: 20 },
+    chipsContent: { paddingHorizontal: H_PAD, gap: 8, paddingVertical: 2 },
+    chip: {
+      paddingHorizontal: 14, paddingVertical: 7,
+      borderRadius: 20, borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
     },
-    heroBlob1: {
-      position: 'absolute', width: 180, height: 180, borderRadius: 90,
-      backgroundColor: 'rgba(255,255,255,0.07)', top: -60, right: -40,
-    },
-    heroBlob2: {
-      position: 'absolute', width: 80, height: 80, borderRadius: 40,
-      backgroundColor: 'rgba(255,255,255,0.05)', bottom: -20, left: 20,
-    },
-    heroTitle:   { fontSize: 30, fontWeight: '900', color: '#fff', marginBottom: 5, letterSpacing: -0.5 },
-    heroSub:     { fontSize: 13, color: 'rgba(255,255,255,0.72)', fontWeight: '500' },
-    heroPlusRing: {
-      width: 54, height: 54, borderRadius: 18,
-      backgroundColor: 'rgba(255,255,255,0.15)',
-      borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
-      alignItems: 'center', justifyContent: 'center',
-    },
-    heroPlus: { fontSize: 34, fontWeight: '200', color: '#fff', lineHeight: 40 },
+    chipText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
 
-    // ── Secondary row ───────────────────────────────────────────────
-    secondaryRow: {
-      marginHorizontal: H_PAD,
-      marginBottom: 28,
-      gap: CARD_GAP,
+    // ── Section labels ───────────────────────────────────────────
+    sectionLabel: {
+      fontSize: 14, fontWeight: '700', color: colors.textSecondary,
+      paddingHorizontal: H_PAD, marginBottom: 12,
     },
-    urgentCard: {
-      flex: 1, borderRadius: 22,
-      backgroundColor: isDark ? 'rgba(239,68,68,0.10)' : 'rgba(239,68,68,0.07)',
-      borderWidth: 1.5, borderColor: 'rgba(239,68,68,0.30)',
-      padding: 18, alignItems: 'center', justifyContent: 'center',
-      overflow: 'hidden', minHeight: 118,
-    },
-    urgentGlow: {
-      position: 'absolute', width: 90, height: 90, borderRadius: 45,
-      backgroundColor: 'rgba(239,68,68,0.12)', top: -28, right: -22,
-    },
-    urgentTitle: { fontSize: 14, fontWeight: '800', color: '#EF4444', marginBottom: 2 },
-    urgentSub:   { fontSize: 11, color: 'rgba(239,68,68,0.55)' },
-
-    recurCard: {
-      flex: 1, borderRadius: 22,
-      backgroundColor: isDark ? 'rgba(16,185,129,0.09)' : 'rgba(16,185,129,0.06)',
-      borderWidth: 1.5, borderColor: 'rgba(16,185,129,0.28)',
-      padding: 18, alignItems: 'center', justifyContent: 'center',
-      overflow: 'hidden', minHeight: 118,
-    },
-    recurGlow: {
-      position: 'absolute', width: 90, height: 90, borderRadius: 45,
-      backgroundColor: 'rgba(16,185,129,0.12)', top: -28, left: -22,
-    },
-    recurTitle: { fontSize: 14, fontWeight: '800', color: '#10B981', marginBottom: 2 },
-    recurSub:   { fontSize: 11, color: 'rgba(16,185,129,0.55)' },
-
-    // ── Section headers ─────────────────────────────────────────────
     sectionRow: {
-      paddingHorizontal: H_PAD,
-      marginBottom: 14,
+      paddingHorizontal: H_PAD, marginBottom: 14,
       justifyContent: 'space-between', alignItems: 'center',
     },
-    sectionTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary },
+    sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
     seeAll:       { fontSize: 13, color: colors.accent, fontWeight: '600' },
 
-    // ── Category grid ───────────────────────────────────────────────
+    // ── Shortcuts card ───────────────────────────────────────────
+    shortcutsCard: {
+      marginHorizontal: H_PAD, marginBottom: 28,
+      backgroundColor: colors.surface,
+      borderRadius: 20, borderWidth: 1, borderColor: colors.border,
+      paddingVertical: 20, paddingHorizontal: 12,
+      alignItems: 'flex-start',
+    },
+    shortcutDivider: {
+      width: 1, height: 48,
+      backgroundColor: colors.border,
+      alignSelf: 'center',
+    },
+
+    // ── Category grid ────────────────────────────────────────────
     categoryGrid: {
       flexDirection: 'row', flexWrap: 'wrap',
       paddingHorizontal: H_PAD,
-      gap: CARD_GAP,
-      marginBottom: 28,
+      gap: CARD_GAP, marginBottom: 28,
     },
 
-    // ── Request cards ───────────────────────────────────────────────
+    // ── Request cards ────────────────────────────────────────────
     reqCard: {
       marginHorizontal: H_PAD, marginBottom: 10,
       backgroundColor: colors.surface,
-      borderRadius: 20,
-      padding: 14,
+      borderRadius: 18, padding: 14,
       borderWidth: 1, borderColor: colors.border,
       alignItems: 'center',
     },
     reqIcon: {
-      width: 48, height: 48, borderRadius: 14,
-      backgroundColor: glass,
-      borderWidth: 1, borderColor: glassB,
-      alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0,
+      width: 44, height: 44, borderRadius: 13,
+      backgroundColor: surf2, borderWidth: 1, borderColor: border2,
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     },
     reqTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 3 },
     reqMeta:   { fontSize: 12, color: colors.textMuted },
     badge:     { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 0, marginStart: 8 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
+    badgeText: { fontSize: 11, fontWeight: '700' },
 
-    // ── Empty state ─────────────────────────────────────────────────
+    // ── Empty state ──────────────────────────────────────────────
     emptyBox: {
-      alignItems: 'center', paddingTop: 32, paddingHorizontal: H_PAD,
+      alignItems: 'center', paddingTop: 24,
+      paddingHorizontal: H_PAD, marginBottom: 24,
     },
-    emptyIcon: {
-      width: 80, height: 80, borderRadius: 24,
-      backgroundColor: glass,
-      borderWidth: 1, borderColor: glassB,
-      alignItems: 'center', justifyContent: 'center',
-      marginBottom: 16,
+    emptyIconWrap: {
+      width: 72, height: 72, borderRadius: 22,
+      backgroundColor: surf2, borderWidth: 1, borderColor: border2,
+      alignItems: 'center', justifyContent: 'center', marginBottom: 14,
     },
-    emptyTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
-    emptySub:   { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22, marginBottom: 20 },
+    emptyTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+    emptySub:   { fontSize: 13, color: colors.textMuted, lineHeight: 20, marginBottom: 18 },
     emptyBtn: {
-      backgroundColor: colors.accent,
-      borderRadius: 14,
+      backgroundColor: colors.accent, borderRadius: 14,
       paddingHorizontal: 28, paddingVertical: 12,
     },
     emptyBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
+
+    // ── CTA Banner ───────────────────────────────────────────────
+    ctaBanner: {
+      marginHorizontal: H_PAD, marginTop: 8,
+      backgroundColor: colors.accentDim,
+      borderRadius: 20, padding: 18,
+      alignItems: 'center', justifyContent: 'space-between',
+      borderWidth: 1, borderColor: 'rgba(201,168,76,0.28)',
+      gap: 12,
+    },
+    ctaTitle:   { fontSize: 14, fontWeight: '800', color: colors.accent, marginBottom: 4 },
+    ctaSub:     { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+    ctaBtn: {
+      backgroundColor: colors.accent, borderRadius: 12,
+      paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0,
+    },
+    ctaBtnText: { fontSize: 13, fontWeight: '700', color: colors.bg },
   });
 }

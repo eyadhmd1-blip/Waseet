@@ -89,7 +89,18 @@
     "urgentRemaining": "⏱️ Remaining",
     "heroSub": "Select service & schedule now",
     "urgentRequest": "Urgent Request",
-    "urgentSub": "Instant response"
+    "urgentSub": "Instant response",
+    "title": "Choose a Service",
+    "subtitle": "We're here to help you",
+    "quickAccess": "Quick Access",
+    "saved": "Saved",
+    "savedSub": "Your saved services",
+    "lastRequest": "Last Request",
+    "lastRequestSub": "View your last request",
+    "popularServices": "Most Popular Services",
+    "ctaTitle": "Trusted service, pro technicians",
+    "ctaSub": "Best quality at the best price",
+    "ctaBtnLabel": "Request Now"
   },
   "requests": {
     "title": "My Requests",

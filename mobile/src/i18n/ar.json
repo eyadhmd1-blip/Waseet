@@ -89,7 +89,18 @@
     "urgentRemaining": "⏱️ متبقٍّ",
     "heroSub": "حدد الخدمة والموعد الآن",
     "urgentRequest": "طلب طارئ",
-    "urgentSub": "استجابة فورية"
+    "urgentSub": "استجابة فورية",
+    "title": "اختر نوع الخدمة",
+    "subtitle": "نحن هنا لمساعدتك",
+    "quickAccess": "اختصارات سريعة",
+    "saved": "المفضلة",
+    "savedSub": "خدماتك المحفوظة",
+    "lastRequest": "آخر طلب",
+    "lastRequestSub": "عرض طلبك الأخير",
+    "popularServices": "الخدمات الأكثر طلباً",
+    "ctaTitle": "خدمة موثوقة، فنيون محترفون",
+    "ctaSub": "نضمن لك أفضل جودة بأفضل سعر",
+    "ctaBtnLabel": "اطلب الآن"
   },
   "requests": {
     "title": "طلباتي",
