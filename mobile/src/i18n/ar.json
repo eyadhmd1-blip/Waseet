@@ -136,7 +136,14 @@
     "bidAccept": "قبول هذا العرض",
     "errBidNotFound": "العرض لم يعد متاحاً",
     "errRequestClosed": "الطلب أُغلق مسبقاً",
-    "errGeneric": "حدث خطأ"
+    "errGeneric": "حدث خطأ",
+    "cancelRequest": "إلغاء الطلب",
+    "cancelConfirmTitle": "تأكيد الإلغاء",
+    "cancelConfirmMsg": "هل أنت متأكد أنك تريد إلغاء هذا الطلب؟ لن تتمكن من التراجع عن هذا الإجراء.",
+    "cancelling": "جارٍ الإلغاء...",
+    "cancelSuccess": "تم إلغاء الطلب",
+    "errTotalLimit": "لديك 5 طلبات مفتوحة. أغلق أحدها أولاً لتتمكن من إضافة طلب جديد.",
+    "errCategoryLimit": "لديك طلب مفتوح بالفعل في هذا التصنيف. أغلقه أولاً."
   },
   "newRequest": {
     "title": "طلب جديد",

@@ -142,6 +142,22 @@ export default function RecurringRequestScreen() {
 
     setSubmitting(true);
     try {
+      // Recurring contracts share the same category-limit rule as regular requests
+      const { data: limitResult } = await supabase.rpc('check_request_limits', {
+        p_client_id:     authUser.id,
+        p_category_slug: selectedCat.slug,
+      });
+      if (limitResult === 'TOTAL_LIMIT' || limitResult === 'CATEGORY_LIMIT') {
+        setSubmitting(false);
+        Alert.alert(
+          t('common.attention'),
+          limitResult === 'TOTAL_LIMIT'
+            ? t('requests.errTotalLimit')
+            : t('requests.errCategoryLimit')
+        );
+        return;
+      }
+
       const { data: inserted, error } = await supabase
         .from('recurring_contracts')
         .insert({

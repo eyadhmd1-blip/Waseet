@@ -251,6 +251,21 @@ export default function UrgentRequestScreen() {
     const user = _ses?.user;
       if (!user) return;
 
+      // Check request limits before submission
+      const { data: limitResult } = await supabase.rpc('check_request_limits', {
+        p_client_id:     user.id,
+        p_category_slug: selectedCat!.slug,
+      });
+      if (limitResult === 'TOTAL_LIMIT' || limitResult === 'CATEGORY_LIMIT') {
+        Alert.alert(
+          t('common.attention'),
+          limitResult === 'TOTAL_LIMIT'
+            ? t('requests.errTotalLimit')
+            : t('requests.errCategoryLimit')
+        );
+        return;
+      }
+
       const expiresAt = new Date(Date.now() + URGENT_MINUTES * 60 * 1000).toISOString();
 
       const { data: req, error } = await supabase.from('requests').insert({

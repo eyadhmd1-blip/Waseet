@@ -124,6 +124,22 @@ export default function NewRequestScreen() {
     const user = _ses?.user;
     if (!user) { setSubmitting(false); return; }
 
+    // Check request limits before submission
+    const { data: limitResult } = await supabase.rpc('check_request_limits', {
+      p_client_id:     user.id,
+      p_category_slug: selectedCat!.slug,
+    });
+    if (limitResult === 'TOTAL_LIMIT' || limitResult === 'CATEGORY_LIMIT') {
+      setSubmitting(false);
+      Alert.alert(
+        t('common.attention'),
+        limitResult === 'TOTAL_LIMIT'
+          ? t('requests.errTotalLimit')
+          : t('requests.errCategoryLimit')
+      );
+      return;
+    }
+
     const uploadedUrls: string[] = [];
     for (const uri of images) {
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
