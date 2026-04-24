@@ -926,6 +926,26 @@ export default function ProviderFeed() {
     setDemoSuccess(true);
   };
 
+  const showBidError = useCallback((code: string, closeModal: () => void) => {
+    const msgMap: Record<string, string> = {
+      NO_CREDITS:        t('providerFeed.errNoCredits'),
+      COOLDOWN_ACTIVE:   t('providerFeed.errCooldown'),
+      MAX_ACTIVE_BIDS:   t('providerFeed.errMaxActiveBids'),
+      NOT_SUBSCRIBED:    t('providerFeed.mustSubscribe'),
+      REQUEST_NOT_FOUND: t('common.error'),
+    };
+    const message = msgMap[code] ?? code;
+    if (code === 'NO_CREDITS' || code === 'NOT_SUBSCRIBED') {
+      closeModal();
+      Alert.alert(t('common.error'), message, [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('providerFeed.renewNow'), onPress: () => router.push('/subscribe') },
+      ]);
+    } else {
+      Alert.alert(t('common.error'), message);
+    }
+  }, [t, router]);
+
   const submitUrgentAccept = async () => {
     const target = urgentModal.target;
     if (!target) return;
@@ -952,13 +972,7 @@ export default function ProviderFeed() {
     if (error) { Alert.alert(t('common.error'), error.message); return; }
     const result = rpcResult as { error?: string; bid_id?: string };
     if (result?.error) {
-      const msgMap: Record<string, string> = {
-        NO_CREDITS:      t('providerFeed.errNoCredits'),
-        COOLDOWN_ACTIVE: t('providerFeed.errCooldown'),
-        MAX_ACTIVE_BIDS: t('providerFeed.errMaxActiveBids'),
-        NOT_SUBSCRIBED:  t('providerFeed.mustSubscribe'),
-      };
-      Alert.alert(t('common.error'), msgMap[result.error] ?? result.error);
+      showBidError(result.error, () => setUrgentModal({ target: null, loading: false }));
       return;
     }
     setUrgentModal({ target: null, loading: false });
@@ -1005,14 +1019,7 @@ export default function ProviderFeed() {
     if (error) { Alert.alert(t('common.error'), error.message); return; }
     const result = rpcResult as { error?: string; bid_id?: string };
     if (result?.error) {
-      const msgMap: Record<string, string> = {
-        NO_CREDITS:        t('providerFeed.errNoCredits'),
-        COOLDOWN_ACTIVE:   t('providerFeed.errCooldown'),
-        MAX_ACTIVE_BIDS:   t('providerFeed.errMaxActiveBids'),
-        NOT_SUBSCRIBED:    t('providerFeed.mustSubscribe'),
-        REQUEST_NOT_FOUND: t('common.error'),
-      };
-      Alert.alert(t('common.error'), msgMap[result.error] ?? result.error);
+      showBidError(result.error, () => setBidModal({ target: null, amount: '', note: '', loading: false }));
       return;
     }
     setBidModal({ target: null, amount: '', note: '', loading: false });
@@ -1047,14 +1054,7 @@ export default function ProviderFeed() {
     }
     const creditRes = creditResult as { error?: string };
     if (creditRes?.error) {
-      setContractModal(prev => ({ ...prev, loading: false }));
-      const msgMap: Record<string, string> = {
-        NO_CREDITS:      t('providerFeed.errNoCredits'),
-        COOLDOWN_ACTIVE: t('providerFeed.errCooldown'),
-        MAX_ACTIVE_BIDS: t('providerFeed.errMaxActiveBids'),
-        NOT_SUBSCRIBED:  t('providerFeed.mustSubscribe'),
-      };
-      Alert.alert(t('common.error'), msgMap[creditRes.error] ?? creditRes.error);
+      showBidError(creditRes.error, () => setContractModal({ target: null, amount: '', note: '', loading: false }));
       return;
     }
 
