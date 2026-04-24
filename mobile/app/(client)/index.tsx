@@ -26,18 +26,40 @@ const CARD_W_3 = (W - H_PAD * 2 - CARD_GAP * 2) / 3;
 
 // ─── Maps ─────────────────────────────────────────────────────
 const ICON_MAP: Record<string, string> = {
+  // صيانة المنازل
   zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
   wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚',
   moon: '🌙', 'pen-tool': '✏️', car: '🚗', battery: '🔋',
   gauge: '⛽', snowflake: '🧊', shield: '🛡️', droplet: '💧',
+  // صيانة المنازل — جديد
+  tile: '🔲', plaster: '🪣', iron: '⚒️', aluminium: '🪟', sofa: '🛋️',
+  gypsum: '🏗️', bricks: '🧱', 'glass-pane': '🔳',
+  // الخدمات الفنية
+  wifi: '📶', cctv: '📹', 'solar-panel': '☀️', 'fire-alarm': '🔔',
+  desktop: '🖥️', laptop: '💻',
+  // الصحة والعناية
+  massage: '💆', nurse: '🏥', haircut: '✂️',
+  // المناسبات والفعاليات
+  photo: '📸', cake: '🎂', party: '🎉',
+  // تصميم وأعمال حرة
+  'code-bracket': '⌨️', 'chart-up': '📈', document: '📝', calculator: '🧮',
+  // الحِرَف اليدوية
+  thread: '🧵', stitch: '🪡', shoe: '👟',
+  // الحيوانات الأليفة
+  paw: '🐾', 'dog-lead': '🦮', stethoscope: '🩺',
 };
 
 const GROUP_COLORS: Record<string, string> = {
-  maintenance:  '#3B82F6',
-  cleaning:     '#10B981',
-  education:    '#8B5CF6',
-  freelance:    '#F59E0B',
-  car_services: '#EF4444',
+  maintenance:   '#3B82F6', // أزرق
+  cleaning:      '#10B981', // أخضر
+  technical:     '#06B6D4', // سماوي
+  health_beauty: '#EC4899', // وردي
+  events:        '#F97316', // برتقالي
+  education:     '#8B5CF6', // بنفسجي
+  freelance:     '#F59E0B', // ذهبي
+  handicrafts:   '#84CC16', // أخضر ليموني
+  pets:          '#A78BFA', // بنفسجي فاتح
+  car_services:  '#EF4444', // أحمر
 };
 
 // ─── Status helpers ───────────────────────────────────────────
