@@ -57,7 +57,10 @@
     "city": "المدينة",
     "createAccount": "إنشاء الحساب",
     "registering": "جارٍ التسجيل...",
-    "fillAllFields": "يرجى تعبئة جميع الحقول"
+    "fillAllFields": "يرجى تعبئة جميع الحقول",
+    "phoneAlreadyRegistered": "هذا الرقم مسجّل بالفعل",
+    "phoneAlreadyRegisteredMsg": "يبدو أن هذا الرقم مرتبط بحساب موجود. هل تريد تسجيل الدخول؟",
+    "goToLogin": "تسجيل الدخول"
   },
   "home": {
     "mostRequested": "الأكثر طلباً",

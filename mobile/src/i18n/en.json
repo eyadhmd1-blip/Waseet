@@ -57,7 +57,10 @@
     "city": "City",
     "createAccount": "Create Account",
     "registering": "Creating account...",
-    "fillAllFields": "Please fill in all fields"
+    "fillAllFields": "Please fill in all fields",
+    "phoneAlreadyRegistered": "Phone number already registered",
+    "phoneAlreadyRegisteredMsg": "This number is linked to an existing account. Would you like to log in instead?",
+    "goToLogin": "Log In"
   },
   "home": {
     "mostRequested": "Most Requested",

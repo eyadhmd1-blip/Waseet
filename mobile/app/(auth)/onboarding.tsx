@@ -476,7 +476,18 @@ export default function OnboardingScreen() {
       });
 
       if (userErr) {
-        Alert.alert(t('common.error'), userErr.message);
+        if ((userErr as any).code === '23505') {
+          Alert.alert(
+            t('auth.phoneAlreadyRegistered'),
+            t('auth.phoneAlreadyRegisteredMsg'),
+            [
+              { text: t('common.cancel'), style: 'cancel' },
+              { text: t('auth.goToLogin'), onPress: () => router.replace('/(auth)/login' as any) },
+            ]
+          );
+        } else {
+          Alert.alert(t('common.error'), userErr.message);
+        }
         return;
       }
 
