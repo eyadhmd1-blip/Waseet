@@ -387,6 +387,7 @@ function RequestCard({
   item,
   index,
   isLocked,
+  myBidAmount,
   entranceAnim,
   onBidPress,
   onUrgentAccept,
@@ -394,6 +395,7 @@ function RequestCard({
   item: RequestWithMeta;
   index: number;
   isLocked: boolean;
+  myBidAmount?: number;
   entranceAnim: Animated.Value;
   onBidPress: () => void;
   onUrgentAccept: () => void;
@@ -428,6 +430,15 @@ function RequestCard({
             <View style={urgentStyles.urgentBadge}>
               <Text style={urgentStyles.urgentBadgeText}>{t('providerFeed.urgentBadge')}</Text>
             </View>
+          </View>
+        )}
+
+        {/* Submitted bid banner */}
+        {myBidAmount !== undefined && (
+          <View style={styles.submittedBanner}>
+            <Text style={styles.submittedBannerText}>
+              {t('providerFeed.submittedBanner', { amount: myBidAmount })}
+            </Text>
           </View>
         )}
 
@@ -472,7 +483,11 @@ function RequestCard({
             </Text>
           )}
 
-          {isUrgent ? (
+          {myBidAmount !== undefined ? (
+            <View style={styles.submittedChip}>
+              <Text style={styles.submittedChipText}>{t('providerFeed.submittedChip')}</Text>
+            </View>
+          ) : isUrgent ? (
             <TouchableOpacity style={urgentStyles.acceptBtn} onPress={onUrgentAccept}>
               <Text style={urgentStyles.acceptBtnText}>{t('providerFeed.acceptUrgent')}</Text>
             </TouchableOpacity>
@@ -688,13 +703,14 @@ export default function ProviderFeed() {
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang, isRTL } = useLanguage();
-  const [provider, setProvider]         = useState<(Provider & { user: User }) | null>(null);
-  const [requests, setRequests]         = useState<RequestWithMeta[]>([]);
-  const [myBidRequestIds, setMyBidRequestIds] = useState<Set<string>>(new Set());
-  const [loading, setLoading]           = useState(true);
-  const [refreshing, setRefreshing]     = useState(false);
-  const [catFilter, setCatFilter]       = useState<string>('all');
-  const [cityFilter, setCityFilter]     = useState<string>('all');
+  const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
+  const [requests, setRequests]   = useState<RequestWithMeta[]>([]);
+  // Map<request_id, bid_amount> — tracks every request this provider has already bid on
+  const [myBidAmounts, setMyBidAmounts] = useState<Map<string, number>>(new Map());
+  const [loading, setLoading]     = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [catFilter, setCatFilter] = useState<string>('all');
+  const [cityFilter, setCityFilter] = useState<string>('all');
 
   // Demo request
   const [demoStatus, setDemoStatus] = useState<DemoStatus | null>(null);
@@ -797,14 +813,14 @@ export default function ProviderFeed() {
           .order('created_at', { ascending: false })
           .limit(20),
         supabase.rpc('get_provider_demo', { p_provider_id: authUser.id }),
-        supabase.from('bids').select('request_id').eq('provider_id', authUser.id),
+        supabase.from('bids').select('request_id, amount').eq('provider_id', authUser.id),
       ]);
 
       if (providerData)  setProvider(providerData);
       if (requestsData)  setRequests(requestsData);
       if (contractsData) setContracts(contractsData as RecurringContract[]);
       if (demoData)      setDemoStatus(demoData as DemoStatus);
-      if (myBidsData)    setMyBidRequestIds(new Set(myBidsData.map((b: any) => b.request_id)));
+      if (myBidsData)    setMyBidAmounts(new Map(myBidsData.map((b: any) => [b.request_id, b.amount])));
 
       runEntranceAnims(requestsData?.length ?? 0);
   
@@ -883,18 +899,18 @@ export default function ProviderFeed() {
     setRefreshing(false);
   }, [load]);
 
-  // useMemo: filter by category/city and remove requests already bid on
+  // useMemo: filter by category/city only — already-bid requests stay visible with a "submitted" badge
   const filtered = useMemo(() =>
     requests.filter(r => {
-      if (myBidRequestIds.has(r.id))                              return false;
       if (catFilter  !== 'all' && r.category_slug !== catFilter)  return false;
       if (cityFilter !== 'all' && r.city          !== cityFilter) return false;
       return true;
     }),
-    [requests, catFilter, cityFilter, myBidRequestIds],
+    [requests, catFilter, cityFilter],
   );
 
   const handleBidPress = (req: RequestWithMeta, index: number) => {
+    if (myBidAmounts.has(req.id)) return; // already bid — chip is shown instead
     if (!provider?.is_subscribed && index > 0) {
       setShowUpsell(true);
     } else {
@@ -983,8 +999,8 @@ export default function ProviderFeed() {
     }
     const submittedId = target.id;
     setUrgentModal({ target: null, loading: false });
-    // Optimistically remove from feed so it disappears immediately
-    setMyBidRequestIds(prev => new Set([...prev, submittedId]));
+    // Optimistically mark as submitted in the feed
+    setMyBidAmounts(prev => new Map([...prev, [submittedId, premiumMin ?? 0]]));
     Alert.alert(t('providerFeed.successUrgentTitle'), t('providerFeed.successUrgentMsg'));
     load();
   };
@@ -1031,10 +1047,11 @@ export default function ProviderFeed() {
       showBidError(result.error, () => setBidModal({ target: null, amount: '', note: '', loading: false }));
       return;
     }
-    const submittedId = target.id;
+    const submittedId     = target.id;
+    const submittedAmount = amount;
     setBidModal({ target: null, amount: '', note: '', loading: false });
-    // Optimistically remove from feed so it disappears immediately
-    setMyBidRequestIds(prev => new Set([...prev, submittedId]));
+    // Optimistically mark as submitted in the feed
+    setMyBidAmounts(prev => new Map([...prev, [submittedId, submittedAmount]]));
     Alert.alert(t('providerFeed.successBidTitle'), t('providerFeed.successBidMsg'));
     load();
   };
@@ -1237,6 +1254,7 @@ export default function ProviderFeed() {
             item={item}
             index={index}
             isLocked={!item.is_urgent && !provider?.is_subscribed && index > 0}
+            myBidAmount={myBidAmounts.get(item.id)}
             entranceAnim={getCardAnim(Math.min(index, MAX_CARDS - 1))}
             onBidPress={() => handleBidPress(item, index)}
             onUrgentAccept={() => setUrgentModal(prev => ({ ...prev, target: item }))}
@@ -1624,6 +1642,21 @@ function createStyles(colors: AppColors) {
   bidBtnLocked:     { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   bidBtnText:       { fontSize: 13, fontWeight: '700', color: colors.bg },
   bidBtnTextLocked: { color: colors.textMuted },
+
+  submittedBanner: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: 'rgba(16,185,129,0.1)',
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
+    marginBottom: 10,
+    borderWidth: 1, borderColor: 'rgba(16,185,129,0.25)',
+  },
+  submittedBannerText: { fontSize: 12, color: '#10B981', fontWeight: '700', textAlign: 'auto' as const },
+  submittedChip: {
+    backgroundColor: 'rgba(16,185,129,0.12)',
+    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7,
+    borderWidth: 1, borderColor: 'rgba(16,185,129,0.30)',
+  },
+  submittedChipText: { fontSize: 12, fontWeight: '700', color: '#10B981' },
 
   empty:     { alignItems: 'center', paddingTop: 80 },
   emptyText: { fontSize: 16, color: colors.textMuted },

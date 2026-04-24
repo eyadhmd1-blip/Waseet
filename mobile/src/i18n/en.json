@@ -301,6 +301,8 @@
     "errCooldown": "You cannot bid for this client right now (24-hour cooldown)",
     "errMaxActiveBids": "You have reached the maximum (5 active bids at a time)",
     "errAlreadyBid": "You have already submitted a bid on this request",
+    "submittedBanner": "✓ Your bid: {{amount}} JOD · Awaiting response",
+    "submittedChip": "Bid Submitted ✓",
     "upgradeBtn": "Upgrade Subscription",
     "renewNow": "Renew Now",
     "errBelowMin": "Minimum bid for this category is {{min}} JOD",
