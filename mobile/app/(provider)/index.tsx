@@ -688,12 +688,13 @@ export default function ProviderFeed() {
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang, isRTL } = useLanguage();
-  const [provider, setProvider]     = useState<(Provider & { user: User }) | null>(null);
-  const [requests, setRequests]     = useState<RequestWithMeta[]>([]);
-  const [loading, setLoading]       = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [catFilter, setCatFilter]   = useState<string>('all');
-  const [cityFilter, setCityFilter] = useState<string>('all');
+  const [provider, setProvider]         = useState<(Provider & { user: User }) | null>(null);
+  const [requests, setRequests]         = useState<RequestWithMeta[]>([]);
+  const [myBidRequestIds, setMyBidRequestIds] = useState<Set<string>>(new Set());
+  const [loading, setLoading]           = useState(true);
+  const [refreshing, setRefreshing]     = useState(false);
+  const [catFilter, setCatFilter]       = useState<string>('all');
+  const [cityFilter, setCityFilter]     = useState<string>('all');
 
   // Demo request
   const [demoStatus, setDemoStatus] = useState<DemoStatus | null>(null);
@@ -774,12 +775,13 @@ export default function ProviderFeed() {
       const authUser = _ses?.user;
       if (!authUser) { setLoading(false); return; }
 
-      // All four queries run in parallel — no waterfall
+      // All five queries run in parallel — no waterfall
       const [
         { data: providerData },
         { data: requestsData },
         { data: contractsData },
         { data: demoData },
+        { data: myBidsData },
       ] = await Promise.all([
         supabase.from('providers').select('*, user:users(*)').eq('id', authUser.id).single(),
         supabase
@@ -795,12 +797,14 @@ export default function ProviderFeed() {
           .order('created_at', { ascending: false })
           .limit(20),
         supabase.rpc('get_provider_demo', { p_provider_id: authUser.id }),
+        supabase.from('bids').select('request_id').eq('provider_id', authUser.id),
       ]);
 
       if (providerData)  setProvider(providerData);
       if (requestsData)  setRequests(requestsData);
       if (contractsData) setContracts(contractsData as RecurringContract[]);
       if (demoData)      setDemoStatus(demoData as DemoStatus);
+      if (myBidsData)    setMyBidRequestIds(new Set(myBidsData.map((b: any) => b.request_id)));
 
       runEntranceAnims(requestsData?.length ?? 0);
   
@@ -879,14 +883,15 @@ export default function ProviderFeed() {
     setRefreshing(false);
   }, [load]);
 
-  // useMemo: only re-filter when requests list or active filters change
+  // useMemo: filter by category/city and remove requests already bid on
   const filtered = useMemo(() =>
     requests.filter(r => {
+      if (myBidRequestIds.has(r.id))                              return false;
       if (catFilter  !== 'all' && r.category_slug !== catFilter)  return false;
       if (cityFilter !== 'all' && r.city          !== cityFilter) return false;
       return true;
     }),
-    [requests, catFilter, cityFilter],
+    [requests, catFilter, cityFilter, myBidRequestIds],
   );
 
   const handleBidPress = (req: RequestWithMeta, index: number) => {
@@ -932,6 +937,7 @@ export default function ProviderFeed() {
       COOLDOWN_ACTIVE:   t('providerFeed.errCooldown'),
       MAX_ACTIVE_BIDS:   t('providerFeed.errMaxActiveBids'),
       NOT_SUBSCRIBED:    t('providerFeed.mustSubscribe'),
+      ALREADY_BID:       t('providerFeed.errAlreadyBid'),
       REQUEST_NOT_FOUND: t('common.error'),
     };
     const message = msgMap[code] ?? code;
@@ -975,7 +981,10 @@ export default function ProviderFeed() {
       showBidError(result.error, () => setUrgentModal({ target: null, loading: false }));
       return;
     }
+    const submittedId = target.id;
     setUrgentModal({ target: null, loading: false });
+    // Optimistically remove from feed so it disappears immediately
+    setMyBidRequestIds(prev => new Set([...prev, submittedId]));
     Alert.alert(t('providerFeed.successUrgentTitle'), t('providerFeed.successUrgentMsg'));
     load();
   };
@@ -1022,7 +1031,10 @@ export default function ProviderFeed() {
       showBidError(result.error, () => setBidModal({ target: null, amount: '', note: '', loading: false }));
       return;
     }
+    const submittedId = target.id;
     setBidModal({ target: null, amount: '', note: '', loading: false });
+    // Optimistically remove from feed so it disappears immediately
+    setMyBidRequestIds(prev => new Set([...prev, submittedId]));
     Alert.alert(t('providerFeed.successBidTitle'), t('providerFeed.successBidMsg'));
     load();
   };
