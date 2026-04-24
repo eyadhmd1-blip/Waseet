@@ -666,7 +666,18 @@
     "unlimitedNote": "*حد أقصى 5 عروض نشطة في آنٍ واحد",
     "trialUsed": "استُخدمت مسبقاً",
     "trialBadge": "شهر مجاني",
-    "discountBreakdown": "خصم الانتصارات {{win}}% + خصم السمعة {{rep}}% = خصم {{total}}%"
+    "discountBreakdown": "خصم الانتصارات {{win}}% + خصم السمعة {{rep}}% = خصم {{total}}%",
+    "contactSupportBtn": "تواصل مع الدعم لإتمام الدفع",
+    "cliqPaymentSub": "حوالة CliQ الفورية · تفعيل خلال ساعة",
+    "otherMethodsTitle": "طرق دفع إلكتروني — قريباً",
+    "comingSoon": "قريباً",
+    "methodCard": "بطاقة ائتمانية / مدى",
+    "methodApplePay": "Apple Pay",
+    "methodGooglePay": "Google Pay",
+    "trialActivated": "🎉 تم تفعيل فترتك التجريبية! يمكنك الآن تقديم عروضك على الطلبات.",
+    "faq2Q_cliq": "كيف يتم الدفع؟",
+    "faq2A_cliq": "الدفع عبر حوالة CliQ الفورية من خلال تطبيقك البنكي. سيرسل فريق الدعم رقم الحساب في المحادثة، وبعد التحقق من الحوالة يُفعَّل اشتراكك خلال ساعة.",
+    "faq3A_cliq": "الفرق الأساسي في عدد رصيد العروض الشهري وأولوية الظهور في نتائج البحث. الباقة التجريبية مجانية مرة واحدة لكل مزود."
   },
   "portfolio": {
     "headerTitle": "معرض أعمالي",
@@ -718,7 +729,9 @@
     "summaryTotal": "إجمالي",
     "sectionFaq": "الأسئلة الشائعة",
     "contactNote": "لم تجد إجابتك؟ افتح تذكرة دعم وسيرد عليك فريقنا خلال ٢–٤ ساعات.",
-    "openTicketBtn": "فتح تذكرة دعم"
+    "openTicketBtn": "فتح تذكرة دعم",
+    "adminInboxBtn": "📥 لوحة الدعم",
+    "adminNewCount": "{{count}} جديد"
   },
   "providerProfile": {
     "contact": "تواصل",
@@ -1023,7 +1036,13 @@
     "thankYou": "شكراً على تقييمك! 🌟",
     "inputPlaceholder": "اكتب ردك...",
     "sendBtn": "إرسال",
-    "resolvedBar": "✅ تم إغلاق هذه التذكرة"
+    "resolvedBar": "✅ تم إغلاق هذه التذكرة",
+    "paymentBanner": "طلب شحن رصيد",
+    "paymentPending": "⏳ بانتظار تأكيد الدفع",
+    "paymentActivated": "✅ تم تفعيل الاشتراك",
+    "activateBtn": "تفعيل الاشتراك ✅",
+    "activateConfirm": "هل تأكدت من وصول الدفعة؟ سيتم تفعيل باقة {{tier}} للمزود.",
+    "activatingText": "جارٍ التفعيل..."
   },
   "portfolioAdd": {
     "headerTitle": "إضافة عمل جديد",
@@ -1209,5 +1228,21 @@
     "backBtn": "رجوع",
     "selectAtLeastOne": "يرجى اختيار خدمة واحدة على الأقل",
     "stepOf": "الخطوة {{current}} من {{total}}"
+  },
+  "admin": {
+    "title": "صندوق الدعم",
+    "filterAll": "الكل",
+    "filterPayments": "مدفوعات",
+    "filterResolved": "محلول",
+    "emptyText": "لا توجد تذاكر",
+    "planLabel": "باقة {{tier}}",
+    "amountLabel": "{{amount}} د.أ",
+    "pendingBadge": "بانتظار التحقق",
+    "catPayment": "💳 دفع",
+    "catOrder": "📋 طلب",
+    "catProvider": "🔧 مزود",
+    "catAccount": "👤 حساب",
+    "catContract": "📄 عقد",
+    "catOther": "💬 أخرى"
   }
 }

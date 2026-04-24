@@ -43,13 +43,15 @@ export default function SupportScreen() {
   const [summary,   setSummary]   = useState<TicketSummary>({ open: 0, in_review: 0, total: 0 });
   const [loading,   setLoading]   = useState(true);
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
+  const [isAdmin,   setIsAdmin]   = useState(false);
+  const [adminNew,  setAdminNew]  = useState(0);
 
   const load = useCallback(async () => {
     try {
       const { data: { session: _ses } } = await supabase.auth.getSession();
       const user = _ses?.user;
 
-      const [{ data: faqData }, { data: tickets }] = await Promise.all([
+      const [{ data: faqData }, { data: tickets }, { data: userData }] = await Promise.all([
         supabase
           .from('support_faq')
           .select('id, question_ar, answer_ar, question_en, answer_en, category')
@@ -61,6 +63,9 @@ export default function SupportScreen() {
               .select('status')
               .eq('user_id', user.id)
           : Promise.resolve({ data: [] }),
+        user
+          ? supabase.from('users').select('is_admin').eq('id', user.id).single()
+          : Promise.resolve({ data: null }),
       ]);
 
       if (faqData) setFaq(faqData as FaqItem[]);
@@ -69,7 +74,15 @@ export default function SupportScreen() {
         const in_review = (tickets as any[]).filter(t => t.status === 'in_review').length;
         setSummary({ open, in_review, total: (tickets as any[]).length });
       }
-  
+      if (userData?.is_admin) {
+        setIsAdmin(true);
+        const { count } = await supabase
+          .from('support_tickets')
+          .select('id', { count: 'exact', head: true })
+          .in('status', ['open', 'in_review']);
+        setAdminNew(count ?? 0);
+      }
+
     } finally {
       setLoading(false);
     }
@@ -97,6 +110,24 @@ export default function SupportScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+
+        {/* Admin inbox shortcut — only visible to admins */}
+        {isAdmin && (
+          <TouchableOpacity
+            style={styles.adminInboxBtn}
+            onPress={() => router.push('/admin' as any)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.adminInboxText}>{t('support.adminInboxBtn')}</Text>
+            {adminNew > 0 && (
+              <View style={styles.adminInboxBadge}>
+                <Text style={styles.adminInboxBadgeText}>
+                  {t('support.adminNewCount', { count: adminNew })}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
 
         {/* Hero */}
         <View style={styles.hero}>
@@ -237,5 +268,15 @@ function createStyles(colors: AppColors) {
     contactNoteText:  { fontSize: 13, color: '#FCD34D', lineHeight: 20, marginBottom: 14 },
     openTicketBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
     openTicketBtnText:{ fontSize: 14, fontWeight: '700', color: colors.bg },
+
+    adminInboxBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      backgroundColor: 'rgba(201,168,76,0.1)', borderRadius: 14,
+      padding: 16, marginBottom: 8,
+      borderWidth: 1, borderColor: 'rgba(201,168,76,0.3)',
+    },
+    adminInboxText:      { fontSize: 15, fontWeight: '700', color: colors.accent },
+    adminInboxBadge:     { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3 },
+    adminInboxBadgeText: { fontSize: 12, fontWeight: '700', color: colors.bg },
   });
 }
