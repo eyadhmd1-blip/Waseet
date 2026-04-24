@@ -142,7 +142,7 @@ export default function RecurringRequestScreen() {
 
     setSubmitting(true);
     try {
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('recurring_contracts')
         .insert({
           client_id:             authUser.id,
@@ -156,9 +156,18 @@ export default function RecurringRequestScreen() {
           duration_months:       durationMonths,
           notes:                 notes.trim() || null,
           status:                'bidding',
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Fire-and-forget: notify matching providers
+      if (inserted?.id) {
+        supabase.functions.invoke('notify-contract', {
+          body: { contract_id: inserted.id, city, category_slug: selectedCat.slug },
+        }).catch(() => {});
+      }
 
       Alert.alert(
         t('recurringRequest.successTitle'),
