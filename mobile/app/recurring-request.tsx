@@ -122,7 +122,7 @@ export default function RecurringRequestScreen() {
   };
 
   const handleStep2Continue = () => {
-    if (!city) { Alert.alert(t('common.attention'), t('recurringRequest.errCity')); return; }
+    if (!city) { Alert.alert(t('common.attention'), t('recurringRequest.errCityRequired')); return; }
     goNext(3);
   };
 
@@ -470,9 +470,9 @@ export default function RecurringRequestScreen() {
                 <ReviewRow label={t('recurringRequest.reviewCity')} value={city} />
                 <ReviewRow label={t('recurringRequest.reviewFreq')} value={freqLabel(frequency)} />
                 {preferredDay !== null && (
-                  <ReviewRow label={t('recurringRequest.reviewPreferredDay')} value={dayLabels[preferredDay]} />
+                  <ReviewRow label={t('recurringRequest.reviewDay')} value={dayLabels[preferredDay]} />
                 )}
-                <ReviewRow label={t('recurringRequest.reviewVisitTime')} value={timeLabel(timeWindow)} />
+                <ReviewRow label={t('recurringRequest.reviewTime')} value={timeLabel(timeWindow)} />
                 <ReviewRow
                   label={t('recurringRequest.reviewDuration')}
                   value={t('recurringRequest.reviewDurationValue', { count: durationMonths, visits: totalVisits })}

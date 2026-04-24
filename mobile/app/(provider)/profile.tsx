@@ -275,7 +275,7 @@ export default function ProviderProfile() {
                 activeOpacity={0.85}
               >
                 <Text style={styles.miniAddIcon}>+</Text>
-                <Text style={styles.miniAddText}>{t('portfolio.addWork')}</Text>
+                <Text style={styles.miniAddText}>{t('portfolio.fabAdd')}</Text>
               </TouchableOpacity>
             </View>
 
