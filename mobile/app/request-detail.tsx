@@ -66,6 +66,7 @@ export default function RequestDetail() {
   const [reportTarget, setReportTarget] = useState<BidWithProvider | null>(null);
   const [reportType, setReportType] = useState<string>('');
   const [submittingReport, setSubmittingReport] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -147,6 +148,36 @@ export default function RequestDetail() {
         is_urgent:     isUrgent ? '1' : '0',
       },
     });
+  };
+
+  // ── Cancel request ──────────────────────────────────────────
+
+  const handleCancelRequest = () => {
+    Alert.alert(
+      t('requests.cancelConfirmTitle'),
+      t('requests.cancelConfirmMsg'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('requests.cancelRequest'),
+          style: 'destructive',
+          onPress: async () => {
+            setCancelling(true);
+            const { error } = await supabase
+              .from('requests')
+              .update({ status: 'cancelled' })
+              .eq('id', id)
+              .eq('client_id', myId!);
+            setCancelling(false);
+            if (error) {
+              Alert.alert(t('common.error'), error.message);
+            } else {
+              setRequest(prev => prev ? { ...prev, status: 'cancelled' } : prev);
+            }
+          },
+        },
+      ]
+    );
   };
 
   // ── Submit report ────────────────────────────────────────────
@@ -318,6 +349,20 @@ export default function RequestDetail() {
               ))
             )}
           </View>
+        )}
+
+        {/* ── Cancel button (owner + open only) ── */}
+        {request.status === 'open' && myId === request.client_id && (
+          <TouchableOpacity
+            style={[styles.cancelBtn, cancelling && styles.cancelBtnDisabled]}
+            onPress={handleCancelRequest}
+            disabled={cancelling}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.cancelBtnText}>
+              {cancelling ? t('requests.cancelling') : t('requests.cancelRequest')}
+            </Text>
+          </TouchableOpacity>
         )}
 
         {/* ── In-progress state ── */}
@@ -586,6 +631,10 @@ function createStyles(colors: AppColors) {
 
   inProgressNote:     { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
   inProgressNoteText: { fontSize: 13, color: '#FCD34D', lineHeight: 20 },
+
+  cancelBtn:         { marginHorizontal: 0, marginBottom: 20, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#7F1D1D' },
+  cancelBtnDisabled: { opacity: 0.5 },
+  cancelBtnText:     { fontSize: 15, fontWeight: '600', color: '#FCA5A5' },
 
   closedBox:  { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 },
   closedIcon: { fontSize: 40, marginBottom: 10 },

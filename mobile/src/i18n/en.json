@@ -132,7 +132,14 @@
     "bidAccept": "Accept this bid",
     "errBidNotFound": "Bid is no longer available",
     "errRequestClosed": "Request was already closed",
-    "errGeneric": "Something went wrong"
+    "errGeneric": "Something went wrong",
+    "cancelRequest": "Cancel Request",
+    "cancelConfirmTitle": "Confirm Cancellation",
+    "cancelConfirmMsg": "Are you sure you want to cancel this request? This action cannot be undone.",
+    "cancelling": "Cancelling...",
+    "cancelSuccess": "Request cancelled",
+    "errTotalLimit": "You have 5 open requests. Close one first to add a new request.",
+    "errCategoryLimit": "You already have an open request in this category. Close it first."
   },
   "newRequest": {
     "title": "New Request",
