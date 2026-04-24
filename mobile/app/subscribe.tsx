@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Animated, Easing, Linking, Alert, ActivityIndicator,
+  Animated, Easing, Alert, ActivityIndicator,
   Dimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -21,13 +21,12 @@ import type { AppColors } from '../src/constants/colors';
 
 const { width } = Dimensions.get('window');
 
-// ─── Paddle checkout URLs (fill after creating products) ─────
-const PADDLE_CHECKOUT_BASE = 'https://buy.paddle.com/product/';
-const PADDLE_PRICE_IDS: Record<string, string> = {
-  basic:   'pri_FILL_BASIC',
-  pro:     'pri_FILL_PRO',
-  premium: 'pri_FILL_PREMIUM',
-};
+// ─── Coming Soon payment methods ─────────────────────────────
+const COMING_SOON_METHODS = [
+  { key: 'methodCard',      icon: '💳' },
+  { key: 'methodApplePay',  icon: '🍎' },
+  { key: 'methodGooglePay', icon: '🔵' },
+] as const;
 
 // ─── Plan config ──────────────────────────────────────────────
 const PLAN_ICONS: Record<string, string>    = { trial: '🎁', basic: '🌱', pro: '🚀', premium: '👑' };
@@ -325,42 +324,51 @@ export default function SubscribeScreen() {
         p_period_months: 1,
       });
       setProcessing(false);
-      Alert.alert(t('common.success'), t('subscribe.paymentSetupMsg'));
+      Alert.alert(t('common.success'), t('subscribe.trialActivated'));
       router.back();
       return;
     }
 
-    const priceId = PADDLE_PRICE_IDS[selectedTier];
-
-    if (priceId.startsWith('pri_FILL')) {
-      Alert.alert(
-        t('subscribe.paymentSetupTitle'),
-        t('subscribe.paymentSetupMsg'),
-        [{ text: t('common.confirm') }]
-      );
-      return;
-    }
-
+    // Paid plan: open a support ticket for CliQ payment
     setProcessing(true);
     try {
-      const repDiscount  = REP_DISCOUNT[provider.reputation_tier] ?? 0;
-      const totalDiscount = Math.min(
-        (provider.loyalty_discount ?? 0) + (provider.win_discount_pct ?? 0) + repDiscount,
-        40
-      );
-      const passthrough = encodeURIComponent(JSON.stringify({
-        provider_id: provider.id,
-        tier:        selectedTier,
-        discount:    totalDiscount,
-      }));
-      const url = `${PADDLE_CHECKOUT_BASE}${priceId}?passthrough=${passthrough}`;
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        Alert.alert(t('common.error'), t('subscribe.errCannotOpen'));
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) { setProcessing(false); return; }
+
+      const plan        = SUBSCRIPTION_PLANS.find(p => p.tier === selectedTier)!;
+      const planName    = lang === 'ar' ? plan.name_ar : (plan.name_en ?? plan.name_ar);
+      const amountFixed = +(plan.price_jod * (1 - discount / 100)).toFixed(2);
+      const subject     = `شحن رصيد — باقة ${planName} (${amountFixed} د.أ)`;
+
+      const { data: ticket, error: ticketErr } = await supabase
+        .from('support_tickets')
+        .insert({
+          user_id:         user.id,
+          category:        'payment',
+          priority:        'urgent',
+          subject,
+          plan_tier:       selectedTier,
+          plan_amount_jod: amountFixed,
+        })
+        .select('id')
+        .single();
+
+      if (ticketErr || !ticket) {
+        Alert.alert(t('common.error'), t('subscribe.errUnexpected'));
+        return;
       }
-    } catch (e) {
+
+      // Auto welcome message from system
+      await supabase.from('support_messages').insert({
+        ticket_id: ticket.id,
+        sender_id: null,
+        is_admin:  true,
+        body: `مرحباً! 👋 تلقّينا طلبك لتفعيل باقة "${planName}" بقيمة ${amountFixed} دينار أردني.\n\nسيرسل لك أحد أعضاء فريقنا رقم حساب CliQ لإتمام التحويل. عادةً ما يستغرق ذلك أقل من ساعة.`,
+      });
+
+      router.push({ pathname: '/support-thread', params: { id: ticket.id } } as any);
+    } catch {
       Alert.alert(t('common.error'), t('subscribe.errUnexpected'));
     } finally {
       setProcessing(false);
@@ -390,9 +398,9 @@ export default function SubscribeScreen() {
   ];
 
   const faqs = [
-    { q: t('subscribe.faq1Q'), a: t('subscribe.faq1A') },
-    { q: t('subscribe.faq2Q'), a: t('subscribe.faq2A') },
-    { q: t('subscribe.faq3Q'), a: t('subscribe.faq3A') },
+    { q: t('subscribe.faq1Q'),       a: t('subscribe.faq1A') },
+    { q: t('subscribe.faq2Q_cliq'),  a: t('subscribe.faq2A_cliq') },
+    { q: t('subscribe.faq3Q'),       a: t('subscribe.faq3A_cliq') },
   ];
 
   return (
@@ -463,6 +471,22 @@ export default function SubscribeScreen() {
           ))}
         </Animated.View>
 
+        {/* ── Coming Soon payment methods ── */}
+        <Animated.View style={[styles.comingSoonSection, { opacity: ctaOp }]}>
+          <Text style={[styles.comingSoonTitle, { textAlign: ta }]}>
+            {t('subscribe.otherMethodsTitle')}
+          </Text>
+          {COMING_SOON_METHODS.map(m => (
+            <View key={m.key} style={styles.comingSoonRow}>
+              <Text style={styles.comingSoonIcon}>{m.icon}</Text>
+              <Text style={styles.comingSoonLabel}>{t(`subscribe.${m.key}` as any)}</Text>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonBadgeText}>{t('subscribe.comingSoon')}</Text>
+              </View>
+            </View>
+          ))}
+        </Animated.View>
+
         <View style={{ height: 120 }} />
       </ScrollView>
 
@@ -492,10 +516,14 @@ export default function SubscribeScreen() {
             : (
               <>
                 <Text style={styles.checkoutBtnText}>
-                  {t('subscribe.checkoutBtn', { name: selectedPlanName })}
+                  {selectedTier === 'trial'
+                    ? t('subscribe.checkoutBtn', { name: selectedPlanName })
+                    : t('subscribe.contactSupportBtn')}
                 </Text>
                 <Text style={styles.checkoutBtnSub}>
-                  {PLAN_ICONS[selectedTier]} {t('subscribe.checkoutSub')}
+                  {selectedTier === 'trial'
+                    ? `🎁 ${t('subscribe.trialBadge')}`
+                    : `💸 ${t('subscribe.cliqPaymentSub')}`}
                 </Text>
               </>
             )
@@ -639,6 +667,24 @@ function createStyles(colors: AppColors) {
   orderPriceRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
   orderOriginal: { fontSize: 13, color: colors.textMuted, textDecorationLine: 'line-through' },
   orderPrice:    { fontSize: 22, fontWeight: '800' },
+
+  comingSoonSection: {
+    marginTop: 8, marginBottom: 8,
+    backgroundColor: colors.surface, borderRadius: 16,
+    padding: 16, borderWidth: 1, borderColor: colors.border,
+  },
+  comingSoonTitle: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 12 },
+  comingSoonRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border,
+  },
+  comingSoonIcon:  { fontSize: 20, width: 28, textAlign: 'center' },
+  comingSoonLabel: { flex: 1, fontSize: 14, color: colors.textMuted },
+  comingSoonBadge: {
+    backgroundColor: colors.border, borderRadius: 8,
+    paddingHorizontal: 8, paddingVertical: 3,
+  },
+  comingSoonBadgeText: { fontSize: 11, fontWeight: '600', color: colors.textMuted },
 
   checkoutBtn: {
     borderRadius: 16, paddingVertical: 16,

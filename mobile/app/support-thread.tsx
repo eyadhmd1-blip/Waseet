@@ -18,10 +18,13 @@ import type { AppColors } from '../src/constants/colors';
 
 interface Ticket {
   id: string;
+  user_id: string;
   category: string;
   priority: string;
   status: string;
   subject: string;
+  plan_tier?: string;
+  plan_amount_jod?: number;
   rating?: number;
   rating_note?: string;
   opened_at: string;
@@ -54,6 +57,8 @@ export default function SupportThreadScreen() {
   const [ticket,            setTicket]            = useState<Ticket | null>(null);
   const [messages,          setMessages]          = useState<SupportMessage[]>([]);
   const [loading,           setLoading]           = useState(true);
+  const [isAdmin,           setIsAdmin]           = useState(false);
+  const [activating,        setActivating]        = useState(false);
   const [body,              setBody]              = useState('');
   const [sending,           setSending]           = useState(false);
   const [rating,            setRating]            = useState(0);
@@ -81,10 +86,10 @@ export default function SupportThreadScreen() {
       const user = _ses?.user;
       if (user) currentUserIdRef.current = user.id;
 
-      const [{ data: ticketData }, { data: msgs }] = await Promise.all([
+      const [{ data: ticketData }, { data: msgs }, { data: userData }] = await Promise.all([
         supabase
           .from('support_tickets')
-          .select('id, category, priority, status, subject, rating, rating_note, opened_at')
+          .select('id, user_id, category, priority, status, subject, plan_tier, plan_amount_jod, rating, rating_note, opened_at')
           .eq('id', id)
           .single(),
         supabase
@@ -92,7 +97,12 @@ export default function SupportThreadScreen() {
           .select('id, sender_id, is_admin, body, created_at')
           .eq('ticket_id', id)
           .order('created_at', { ascending: true }),
+        user
+          ? supabase.from('users').select('is_admin').eq('id', user.id).single()
+          : Promise.resolve({ data: null }),
       ]);
+
+      if (userData?.is_admin) setIsAdmin(true);
 
       if (ticketData) setTicket(ticketData as Ticket);
       if (msgs)       setMessages(msgs as SupportMessage[]);
@@ -124,6 +134,36 @@ export default function SupportThreadScreen() {
     return () => { supabase.removeChannel(channel); };
   }, [id]);
 
+  // ── Admin: activate subscription ─────────────────────────────
+  const handleActivate = async () => {
+    if (!ticket?.plan_tier) return;
+    Alert.alert(
+      t('supportThread.activateBtn'),
+      t('supportThread.activateConfirm', { tier: ticket.plan_tier }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('supportThread.activateBtn'),
+          onPress: async () => {
+            setActivating(true);
+            const { error } = await supabase.rpc('admin_activate_subscription', {
+              p_ticket_id:   ticket.id,
+              p_provider_id: ticket.user_id,
+              p_tier:        ticket.plan_tier,
+            });
+            setActivating(false);
+            if (error) {
+              Alert.alert(t('common.error'), error.message);
+            } else {
+              setTicket(prev => prev ? { ...prev, status: 'resolved' } : prev);
+              load();
+            }
+          },
+        },
+      ]
+    );
+  };
+
   // ── Send message ──────────────────────────────────────────────
   const handleSend = async () => {
     if (!body.trim() || sending) return;
@@ -135,7 +175,7 @@ export default function SupportThreadScreen() {
     const { error } = await supabase.from('support_messages').insert({
       ticket_id: id,
       sender_id: user.id,
-      is_admin:  false,
+      is_admin:  isAdmin,
       body:      body.trim(),
     });
     setSending(false);
@@ -198,6 +238,37 @@ export default function SupportThreadScreen() {
         </View>
         <View style={{ width: 36 }} />
       </View>
+
+      {/* Payment Banner — visible on all payment tickets */}
+      {ticket.category === 'payment' && ticket.plan_tier && (
+        <View style={styles.paymentBanner}>
+          <View style={styles.paymentBannerLeft}>
+            <Text style={styles.paymentBannerLabel}>{t('supportThread.paymentBanner')}</Text>
+            <Text style={styles.paymentBannerPlan}>
+              {ticket.plan_tier.toUpperCase()}
+              {ticket.plan_amount_jod ? `  ·  ${ticket.plan_amount_jod} ${t('common.jod')}` : ''}
+            </Text>
+            <Text style={[
+              styles.paymentBannerStatus,
+              { color: isResolved ? '#86EFAC' : '#FCD34D' },
+            ]}>
+              {isResolved ? t('supportThread.paymentActivated') : t('supportThread.paymentPending')}
+            </Text>
+          </View>
+          {isAdmin && !isResolved && (
+            <TouchableOpacity
+              style={[styles.activateBtn, activating && styles.activateBtnDisabled]}
+              onPress={handleActivate}
+              disabled={activating}
+            >
+              {activating
+                ? <ActivityIndicator color="#fff" size="small" />
+                : <Text style={styles.activateBtnText}>{t('supportThread.activateBtn')}</Text>
+              }
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Messages */}
       <ScrollView
@@ -369,5 +440,14 @@ function createStyles(colors: AppColors) {
 
     resolvedBar:     { padding: 14, borderTopWidth: 1, borderTopColor: colors.border, alignItems: 'center', backgroundColor: 'rgba(20,83,45,0.2)' },
     resolvedBarText: { fontSize: 13, color: '#86EFAC', fontWeight: '600' },
+
+    paymentBanner:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: 'rgba(201,168,76,0.07)', gap: 10 },
+    paymentBannerLeft:   { flex: 1, gap: 2 },
+    paymentBannerLabel:  { fontSize: 11, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
+    paymentBannerPlan:   { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+    paymentBannerStatus: { fontSize: 12, fontWeight: '600' },
+    activateBtn:         { backgroundColor: '#15803D', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14 },
+    activateBtnDisabled: { opacity: 0.5 },
+    activateBtnText:     { fontSize: 13, fontWeight: '700', color: '#fff' },
   });
 }

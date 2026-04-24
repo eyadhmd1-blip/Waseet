@@ -662,7 +662,18 @@
     "unlimitedNote": "*Max 5 concurrent active bids",
     "trialUsed": "Already used",
     "trialBadge": "Free month",
-    "discountBreakdown": "Win discount {{win}}% + Reputation discount {{rep}}% = {{total}}% off"
+    "discountBreakdown": "Win discount {{win}}% + Reputation discount {{rep}}% = {{total}}% off",
+    "contactSupportBtn": "Contact Support to Complete Payment",
+    "cliqPaymentSub": "Instant CliQ Transfer · Activated within 1 hour",
+    "otherMethodsTitle": "Digital Payment Methods — Coming Soon",
+    "comingSoon": "Coming Soon",
+    "methodCard": "Credit / Debit Card",
+    "methodApplePay": "Apple Pay",
+    "methodGooglePay": "Google Pay",
+    "trialActivated": "🎉 Trial activated! You can now submit offers on requests.",
+    "faq2Q_cliq": "How does payment work?",
+    "faq2A_cliq": "Payment is via CliQ instant transfer through your banking app. Support will send the account details in the chat, and your subscription is activated within 1 hour after confirming the transfer.",
+    "faq3A_cliq": "The main difference is the monthly bid credits and search ranking priority. The trial plan is free once per provider."
   },
   "portfolio": {
     "headerTitle": "My Portfolio",
@@ -714,7 +725,9 @@
     "summaryTotal": "Total",
     "sectionFaq": "Frequently Asked Questions",
     "contactNote": "Didn't find your answer? Open a support ticket and our team will respond within 2–4 hours.",
-    "openTicketBtn": "Open Support Ticket"
+    "openTicketBtn": "Open Support Ticket",
+    "adminInboxBtn": "📥 Support Panel",
+    "adminNewCount": "{{count}} new"
   },
   "providerProfile": {
     "contact": "Contact",
@@ -1019,7 +1032,13 @@
     "thankYou": "Thank you for your feedback! 🌟",
     "inputPlaceholder": "Write your reply...",
     "sendBtn": "Send",
-    "resolvedBar": "✅ This ticket has been closed"
+    "resolvedBar": "✅ This ticket has been closed",
+    "paymentBanner": "Top-up Request",
+    "paymentPending": "⏳ Awaiting payment confirmation",
+    "paymentActivated": "✅ Subscription activated",
+    "activateBtn": "Activate Subscription ✅",
+    "activateConfirm": "Confirm payment received? This will activate the {{tier}} plan for the provider.",
+    "activatingText": "Activating..."
   },
   "portfolioAdd": {
     "headerTitle": "Add New Work",
@@ -1205,5 +1224,21 @@
     "backBtn": "Back",
     "selectAtLeastOne": "Please select at least one service",
     "stepOf": "Step {{current}} of {{total}}"
+  },
+  "admin": {
+    "title": "Support Inbox",
+    "filterAll": "All",
+    "filterPayments": "Payments",
+    "filterResolved": "Resolved",
+    "emptyText": "No tickets",
+    "planLabel": "Plan: {{tier}}",
+    "amountLabel": "{{amount}} JOD",
+    "pendingBadge": "Awaiting verification",
+    "catPayment": "💳 Payment",
+    "catOrder": "📋 Order",
+    "catProvider": "🔧 Provider",
+    "catAccount": "👤 Account",
+    "catContract": "📄 Contract",
+    "catOther": "💬 Other"
   }
 }
