@@ -47,8 +47,19 @@ export default function RegisterScreen() {
     });
 
     if (error) {
-      Alert.alert(t('common.error'), error.message);
       setLoading(false);
+      if ((error as any).code === '23505') {
+        Alert.alert(
+          t('auth.phoneAlreadyRegistered'),
+          t('auth.phoneAlreadyRegisteredMsg'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            { text: t('auth.goToLogin'), onPress: () => router.replace('/(auth)/login' as any) },
+          ]
+        );
+      } else {
+        Alert.alert(t('common.error'), error.message);
+      }
       return;
     }
 
