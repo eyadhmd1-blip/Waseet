@@ -9,7 +9,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Modal, TextInput,
   Alert, ScrollView, Animated, Easing, Pressable, I18nManager,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, AppState,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -171,11 +171,12 @@ function createCStyles(colors: AppColors) {
 // ─── Live Indicator ──────────────────────────────────────────
 
 function LiveDot() {
-  const scale = useRef(new Animated.Value(1)).current;
-  const op    = useRef(new Animated.Value(1)).current;
+  const scale   = useRef(new Animated.Value(1)).current;
+  const op      = useRef(new Animated.Value(1)).current;
+  const loopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    Animated.loop(
+    loopRef.current = Animated.loop(
       Animated.sequence([
         Animated.parallel([
           Animated.timing(scale, { toValue: 1.8, duration: 700, useNativeDriver: true }),
@@ -187,7 +188,9 @@ function LiveDot() {
         ]),
         Animated.delay(900),
       ])
-    ).start();
+    );
+    loopRef.current.start();
+    return () => { loopRef.current?.stop(); };
   }, []);
 
   return (
@@ -207,10 +210,11 @@ const liveDotStyles = StyleSheet.create({
 // ─── Locked Card Shimmer ─────────────────────────────────────
 
 function LockedShimmer() {
-  const x = useRef(new Animated.Value(-100)).current;
+  const x       = useRef(new Animated.Value(-100)).current;
+  const loopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    Animated.loop(
+    loopRef.current = Animated.loop(
       Animated.sequence([
         Animated.timing(x, {
           toValue: 340, duration: 1600,
@@ -219,7 +223,9 @@ function LockedShimmer() {
         Animated.timing(x, { toValue: -100, duration: 0, useNativeDriver: true }),
         Animated.delay(2200),
       ])
-    ).start();
+    );
+    loopRef.current.start();
+    return () => { loopRef.current?.stop(); };
   }, []);
 
   return (
@@ -241,17 +247,20 @@ const shimmerStyles = StyleSheet.create({
 // ─── New Badge Pulse ─────────────────────────────────────────
 
 function NewBadge() {
-  const { t } = useLanguage();
-  const scale = useRef(new Animated.Value(1)).current;
+  const { t }   = useLanguage();
+  const scale   = useRef(new Animated.Value(1)).current;
+  const loopRef = useRef<Animated.CompositeAnimation | null>(null);
 
   useEffect(() => {
-    Animated.loop(
+    loopRef.current = Animated.loop(
       Animated.sequence([
         Animated.timing(scale, { toValue: 1.08, duration: 500, useNativeDriver: true }),
         Animated.timing(scale, { toValue: 1.00, duration: 500, useNativeDriver: true }),
         Animated.delay(1500),
       ])
-    ).start();
+    );
+    loopRef.current.start();
+    return () => { loopRef.current?.stop(); };
   }, []);
 
   return (
@@ -432,7 +441,7 @@ function RequestCard({
   return (
     <Animated.View style={{ opacity: entranceAnim, transform: [{ translateY }] }}>
       <View style={[styles.card, isLocked && styles.cardLocked, isUrgent && urgentStyles.urgentCard]}>
-        {isLocked && <LockedShimmer />}
+        {isLocked && index <= 3 && <LockedShimmer />}
 
         {/* Urgent top bar */}
         {isUrgent && (
@@ -801,6 +810,16 @@ export default function ProviderFeed() {
   useEffect(() => () => {
     cardAnimsRef.current.forEach(a => a.stopAnimation());
     cardAnimsRef.current = [];
+  }, []);
+
+  // Pause card entrance animations when app goes to background
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      if (state !== 'active') {
+        cardAnimsRef.current.forEach(a => a.stopAnimation());
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   const load = useCallback(async () => {
