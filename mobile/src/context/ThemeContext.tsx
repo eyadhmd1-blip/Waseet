@@ -40,14 +40,28 @@ function resolveColors(theme: ThemeName, system: ColorSchemeName): AppColors {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme,   setThemeState] = useState<ThemeName>('dark');
-  const [system,  setSystem]     = useState<ColorSchemeName>(Appearance.getColorScheme());
+  // Synchronous initialiser: avoids a flash of wrong theme before AsyncStorage loads.
+  // The value here is only a temporary default; the useEffect below overwrites it
+  // immediately with whatever is persisted (or saves it if this is first launch).
+  const [theme,  setThemeState] = useState<ThemeName>(() => {
+    const sys = Appearance.getColorScheme();
+    return sys === 'light' ? 'light' : 'dark';
+  });
+  const [system, setSystem]     = useState<ColorSchemeName>(Appearance.getColorScheme());
 
-  // Load persisted preference on mount
+  // Load persisted preference on mount.
+  // First launch: no saved value → persist the system-detected default from above.
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then(saved => {
       if (saved === 'light' || saved === 'dark' || saved === 'system') {
         setThemeState(saved);
+      } else {
+        // First launch — save the system-detected value so manual overrides are
+        // never silently reset by a future system-theme change.
+        const sys = Appearance.getColorScheme();
+        const initial: ThemeName = sys === 'light' ? 'light' : 'dark';
+        setThemeState(initial);
+        AsyncStorage.setItem(STORAGE_KEY, initial);
       }
     });
   }, []);
