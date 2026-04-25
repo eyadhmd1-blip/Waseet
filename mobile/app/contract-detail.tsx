@@ -469,7 +469,7 @@ function createBc(colors: AppColors) {
   avatarText:    { fontSize: 18, fontWeight: '700', color: CONTRACT_COLOR },
   nameRow:       { alignItems: 'center', gap: 6, marginBottom: 2 },
   name:          { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  verified:      { fontSize: 12, color: '#7DD3FC', backgroundColor: '#0C4A6E', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
+  verified:      { fontSize: 12, color: colors.infoSoft, backgroundColor: colors.infoBg, borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
   score:         { fontSize: 12, color: colors.textMuted },
   priceWrap:     { alignItems: 'flex-end' },
   price:         { fontSize: 20, fontWeight: '800', color: CONTRACT_COLOR },
@@ -589,8 +589,8 @@ function createStyles(colors: AppColors) {
   acceptedAvatarText:  { fontSize: 20, fontWeight: '700', color: CONTRACT_COLOR },
   acceptedName:        { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
   acceptedPrice:       { fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600' },
-  verifiedBadge:       { backgroundColor: '#0C4A6E', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  verifiedBadgeText:   { fontSize: 12, color: '#7DD3FC', fontWeight: '600' },
+  verifiedBadge:       { backgroundColor: colors.infoBg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
+  verifiedBadgeText:   { fontSize: 12, color: colors.infoSoft, fontWeight: '600' },
 
   timeline: { paddingLeft: 4 },
   });

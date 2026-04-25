@@ -1125,7 +1125,7 @@ import type { AppColors } from '../src/constants/colors';
 function createPcStyles(colors: AppColors) {
   return StyleSheet.create({
     card:       { borderRadius: 16, padding: 14, maxWidth: SCREEN_W * 0.78, minWidth: 220, borderWidth: 1 },
-    cardMine:   { backgroundColor: '#1C1A0E', borderColor: 'rgba(201,168,76,0.30)', alignSelf: 'flex-end' },
+    cardMine:   { backgroundColor: colors.accentDim, borderColor: 'rgba(201,168,76,0.30)', alignSelf: 'flex-end' },
     cardTheirs: { backgroundColor: colors.surface, borderColor: colors.border, alignSelf: 'flex-start' },
 
   header:     { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginBottom: 10 },
@@ -1137,7 +1137,7 @@ function createPcStyles(colors: AppColors) {
   badgeRow:   { flexDirection: 'row', gap: 6, justifyContent: 'flex-end' },
   tier:       { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   tierText:   { fontSize: 10, fontWeight: '700' },
-  verified:   { fontSize: 10, color: '#7DD3FC', fontWeight: '700' },
+  verified:   { fontSize: 10, color: colors.info, fontWeight: '700' },
 
   statsRow: { flexDirection: 'row', gap: 12, justifyContent: 'flex-end', marginBottom: 10 },
   stat:     { fontSize: 12, color: colors.textSecondary },

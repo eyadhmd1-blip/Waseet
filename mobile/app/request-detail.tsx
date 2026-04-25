@@ -34,12 +34,14 @@ type RequestWithMeta = ServiceRequest & {
 
 // ─── Constants ────────────────────────────────────────────────
 
-const STATUS_COLORS: Record<RequestStatus, { bg: string; text: string }> = {
-  open:        { bg: '#0C4A6E', text: '#7DD3FC' },
-  in_progress: { bg: '#78350F', text: '#FCD34D' },
-  completed:   { bg: '#14532D', text: '#86EFAC' },
-  cancelled:   { bg: '#3B0764', text: '#C4B5FD' },
-};
+function getStatusColors(colors: AppColors): Record<RequestStatus, { bg: string; text: string }> {
+  return {
+    open:        { bg: colors.infoBg,    text: colors.infoSoft },
+    in_progress: { bg: '#78350F',        text: '#FCD34D' },
+    completed:   { bg: colors.successBg, text: colors.successSoft },
+    cancelled:   { bg: '#3B0764',        text: '#C4B5FD' },
+  };
+}
 
 const ICON_MAP: Record<string, string> = {
   zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
@@ -224,7 +226,7 @@ export default function RequestDetail() {
     );
   }
 
-  const statusColor  = STATUS_COLORS[request.status];
+  const statusColor  = getStatusColors(colors)[request.status];
   const visibleBids  = bids.filter(b => b.status === 'pending' || b.status === 'accepted');
   const catName      = lang === 'ar'
     ? (request.category?.name_ar ?? request.category_slug)
@@ -629,19 +631,19 @@ function createStyles(colors: AppColors) {
   shareProviderBtnText:    { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
   shareProviderBtnTextAccent: { fontSize: 12, color: colors.accent, fontWeight: '700' },
 
-  inProgressNote:     { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
-  inProgressNoteText: { fontSize: 13, color: '#FCD34D', lineHeight: 20 },
+  inProgressNote:     { backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
+  inProgressNoteText: { fontSize: 13, color: colors.accent, lineHeight: 20 },
 
-  cancelBtn:         { marginHorizontal: 0, marginBottom: 20, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#7F1D1D' },
+  cancelBtn:         { marginHorizontal: 0, marginBottom: 20, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.errorBg },
   cancelBtnDisabled: { opacity: 0.5 },
-  cancelBtnText:     { fontSize: 15, fontWeight: '600', color: '#FCA5A5' },
+  cancelBtnText:     { fontSize: 15, fontWeight: '600', color: colors.errorSoft },
 
   closedBox:  { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 },
   closedIcon: { fontSize: 40, marginBottom: 10 },
   closedText: { fontSize: 15, color: colors.textSecondary, textAlign: 'center' },
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
-  modalSheet:   { backgroundColor: '#0E1E4A', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: 'rgba(201,168,76,0.25)', padding: 24, paddingBottom: 48 },
+  modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: colors.border, padding: 24, paddingBottom: 48 },
   modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 20 },
   modalProvider:{ fontSize: 15, color: colors.textSecondary, marginBottom: 16 },
   modalAmountRow:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.bg, borderRadius: 12, padding: 16, marginBottom: 12 },
@@ -660,7 +662,7 @@ function createStyles(colors: AppColors) {
 
   // ── Report modal ──
   reportOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  reportSheet:         { backgroundColor: '#0E1E4A', borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: 'rgba(201,168,76,0.25)', padding: 24, paddingBottom: 40 },
+  reportSheet:         { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: colors.border, padding: 24, paddingBottom: 40 },
   reportTitle:         { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 4 },
   reportSubtitle:      { fontSize: 13, color: colors.textMuted, textAlign: 'auto', marginBottom: 16 },
   reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: colors.border },

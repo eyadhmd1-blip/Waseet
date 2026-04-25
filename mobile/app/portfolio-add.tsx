@@ -494,8 +494,8 @@ function createSt(colors: AppColors) {
   baLabel:        { fontSize: 13, fontWeight: '800', color: colors.textSecondary, textAlign: 'center', marginBottom: 8 },
   baArrow:        { paddingHorizontal: 6, paddingTop: 28 },
   baArrowText:    { fontSize: 20, color: colors.accent },
-  videoBadge:     { marginTop: 12, backgroundColor: '#064E3B', borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#10B981' },
-  videoBadgeText: { color: '#10B981', fontWeight: '700', fontSize: 13 },
+  videoBadge:     { marginTop: 12, backgroundColor: colors.successBg, borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.success },
+  videoBadgeText: { color: colors.successSoft, fontWeight: '700', fontSize: 13 },
 
   fieldLabel:  { fontSize: 14, fontWeight: '700', color: colors.textSecondary, marginBottom: 12 },
   catScroll:   { gap: 8, paddingVertical: 4 },

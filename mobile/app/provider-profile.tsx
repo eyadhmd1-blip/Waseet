@@ -456,8 +456,8 @@ function createStyles(colors: AppColors) {
   badgeRow:        { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
   tierPill:        { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   tierPillText:    { fontSize: 11, fontWeight: '700' },
-  verifiedPill:    { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: '#0C4A6E' },
-  verifiedPillText:{ fontSize: 11, fontWeight: '700', color: '#7DD3FC' },
+  verifiedPill:    { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: colors.infoBg },
+  verifiedPillText:{ fontSize: 11, fontWeight: '700', color: colors.infoSoft },
   recommendedPill: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, backgroundColor: colors.accentDim, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
   recommendedPillText: { fontSize: 11, fontWeight: '700', color: '#FCD34D' },
 

@@ -376,8 +376,8 @@ function createStyles(colors: AppColors) {
   tierPillText:  { fontSize: 12, fontWeight: '700' },
   score:         { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
   lifetimeJobs:  { fontSize: 13, color: colors.textMuted },
-  verifiedBadge: { backgroundColor: '#0C4A6E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 },
-  verifiedText:  { fontSize: 11, color: '#7DD3FC', fontWeight: '600' },
+  verifiedBadge: { backgroundColor: colors.infoBg, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 },
+  verifiedText:  { fontSize: 11, color: colors.infoSoft, fontWeight: '600' },
 
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10, marginBottom: 24 },
 

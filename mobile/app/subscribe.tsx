@@ -586,7 +586,7 @@ function createStyles(colors: AppColors) {
 
   savingsBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#1C1A0E', borderRadius: 14,
+    backgroundColor: colors.accentDim, borderRadius: 14,
     padding: 14, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)',
   },
   savingsIcon: { fontSize: 22 },
@@ -615,16 +615,16 @@ function createStyles(colors: AppColors) {
   pricePer:     { fontSize: 13, color: colors.textMuted, marginBottom: 2 },
 
   discountTag: {
-    backgroundColor: '#14532D', borderRadius: 8,
+    backgroundColor: colors.successBg, borderRadius: 8,
     paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'flex-start',
   },
-  discountTagText: { fontSize: 11, fontWeight: '700', color: '#86EFAC' },
+  discountTagText: { fontSize: 11, fontWeight: '700', color: colors.successSoft },
 
   creditsHint:   { fontSize: 13, fontWeight: '700', marginTop: 4 },
   unlimitedNote: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
 
   discountBreakdownBanner: {
-    backgroundColor: '#1C1A0E', borderRadius: 12,
+    backgroundColor: colors.accentDim, borderRadius: 12,
     padding: 12, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)',
   },
   discountBreakdownText: { fontSize: 12, color: colors.accent, textAlign: 'auto', fontWeight: '600' },
@@ -634,7 +634,7 @@ function createStyles(colors: AppColors) {
     borderWidth: 2, borderColor: colors.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  selectorDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#fff' },
+  selectorDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.bg },
 
   divider: { height: 1, backgroundColor: colors.border, marginHorizontal: 18 },
 
