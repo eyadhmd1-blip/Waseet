@@ -7,7 +7,7 @@ import { SuccessModal } from '../../src/components/SuccessModal';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../src/lib/supabase';
-import { CATEGORY_GROUPS, JORDAN_CITIES } from '../../src/constants/categories';
+import { CATEGORY_GROUPS, JORDAN_CITIES, CATEGORY_PLACEHOLDERS } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceCategory } from '../../src/types';
 import { useTheme } from '../../src/context/ThemeContext';
@@ -241,7 +241,12 @@ export default function NewRequestScreen() {
           <Text style={[styles.label, { textAlign: ta }]}>{t('newRequest.requestTitle')}</Text>
           <TextInput
             style={[styles.input, { textAlign: ta }]}
-            placeholder={t('newRequest.titlePlaceholder')}
+            placeholder={
+              (lang === 'ar'
+                ? CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.title_ar
+                : CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.title_en)
+              ?? t('newRequest.titlePlaceholder')
+            }
             placeholderTextColor={colors.textMuted}
             value={title}
             onChangeText={setTitle}
@@ -251,7 +256,12 @@ export default function NewRequestScreen() {
           <Text style={[styles.label, { textAlign: ta }]}>{t('newRequest.description')}</Text>
           <TextInput
             style={[styles.input, styles.inputMultiline, { textAlign: ta }]}
-            placeholder={t('newRequest.descPlaceholder')}
+            placeholder={
+              (lang === 'ar'
+                ? CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.desc_ar
+                : CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.desc_en)
+              ?? t('newRequest.descPlaceholder')
+            }
             placeholderTextColor={colors.textMuted}
             value={description}
             onChangeText={setDescription}

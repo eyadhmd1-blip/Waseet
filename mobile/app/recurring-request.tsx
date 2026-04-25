@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { CATEGORY_GROUPS, JORDAN_CITIES } from '../src/constants/categories';
+import { CATEGORY_GROUPS, JORDAN_CITIES, CATEGORY_PLACEHOLDERS } from '../src/constants/categories';
 import {
   RecurrenceFrequency, FREQ_VISITS_PER_MONTH,
 } from '../src/types';
@@ -407,7 +407,12 @@ export default function RecurringRequestScreen() {
                 style={styles.input}
                 value={title}
                 onChangeText={setTitle}
-                placeholder={t('recurringRequest.titlePlaceholder', { service: catName, freq: freqLabel(frequency) })}
+                placeholder={
+                  (lang === 'ar'
+                    ? CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.title_ar
+                    : CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.title_en)
+                  ?? t('recurringRequest.titlePlaceholder', { service: catName, freq: freqLabel(frequency) })
+                }
                 placeholderTextColor={colors.textMuted}
                 textAlign={ta}
                 maxLength={80}
