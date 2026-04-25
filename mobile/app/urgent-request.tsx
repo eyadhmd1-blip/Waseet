@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { CATEGORY_GROUPS } from '../src/constants/categories';
+import { CATEGORY_GROUPS, CATEGORY_PLACEHOLDERS } from '../src/constants/categories';
 import type { ServiceCategory } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { AppHeader } from '../src/components/AppHeader';
@@ -374,7 +374,12 @@ export default function UrgentRequestScreen() {
             <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('urgentRequest.fieldDescLabel')}</Text>
             <TextInput
               style={styles.descInput}
-              placeholder={t('urgentRequest.descPlaceholder')}
+              placeholder={
+                (lang === 'ar'
+                  ? CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.desc_ar
+                  : CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.desc_en)
+                ?? t('urgentRequest.descPlaceholder')
+              }
               placeholderTextColor={colors.textMuted}
               value={description}
               onChangeText={setDescription}
