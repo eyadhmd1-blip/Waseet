@@ -359,22 +359,15 @@ export default function NewRequestScreen() {
   );
 }
 
-function Row({ label, value, multiline, colors: _colors }: { label: string; value: string; multiline?: boolean; isRTL?: boolean; colors?: AppColors }) {
+function Row({ label, value, multiline }: { label: string; value: string; multiline?: boolean; isRTL?: boolean }) {
+  const { colors } = useTheme();
   return (
-    <View style={rowStyles.row}>
-      <Text style={rowStyles.label}>{label}</Text>
-      <Text style={rowStyles.value} numberOfLines={multiline ? 3 : 1}>{value}</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border }}>
+      <Text style={{ fontSize: 13, color: colors.textSecondary, flex: 0.4 }}>{label}</Text>
+      <Text style={{ fontSize: 13, color: colors.textPrimary, flex: 0.6 }} numberOfLines={multiline ? 3 : 1}>{value}</Text>
     </View>
   );
 }
-
-// Row uses static styles since it doesn't have access to theme context here
-// and colors don't change for border/text values in this sub-component
-const rowStyles = StyleSheet.create({
-  row:   { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#1B3568' },
-  label: { fontSize: 13, color: '#3A5C80', flex: 0.4 },
-  value: { fontSize: 13, color: '#EEF4FF', flex: 0.6 },
-});
 
 function createStyles(colors: AppColors) {
   return StyleSheet.create({

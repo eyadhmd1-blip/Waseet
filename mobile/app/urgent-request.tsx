@@ -494,14 +494,14 @@ function createStyles(colors: AppColors) {
   descInput:  { backgroundColor: colors.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: '#7F1D1D', textAlignVertical: 'top', height: 120 },
   charCount:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16 },
 
-  aiPreview:     { backgroundColor: '#0C4A6E', borderRadius: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: '#0369A1' },
-  aiPreviewText: { fontSize: 13, color: '#BAE6FD' },
-  aiPremiumText: { color: '#FCA5A5', fontWeight: '700' },
+  aiPreview:     { backgroundColor: colors.infoBg, borderRadius: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: colors.info },
+  aiPreviewText: { fontSize: 13, color: colors.infoSoft },
+  aiPremiumText: { color: colors.errorSoft, fontWeight: '700' },
 
-  guaranteeBadge: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#064E3B', borderRadius: 12, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: '#065F46' },
+  guaranteeBadge: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.successBg, borderRadius: 12, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: colors.success },
   guaranteeIcon:  { fontSize: 22 },
-  guaranteeTitle: { fontSize: 13, fontWeight: '700', color: '#6EE7B7', textAlign: 'auto' },
-  guaranteeSub:   { fontSize: 11, color: '#34D399', textAlign: 'auto', marginTop: 2 },
+  guaranteeTitle: { fontSize: 13, fontWeight: '700', color: colors.successSoft, textAlign: 'auto' },
+  guaranteeSub:   { fontSize: 11, color: colors.success, textAlign: 'auto', marginTop: 2 },
 
   urgentBtn:     { backgroundColor: '#DC2626', borderRadius: 14, paddingVertical: 17, alignItems: 'center', shadowColor: '#EF4444', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 8 },
   urgentBtnText: { fontSize: 17, fontWeight: '800', color: '#fff' },
@@ -515,7 +515,7 @@ function createStyles(colors: AppColors) {
   confirmLabel: { fontSize: 13, color: colors.textMuted, flex: 0.35 },
   confirmValue: { fontSize: 14, color: colors.textPrimary, fontWeight: '600', flex: 0.65, textAlign: 'auto' },
 
-  priceSummary:      { backgroundColor: '#1C1A0E', borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
+  priceSummary:      { backgroundColor: colors.accentDim, borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
   priceSummaryTitle: { fontSize: 12, color: colors.textMuted, marginBottom: 10 },
   priceRow:          { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   priceBase:         { fontSize: 13, color: colors.textSecondary },

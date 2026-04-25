@@ -300,17 +300,17 @@ function createStyles(colors: AppColors) {
   cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
   clientName: { fontSize: 13, color: colors.textSecondary, marginBottom: 14 },
 
-  doneBtn:      { backgroundColor: '#14532D', borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#15803D' },
-  doneBtnText:  { fontSize: 15, fontWeight: '700', color: '#86EFAC' },
+  doneBtn:      { backgroundColor: colors.successBg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.success },
+  doneBtnText:  { fontSize: 15, fontWeight: '700', color: colors.successSoft },
   btnDisabled:  { backgroundColor: colors.border },
 
-  waitingBox:      { backgroundColor: '#1C1A0E', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', alignItems: 'center', gap: 10 },
-  waitingText:     { fontSize: 13, color: '#FCD34D', textAlign: 'center' },
+  waitingBox:      { backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', alignItems: 'center', gap: 10 },
+  waitingText:     { fontSize: 13, color: colors.accent, textAlign: 'center' },
   enterCodeBtn:    { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 20, paddingVertical: 8 },
   enterCodeBtnText:{ fontSize: 13, fontWeight: '700', color: colors.bg },
 
-  completedBadge:     { alignSelf: 'flex-end', backgroundColor: '#14532D', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
-  completedBadgeText: { fontSize: 11, color: '#86EFAC', fontWeight: '600' },
+  completedBadge:     { alignSelf: 'flex-end', backgroundColor: colors.successBg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
+  completedBadgeText: { fontSize: 11, color: colors.successSoft, fontWeight: '600' },
   ratingRow:          { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 8, marginBottom: 4 },
   reviewText:         { fontSize: 12, color: colors.textSecondary, marginStart: 8, flex: 1 },
   confirmedAt:        { fontSize: 11, color: colors.textMuted, marginTop: 6 },
