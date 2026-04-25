@@ -15,9 +15,8 @@ import { supabase } from '../src/lib/supabase';
 import { TIER_META, CATEGORY_GROUPS } from '../src/constants/categories';
 import type { Provider, User, PortfolioItem, ShareChannel } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
@@ -173,7 +172,6 @@ function ShareSheet({
 export default function ProviderPublicProfile() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { provider_id } = useLocalSearchParams<{ provider_id: string }>();
   const { t, ta, lang } = useLanguage();
@@ -279,16 +277,13 @@ export default function ProviderPublicProfile() {
 
   return (
     <View style={styles.container}>
-      {/* ── Top bar ── */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.topBackBtn} onPress={() => router.back()}>
-          <Text style={styles.topBackText}>→</Text>
-        </TouchableOpacity>
-        <Text style={styles.topTitle}>{t('providerProfile.topTitle')}</Text>
-        <TouchableOpacity style={styles.shareIconBtn} onPress={() => setShowShare(true)}>
-          <Text style={{ fontSize: 20 }}>⬆️</Text>
-        </TouchableOpacity>
-      </View>
+      <AppHeader
+        variant="stack"
+        title={t('providerProfile.topTitle')}
+        onBack={() => router.back()}
+        actionIcon="share-outline"
+        onAction={() => setShowShare(true)}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
@@ -437,11 +432,6 @@ function createStyles(colors: AppColors) {
   backPill:  { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
   backPillText: { fontSize: 14, fontWeight: '700', color: colors.bg },
 
-  topBar:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
-  topBackBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  topBackText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle:     { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
-  shareIconBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
 
   content: { padding: 16, paddingBottom: 60 },
 

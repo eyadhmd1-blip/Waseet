@@ -868,19 +868,13 @@ export default function ChatScreen() {
         </View>
       </Modal>
 
-      {/* ── Header ── */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backText}>→</Text>
-        </TouchableOpacity>
-        <View style={styles.headerInfo}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{job?.request?.title ?? t('chat.defaultChatTitle')}</Text>
-          <Text style={styles.headerSub} numberOfLines={1}>{otherPartyName()}</Text>
-        </View>
-        <TouchableOpacity style={styles.backBtn} onPress={() => setReportModalVisible(true)}>
-          <Text style={{ fontSize: 18 }}>🚩</Text>
-        </TouchableOpacity>
-      </View>
+      <AppHeader
+        variant="stack"
+        title={job?.request?.title ?? t('chat.defaultChatTitle')}
+        onBack={() => router.back()}
+        actionIcon="flag-outline"
+        onAction={() => setReportModalVisible(true)}
+      />
 
       {/* ── Messages ── */}
       <FlatList
@@ -1118,8 +1112,8 @@ function ProfileCardBubble({
 // Import TIER_META for colors — inline map used above, import needed for type safety
 import { TIER_META } from '../src/constants/categories';
 import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 function createPcStyles(colors: AppColors) {
@@ -1156,12 +1150,6 @@ function createStyles(colors: AppColors) {
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 },
-  backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText:    { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-  headerInfo:  { flex: 1 },
-  headerTitle: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
-  headerSub:   { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 2 },
 
   listContent: { padding: 16, paddingBottom: 8, flexGrow: 1, justifyContent: 'flex-end' },
 

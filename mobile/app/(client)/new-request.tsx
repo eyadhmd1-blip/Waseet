@@ -10,9 +10,8 @@ import { supabase } from '../../src/lib/supabase';
 import { CATEGORY_GROUPS, JORDAN_CITIES } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceCategory } from '../../src/types';
-import { useInsets } from '../../src/hooks/useInsets';
-import { HEADER_PAD } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
+import { AppHeader } from '../../src/components/AppHeader';
 import type { AppColors } from '../../src/constants/colors';
 
 type Step = 1 | 2 | 3;
@@ -24,7 +23,6 @@ const ICON_MAP: Record<string, string> = {
 };
 
 export default function NewRequestScreen() {
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
   const { colors } = useTheme();
@@ -188,21 +186,13 @@ export default function NewRequestScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          onPress={() => step === 1 ? router.back() : setStep((step - 1) as Step)}
-          style={styles.backBtn}
-        >
-          <Text style={styles.backText}>→</Text>
-        </TouchableOpacity>
-        <Text style={styles.topTitle}>{STEP_TITLES[step]}</Text>
-        <View style={styles.stepIndicator}>
-          {([1, 2, 3] as Step[]).map(s => (
-            <View key={s} style={[styles.stepDot, s <= step && styles.stepDotActive]} />
-          ))}
-        </View>
-      </View>
+      <AppHeader
+        variant="modal"
+        title={STEP_TITLES[step]}
+        onClose={() => step === 1 ? router.back() : setStep((step - 1) as Step)}
+        step={step}
+        totalSteps={3}
+      />
 
       {/* ── Step 1: Category ── */}
       {step === 1 && (
@@ -383,11 +373,6 @@ function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
 
-    topBar:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-    backBtn:       { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    backText:      { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-    topTitle:      { flex: 1, fontSize: 17, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
-    stepIndicator: { flexDirection: 'row', gap: 6 },
     stepDot:       { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
     stepDotActive: { backgroundColor: colors.accent },
 

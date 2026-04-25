@@ -15,8 +15,7 @@ import { supabase } from '../src/lib/supabase';
 import { CATEGORY_GROUPS } from '../src/constants/categories';
 import type { ServiceCategory } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
+import { AppHeader } from '../src/components/AppHeader';
 import { useTheme } from '../src/context/ThemeContext';
 import type { AppColors } from '../src/constants/colors';
 
@@ -182,7 +181,6 @@ function ConfirmModal({
 export default function UrgentRequestScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
 
@@ -306,26 +304,13 @@ export default function UrgentRequestScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* ── Top bar ── */}
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => step === 1 ? router.back() : goToStep(1)}
-        >
-          <Text style={styles.backText}>→</Text>
-        </TouchableOpacity>
-
-        <View style={styles.topCenter}>
-          <SirenIcon />
-          <Text style={styles.topTitle}>{t('urgentRequest.title')}</Text>
-        </View>
-
-        <View style={styles.stepDots}>
-          {([1, 2] as const).map(s => (
-            <View key={s} style={[styles.stepDot, s <= step && styles.stepDotActive]} />
-          ))}
-        </View>
-      </View>
+      <AppHeader
+        variant="modal"
+        title={t('urgentRequest.title')}
+        onClose={() => step === 1 ? router.back() : goToStep(1)}
+        step={step}
+        totalSteps={2}
+      />
 
       {/* ── Step content ── */}
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
@@ -465,12 +450,7 @@ function createStyles(colors: AppColors) {
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
 
-  topBar:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: '#7F1D1D' },
-  backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-  topCenter: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   sirenEmoji:{ fontSize: 22 },
-  topTitle:  { fontSize: 18, fontWeight: '800', color: '#EF4444' },
   stepDots:  { flexDirection: 'row', gap: 6 },
   stepDot:   { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.border },
   stepDotActive: { backgroundColor: '#EF4444' },

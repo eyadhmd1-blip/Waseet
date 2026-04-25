@@ -4,12 +4,12 @@ import {
   RefreshControl, ActivityIndicator, Modal, TextInput,
   Alert,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Job } from '../../src/types';
-import { useInsets } from '../../src/hooks/useInsets';
-import { HEADER_PAD } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
+import { AppHeader } from '../../src/components/AppHeader';
 import type { AppColors } from '../../src/constants/colors';
 
 type JobTab = 'active' | 'completed';
@@ -22,12 +22,13 @@ type JobWithMeta = Job & {
 export default function ProviderJobs() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  useInsets();
+  const router = useRouter();
   const { t, ta, lang } = useLanguage();
   const [tab, setTab]             = useState<JobTab>('active');
   const [jobs, setJobs]           = useState<JobWithMeta[]>([]);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [userName, setUserName]   = useState('');
 
   const [confirmJob, setConfirmJob]       = useState<JobWithMeta | null>(null);
   const [codeInput, setCodeInput]         = useState(['', '', '', '', '', '']);
@@ -57,6 +58,15 @@ export default function ProviderJobs() {
   }, [tab]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user.id) {
+        supabase.from('users').select('full_name').eq('id', session.user.id).single()
+          .then(({ data }) => { if (data?.full_name) setUserName(data.full_name); });
+      }
+    });
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -187,9 +197,13 @@ export default function ProviderJobs() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { textAlign: ta }]}>{t('providerJobs.title')}</Text>
-      </View>
+      <AppHeader
+        variant="root"
+        userName={userName}
+        userRole="provider"
+        onNotifPress={() => router.push('/notification-settings' as any)}
+        onAvatarPress={() => router.push('/(provider)/profile' as any)}
+      />
 
       <View style={styles.tabRow}>
         <TouchableOpacity
@@ -284,8 +298,7 @@ function createStyles(colors: AppColors) {
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-  header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 12 },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+  sectionTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
 
   tabRow:        { flexDirection: 'row', marginHorizontal: 20, backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginBottom: 16 },
   tabBtn:        { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },

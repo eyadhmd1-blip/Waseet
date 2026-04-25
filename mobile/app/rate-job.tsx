@@ -12,16 +12,14 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 const TAG_KEYS = ['fast', 'excellent', 'affordable', 'professional', 'recommended', 'communication'] as const;
 type TagKey = typeof TAG_KEYS[number];
 
 export default function RateJobScreen() {
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta } = useLanguage();
   const { colors } = useTheme();
@@ -86,16 +84,7 @@ export default function RateJobScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.replace('/(client)/requests')} style={styles.backBtn}>
-          <Text style={styles.backText}>→</Text>
-        </TouchableOpacity>
-        <Text style={styles.topTitle}>{t('rateJob.title')}</Text>
-        <TouchableOpacity onPress={() => router.replace('/(client)/requests')}>
-          <Text style={styles.skipText}>{t('rateJob.skip')}</Text>
-        </TouchableOpacity>
-      </View>
+      <AppHeader variant="stack" title={t('rateJob.title')} onBack={() => router.replace('/(client)/requests' as any)} />
 
       <ScrollView
         style={{ flex: 1 }}
@@ -190,11 +179,6 @@ function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
 
-    topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-    backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    backText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-    topTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
-    skipText:  { fontSize: 14, color: colors.textMuted },
 
     content: { flexGrow: 1, padding: 24 },
 

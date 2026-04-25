@@ -13,9 +13,9 @@ import { CATEGORY_GROUPS }              from '../../src/constants/categories';
 import { useLanguage }                  from '../../src/hooks/useLanguage';
 import type { User, ServiceRequest }    from '../../src/types';
 import { useInsets }                    from '../../src/hooks/useInsets';
-import { HEADER_PAD }                   from '../../src/utils/layout';
 import { flexRow, me }                  from '../../src/utils/rtl';
 import { useTheme }                     from '../../src/context/ThemeContext';
+import { AppHeader }                    from '../../src/components/AppHeader';
 import type { AppColors }               from '../../src/constants/colors';
 
 // ─── Layout constants ─────────────────────────────────────────
@@ -206,32 +206,17 @@ export default function ClientHome() {
   const [refreshing,  setRefreshing]  = useState(false);
   const [activeGroup, setActiveGroup] = useState(CATEGORY_GROUPS[0].slug);
 
-  // ── Animations (unchanged) ───────────────────────────────────
-  const headerOp   = useRef(new Animated.Value(0)).current;
-  const headerY    = useRef(new Animated.Value(-20)).current;
+  // ── Animations ───────────────────────────────────────────────
   const contentOp  = useRef(new Animated.Value(0)).current;
   const contentY   = useRef(new Animated.Value(24)).current;
   const heroScale  = useRef(new Animated.Value(0.94)).current;
-  const notifPulse = useRef(new Animated.Value(1)).current;
 
   const runEntrance = useCallback(() => {
-    Animated.parallel([
-      Animated.timing(headerOp, { toValue: 1, duration: 480, delay: 60,  easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      Animated.timing(headerY,  { toValue: 0, duration: 480, delay: 60,  easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-    ]).start();
     Animated.parallel([
       Animated.timing(contentOp, { toValue: 1, duration: 520, delay: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       Animated.timing(contentY,  { toValue: 0, duration: 520, delay: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
     ]).start();
     Animated.spring(heroScale, { toValue: 1, tension: 100, friction: 8, delay: 320, useNativeDriver: true }).start();
-    Animated.loop(Animated.sequence([
-      Animated.delay(6000),
-      Animated.timing(notifPulse, { toValue: 1.20, duration: 130, useNativeDriver: true }),
-      Animated.timing(notifPulse, { toValue: 0.88, duration: 90,  useNativeDriver: true }),
-      Animated.timing(notifPulse, { toValue: 1.08, duration: 90,  useNativeDriver: true }),
-      Animated.timing(notifPulse, { toValue: 1.00, duration: 70,  useNativeDriver: true }),
-      Animated.delay(6000),
-    ])).start();
   }, []);
 
   // ── Data loading (unchanged) ─────────────────────────────────
@@ -297,30 +282,13 @@ export default function ClientHome() {
     <View style={styles.container}>
 
       {/* ══ HEADER ══════════════════════════════════════════════ */}
-      <Animated.View style={[styles.header, { opacity: headerOp, transform: [{ translateY: headerY }] }]}>
-        <View style={[styles.headerRow, { flexDirection: flexRow(isRTL) }]}>
-
-          {/* Bell */}
-          <Animated.View style={{ transform: [{ scale: notifPulse }] }}>
-            <TouchableOpacity
-              style={styles.bellBtn}
-              onPress={() => router.push('/notification-settings')}
-              activeOpacity={0.75}
-            >
-              <Text style={{ fontSize: 20 }}>🔔</Text>
-            </TouchableOpacity>
-          </Animated.View>
-
-          {/* Centered title */}
-          <View style={styles.headerCenter}>
-            <Text style={styles.headerTitle}>{t('home.title')}</Text>
-            <Text style={styles.headerSub}>{t('home.subtitle')}</Text>
-          </View>
-
-          {/* Balancer */}
-          <View style={{ width: 44 }} />
-        </View>
-      </Animated.View>
+      <AppHeader
+        variant="root"
+        userName={user?.full_name}
+        userRole="client"
+        onNotifPress={() => router.push('/notification-settings')}
+        onAvatarPress={() => router.push('/(client)/profile' as any)}
+      />
 
       {/* ══ SCROLL ══════════════════════════════════════════════ */}
       <ScrollView
@@ -510,25 +478,6 @@ function createStyles(colors: AppColors, isDark: boolean) {
     scroll:    { flex: 1 },
     content:   { paddingTop: 8 },
 
-    // ── Header ──────────────────────────────────────────────────
-    header: {
-      paddingHorizontal: H_PAD,
-      paddingTop:        HEADER_PAD,
-      paddingBottom:     14,
-      backgroundColor:   colors.bg,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    headerRow:   { alignItems: 'center' },
-    headerCenter:{ flex: 1, alignItems: 'center' },
-    headerTitle: { fontSize: 17, fontWeight: '800', color: colors.textPrimary, letterSpacing: -0.3 },
-    headerSub:   { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-    bellBtn: {
-      width: 42, height: 42, borderRadius: 13,
-      backgroundColor: surf2,
-      borderWidth: 1, borderColor: border2,
-      alignItems: 'center', justifyContent: 'center',
-    },
 
     // ── Search ──────────────────────────────────────────────────
     searchBar: {

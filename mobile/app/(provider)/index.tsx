@@ -18,7 +18,8 @@ import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceRequest, Provider, User, RecurringContract } from '../../src/types';
 import { FREQ_VISITS_PER_MONTH } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
-import { HEADER_PAD } from '../../src/utils/layout';
+import { AppHeader }         from '../../src/components/AppHeader';
+import { ProviderSubHeader } from '../../src/components/ProviderSubHeader';
 import { calcUrgentPremium, calcContractTotal, sanitizeAmount } from '../../src/utils/pricing';
 import { flexRow, alignEnd, selfStart, me } from '../../src/utils/rtl';
 import { useTheme } from '../../src/context/ThemeContext';
@@ -727,7 +728,7 @@ export default function ProviderFeed() {
   const urgentStyles = useMemo(() => createUrgentStyles(colors), [colors]);
   const demoBidStyles = useMemo(() => createDemoBidStyles(colors), [colors]);
   const cBidStyles = useMemo(() => createCBidStyles(colors), [colors]);
-  const { headerPad, contentPad } = useInsets();
+  const { contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang, isRTL } = useLanguage();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
@@ -1174,6 +1175,20 @@ export default function ProviderFeed() {
   return (
     <View style={styles.container}>
 
+      <AppHeader
+        variant="root"
+        userName={provider?.user?.full_name}
+        userRole="provider"
+        onNotifPress={() => router.push('/notification-settings' as any)}
+        onAvatarPress={() => router.push('/(provider)/profile' as any)}
+      />
+      <ProviderSubHeader
+        bidCredits={provider?.bid_credits ?? 0}
+        subscriptionTier={provider?.subscription_tier ?? ''}
+        isSubscribed={provider?.is_subscribed ?? false}
+        onUpgrade={() => router.push('/subscribe' as any)}
+      />
+
       {/* ── Pending commitment banner ─────────────────────────── */}
       {pendingCommit && (
         <TouchableOpacity
@@ -1210,32 +1225,12 @@ export default function ProviderFeed() {
           )}
         </View>
 
-        <View style={{ alignItems: alignEnd(isRTL), gap: 8 }}>
-          {/* Live feed indicator */}
-          <View style={[styles.liveRow, { flexDirection: flexRow(isRTL) }]}>
-            <Text style={[styles.liveText, me(4, isRTL) as any]}>
-              {t('providerFeed.live')}
-            </Text>
-            <LiveDot />
-          </View>
-
-          {provider?.is_subscribed ? (
-            <View style={styles.creditsBadge}>
-              <Text style={styles.creditsBadgeText}>
-                {provider.subscription_tier === 'premium'
-                  ? t('providerFeed.creditsUnlimited')
-                  : t('providerFeed.creditsRemaining', { count: provider.bid_credits ?? 0 })}
-              </Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              style={styles.upgradeBtn}
-              onPress={() => router.push('/subscribe')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.upgradeBtnText}>{t('providerFeed.subscribeBtn')}</Text>
-            </TouchableOpacity>
-          )}
+        {/* Live feed indicator */}
+        <View style={[styles.liveRow, { flexDirection: flexRow(isRTL) }]}>
+          <Text style={[styles.liveText, me(4, isRTL) as any]}>
+            {t('providerFeed.live')}
+          </Text>
+          <LiveDot />
         </View>
       </Animated.View>
 
@@ -1652,7 +1647,7 @@ function createStyles(colors: AppColors) {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingHorizontal: 20,
-    paddingTop: HEADER_PAD,
+    paddingTop: 12,
     paddingBottom: 12,
   },
   greeting:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 6 },

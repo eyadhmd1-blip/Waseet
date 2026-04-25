@@ -6,9 +6,8 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -63,7 +62,6 @@ const QUIET_END_OPTIONS   = [6, 7, 8, 9];
 export default function NotificationSettingsScreen() {
   const { colors } = useTheme();
   const st = useMemo(() => createSt(colors), [colors]);
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
 
@@ -185,14 +183,7 @@ export default function NotificationSettingsScreen() {
 
   return (
     <View style={st.container}>
-      {/* ── Header ── */}
-      <View style={st.header}>
-        <TouchableOpacity style={st.backBtn} onPress={() => router.back()}>
-          <Text style={st.backIcon}>→</Text>
-        </TouchableOpacity>
-        <Text style={st.headerTitle}>{t('notifSettings.headerTitle')}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <AppHeader variant="stack" title={t('notifSettings.headerTitle')} onBack={() => router.back()} />
 
       {/* ── Tabs ── */}
       <View style={st.tabs}>
@@ -485,10 +476,6 @@ function createSt(colors: AppColors) {
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll:    { padding: 16, paddingBottom: 48 },
 
-  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
-  backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backIcon:    { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
 
   tabs:          { flexDirection: 'row', margin: 16, backgroundColor: colors.surface, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: colors.border },
   tab:           { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10 },
