@@ -3,7 +3,8 @@
 // 2-step fast flow: Category → Details + submit
 // ============================================================
 
-import { useState, useRef, useEffect, useCallback, useMemo} from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { SuccessModal } from '../src/components/SuccessModal';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView,
@@ -195,6 +196,7 @@ export default function UrgentRequestScreen() {
   const [aiLoading, setAiLoading]     = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting]   = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const fadeAnim  = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -291,11 +293,7 @@ export default function UrgentRequestScreen() {
       }).catch(() => {});
 
       setShowConfirm(false);
-      Alert.alert(
-        t('urgentRequest.successTitle'),
-        t('urgentRequest.successMsg', { mins: URGENT_MINUTES }),
-        [{ text: t('common.confirm'), onPress: () => router.replace('/(client)') }]
-      );
+      setShowSuccess(true);
     } catch {
       Alert.alert(t('common.error'), t('urgentRequest.errSubmit'));
     } finally {
@@ -446,6 +444,16 @@ export default function UrgentRequestScreen() {
         onConfirm={handleSubmit}
         onCancel={() => setShowConfirm(false)}
         loading={submitting}
+      />
+      <SuccessModal
+        visible={showSuccess}
+        title={t('urgentRequest.successTitle')}
+        subtitle={t('urgentRequest.successMsg', { mins: URGENT_MINUTES })}
+        hint="سنقوم بإشعارك عند وصول أي عرض"
+        primaryLabel="عرض طلباتي"
+        secondaryLabel="حسناً"
+        onPrimary={() => { setShowSuccess(false); router.replace('/(client)/requests'); }}
+        onSecondary={() => { setShowSuccess(false); router.replace('/(client)'); }}
       />
     </KeyboardAvoidingView>
   );

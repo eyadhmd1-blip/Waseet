@@ -1,4 +1,5 @@
-import { useState, useRef, useMemo} from 'react';
+import { useState, useRef, useMemo } from 'react';
+import { SuccessModal } from '../src/components/SuccessModal';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, ActivityIndicator, Alert, Animated, Dimensions,
@@ -139,6 +140,7 @@ export default function PortfolioAddScreen() {
   const [catSlug,     setCatSlug]     = useState<string | null>(null);
   const [description, setDescription] = useState('');
   const [submitting,  setSubmitting]  = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const typeAnims = useRef(TYPE_KEYS.map(() => new Animated.Value(1))).current;
   const fadeAnim  = useRef(new Animated.Value(1)).current;
@@ -242,9 +244,7 @@ export default function PortfolioAddScreen() {
 
       if (error) throw error;
 
-      Alert.alert(t('portfolioAdd.successTitle'), t('portfolioAdd.successMsg'), [
-        { text: t('portfolioAdd.successOk'), onPress: () => router.back() },
-      ]);
+      setShowSuccess(true);
     } catch {
       Alert.alert(t('common.error'), t('portfolioAdd.errSubmit'));
     } finally {
@@ -459,6 +459,13 @@ export default function PortfolioAddScreen() {
           </TouchableOpacity>
         )}
       </View>
+      <SuccessModal
+        visible={showSuccess}
+        title={t('portfolioAdd.successTitle')}
+        subtitle={t('portfolioAdd.successMsg')}
+        primaryLabel={t('portfolioAdd.successOk')}
+        onPrimary={() => { setShowSuccess(false); router.back(); }}
+      />
     </KeyboardAvoidingView>
   );
 }

@@ -4,7 +4,8 @@
 // Color identity: Teal #10B981
 // ============================================================
 
-import { useState, useRef, useCallback, useMemo} from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
+import { SuccessModal } from '../src/components/SuccessModal';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView,
@@ -107,6 +108,7 @@ export default function RecurringRequestScreen() {
   const [title, setTitle]             = useState('');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting]   = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const slideIn = () => {
     slideAnim.setValue(30);
@@ -185,11 +187,7 @@ export default function RecurringRequestScreen() {
         }).catch(() => {});
       }
 
-      Alert.alert(
-        t('recurringRequest.successTitle'),
-        t('recurringRequest.successMsg'),
-        [{ text: t('common.confirm'), onPress: () => router.replace('/(client)') }]
-      );
+      setShowSuccess(true);
     } catch {
       Alert.alert(t('common.error'), t('recurringRequest.errSubmit'));
     } finally {
@@ -541,6 +539,16 @@ export default function RecurringRequestScreen() {
           <View style={{ height: 40 }} />
         </ScrollView>
       </Animated.View>
+      <SuccessModal
+        visible={showSuccess}
+        title={t('recurringRequest.successTitle')}
+        subtitle={t('recurringRequest.successMsg')}
+        hint="سنقوم بإشعارك عند وصول أي عرض"
+        primaryLabel="عرض طلباتي"
+        secondaryLabel="حسناً"
+        onPrimary={() => { setShowSuccess(false); router.replace('/(client)/requests'); }}
+        onSecondary={() => { setShowSuccess(false); router.replace('/(client)'); }}
+      />
     </KeyboardAvoidingView>
   );
 }
