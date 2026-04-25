@@ -138,6 +138,10 @@ export default function RequestDetail() {
       body: { job_id: jobId, is_urgent: isUrgent },
     }).catch(() => {});
 
+    supabase.functions.invoke('notify-providers-bid-rejected', {
+      body: { request_id: id },
+    }).catch(() => {});
+
     setAccepting(null);
 
     router.push({

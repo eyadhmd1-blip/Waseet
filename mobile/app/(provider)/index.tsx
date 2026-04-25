@@ -1059,8 +1059,10 @@ export default function ProviderFeed() {
     }
     const submittedId = target.id;
     setUrgentModal({ target: null, loading: false });
-    // Optimistically mark as submitted in the feed
     setMyBidAmounts(prev => new Map([...prev, [submittedId, premiumMin ?? 0]]));
+    supabase.functions.invoke('notify-client-new-bid', {
+      body: { request_id: submittedId },
+    }).catch(() => {});
     Alert.alert(t('providerFeed.successUrgentTitle'), t('providerFeed.successUrgentMsg'));
     load();
   };
@@ -1110,8 +1112,10 @@ export default function ProviderFeed() {
     const submittedId     = target.id;
     const submittedAmount = amount;
     setBidModal({ target: null, amount: '', note: '', loading: false });
-    // Optimistically mark as submitted in the feed
     setMyBidAmounts(prev => new Map([...prev, [submittedId, submittedAmount]]));
+    supabase.functions.invoke('notify-client-new-bid', {
+      body: { request_id: submittedId },
+    }).catch(() => {});
     Alert.alert(t('providerFeed.successBidTitle'), t('providerFeed.successBidMsg'));
     load();
   };
