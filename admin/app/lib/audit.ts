@@ -8,6 +8,8 @@ export type AuditAction =
   | 'verify_provider'
   | 'unverify_provider'
   | 'override_tier'
+  | 'add_credits'
+  | 'deduct_credits'
   | 'close_request'
   | 'delete_request'
   | 'broadcast_notification'

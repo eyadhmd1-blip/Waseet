@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ConfirmModal } from '../ui/confirm-modal';
-import { suspendProvider, unsuspendProvider, verifyProvider, unverifyProvider, overrideTier } from './actions';
+import { suspendProvider, unsuspendProvider, verifyProvider, unverifyProvider, overrideTier, adjustCredits } from './actions';
 
 const TIERS = ['new', 'rising', 'trusted', 'expert', 'elite'] as const;
 const TIER_LABELS: Record<string, string> = {
@@ -16,15 +16,17 @@ interface ProviderActionsProps {
   isActive:       boolean;
   badgeVerified:  boolean;
   currentTier:    string;
+  bidCredits:     number;
 }
 
 export function ProviderActions({
-  providerId, userId, name, isActive, badgeVerified, currentTier
+  providerId, userId, name, isActive, badgeVerified, currentTier, bidCredits
 }: ProviderActionsProps) {
   const [open,        setOpen]        = useState(false);
-  const [modal,       setModal]       = useState<'suspend' | 'unsuspend' | 'verify' | 'unverify' | 'tier' | null>(null);
+  const [modal,       setModal]       = useState<'suspend' | 'unsuspend' | 'verify' | 'unverify' | 'tier' | 'credits' | null>(null);
   const [reason,      setReason]      = useState('');
   const [tier,        setTier]        = useState(currentTier);
+  const [creditDelta, setCreditDelta] = useState('');
   const [loading,     setLoading]     = useState(false);
 
   async function run() {
@@ -34,10 +36,12 @@ export function ProviderActions({
     if (modal === 'verify')    await verifyProvider(providerId, name);
     if (modal === 'unverify')  await unverifyProvider(providerId, name);
     if (modal === 'tier')      await overrideTier(providerId, name, tier, currentTier);
+    if (modal === 'credits')   await adjustCredits(providerId, name, parseInt(creditDelta, 10), reason);
     setLoading(false);
     setModal(null);
     setOpen(false);
     setReason('');
+    setCreditDelta('');
   }
 
   return (
@@ -78,6 +82,10 @@ export function ProviderActions({
             <button className="w-full px-4 py-2.5 text-sm text-amber-400 hover:bg-slate-700 transition-colors text-right border-t border-slate-700"
               onClick={() => { setOpen(false); setModal('tier'); }}>
               ⭐ تعديل الرتبة
+            </button>
+            <button className="w-full px-4 py-2.5 text-sm text-violet-400 hover:bg-slate-700 transition-colors text-right border-t border-slate-700"
+              onClick={() => { setOpen(false); setModal('credits'); }}>
+              💳 إدارة الرصيد
             </button>
           </div>
         </>
@@ -130,6 +138,57 @@ export function ProviderActions({
                 {loading ? '...' : 'حفظ'}
               </button>
               <button onClick={() => setModal(null)}
+                className="px-5 py-2.5 rounded-xl text-sm text-slate-400 hover:bg-slate-800 transition-all">
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Credits modal */}
+      {modal === 'credits' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm mx-4 text-right shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-100 mb-1">إدارة رصيد المزايدة</h3>
+            <p className="text-sm text-slate-400 mb-1">{name}</p>
+            <p className="text-xs text-slate-500 mb-4">الرصيد الحالي: <span className="text-violet-400 font-bold">{bidCredits} رصيد</span></p>
+            <div className="mb-3">
+              <label className="text-xs text-slate-500 mb-1 block">الكمية (موجب = إضافة، سالب = خصم)</label>
+              <input
+                type="number"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-violet-400/50"
+                placeholder="مثال: 10 أو -5"
+                value={creditDelta}
+                onChange={e => setCreditDelta(e.target.value)}
+              />
+              {creditDelta && !isNaN(parseInt(creditDelta, 10)) && (
+                <p className="text-xs mt-1.5 text-slate-500">
+                  بعد التعديل: <span className={parseInt(creditDelta, 10) >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                    {Math.max(0, bidCredits + parseInt(creditDelta, 10))} رصيد
+                  </span>
+                </p>
+              )}
+            </div>
+            <div className="mb-4">
+              <label className="text-xs text-slate-500 mb-1 block">السبب (مطلوب)</label>
+              <input
+                type="text"
+                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 outline-none focus:border-violet-400/50"
+                placeholder="مثال: تعويض عن خطأ تقني"
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+              />
+            </div>
+            <div className="flex gap-3 flex-row-reverse">
+              <button
+                onClick={run}
+                disabled={loading || !reason.trim() || !creditDelta || isNaN(parseInt(creditDelta, 10)) || parseInt(creditDelta, 10) === 0}
+                className="px-5 py-2.5 rounded-xl text-sm font-bold bg-violet-500 hover:bg-violet-400 text-white disabled:opacity-40 transition-all"
+              >
+                {loading ? '...' : 'تطبيق'}
+              </button>
+              <button onClick={() => { setModal(null); setCreditDelta(''); setReason(''); }}
                 className="px-5 py-2.5 rounded-xl text-sm text-slate-400 hover:bg-slate-800 transition-all">
                 إلغاء
               </button>

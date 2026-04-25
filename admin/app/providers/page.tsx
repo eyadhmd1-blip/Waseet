@@ -30,6 +30,7 @@ async function getProviders() {
       is_subscribed, subscription_tier, subscription_ends,
       badge_verified, loyalty_discount, created_at,
       is_active, suspended_at, suspension_reason,
+      bid_credits,
       user:users(id, full_name, phone, city, is_disabled)
     `)
     .order('lifetime_jobs', { ascending: false });
@@ -80,16 +81,17 @@ export default async function ProvidersPage() {
                 <th className="px-5 py-3 text-slate-500 font-medium">الرتبة</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">التقييم</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">الأعمال</th>
+                <th className="px-5 py-3 text-slate-500 font-medium">الرصيد</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">الاشتراك</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">الحالة</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">انتهاء الاشتراك</th>
-                <th className="px-5 py-3 text-slate-500 font-medium">إجراء</th>
+                <th className="px-5 py-3 text-slate-500 font-medium text-center">إجراء</th>
               </tr>
             </thead>
             <tbody>
               {providers.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-slate-600">لا يوجد مزودون بعد</td>
+                  <td colSpan={9} className="text-center py-12 text-slate-600">لا يوجد مزودون بعد</td>
                 </tr>
               )}
               {providers.map((p: any) => {
@@ -128,6 +130,13 @@ export default async function ProvidersPage() {
                     </td>
                     <td className="px-5 py-3 text-slate-300 font-semibold">{p.lifetime_jobs}</td>
                     <td className="px-5 py-3">
+                      <span className={`font-semibold text-sm ${(p.bid_credits ?? 0) > 0 ? 'text-violet-400' : 'text-slate-600'}`}>
+                        {p.subscription_tier === 'premium'
+                          ? <span className="text-amber-400 text-xs">∞</span>
+                          : (p.bid_credits ?? 0)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3">
                       {p.is_subscribed && sub
                         ? <Badge variant={sub.variant}>{sub.label}</Badge>
                         : <span className="text-slate-600 text-xs">مجاني</span>
@@ -150,6 +159,7 @@ export default async function ProvidersPage() {
                         isActive={p.is_active}
                         badgeVerified={p.badge_verified}
                         currentTier={p.reputation_tier}
+                        bidCredits={p.bid_credits ?? 0}
                       />
                     </td>
                   </tr>
