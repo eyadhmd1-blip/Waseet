@@ -930,6 +930,29 @@ export default function ProviderFeed() {
     return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
+  // ── Realtime: sync provider profile changes (credits, subscription) ──
+  useEffect(() => {
+    let profileChannel: ReturnType<typeof supabase.channel> | null = null;
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+
+      profileChannel = supabase
+        .channel(`provider_profile:${user.id}`)
+        .on('postgres_changes', {
+          event:  'UPDATE',
+          schema: 'public',
+          table:  'providers',
+          filter: `id=eq.${user.id}`,
+        }, (payload) => {
+          setProvider((prev: any) => prev ? { ...prev, ...payload.new } : prev);
+        })
+        .subscribe();
+    });
+
+    return () => { if (profileChannel) supabase.removeChannel(profileChannel); };
+  }, []);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();
