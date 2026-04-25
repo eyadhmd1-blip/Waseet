@@ -11,9 +11,8 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 interface Ticket {
@@ -42,7 +41,6 @@ const CAT_ICON: Record<string, string> = {
 type Filter = 'all' | 'open' | 'in_review' | 'resolved';
 
 export default function SupportTicketsScreen() {
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
   const { colors } = useTheme();
@@ -141,16 +139,13 @@ export default function SupportTicketsScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>→</Text>
-        </TouchableOpacity>
-        <Text style={styles.topTitle}>{t('supportTickets.headerTitle')}</Text>
-        <TouchableOpacity onPress={() => router.push('/support-new' as any)}>
-          <Text style={styles.newBtn}>{t('supportTickets.newBtn')}</Text>
-        </TouchableOpacity>
-      </View>
+      <AppHeader
+        variant="stack"
+        title={t('supportTickets.headerTitle')}
+        onBack={() => router.back()}
+        actionIcon="add-outline"
+        onAction={() => router.push('/support-new' as any)}
+      />
 
       {/* Filters */}
       <View style={styles.filterRow}>
@@ -204,11 +199,6 @@ function createStyles(colors: AppColors) {
     container: { flex: 1, backgroundColor: colors.bg },
     center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-    topBar:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-    backBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    backText: { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-    topTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
-    newBtn:   { fontSize: 14, fontWeight: '700', color: colors.accent },
 
     filterRow:      { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 10, gap: 8, borderBottomWidth: 1, borderBottomColor: colors.border },
     chip:           { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1, borderColor: colors.border },
@@ -230,7 +220,7 @@ function createStyles(colors: AppColors) {
     urgentPill:      { alignSelf: 'flex-start', marginTop: 6, backgroundColor: 'rgba(239,68,68,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
     urgentPillText:  { fontSize: 11, color: '#F87171', fontWeight: '700' },
 
-    empty:       { alignItems: 'center', paddingTop: HEADER_PAD },
+    empty:       { alignItems: 'center', paddingTop: 32 },
     emptyIcon:   { fontSize: 48, marginBottom: 12 },
     emptyText:   { fontSize: 16, color: colors.textMuted, marginBottom: 20 },
     emptyBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24 },

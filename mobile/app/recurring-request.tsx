@@ -19,9 +19,8 @@ import {
 } from '../src/types';
 import type { ServiceCategory } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 const CONTRACT_COLOR = '#10B981';
@@ -90,7 +89,6 @@ function createProg(colors: AppColors) {
 export default function RecurringRequestScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -236,19 +234,7 @@ export default function RecurringRequestScreen() {
       style={styles.root}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={goBack} style={styles.backBtn}>
-          <Text style={styles.backIcon}>→</Text>
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <View style={styles.headerBadge}>
-            <Text style={styles.headerBadgeText}>{t('recurringRequest.headerBadge')}</Text>
-          </View>
-          <Text style={styles.headerTitle}>{t('recurringRequest.headerTitle')}</Text>
-        </View>
-        <View style={{ width: 36 }} />
-      </View>
+      <AppHeader variant="modal" title={t('recurringRequest.headerTitle')} onClose={goBack} />
 
       <ProgressBar step={step} />
 
@@ -582,13 +568,8 @@ function createStyles(colors: AppColors) {
   root:    { flex: 1, backgroundColor: colors.bg },
   content: { flex: 1 },
 
-  header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: HEADER_PAD, paddingHorizontal: 16, paddingBottom: 8 },
-  backBtn:      { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
-  backIcon:     { fontSize: 18, color: colors.textSecondary },
-  headerCenter: { alignItems: 'center', flex: 1 },
   headerBadge:  { backgroundColor: CONTRACT_DIM, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 4, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
   headerBadgeText: { fontSize: 11, color: CONTRACT_COLOR, fontWeight: '700' },
-  headerTitle:  { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
 
   stepTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginHorizontal: 16, marginBottom: 6, marginTop: 8 },
   stepSub:   { fontSize: 13, color: colors.textMuted, marginHorizontal: 16, marginBottom: 20 },

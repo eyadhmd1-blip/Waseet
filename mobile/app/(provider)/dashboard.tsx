@@ -3,13 +3,13 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { TIER_META } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User } from '../../src/types';
-import { useInsets } from '../../src/hooks/useInsets';
-import { HEADER_PAD } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
+import { AppHeader } from '../../src/components/AppHeader';
 import type { AppColors } from '../../src/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ function capitalize(s: string): string {
 export default function ProviderDashboard() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-    const { headerPad } = useInsets();
+  const router = useRouter();
   const { t, ta, lang } = useLanguage();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsRow[]>([]);
@@ -155,16 +155,23 @@ export default function ProviderDashboard() {
   const locale = lang === 'ar' ? 'ar-JO' : 'en-GB';
 
   return (
+    <View style={styles.outerContainer}>
+      <AppHeader
+        variant="root"
+        userName={provider?.user?.full_name}
+        userRole="provider"
+        onNotifPress={() => router.push('/notification-settings' as any)}
+        onAvatarPress={() => router.push('/(provider)/profile' as any)}
+      />
     <ScrollView
       style={styles.container}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
     >
-      {/* ── Header ── */}
+      {/* ── Period toggle ── */}
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { textAlign: ta }]}>{t('dashboard.myStats')}</Text>
-        {/* Period toggle */}
         <View style={styles.periodToggle}>
           {(['7', '30'] as Period[]).map(p => (
             <TouchableOpacity
@@ -307,6 +314,7 @@ export default function ProviderDashboard() {
         </View>
       )}
     </ScrollView>
+    </View>
   );
 }
 
@@ -359,11 +367,12 @@ function KpiCard({
 
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
+  outerContainer: { flex: 1, backgroundColor: colors.bg },
+  container: { flex: 1 },
   content:   { paddingBottom: 48 },
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 16 },
+  header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 },
   headerTitle:  { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
   periodToggle: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 10, padding: 3, borderWidth: 1, borderColor: colors.border },
   periodBtn:         { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },

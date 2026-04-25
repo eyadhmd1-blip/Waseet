@@ -14,9 +14,8 @@ import { supabase } from '../src/lib/supabase';
 import { SUBSCRIPTION_PLANS, REP_DISCOUNT } from '../src/constants/categories';
 import type { Provider, User } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 const { width } = Dimensions.get('window');
@@ -244,8 +243,6 @@ export default function SubscribeScreen() {
   const router   = useRouter();
   const params   = useLocalSearchParams<{ tier?: string }>();
   const { t, ta, lang } = useLanguage();
-  const { headerPad } = useInsets();
-
   const [provider, setProvider]         = useState<(Provider & { user: User }) | null>(null);
   const [loading, setLoading]           = useState(true);
   const [selectedTier, setSelectedTier] = useState<string>(params.tier ?? 'pro');
@@ -253,7 +250,6 @@ export default function SubscribeScreen() {
 
   // Entrance animations
   const headerOp   = useRef(new Animated.Value(0)).current;
-  const headerY    = useRef(new Animated.Value(-20)).current;
   const cardsOp    = useRef(new Animated.Value(0)).current;
   const cardsY     = useRef(new Animated.Value(32)).current;
   const ctaOp      = useRef(new Animated.Value(0)).current;
@@ -288,10 +284,7 @@ export default function SubscribeScreen() {
         setSelectedTier(defaultTier);
       }
 
-      Animated.parallel([
-        Animated.timing(headerOp, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }),
-        Animated.timing(headerY,  { toValue: 0, duration: 500, delay: 100, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      ]).start();
+      Animated.timing(headerOp, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }).start();
       Animated.parallel([
         Animated.timing(cardsOp, { toValue: 1, duration: 600, delay: 300, useNativeDriver: true }),
         Animated.timing(cardsY,  { toValue: 0, duration: 600, delay: 300, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
@@ -405,19 +398,7 @@ export default function SubscribeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* ── Fixed Header ── */}
-      <Animated.View style={[styles.header, { opacity: headerOp, transform: [{ translateY: headerY }], paddingTop: headerPad }]}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backIcon}>→</Text>
-        </TouchableOpacity>
-
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>{t('subscribe.headerTitle')}</Text>
-          <Text style={styles.headerSub}>{t('subscribe.headerSub')}</Text>
-        </View>
-
-        <View style={{ width: 40 }} />
-      </Animated.View>
+      <AppHeader variant="stack" title={t('subscribe.headerTitle')} onBack={() => router.back()} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -570,14 +551,6 @@ function createStyles(colors: AppColors) {
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
 
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14,
-    borderBottomWidth: 1, borderBottomColor: colors.border,
-    backgroundColor: colors.bg,
-  },
-  backBtn:      { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  backIcon:     { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
   headerCenter: { flex: 1, alignItems: 'center' },
   headerTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
   headerSub:    { fontSize: 12, color: colors.textMuted, marginTop: 2 },

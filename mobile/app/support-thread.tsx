@@ -11,9 +11,8 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 interface Ticket {
@@ -46,7 +45,6 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function SupportThreadScreen() {
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, ta, lang } = useLanguage();
@@ -225,19 +223,7 @@ export default function SupportThreadScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={0}
     >
-      {/* Top bar */}
-      <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>→</Text>
-        </TouchableOpacity>
-        <View style={styles.topCenter}>
-          <Text style={styles.topTitle} numberOfLines={1}>{ticket.subject}</Text>
-          <Text style={[styles.topStatus, { color: statusColor(ticket.status) }]}>
-            {statusLabel(ticket.status)}
-          </Text>
-        </View>
-        <View style={{ width: 36 }} />
-      </View>
+      <AppHeader variant="stack" title={ticket.subject} onBack={() => router.back()} />
 
       {/* Payment Banner — visible on all payment tickets */}
       {ticket.category === 'payment' && ticket.plan_tier && (
@@ -392,12 +378,6 @@ function createStyles(colors: AppColors) {
     backBtnLg:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
     backBtnLgText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
 
-    topBar:    { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 10 },
-    backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    backText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-    topCenter: { flex: 1, alignItems: 'center' },
-    topTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
-    topStatus: { fontSize: 11, fontWeight: '600', marginTop: 2 },
 
     messages:        { flex: 1 },
     messagesContent: { padding: 16, paddingBottom: 24, gap: 8 },

@@ -9,9 +9,8 @@ import { supabase } from '../src/lib/supabase';
 import { TIER_META } from '../src/constants/categories';
 import { useLanguage } from '../src/hooks/useLanguage';
 import type { ServiceRequest, Bid, RequestStatus } from '../src/types';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -53,7 +52,6 @@ const ICON_MAP: Record<string, string> = {
 export default function RequestDetail() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { headerPad } = useInsets();
   const router  = useRouter();
   const { t, ta, lang } = useLanguage();
   const locale  = lang === 'ar' ? 'ar-JO' : 'en-GB';
@@ -281,14 +279,7 @@ export default function RequestDetail() {
         </View>
       </Modal>
 
-      {/* ── Top bar ── */}
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.topBackBtn} onPress={() => router.back()}>
-          <Text style={styles.topBackText}>→</Text>
-        </TouchableOpacity>
-        <Text style={styles.topTitle}>{t('requests.detailTitle')}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <AppHeader variant="stack" title={t('requests.detailTitle')} onBack={() => router.back()} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
@@ -582,10 +573,6 @@ function createStyles(colors: AppColors) {
   backBtn:   { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
   backBtnText:{ fontSize: 15, fontWeight: '700', color: colors.bg },
 
-  topBar:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-  topBackBtn:  { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  topBackText: { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-  topTitle:    { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
 
   content: { padding: 16, paddingBottom: 48 },
 

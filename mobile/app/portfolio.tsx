@@ -10,9 +10,8 @@ import { supabase }          from '../src/lib/supabase';
 import { ALL_CATEGORIES }    from '../src/constants/categories';
 import type { PortfolioItem } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 const { width: W, height: H } = Dimensions.get('window');
@@ -252,7 +251,6 @@ export default function PortfolioScreen() {
   const { colors } = useTheme();
   const st = useMemo(() => createSt(colors), [colors]);
   const baStyles = useMemo(() => createBaStyles(colors), [colors]);
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
 
@@ -341,14 +339,7 @@ export default function PortfolioScreen() {
 
   return (
     <View style={st.container}>
-      {/* ── Header ── */}
-      <View style={st.header}>
-        <TouchableOpacity style={st.backBtn} onPress={() => router.back()}>
-          <Text style={st.backIcon}>→</Text>
-        </TouchableOpacity>
-        <Text style={st.headerTitle}>{t('portfolio.headerTitle')}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <AppHeader variant="stack" title={t('portfolio.headerTitle')} onBack={() => router.back()} />
 
       <FlatList
         data={items}
@@ -494,10 +485,6 @@ function createSt(colors: AppColors) {
   container:   { flex: 1, backgroundColor: colors.bg },
   center:      { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-  backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backIcon:    { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
 
   listContent: { padding: PAD, paddingBottom: 120 },
   row:         { gap: GAP, marginBottom: GAP },

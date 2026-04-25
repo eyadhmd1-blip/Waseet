@@ -16,9 +16,8 @@ import {
   FREQ_VISITS_PER_MONTH,
 } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 const CONTRACT_COLOR = '#10B981';
@@ -34,7 +33,6 @@ const VISIT_STATUS_COLOR: Record<string, string> = {
 export default function ContractDetailScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { contract_id } = useLocalSearchParams<{ contract_id: string }>();
   const { t, ta, lang } = useLanguage();
@@ -195,14 +193,7 @@ export default function ContractDetailScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backIcon}>→</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t('contractDetail.headerTitle')}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <AppHeader variant="stack" title={t('contractDetail.headerTitle')} onBack={() => router.back()} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -544,10 +535,6 @@ function createStyles(colors: AppColors) {
   root:   { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingTop: HEADER_PAD, paddingHorizontal: 16, paddingBottom: 16 },
-  backBtn:     { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
-  backIcon:    { fontSize: 18, color: colors.textSecondary },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary },
 
   heroCard:     { marginHorizontal: 16, marginBottom: 16, backgroundColor: CONTRACT_DIM, borderRadius: 20, padding: 16, borderWidth: 2, borderColor: CONTRACT_COLOR },
   heroTop:      { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 },

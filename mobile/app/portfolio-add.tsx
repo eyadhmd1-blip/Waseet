@@ -12,9 +12,8 @@ import { supabase }     from '../src/lib/supabase';
 import { CATEGORY_GROUPS } from '../src/constants/categories';
 import type { PortfolioItemType } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
-import { useInsets } from '../src/hooks/useInsets';
-import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
+import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
@@ -127,7 +126,6 @@ function createUbSt(colors: AppColors) {
 export default function PortfolioAddScreen() {
   const { colors } = useTheme();
   const st = useMemo(() => createSt(colors), [colors]);
-    const { headerPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
 
@@ -408,16 +406,13 @@ export default function PortfolioAddScreen() {
       style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={st.header}>
-        <TouchableOpacity
-          style={st.backBtn}
-          onPress={() => step === 1 ? router.back() : goToStep((step - 1) as 1 | 2 | 3)}
-        >
-          <Text style={st.backIcon}>{step === 1 ? '✕' : '→'}</Text>
-        </TouchableOpacity>
-        <Text style={st.headerTitle}>{t('portfolioAdd.headerTitle')}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+      <AppHeader
+        variant="modal"
+        title={t('portfolioAdd.headerTitle')}
+        onClose={() => step === 1 ? router.back() : goToStep((step - 1) as 1 | 2 | 3)}
+        step={step}
+        totalSteps={3}
+      />
 
       <ScrollView
         contentContainerStyle={st.scroll}
@@ -474,10 +469,6 @@ export default function PortfolioAddScreen() {
 
 function createSt(colors: AppColors) {
   return StyleSheet.create({
-  header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-  backBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  backIcon:    { fontSize: 20, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: '800', color: colors.textPrimary, textAlign: 'center' },
 
   scroll:  { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 32 },
   footer:  { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 24, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg },
