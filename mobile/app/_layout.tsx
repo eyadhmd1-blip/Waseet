@@ -51,7 +51,7 @@ async function registerPushToken(userId: string) {
       .from('push_tokens')
       .upsert(
         { user_id: userId, token, platform: 'expo', updated_at: new Date().toISOString() },
-        { onConflict: 'user_id,token' },
+        { onConflict: 'user_id' },
       );
   } catch { /* non-blocking */ }
 }
