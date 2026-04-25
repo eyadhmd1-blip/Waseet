@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { SuccessModal } from '../../src/components/SuccessModal';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../src/lib/supabase';
@@ -45,6 +46,7 @@ export default function NewRequestScreen() {
   const [aiPrice, setAiPrice]         = useState<{ min: number; max: number } | null>(null);
   const [aiLoading, setAiLoading]     = useState(false);
   const [submitting, setSubmitting]   = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -178,9 +180,7 @@ export default function NewRequestScreen() {
       supabase.rpc('mark_notification_converted', { notif_id: notifId }).then(() => {});
     }
 
-    Alert.alert(t('newRequest.successDone'), t('newRequest.successTitle'), [
-      { text: t('common.confirm'), onPress: () => router.replace('/(client)') },
-    ]);
+    setShowSuccess(true);
   };
 
   return (
@@ -355,6 +355,16 @@ export default function NewRequestScreen() {
           </TouchableOpacity>
         </ScrollView>
       )}
+      <SuccessModal
+        visible={showSuccess}
+        title={t('newRequest.successTitle')}
+        subtitle="سيبدأ مقدمو الخدمة بإرسال عروضهم قريباً"
+        hint="سنقوم بإشعارك عند وصول أي عرض"
+        primaryLabel="عرض طلباتي"
+        secondaryLabel="حسناً"
+        onPrimary={() => { setShowSuccess(false); router.replace('/(client)/requests'); }}
+        onSecondary={() => { setShowSuccess(false); router.replace('/(client)'); }}
+      />
     </KeyboardAvoidingView>
   );
 }
