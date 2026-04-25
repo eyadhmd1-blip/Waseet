@@ -70,6 +70,38 @@ export async function unverifyProvider(providerId: string, name: string) {
   revalidatePath('/providers');
 }
 
+export async function adjustCredits(
+  providerId: string,
+  name: string,
+  amount: number,
+  reason: string,
+) {
+  const { data: provider } = await supabaseAdmin
+    .from('providers')
+    .select('bid_credits')
+    .eq('id', providerId)
+    .single();
+
+  const current = (provider as any)?.bid_credits ?? 0;
+  const updated = Math.max(0, current + amount);
+
+  await supabaseAdmin
+    .from('providers')
+    .update({ bid_credits: updated })
+    .eq('id', providerId);
+
+  await logAudit({
+    action: amount >= 0 ? 'add_credits' : 'deduct_credits',
+    target_type: 'provider',
+    target_id: providerId,
+    target_label: name,
+    reason,
+    metadata: { before: current, after: updated, delta: amount },
+  });
+
+  revalidatePath('/providers');
+}
+
 export async function overrideTier(
   providerId: string,
   name: string,
