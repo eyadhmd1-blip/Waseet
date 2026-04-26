@@ -6,6 +6,7 @@
 
 import { useState, useRef, useCallback, useMemo } from 'react';
 import { SuccessModal } from '../src/components/SuccessModal';
+import { SuggestServiceModal } from '../src/components/SuggestServiceModal';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView,
@@ -13,7 +14,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { CATEGORY_GROUPS, JORDAN_CITIES, CATEGORY_PLACEHOLDERS } from '../src/constants/categories';
+import { JORDAN_CITIES, CATEGORY_PLACEHOLDERS } from '../src/constants/categories';
+import { useCategories } from '../src/hooks/useCategories';
 import {
   RecurrenceFrequency, FREQ_VISITS_PER_MONTH,
 } from '../src/types';
@@ -93,8 +95,11 @@ export default function RecurringRequestScreen() {
   const { t, ta, lang } = useLanguage();
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  const { groups } = useCategories();
+
   const [step, setStep]           = useState<Step>(1);
   const [activeGroup, setActiveGroup] = useState('maintenance');
+  const [showSuggest, setShowSuggest] = useState(false);
 
   const [selectedCat, setSelectedCat] = useState<ServiceCategory | null>(null);
   const [frequency, setFrequency]     = useState<RecurrenceFrequency>('monthly');
@@ -248,7 +253,7 @@ export default function RecurringRequestScreen() {
               <Text style={[styles.stepSub, { textAlign: ta }]}>{t('recurringRequest.step1Sub')}</Text>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupScroll}>
-                {CATEGORY_GROUPS.map(g => (
+                {groups.map(g => (
                   <TouchableOpacity
                     key={g.slug}
                     style={[styles.groupTab, activeGroup === g.slug && styles.groupTabActive]}
@@ -262,7 +267,7 @@ export default function RecurringRequestScreen() {
               </ScrollView>
 
               <View style={styles.catGrid}>
-                {(CATEGORY_GROUPS.find(g => g.slug === activeGroup)?.categories ?? []).map(cat => (
+                {(groups.find(g => g.slug === activeGroup)?.categories ?? []).map(cat => (
                   <TouchableOpacity
                     key={cat.slug}
                     style={[styles.catCard, selectedCat?.slug === cat.slug && styles.catCardActive]}
@@ -275,6 +280,10 @@ export default function RecurringRequestScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
+
+              <TouchableOpacity style={styles.suggestBtn} onPress={() => setShowSuggest(true)}>
+                <Text style={styles.suggestBtnText}>{t('suggestions.notFound')}</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -530,6 +539,7 @@ export default function RecurringRequestScreen() {
           <View style={{ height: 40 }} />
         </ScrollView>
       </Animated.View>
+      <SuggestServiceModal visible={showSuggest} onClose={() => setShowSuggest(false)} />
       <SuccessModal
         visible={showSuccess}
         title={t('recurringRequest.successTitle')}
@@ -672,5 +682,8 @@ function createStyles(colors: AppColors) {
   submitBtnDisabled: { backgroundColor: colors.border },
   submitBtnText:     { fontSize: 17, fontWeight: '800', color: '#fff' },
   submitHint:        { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 8 },
+
+  suggestBtn:     { marginTop: 20, marginHorizontal: 16, paddingVertical: 14, alignItems: 'center' as const, borderTopWidth: 1, borderTopColor: colors.border },
+  suggestBtnText: { fontSize: 13, color: colors.textMuted },
   });
 }
