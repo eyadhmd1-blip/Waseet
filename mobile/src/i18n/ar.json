@@ -336,7 +336,7 @@
     "demoCompletedBid": "قدّمت عرضاً بـ {{amount}} د.أ",
     "demoRealCTA": "الطلبات الحقيقية بانتظارك",
     "demoExpiringSoon": "لا تفوّت تجربتك المجانية",
-    "demoSkip": "تخطّي"
+    "demoSkip": "فهمت، إخفاء نهائياً"
   },
   "dashboard": {
     "title": "لوحة التحكم",

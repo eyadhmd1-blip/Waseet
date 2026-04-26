@@ -1279,7 +1279,12 @@ export default function ProviderFeed() {
         <DemoRequestCard
           demo={demoStatus}
           onBidPress={() => setDemoModal(prev => ({ ...prev, open: true }))}
-          onSkip={() => setDemoStatus(null)}
+          onSkip={() => {
+            setDemoStatus(null);
+            if (provider?.id) {
+              supabase.rpc('dismiss_provider_demo', { p_provider_id: provider.id }).then(() => {});
+            }
+          }}
         />
       )}
 
