@@ -26,9 +26,12 @@ export const options = {
   },
 };
 
-const BASE_URL   = __ENV.SUPABASE_URL   || 'http://localhost:54321';
-const ANON_KEY   = __ENV.SUPABASE_ANON_KEY || '';
-const BEARER     = __ENV.BEARER_TOKEN   || ANON_KEY;
+const BASE_URL   = __ENV.SUPABASE_URL       || 'http://localhost:54321';
+const ANON_KEY   = __ENV.SUPABASE_ANON_KEY  || '';
+// BEARER_TOKEN must be a real user JWT. Never fall back to the anon key here —
+// sending a non-JWT anon key as Authorization: Bearer causes PostgREST to reject
+// the request even though the apikey header is valid.
+const BEARER     = __ENV.BEARER_TOKEN || '';
 
 const CITIES      = ['عمان', 'إربد', 'الزرقاء', 'العقبة', 'السلط'];
 const CATEGORIES  = ['cleaning', 'plumbing', 'electrical', 'painting', 'carpentry'];
@@ -46,9 +49,9 @@ export default function () {
     `&limit=20`;
 
   const headers = {
-    'apikey':        ANON_KEY,
-    'Authorization': `Bearer ${BEARER}`,
-    'Content-Type':  'application/json',
+    'apikey':       ANON_KEY,
+    'Content-Type': 'application/json',
+    ...(BEARER ? { 'Authorization': `Bearer ${BEARER}` } : {}),
   };
 
   const start = Date.now();

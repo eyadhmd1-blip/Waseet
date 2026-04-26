@@ -28,9 +28,9 @@ export const options = {
   },
 };
 
-const BASE_URL = __ENV.SUPABASE_URL     || 'http://localhost:54321';
+const BASE_URL = __ENV.SUPABASE_URL      || 'http://localhost:54321';
 const ANON_KEY = __ENV.SUPABASE_ANON_KEY || '';
-const BEARER   = __ENV.BEARER_TOKEN     || '';
+const BEARER   = __ENV.BEARER_TOKEN      || ''; // must be a real user JWT
 
 // These should be pre-seeded request IDs from your staging environment.
 // Replace with real UUIDs before running against staging/prod.
@@ -50,10 +50,10 @@ export default function () {
   const creditCost = Math.random() < 0.3 ? 2 : 1;        // 30% urgent bids
 
   const headers = {
-    'apikey':        ANON_KEY,
-    'Authorization': `Bearer ${BEARER}`,
-    'Content-Type':  'application/json',
-    'Prefer':        'return=representation',
+    'apikey':       ANON_KEY,
+    'Content-Type': 'application/json',
+    'Prefer':       'return=representation',
+    ...(BEARER ? { 'Authorization': `Bearer ${BEARER}` } : {}),
   };
 
   const body = JSON.stringify({

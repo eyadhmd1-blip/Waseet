@@ -29,16 +29,16 @@ export const options = {
 
 const BASE_URL = __ENV.SUPABASE_URL      || 'http://localhost:54321';
 const ANON_KEY = __ENV.SUPABASE_ANON_KEY || '';
-const BEARER   = __ENV.BEARER_TOKEN      || '';
+const BEARER   = __ENV.BEARER_TOKEN      || ''; // must be a real user JWT
 
 const SEED_CLIENT_IDS  = (__ENV.CLIENT_IDS  || '').split(',').filter(Boolean);
 const SEED_REQUEST_IDS = (__ENV.REQUEST_IDS || '').split(',').filter(Boolean);
 
 export default function () {
   const headers = {
-    'apikey':        ANON_KEY,
-    'Authorization': `Bearer ${BEARER}`,
-    'Content-Type':  'application/json',
+    'apikey':       ANON_KEY,
+    'Content-Type': 'application/json',
+    ...(BEARER ? { 'Authorization': `Bearer ${BEARER}` } : {}),
   };
 
   // ── Step 1: List client's requests ──────────────────────────
