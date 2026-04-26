@@ -196,6 +196,10 @@ function Step3Services({
     : null;
 
   const toggle = (slug: string) => {
+    if (!selectedCats.includes(slug) && selectedCats.length >= 3) {
+      Alert.alert(t('profile.maxSpecialties'), t('profile.maxSpecialtiesMsg'));
+      return;
+    }
     setSelectedCats(
       selectedCats.includes(slug)
         ? selectedCats.filter(s => s !== slug)
@@ -254,13 +258,11 @@ function Step3Services({
         )}
 
         {/* Selected summary */}
-        {selectedCats.length > 0 && (
-          <View style={styles.selectedBar}>
-            <Text style={styles.selectedBarText}>
-              {t('onboarding.selectedCount', { count: selectedCats.length })}
-            </Text>
-          </View>
-        )}
+        <View style={styles.selectedBar}>
+          <Text style={styles.selectedBarText}>
+            {t('profile.selectedCount', { count: selectedCats.length, max: 3 })}
+          </Text>
+        </View>
 
         <TouchableOpacity
           style={{ paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border, marginTop: 8 }}
