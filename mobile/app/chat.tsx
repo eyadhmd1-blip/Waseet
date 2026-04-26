@@ -989,7 +989,7 @@ export default function ChatScreen() {
             placeholderTextColor={colors.textMuted}
             value={text}
             onChangeText={setText}
-            textAlign="right"
+            textAlign={ta}
             multiline
             maxLength={500}
           />

@@ -166,7 +166,7 @@ export default function VerifyPhoneScreen() {
                 keyboardType="phone-pad"
                 value={phone}
                 onChangeText={setPhone}
-                textAlign="left"
+                textAlign={ta}
                 maxLength={10}
               />
             </View>

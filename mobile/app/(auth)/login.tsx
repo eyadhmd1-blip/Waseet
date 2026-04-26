@@ -14,7 +14,7 @@ import type { AppColors } from '../../src/constants/colors';
 export default function LoginScreen() {
     useInsets();
   const router = useRouter();
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
   const { colors } = useTheme();
   const [phone, setPhone]     = useState('');
   const [loading, setLoading] = useState(false);
@@ -68,7 +68,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-        <Text style={styles.backText}>→</Text>
+        <Text style={styles.backText}>{isRTL ? '→' : '←'}</Text>
       </TouchableOpacity>
 
       <View style={styles.content}>
@@ -85,7 +85,7 @@ export default function LoginScreen() {
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
-            textAlign="left"
+            textAlign={ta}
             maxLength={10}
           />
         </View>
@@ -108,7 +108,7 @@ function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container:   { flex: 1, backgroundColor: colors.bg },
     back:        { padding: 24, paddingTop: HEADER_PAD },
-    backText:    { fontSize: 24, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    backText:    { fontSize: 24, color: colors.textSecondary },
     content:     { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
     title:       { fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
     subtitle:    { fontSize: 15, color: colors.textMuted, marginBottom: 40 },

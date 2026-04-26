@@ -4,6 +4,7 @@ import {
   Animated, StyleSheet, Easing,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../hooks/useLanguage';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -65,6 +66,7 @@ export function SuccessModal({
   onPrimary, onSecondary,
 }: SuccessModalProps) {
   const { colors } = useTheme();
+  const { ta } = useLanguage();
 
   const backdropOpacity = useRef(new Animated.Value(0)).current;
   const cardScale       = useRef(new Animated.Value(0.82)).current;
@@ -133,7 +135,7 @@ export function SuccessModal({
           {hint ? (
             <View style={styles.hintBox}>
               <Text style={styles.hintIcon}>🔔</Text>
-              <Text style={styles.hintText}>{hint}</Text>
+              <Text style={[styles.hintText, { textAlign: ta }]}>{hint}</Text>
             </View>
           ) : null}
 
@@ -241,7 +243,7 @@ function makeStyles(colors: ReturnType<typeof import('../context/ThemeContext').
       flex: 1,
       fontSize: 13,
       color: colors.textSecondary,
-      textAlign: 'right',
+      textAlign: 'auto',
       lineHeight: 20,
     },
 

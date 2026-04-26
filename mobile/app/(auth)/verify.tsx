@@ -19,7 +19,7 @@ export default function VerifyScreen() {
   useInsets();
   const router = useRouter();
   const { phone, dev_code } = useLocalSearchParams<{ phone: string; dev_code?: string }>();
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
   const { colors } = useTheme();
   const [otp, setOtp]         = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
@@ -119,7 +119,7 @@ export default function VerifyScreen() {
   return (
     <View style={styles.container}>
       <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-        <Text style={styles.backText}>→</Text>
+        <Text style={styles.backText}>{isRTL ? '→' : '←'}</Text>
       </TouchableOpacity>
 
       <View style={styles.content}>
@@ -163,7 +163,7 @@ function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container:  { flex: 1, backgroundColor: colors.bg },
     back:       { padding: 24, paddingTop: HEADER_PAD },
-    backText:   { fontSize: 24, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    backText:   { fontSize: 24, color: colors.textSecondary },
     content:    { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
     title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
     subtitle:   { fontSize: rs(15, 13, 17), color: colors.textMuted, marginBottom: 40 },
