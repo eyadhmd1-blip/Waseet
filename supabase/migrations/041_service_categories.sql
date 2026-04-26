@@ -29,9 +29,12 @@ CREATE TABLE IF NOT EXISTS service_categories (
 ALTER TABLE service_categories ENABLE ROW LEVEL SECURITY;
 
 -- Anyone can read active categories (no auth required)
-CREATE POLICY "categories_public_read"
-  ON service_categories FOR SELECT
-  USING (is_active = true);
+DO $$ BEGIN
+  CREATE POLICY "categories_public_read"
+    ON service_categories FOR SELECT
+    USING (is_active = true);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- ── 3. Indexes ────────────────────────────────────────────────
 

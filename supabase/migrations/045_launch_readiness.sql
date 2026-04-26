@@ -4,6 +4,32 @@
 -- Targets hot paths introduced since migration 031.
 -- ============================================================
 
+-- ── 0. notifications table (in-app notification inbox) ───────
+-- Created here because it was built directly in the dashboard
+-- and was never captured in a prior migration file.
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id         UUID         PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title      TEXT         NOT NULL,
+  body       TEXT,
+  type       TEXT,
+  screen     TEXT,
+  metadata   JSONB,
+  is_read    BOOLEAN      NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  CREATE POLICY "notifications_own"
+    ON notifications FOR ALL
+    USING (auth.uid() = user_id)
+    WITH CHECK (auth.uid() = user_id);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- ── 1. notifications — per-user unread feed ──────────────────
 -- The notification bell fetches all unread notifications for a
 -- user ordered by time. Without this index every user query
@@ -40,7 +66,7 @@ CREATE INDEX IF NOT EXISTS idx_requests_client_status
 -- ── 6. contract_visits — contract detail screen ─────────────
 -- Fetches visits for a contract ordered by scheduled_date.
 CREATE INDEX IF NOT EXISTS idx_contract_visits_contract_date
-  ON contract_visits (contract_id, scheduled_date);
+  ON contract_visits (contract_id, scheduled_at);
 
 -- ── 7. bids — provider bid history ──────────────────────────
 -- Providers list their own bids (bid history tab).
@@ -59,7 +85,7 @@ CREATE INDEX IF NOT EXISTS idx_push_tokens_user
 -- Partial index only covers the hot statuses.
 CREATE INDEX IF NOT EXISTS idx_jobs_provider_active
   ON jobs (provider_id, created_at DESC)
-  WHERE status IN ('in_progress', 'pending_confirmation');
+  WHERE status = 'active';
 
 -- ── 10. messages — unread count badge ───────────────────────
 -- Chat tab unread count = messages WHERE job_id IN (...) AND
@@ -74,7 +100,7 @@ CREATE INDEX IF NOT EXISTS idx_messages_unread
 -- AND status = 'open'. Covers the routing RPC fast-path.
 CREATE INDEX IF NOT EXISTS idx_requests_urgent_open
   ON requests (city, category_slug, created_at DESC)
-  WHERE status = 'open' AND urgency_level = 'urgent';
+  WHERE status = 'open' AND is_urgent = true;
 
 -- ── 12. provider_analytics — daily aggregation ──────────────
 -- Analytics cron job scans by date range per provider.
