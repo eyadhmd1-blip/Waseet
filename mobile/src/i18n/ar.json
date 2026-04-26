@@ -257,7 +257,7 @@
     "contractAvailable": "{{count}} متاح",
     "contractBadge": "🔄 عقد دوري",
     "contractVisitCount": "{{count}} زيارة",
-    "emptyRequests": "لا توجد طلبات حالياً",
+    "emptyRequests": "لا توجد طلبات متاحة في محافظتك لتخصصاتك حالياً",
     "upsellTitle": "اشترك للمزايدة على الطلبات",
     "upsellSub": "المزودون المشتركون يحصلون على طالبي خدمات أكثر ويبنون سمعة موثّقة على المنصة",
     "upsellBestTag": "الأفضل",
