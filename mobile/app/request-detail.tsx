@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo} from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, Modal,
@@ -68,6 +68,7 @@ export default function RequestDetail() {
   const [reportType, setReportType] = useState<string>('');
   const [submittingReport, setSubmittingReport] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [sortBy, setSortBy]         = useState<'price' | 'score'>('price');
 
   const load = useCallback(async () => {
     try {
@@ -230,7 +231,11 @@ export default function RequestDetail() {
   }
 
   const statusColor  = getStatusColors(colors)[request.status];
-  const visibleBids  = bids.filter(b => b.status === 'pending' || b.status === 'accepted');
+  const visibleBids  = [...bids.filter(b => b.status === 'pending' || b.status === 'accepted')]
+    .sort((a, b) => sortBy === 'score'
+      ? b.provider.score - a.provider.score
+      : a.amount - b.amount,
+    );
   const catName      = lang === 'ar'
     ? (request.category?.name_ar ?? request.category_slug)
     : (request.category?.name_en ?? request.category?.name_ar ?? request.category_slug);
@@ -340,6 +345,29 @@ export default function RequestDetail() {
               ) : null}
             </Text>
 
+            {/* Sort toggle */}
+            {visibleBids.length > 1 && (
+              <View style={styles.sortRow}>
+                <Text style={styles.sortLabel}>{t('requests.sortLabel')}</Text>
+                <TouchableOpacity
+                  style={[styles.sortBtn, sortBy === 'price' && styles.sortBtnActive]}
+                  onPress={() => setSortBy('price')}
+                >
+                  <Text style={[styles.sortBtnText, sortBy === 'price' && styles.sortBtnTextActive]}>
+                    {t('requests.sortByPrice')}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.sortBtn, sortBy === 'score' && styles.sortBtnActive]}
+                  onPress={() => setSortBy('score')}
+                >
+                  <Text style={[styles.sortBtnText, sortBy === 'score' && styles.sortBtnTextActive]}>
+                    {t('requests.sortByScore')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             {visibleBids.length === 0 ? (
               <View style={styles.noBids}>
                 <Text style={styles.noBidsIcon}>⏳</Text>
@@ -353,6 +381,10 @@ export default function RequestDetail() {
                   bid={bid}
                   onAccept={() => setConfirmBid(bid)}
                   onReport={() => { setReportTarget(bid); setReportType(''); }}
+                  onViewProfile={() => router.push({
+                    pathname: '/provider-profile',
+                    params: { provider_id: bid.provider.id },
+                  })}
                 />
               ))
             )}
@@ -515,51 +547,78 @@ function BidCard({
   bid,
   onAccept,
   onReport,
+  onViewProfile,
 }: {
   bid: BidWithProvider;
   onAccept: () => void;
   onReport: () => void;
+  onViewProfile: () => void;
 }) {
   const { colors } = useTheme();
   const bidStyles = useMemo(() => createBidStyles(colors), [colors]);
   const { t, ta } = useLanguage();
   const tier = TIER_META[bid.provider.reputation_tier as keyof typeof TIER_META];
+  const [noteExpanded, setNoteExpanded] = useState(false);
+  const noteLines = noteExpanded ? undefined : 3;
 
   return (
     <View style={bidStyles.card}>
+      {/* Provider row — tappable to open profile */}
       <View style={bidStyles.providerRow}>
-        <View style={bidStyles.avatar}>
-          <Text style={bidStyles.avatarText}>
-            {bid.provider.user.full_name.charAt(0)}
-          </Text>
-        </View>
-        <View style={bidStyles.providerInfo}>
-          <View style={bidStyles.nameRow}>
-            <Text style={bidStyles.providerName}>{bid.provider.user.full_name}</Text>
-            {bid.provider.badge_verified && (
-              <Text style={bidStyles.verified}>✓</Text>
-            )}
+        <TouchableOpacity
+          style={bidStyles.providerLeft}
+          onPress={onViewProfile}
+          activeOpacity={0.75}
+        >
+          <View style={bidStyles.avatar}>
+            <Text style={bidStyles.avatarText}>
+              {bid.provider.user.full_name.charAt(0)}
+            </Text>
           </View>
-          <View style={bidStyles.metaRow}>
-            <View style={[bidStyles.tierBadge, { backgroundColor: tier.color + '22' }]}>
-              <Text style={[bidStyles.tierText, { color: tier.color }]}>
-                {t(`dashboard.tier${bid.provider.reputation_tier.charAt(0).toUpperCase() + bid.provider.reputation_tier.slice(1)}` as any)}
-              </Text>
+          <View style={bidStyles.providerInfo}>
+            <View style={bidStyles.nameRow}>
+              <Text style={bidStyles.providerName}>{bid.provider.user.full_name}</Text>
+              {bid.provider.badge_verified && (
+                <Text style={bidStyles.verified}>✓</Text>
+              )}
+              <Text style={bidStyles.profileArrow}>{ta === 'right' ? '←' : '→'}</Text>
             </View>
-            {bid.provider.score > 0 && (
-              <Text style={bidStyles.score}>⭐ {bid.provider.score.toFixed(1)}</Text>
-            )}
-            <Text style={bidStyles.jobs}>{t('chat.jobsCount', { count: bid.provider.lifetime_jobs })}</Text>
+            <View style={bidStyles.metaRow}>
+              <View style={[bidStyles.tierBadge, { backgroundColor: tier.color + '22' }]}>
+                <Text style={[bidStyles.tierText, { color: tier.color }]}>
+                  {t(`dashboard.tier${bid.provider.reputation_tier.charAt(0).toUpperCase() + bid.provider.reputation_tier.slice(1)}` as any)}
+                </Text>
+              </View>
+              {bid.provider.score > 0 && (
+                <Text style={bidStyles.score}>⭐ {bid.provider.score.toFixed(1)}</Text>
+              )}
+              <Text style={bidStyles.jobs}>{t('chat.jobsCount', { count: bid.provider.lifetime_jobs })}</Text>
+              {bid.provider.user.city ? (
+                <Text style={bidStyles.city}>📍 {bid.provider.user.city}</Text>
+              ) : null}
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
+
         <View style={bidStyles.amountBox}>
           <Text style={bidStyles.amountValue}>{bid.amount}</Text>
           <Text style={bidStyles.amountCur}>{t('requests.jod')}</Text>
         </View>
       </View>
 
+      {/* Expandable note */}
       {bid.note ? (
-        <Text style={[bidStyles.note, { textAlign: ta }]} numberOfLines={3}>{bid.note}</Text>
+        <TouchableOpacity
+          onPress={() => setNoteExpanded(v => !v)}
+          activeOpacity={0.8}
+        >
+          <Text style={[bidStyles.note, { textAlign: ta }]} numberOfLines={noteLines}>
+            {bid.note}
+          </Text>
+          <Text style={[bidStyles.readMore, { textAlign: ta }]}>
+            {noteExpanded ? t('requests.readLess') : t('requests.readMore')}
+          </Text>
+        </TouchableOpacity>
       ) : null}
 
       <View style={bidStyles.actionRow}>
@@ -682,29 +741,40 @@ function createStyles(colors: AppColors) {
   reviewingBanner:     { backgroundColor: '#422006', borderRadius: 14, borderWidth: 1, borderColor: '#92400E', paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16 },
   reviewingBannerText: { fontSize: 14, fontWeight: '700', color: '#FED7AA', textAlign: 'center' },
   bidsOf:              { fontSize: 12, fontWeight: '400', color: colors.textMuted },
+
+  sortRow:         { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
+  sortLabel:       { fontSize: 12, color: colors.textMuted, marginEnd: 4 },
+  sortBtn:         { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.surface },
+  sortBtnActive:   { borderColor: colors.accent, backgroundColor: colors.accentDim },
+  sortBtnText:     { fontSize: 12, color: colors.textMuted },
+  sortBtnTextActive: { color: colors.accent, fontWeight: '700' },
   });
 }
 
 function createBidStyles(colors: AppColors) {
   return StyleSheet.create({
-  card:        { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-  providerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  avatar:      { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-  avatarText:  { fontSize: 18, fontWeight: '700', color: colors.bg },
-  providerInfo:{ flex: 1 },
-  nameRow:     { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 4 },
-  providerName:{ fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  verified:    { fontSize: 12, color: '#7DD3FC', fontWeight: '700' },
-  metaRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, justifyContent: 'flex-end' },
-  tierBadge:   { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  tierText:    { fontSize: 10, fontWeight: '700' },
-  score:       { fontSize: 12, color: colors.textSecondary },
-  jobs:        { fontSize: 12, color: colors.textMuted },
-  amountBox:   { alignItems: 'center', minWidth: 60 },
-  amountValue: { fontSize: 20, fontWeight: '700', color: colors.accent },
-  amountCur:   { fontSize: 11, color: colors.textMuted },
-  note:        { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginBottom: 12, paddingHorizontal: 4 },
-  actionRow:    { flexDirection: 'row', gap: 8 },
+  card:         { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+  providerRow:  { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  providerLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  avatar:       { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
+  avatarText:   { fontSize: 18, fontWeight: '700', color: colors.bg },
+  providerInfo: { flex: 1 },
+  nameRow:      { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 4 },
+  providerName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
+  verified:     { fontSize: 12, color: '#7DD3FC', fontWeight: '700' },
+  profileArrow: { fontSize: 12, color: colors.textMuted },
+  metaRow:      { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' },
+  tierBadge:    { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
+  tierText:     { fontSize: 10, fontWeight: '700' },
+  score:        { fontSize: 12, color: colors.textSecondary },
+  jobs:         { fontSize: 12, color: colors.textMuted },
+  city:         { fontSize: 11, color: colors.textMuted },
+  amountBox:    { alignItems: 'center', minWidth: 60, marginStart: 8 },
+  amountValue:  { fontSize: 20, fontWeight: '700', color: colors.accent },
+  amountCur:    { fontSize: 11, color: colors.textMuted },
+  note:         { fontSize: 13, color: colors.textSecondary, lineHeight: 20, paddingHorizontal: 4 },
+  readMore:     { fontSize: 12, color: colors.accent, paddingHorizontal: 4, marginTop: 4, marginBottom: 12 },
+  actionRow:    { flexDirection: 'row', gap: 8, marginTop: 12 },
   reportBtn:    { flex: 0, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#7F1D1D', alignItems: 'center', justifyContent: 'center' },
   reportBtnText:{ fontSize: 12, color: '#FCA5A5' },
   acceptBtn:    { flex: 1, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
