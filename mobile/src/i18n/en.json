@@ -1214,7 +1214,10 @@
     "successTitle": "Report Submitted",
     "successMsg": "Your report will be reviewed by our team.",
     "alreadyReported": "You have already reported this user.",
-    "submitFailed": "Could not submit report. Please try again."
+    "submitFailed": "Could not submit report. Please try again.",
+    "profileTitle": "Report this account",
+    "profileSub": "Describe your complaint in detail. Our team will review it.",
+    "profilePlaceholder": "Write your complaint here..."
   },
   "onboarding": {
     "step1Title": "Welcome to Waseet 👋",

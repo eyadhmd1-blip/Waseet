@@ -8,7 +8,7 @@ import { useEffect, useState, useCallback, useRef, useMemo} from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Share, Alert, Animated, Easing,
-  Dimensions, Image,
+  Dimensions, Image, Modal, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
@@ -183,7 +183,10 @@ export default function ProviderPublicProfile() {
   const [myRole, setMyRole]       = useState<string | null>(null);
   const [isSaved, setIsSaved]     = useState(false);
   const [savingToggle, setSavingToggle] = useState(false);
-  const [showShare, setShowShare] = useState(false);
+  const [showShare, setShowShare]   = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportText, setReportText] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
 
   const headerOp = useRef(new Animated.Value(0)).current;
   const headerY  = useRef(new Animated.Value(20)).current;
@@ -254,6 +257,32 @@ export default function ProviderPublicProfile() {
       setIsSaved(true);
     }
     setSavingToggle(false);
+  };
+
+  const submitReport = async () => {
+    if (reportText.trim().length < 10 || submittingReport || !provider) return;
+    setSubmittingReport(true);
+    try {
+      const { data, error } = await supabase.rpc('submit_report', {
+        p_reported_user_id: provider.user?.id,
+        p_report_type:      'other',
+        p_description:      reportText.trim(),
+      });
+      if (error || data?.error) {
+        Alert.alert(
+          t('common.error'),
+          data?.error === 'ALREADY_REPORTED' ? t('report.alreadyReported') : t('report.submitFailed'),
+        );
+        return;
+      }
+      setShowReport(false);
+      setReportText('');
+      Alert.alert(t('report.successTitle'), t('report.successMsg'));
+    } catch {
+      Alert.alert(t('common.error'), t('report.submitFailed'));
+    } finally {
+      setSubmittingReport(false);
+    }
   };
 
   if (loading) {
@@ -407,7 +436,66 @@ export default function ProviderPublicProfile() {
           )}
         </Animated.View>
 
+        {/* ── Report link (only for other users) ── */}
+        {myId && myId !== provider_id && (
+          <TouchableOpacity
+            style={styles.reportLink}
+            onPress={() => setShowReport(true)}
+          >
+            <Text style={styles.reportLinkText}>🚩 {t('report.reportBtn')}</Text>
+          </TouchableOpacity>
+        )}
+
       </ScrollView>
+
+      {/* ── Report modal ── */}
+      <Modal
+        visible={showReport}
+        transparent
+        animationType="slide"
+        onRequestClose={() => { setShowReport(false); setReportText(''); }}
+      >
+        <View style={styles.reportOverlay}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <View style={styles.reportSheet}>
+              <View style={styles.reportHandle} />
+              <Text style={[styles.reportTitle, { textAlign: ta }]}>{t('report.profileTitle')}</Text>
+              <Text style={[styles.reportSub, { textAlign: ta }]}>{t('report.profileSub')}</Text>
+              <TextInput
+                style={[styles.reportInput, { textAlign: ta === 'right' ? 'right' : 'left' }]}
+                multiline
+                numberOfLines={4}
+                placeholder={t('report.profilePlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                value={reportText}
+                onChangeText={setReportText}
+                maxLength={500}
+              />
+              <Text style={styles.reportCounter}>{reportText.length}/500</Text>
+              <View style={styles.reportBtns}>
+                <TouchableOpacity
+                  style={styles.reportCancelBtn}
+                  onPress={() => { setShowReport(false); setReportText(''); }}
+                >
+                  <Text style={styles.reportCancelText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.reportSubmitBtn,
+                    (reportText.trim().length < 10 || submittingReport) && styles.reportSubmitDisabled,
+                  ]}
+                  onPress={submitReport}
+                  disabled={reportText.trim().length < 10 || submittingReport}
+                >
+                  <Text style={styles.reportSubmitText}>
+                    {submittingReport ? t('common.loading') : t('report.submit')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
 
       {/* ── Share sheet ── */}
       <ShareSheet
@@ -501,5 +589,22 @@ function createStyles(colors: AppColors) {
   channelBtn:   { alignItems: 'center', gap: 6, minWidth: 56 },
   channelIcon:  { width: 52, height: 52, backgroundColor: colors.bg, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
   channelLabel: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
+
+  reportLink:     { alignItems: 'center', paddingVertical: 20, marginTop: 8 },
+  reportLinkText: { fontSize: 13, color: colors.textMuted },
+
+  reportOverlay:  { flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
+  reportSheet:    { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
+  reportHandle:   { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
+  reportTitle:    { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+  reportSub:      { fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 20 },
+  reportInput:    { backgroundColor: colors.bg, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 14, fontSize: 14, color: colors.textPrimary, minHeight: 110, textAlignVertical: 'top' },
+  reportCounter:  { fontSize: 11, color: colors.textMuted, textAlign: 'right', marginTop: 4, marginBottom: 16 },
+  reportBtns:     { flexDirection: 'row', gap: 10 },
+  reportCancelBtn:  { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  reportCancelText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+  reportSubmitBtn:  { flex: 2, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  reportSubmitDisabled: { backgroundColor: colors.border },
+  reportSubmitText: { fontSize: 14, fontWeight: '700', color: '#fff' },
   });
 }
