@@ -663,7 +663,7 @@ function DemoSuccessModal({
 }: { visible: boolean; credits: number; onClose: () => void }) {
   const { colors } = useTheme();
   const demoSuccessStyles = useMemo(() => createDemoSuccessStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
   const steps = [
     t('providerFeed.demoSuccessStep1'),
     t('providerFeed.demoSuccessStep2'),
@@ -681,9 +681,10 @@ function DemoSuccessModal({
           <View style={demoSuccessStyles.stepsBox}>
             <Text style={[demoSuccessStyles.stepsTitle, { textAlign: ta }]}>{t('providerFeed.demoHowItWorks')}</Text>
             {steps.map((s, i) => (
-              <Text key={i} style={[demoSuccessStyles.step, { textAlign: ta }]}>
-                {i + 1}. {s}
-              </Text>
+              <View key={i} style={[demoSuccessStyles.stepRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+                <Text style={demoSuccessStyles.stepNum}>{i + 1}.</Text>
+                <Text style={[demoSuccessStyles.step, { textAlign: ta }]}>{s}</Text>
+              </View>
             ))}
           </View>
 
@@ -694,7 +695,7 @@ function DemoSuccessModal({
           </View>
 
           <TouchableOpacity style={demoSuccessStyles.ctaBtn} onPress={onClose} activeOpacity={0.85}>
-            <Text style={demoSuccessStyles.ctaBtnText}>{t('providerFeed.demoSuccessCTA')} ←</Text>
+            <Text style={demoSuccessStyles.ctaBtnText}>{t('providerFeed.demoSuccessCTA')} {isRTL ? '←' : '→'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -710,7 +711,9 @@ function createDemoSuccessStyles(colors: AppColors) {
     title:       { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 20, width: '100%' },
     stepsBox:    { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 14, width: '100%' },
     stepsTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, width: '100%' },
-    step:        { fontSize: 13, color: colors.textSecondary, lineHeight: 22, width: '100%' },
+    stepRow:     { alignItems: 'flex-start', gap: 6, marginBottom: 2 },
+    stepNum:     { fontSize: 13, color: colors.accent, fontWeight: '700', lineHeight: 22, minWidth: 20 },
+    step:        { fontSize: 13, color: colors.textSecondary, lineHeight: 22, flex: 1 },
     creditsBox:  { backgroundColor: colors.successBg, borderRadius: 10, padding: 12, marginBottom: 20, width: '100%', borderWidth: 1, borderColor: colors.success },
     creditsText: { fontSize: 13, color: colors.successSoft, width: '100%' },
     ctaBtn:      { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignItems: 'center', width: '100%' },

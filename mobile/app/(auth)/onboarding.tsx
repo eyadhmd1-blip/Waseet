@@ -359,7 +359,7 @@ function StepDone({
 }: { role: Role; planChoice: PlanChoice; onExplore: () => void }) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
 
   const subText = role === 'client'
     ? t('onboarding.doneSubClient')
@@ -373,7 +373,7 @@ function StepDone({
       <Text style={[styles.doneTitle, { textAlign: ta }]}>{t('onboarding.doneTitle')}</Text>
       <Text style={[styles.doneSub, { textAlign: ta }]}>{subText}</Text>
       <TouchableOpacity style={styles.doneBtn} onPress={onExplore} activeOpacity={0.85}>
-        <Text style={styles.doneBtnText}>{t('onboarding.exploreCTA')} ←</Text>
+        <Text style={styles.doneBtnText}>{t('onboarding.exploreCTA')} {isRTL ? '←' : '→'}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -385,7 +385,7 @@ export default function OnboardingScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
   const { contentPad } = useInsets();
 
   // Form state
@@ -567,7 +567,7 @@ export default function OnboardingScreen() {
       <View style={styles.header}>
         {canGoBack ? (
           <TouchableOpacity style={styles.backBtn} onPress={goBack}>
-            <Text style={styles.backBtnText}>→</Text>
+            <Text style={styles.backBtnText}>{isRTL ? '→' : '←'}</Text>
           </TouchableOpacity>
         ) : (
           <View style={styles.backBtn} />
@@ -640,7 +640,7 @@ function createStyles(colors: AppColors) {
   // Header
   header:      { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 12 },
   backBtn:     { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-  backBtnText: { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+  backBtnText: { fontSize: 22, color: colors.textSecondary },
 
   // Progress
   progressWrap:            { flex: 1, flexDirection: 'row', gap: 6, paddingHorizontal: 8 },
