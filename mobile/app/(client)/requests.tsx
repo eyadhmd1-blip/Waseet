@@ -17,7 +17,7 @@ import { flexRow }              from '../../src/utils/rtl';
 import { useTheme }             from '../../src/context/ThemeContext';
 import type { AppColors }       from '../../src/constants/colors';
 
-type Filter = 'all' | 'open' | 'in_progress' | 'completed';
+type Filter = 'all' | 'open' | 'in_progress' | 'completed' | 'expired';
 
 const H_PAD = 20;
 
@@ -27,6 +27,7 @@ const STATUS_ACCENT: Record<string, string> = {
   in_progress: '#F59E0B',
   completed:   '#10B981',
   cancelled:   '#8B5CF6',
+  expired:     '#9CA3AF',
 };
 const STATUS_BG: Record<string, string> = {
   open:        'rgba(59,130,246,0.13)',
@@ -34,12 +35,14 @@ const STATUS_BG: Record<string, string> = {
   in_progress: 'rgba(245,158,11,0.13)',
   completed:   'rgba(16,185,129,0.13)',
   cancelled:   'rgba(139,92,246,0.13)',
+  expired:     'rgba(156,163,175,0.15)',
 };
 const FILTER_ACCENT: Record<Filter, string> = {
   all:         '#6B7280',
   open:        '#3B82F6',
   in_progress: '#F59E0B',
   completed:   '#10B981',
+  expired:     '#9CA3AF',
 };
 
 export default function ClientRequests() {
@@ -63,6 +66,7 @@ export default function ClientRequests() {
     { key: 'open',        label: t('requests.filterOpen') },
     { key: 'in_progress', label: t('requests.filterInProgress') },
     { key: 'completed',   label: t('requests.filterCompleted') },
+    { key: 'expired',     label: t('requests.filterExpired') },
   ];
 
   const STATUS_LABEL: Record<string, string> = {
@@ -71,6 +75,7 @@ export default function ClientRequests() {
     in_progress: t('requests.statusInProgress'),
     completed:   t('requests.statusCompleted'),
     cancelled:   t('requests.statusCancelled'),
+    expired:     t('requests.statusExpired'),
   };
 
   // ── Data loading (unchanged) ─────────────────────────────────
@@ -86,8 +91,9 @@ export default function ClientRequests() {
         .eq('client_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (filter === 'open') query = query.in('status', ['open', 'reviewing']);
-      else if (filter !== 'all') query = query.eq('status', filter);
+      if (filter === 'open')    query = query.in('status', ['open', 'reviewing']);
+      else if (filter === 'all') query = query.not('status', 'eq', 'cancelled');
+      else                       query = query.eq('status', filter);
 
       const { data } = await query;
       if (data) setRequests(data);
@@ -182,6 +188,25 @@ export default function ClientRequests() {
             )}
           </View>
         </View>
+
+        {/* Repost banner — only for expired requests */}
+        {item.status === 'expired' && (
+          <TouchableOpacity
+            style={styles.repostBtn}
+            activeOpacity={0.82}
+            onPress={(e) => {
+              e.stopPropagation();
+              router.push({
+                pathname: '/(client)/new-request',
+                params: { repost_from: item.id },
+              } as any);
+            }}
+          >
+            <Text style={styles.repostBtnText}>
+              {t('requests.repostBtn')}
+            </Text>
+          </TouchableOpacity>
+        )}
       </TouchableOpacity>
     );
   };
@@ -356,6 +381,15 @@ function createStyles(colors: AppColors, isDark: boolean) {
     bidChipText: { fontSize: 12, fontWeight: '700' },
 
     aiPrice: { fontSize: 12, color: colors.accent, fontWeight: '600' },
+
+    repostBtn: {
+      marginTop:         12,
+      backgroundColor:   colors.accent,
+      borderRadius:      10,
+      paddingVertical:   10,
+      alignItems:        'center',
+    },
+    repostBtnText: { fontSize: 13, fontWeight: '700', color: isDark ? '#000' : '#fff' },
 
     // ── Empty state
     empty:         { alignItems: 'center', paddingTop: 60, paddingHorizontal: H_PAD },

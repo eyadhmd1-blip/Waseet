@@ -40,6 +40,7 @@ function getStatusColors(colors: AppColors): Record<RequestStatus, { bg: string;
     in_progress: { bg: '#78350F',        text: '#FCD34D' },
     completed:   { bg: colors.successBg, text: colors.successSoft },
     cancelled:   { bg: '#3B0764',        text: '#C4B5FD' },
+    expired:     { bg: 'rgba(156,163,175,0.15)', text: '#9CA3AF' },
   };
 }
 

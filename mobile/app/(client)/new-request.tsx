@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
@@ -28,7 +28,11 @@ export default function NewRequestScreen() {
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
   const { colors } = useTheme();
-  const { category: preselectedCategory, notif_id: notifId } = useLocalSearchParams<{ category?: string; notif_id?: string }>();
+  const {
+    category: preselectedCategory,
+    notif_id: notifId,
+    repost_from: repostFromId,
+  } = useLocalSearchParams<{ category?: string; notif_id?: string; repost_from?: string }>();
 
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { groups } = useCategories();
@@ -49,9 +53,34 @@ export default function NewRequestScreen() {
   const [aiLoading, setAiLoading]     = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [repostBanner, setRepostBanner] = useState(false);
+
+  // Pre-fill fields when reposting from an expired request
+  useEffect(() => {
+    if (!repostFromId) return;
+    supabase
+      .from('requests')
+      .select('category_slug, title, description, city, ai_suggested_price_min, ai_suggested_price_max')
+      .eq('id', repostFromId)
+      .single()
+      .then(({ data }) => {
+        if (!data) return;
+        const cat = CATEGORY_GROUPS.flatMap(g => g.categories).find(c => c.slug === data.category_slug) ?? null;
+        setSelectedCat(cat);
+        setTitle(data.title ?? '');
+        setDescription(data.description ?? '');
+        setCity(data.city ?? '');
+        if (data.ai_suggested_price_min && data.ai_suggested_price_max) {
+          setAiPrice({ min: data.ai_suggested_price_min, max: data.ai_suggested_price_max });
+        }
+        setStep(2);
+        setRepostBanner(true);
+      });
+  }, [repostFromId]);
 
   useFocusEffect(
     useCallback(() => {
+      if (repostFromId) return; // skip reset when reposting
       setStep(preselectedCategory ? 2 : 1);
       setSelectedCat(
         preselectedCategory
@@ -66,7 +95,8 @@ export default function NewRequestScreen() {
       setAiPrice(null);
       setAiLoading(false);
       setSubmitting(false);
-    }, [preselectedCategory])
+      setRepostBanner(false);
+    }, [preselectedCategory, repostFromId])
   );
 
   const STEP_TITLES: Record<Step, string> = {
@@ -233,6 +263,13 @@ export default function NewRequestScreen() {
             <Text style={styles.suggestBtnText}>{t('suggestions.notFound')}</Text>
           </TouchableOpacity>
         </ScrollView>
+      )}
+
+      {/* ── Repost banner ── */}
+      {repostBanner && (
+        <View style={styles.repostBanner}>
+          <Text style={styles.repostBannerText}>{t('requests.repostPrefilled')}</Text>
+        </View>
       )}
 
       {/* ── Step 2: Details ── */}
@@ -443,5 +480,17 @@ function createStyles(colors: AppColors) {
 
     suggestBtn:     { marginTop: 20, paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border },
     suggestBtnText: { fontSize: 13, color: colors.textMuted },
+
+    repostBanner: {
+      marginHorizontal: 20,
+      marginBottom:     12,
+      backgroundColor:  'rgba(59,130,246,0.10)',
+      borderRadius:     10,
+      paddingVertical:  10,
+      paddingHorizontal: 14,
+      borderWidth:      1,
+      borderColor:      'rgba(59,130,246,0.25)',
+    },
+    repostBannerText: { fontSize: 13, color: colors.accent, fontWeight: '600', textAlign: 'center' },
   });
 }

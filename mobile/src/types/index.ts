@@ -4,7 +4,7 @@
 
 export type UserRole = 'client' | 'provider' | 'admin';
 export type ReputationTier = 'new' | 'rising' | 'trusted' | 'expert' | 'elite';
-export type RequestStatus = 'open' | 'reviewing' | 'in_progress' | 'completed' | 'cancelled';
+export type RequestStatus = 'open' | 'reviewing' | 'in_progress' | 'completed' | 'cancelled' | 'expired';
 export type BidStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 export type JobStatus = 'active' | 'completed' | 'disputed' | 'cancelled';
 export type MsgType = 'text' | 'image' | 'video' | 'system' | 'audio' | 'location' | 'profile_card';
