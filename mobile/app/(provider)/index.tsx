@@ -432,10 +432,21 @@ function RequestCard({
   const styles = useMemo(() => createStyles(colors), [colors]);
   const urgentStyles = useMemo(() => createUrgentStyles(colors), [colors]);
   const { t, lang } = useLanguage();
-  const bidsCount = item.bids_count?.[0]?.count ?? 0;
-  const isNew     = Date.now() - new Date(item.created_at).getTime() < 60 * 60 * 1000;
-  const isUrgent  = !!item.is_urgent;
-  const locale    = lang === 'ar' ? 'ar-JO' : 'en-GB';
+  const bidsCount     = item.bids_count?.[0]?.count ?? 0;
+  const isNew         = Date.now() - new Date(item.created_at).getTime() < 60 * 60 * 1000;
+  const isUrgent      = !!item.is_urgent;
+  const locale        = lang === 'ar' ? 'ar-JO' : 'en-GB';
+
+  // Bidding window countdown
+  const biddingEndsLabel = useMemo(() => {
+    if (!item.bidding_ends_at) return null;
+    const msLeft = new Date(item.bidding_ends_at).getTime() - Date.now();
+    if (msLeft <= 0) return t('requests.biddingClosed');
+    const hoursLeft = Math.floor(msLeft / (1000 * 60 * 60));
+    const minsLeft  = Math.floor((msLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const timeStr   = hoursLeft > 0 ? `${hoursLeft}h ${minsLeft}m` : `${minsLeft}m`;
+    return t('requests.biddingEndsIn', { time: timeStr });
+  }, [item.bidding_ends_at]);
 
   const translateY = entranceAnim.interpolate({ inputRange: [0, 1], outputRange: [28, 0] });
 
@@ -502,6 +513,9 @@ function RequestCard({
             <Text style={styles.cardCity}>📍 {item.city}</Text>
             {bidsCount > 0 && !isUrgent && (
               <Text style={styles.bidsCount}>{t('providerFeed.bidCount', { count: bidsCount })}</Text>
+            )}
+            {biddingEndsLabel && !isUrgent && (
+              <Text style={styles.biddingEnds}>⏱ {biddingEndsLabel}</Text>
             )}
           </View>
 
@@ -1695,7 +1709,8 @@ function createStyles(colors: AppColors) {
   cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cardLeft:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
   cardCity:   { fontSize: 12, color: colors.textMuted },
-  bidsCount:  { fontSize: 12, color: colors.textSecondary },
+  bidsCount:    { fontSize: 12, color: colors.textSecondary },
+  biddingEnds:  { fontSize: 11, color: colors.textMuted, marginTop: 2 },
   aiPrice:    { fontSize: 13, color: colors.accent, fontWeight: '600' },
 
   bidBtn:           { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8 },
