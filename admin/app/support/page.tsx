@@ -28,33 +28,51 @@ const STATUS_META: Record<string, { label: string; variant: 'info' | 'warning' |
 async function getTickets(params: { status?: string; category?: string; priority?: string }) {
   let q = supabaseAdmin
     .from('support_tickets')
-    .select(`
-      id, category, priority, status, subject, rating, opened_at, resolved_at,
-      user:users(full_name, role)
-    `)
-    .order('priority', { ascending: false }) // urgent first
-    .order('opened_at', { ascending: true }); // oldest first within priority
+    .select('id, category, priority, status, subject, rating, opened_at, resolved_at, user_id')
+    .order('priority', { ascending: false })
+    .order('opened_at', { ascending: true });
 
   if (params.status)   q = q.eq('status',   params.status);
   if (params.category) q = q.eq('category', params.category);
   if (params.priority) q = q.eq('priority', params.priority);
 
-  const { data } = await q.limit(100);
-  return data ?? [];
+  const { data: tickets, error: ticketsError } = await q.limit(100);
+
+  if (ticketsError) {
+    console.error('[support] getTickets error:', ticketsError.message, ticketsError.details);
+    return [];
+  }
+  if (!tickets || tickets.length === 0) return [];
+
+  // Separately fetch user info to avoid schema-cache FK join failures
+  const userIds = [...new Set(tickets.map((t: any) => t.user_id).filter(Boolean))];
+  const { data: users, error: usersError } = await supabaseAdmin
+    .from('users')
+    .select('id, full_name, role')
+    .in('id', userIds);
+
+  if (usersError) {
+    console.error('[support] getTickets users error:', usersError.message);
+  }
+
+  const userMap = Object.fromEntries((users ?? []).map((u: any) => [u.id, u]));
+
+  return tickets.map((t: any) => ({ ...t, user: userMap[t.user_id] ?? null }));
 }
 
 async function getStats() {
-  const [
-    { count: open },
-    { count: inReview },
-    { count: urgent },
-    { count: resolved },
-  ] = await Promise.all([
+  const results = await Promise.all([
     supabaseAdmin.from('support_tickets').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     supabaseAdmin.from('support_tickets').select('id', { count: 'exact', head: true }).eq('status', 'in_review'),
     supabaseAdmin.from('support_tickets').select('id', { count: 'exact', head: true }).eq('priority', 'urgent').neq('status', 'resolved').neq('status', 'closed'),
     supabaseAdmin.from('support_tickets').select('id', { count: 'exact', head: true }).eq('status', 'resolved'),
   ]);
+
+  results.forEach(({ error }, i) => {
+    if (error) console.error(`[support] getStats[${i}] error:`, error.message);
+  });
+
+  const [{ count: open }, { count: inReview }, { count: urgent }, { count: resolved }] = results;
   return { open: open ?? 0, inReview: inReview ?? 0, urgent: urgent ?? 0, resolved: resolved ?? 0 };
 }
 
