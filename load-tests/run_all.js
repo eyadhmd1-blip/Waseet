@@ -104,14 +104,18 @@ export const options = {
 // ── Shared helpers ────────────────────────────────────────────
 const BASE_URL  = __ENV.SUPABASE_URL       || 'http://localhost:54321';
 const ANON_KEY  = __ENV.SUPABASE_ANON_KEY  || '';
-const BEARER    = __ENV.BEARER_TOKEN       || ANON_KEY;
+// BEARER_TOKEN must be a real user JWT — never fall back to the anon key.
+// Sending a non-JWT anon key as Authorization: Bearer causes PostgREST to
+// reject the request even when the apikey header is valid.
+const BEARER    = __ENV.BEARER_TOKEN       || '';
 
 function headers() {
-  return {
-    'apikey':        ANON_KEY,
-    'Authorization': `Bearer ${BEARER}`,
-    'Content-Type':  'application/json',
+  const h = {
+    'apikey':       ANON_KEY,
+    'Content-Type': 'application/json',
   };
+  if (BEARER) h['Authorization'] = `Bearer ${BEARER}`;
+  return h;
 }
 
 function pick(arr) {
