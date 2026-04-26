@@ -1,6 +1,6 @@
 import 'intl-pluralrules';   // polyfill — must be first import
-import { useEffect, useState, useRef } from 'react';
-import { Platform, View, Text, StatusBar } from 'react-native';
+import { Component, useEffect, useState, useRef } from 'react';
+import { Platform, View, Text, StatusBar, TouchableOpacity } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
@@ -15,6 +15,43 @@ import { initI18n } from '../src/i18n';
 import i18nInstance from '../src/i18n';
 
 SplashScreen.preventAutoHideAsync();
+
+// ── Global Error Boundary ─────────────────────────────────────
+
+class ErrorBoundary extends Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  state: { hasError: boolean; error: Error | null } = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error('[ErrorBoundary]', error, info.componentStack);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+        <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, textAlign: 'center' }}>
+          حدث خطأ غير متوقع
+        </Text>
+        <Text style={{ fontSize: 13, color: '#888', marginBottom: 24, textAlign: 'center' }}>
+          {this.state.error?.message ?? 'Unknown error'}
+        </Text>
+        <TouchableOpacity
+          style={{ backgroundColor: '#3B82F6', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }}
+          onPress={() => this.setState({ hasError: false, error: null })}
+        >
+          <Text style={{ color: '#fff', fontWeight: '600' }}>إعادة المحاولة</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+}
 
 // Show alerts even when app is in foreground
 Notifications.setNotificationHandler({
@@ -266,9 +303,11 @@ function RootLayoutInner() {
 
 export default function RootLayout() {
   return (
-    <ThemeProvider>
-      <RootLayoutInner />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <RootLayoutInner />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
