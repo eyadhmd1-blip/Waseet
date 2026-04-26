@@ -253,7 +253,7 @@
     "contractAvailable": "{{count}} available",
     "contractBadge": "🔄 Recurring Contract",
     "contractVisitCount": "{{count}} visits",
-    "emptyRequests": "No requests right now",
+    "emptyRequests": "No requests in your area matching your specialties",
     "upsellTitle": "Subscribe to Bid on Requests",
     "upsellSub": "Subscribed providers get more clients and build a verified reputation on the platform",
     "upsellBestTag": "Best",

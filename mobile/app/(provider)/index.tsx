@@ -741,7 +741,6 @@ export default function ProviderFeed() {
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [catFilter, setCatFilter] = useState<string>('all');
-  const [cityFilter, setCityFilter] = useState<string>('all');
 
   // Demo request
   const [demoStatus, setDemoStatus] = useState<DemoStatus | null>(null);
@@ -963,14 +962,13 @@ export default function ProviderFeed() {
     setRefreshing(false);
   }, [load]);
 
-  // useMemo: filter by category/city only — already-bid requests stay visible with a "submitted" badge
+  // useMemo: filter by category — DB already scopes to provider's city + categories via RLS
   const filtered = useMemo(() =>
     requests.filter(r => {
-      if (catFilter  !== 'all' && r.category_slug !== catFilter)  return false;
-      if (cityFilter !== 'all' && r.city          !== cityFilter) return false;
+      if (catFilter !== 'all' && r.category_slug !== catFilter) return false;
       return true;
     }),
-    [requests, catFilter, cityFilter],
+    [requests, catFilter],
   );
 
   const handleBidPress = (req: RequestWithMeta, index: number) => {
