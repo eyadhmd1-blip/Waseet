@@ -4,10 +4,12 @@ import {
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SuccessModal } from '../../src/components/SuccessModal';
+import { SuggestServiceModal } from '../../src/components/SuggestServiceModal';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../src/lib/supabase';
 import { CATEGORY_GROUPS, JORDAN_CITIES, CATEGORY_PLACEHOLDERS } from '../../src/constants/categories';
+import { useCategories } from '../../src/hooks/useCategories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceCategory } from '../../src/types';
 import { useTheme } from '../../src/context/ThemeContext';
@@ -29,8 +31,10 @@ export default function NewRequestScreen() {
   const { category: preselectedCategory, notif_id: notifId } = useLocalSearchParams<{ category?: string; notif_id?: string }>();
 
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { groups } = useCategories();
 
   const [step, setStep]               = useState<Step>(preselectedCategory ? 2 : 1);
+  const [showSuggest, setShowSuggest] = useState(false);
   const [selectedCat, setSelectedCat] = useState<ServiceCategory | null>(
     preselectedCategory
       ? CATEGORY_GROUPS.flatMap(g => g.categories).find(c => c.slug === preselectedCategory) ?? null
@@ -198,7 +202,7 @@ export default function NewRequestScreen() {
       {step === 1 && (
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupScroll}>
-            {CATEGORY_GROUPS.map(g => (
+            {groups.map(g => (
               <TouchableOpacity
                 key={g.slug}
                 style={[styles.groupChip, activeGroup === g.slug && styles.groupChipActive]}
@@ -212,7 +216,7 @@ export default function NewRequestScreen() {
           </ScrollView>
 
           <View style={styles.catGrid}>
-            {CATEGORY_GROUPS.find(g => g.slug === activeGroup)?.categories.map(cat => (
+            {groups.find(g => g.slug === activeGroup)?.categories.map(cat => (
               <TouchableOpacity
                 key={cat.slug}
                 style={[styles.catCard, selectedCat?.slug === cat.slug && styles.catCardActive]}
@@ -224,6 +228,10 @@ export default function NewRequestScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          <TouchableOpacity style={styles.suggestBtn} onPress={() => setShowSuggest(true)}>
+            <Text style={styles.suggestBtnText}>{t('suggestions.notFound')}</Text>
+          </TouchableOpacity>
         </ScrollView>
       )}
 
@@ -355,6 +363,7 @@ export default function NewRequestScreen() {
           </TouchableOpacity>
         </ScrollView>
       )}
+      <SuggestServiceModal visible={showSuggest} onClose={() => setShowSuggest(false)} />
       <SuccessModal
         visible={showSuccess}
         title={t('newRequest.successTitle')}
@@ -431,5 +440,8 @@ function createStyles(colors: AppColors) {
     btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
     btnDisabled:{ backgroundColor: colors.border },
     btnText:    { fontSize: 17, fontWeight: '700', color: colors.bg },
+
+    suggestBtn:     { marginTop: 20, paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border },
+    suggestBtnText: { fontSize: 13, color: colors.textMuted },
   });
 }

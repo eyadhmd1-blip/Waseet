@@ -11,7 +11,9 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { notifyRoleUpdate } from '../../src/lib/authEvents';
-import { JORDAN_CITIES, CATEGORY_GROUPS, SUBSCRIPTION_PLANS } from '../../src/constants/categories';
+import { JORDAN_CITIES, SUBSCRIPTION_PLANS } from '../../src/constants/categories';
+import { useCategories } from '../../src/hooks/useCategories';
+import { SuggestServiceModal } from '../../src/components/SuggestServiceModal';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD, rs } from '../../src/utils/layout';
@@ -174,14 +176,19 @@ function Step2Info({
 // ── Step 3: Service Selection (provider only) ─────────────────
 
 function Step3Services({
-  selectedCats, setSelectedCats,
-}: { selectedCats: string[]; setSelectedCats: (v: string[]) => void }) {
+  selectedCats, setSelectedCats, groups, onSuggest,
+}: {
+  selectedCats: string[];
+  setSelectedCats: (v: string[]) => void;
+  groups: ReturnType<typeof useCategories>['groups'];
+  onSuggest: () => void;
+}) {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { t, ta } = useLanguage();
   const [search, setSearch] = useState('');
 
-  const allCats = CATEGORY_GROUPS.flatMap(g => g.categories);
+  const allCats = groups.flatMap(g => g.categories);
   const filtered = search.trim()
     ? allCats.filter(c =>
         c.name_ar.includes(search) || c.name_en.toLowerCase().includes(search.toLowerCase())
@@ -234,7 +241,7 @@ function Step3Services({
             {filtered.map(renderCat)}
           </View>
         ) : (
-          CATEGORY_GROUPS.map(group => (
+          groups.map(group => (
             <View key={group.slug}>
               <Text style={[styles.groupLabel, { textAlign: ta }]}>
                 {t(`categories.${group.slug}`, group.name_ar)}
@@ -254,6 +261,15 @@ function Step3Services({
             </Text>
           </View>
         )}
+
+        <TouchableOpacity
+          style={{ paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border, marginTop: 8 }}
+          onPress={onSuggest}
+        >
+          <Text style={{ fontSize: 13, color: colors.textMuted }}>
+            {t('suggestions.notFound')}
+          </Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -389,6 +405,8 @@ export default function OnboardingScreen() {
   const { contentPad } = useInsets();
 
   // Form state
+  const { groups } = useCategories();
+
   const [role, setRole]               = useState<Role>('client');
   const [fullName, setFullName]       = useState('');
   const [city, setCity]               = useState('');
@@ -397,6 +415,7 @@ export default function OnboardingScreen() {
   const [planChoice, setPlanChoice]   = useState<PlanChoice>('trial');
   const [trialUsed, setTrialUsed]     = useState(false);
   const [saving, setSaving]           = useState(false);
+  const [showSuggest, setShowSuggest] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -594,7 +613,12 @@ export default function OnboardingScreen() {
           />
         )}
         {currentStep === 3 && (
-          <Step3Services selectedCats={selectedCats} setSelectedCats={setSelectedCats} />
+          <Step3Services
+            selectedCats={selectedCats}
+            setSelectedCats={setSelectedCats}
+            groups={groups}
+            onSuggest={() => setShowSuggest(true)}
+          />
         )}
         {currentStep === 4 && (
           <Step4Plan
@@ -627,6 +651,8 @@ export default function OnboardingScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      <SuggestServiceModal visible={showSuggest} onClose={() => setShowSuggest(false)} />
     </KeyboardAvoidingView>
   );
 }

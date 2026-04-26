@@ -1269,5 +1269,16 @@
     "catAccount": "👤 Account",
     "catContract": "📄 Contract",
     "catOther": "💬 Other"
+  },
+  "suggestions": {
+    "notFound": "Can't find your service? Suggest one",
+    "modalTitle": "Suggest a New Service",
+    "modalSub": "Tell us what you're looking for and we'll work on adding it",
+    "placeholder": "e.g. Motorcycle repair, personal training...",
+    "nameRequired": "Please enter the service name",
+    "submit": "Send Suggestion",
+    "successTitle": "Thanks for your suggestion!",
+    "successMsg": "We'll review it and notify you once it's added",
+    "errorMsg": "Something went wrong. Please try again"
   }
 }

@@ -35,6 +35,13 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: 'المحتوى',
+    items: [
+      { href: '/categories',  label: 'التصنيفات',          icon: '🗂️' },
+      { href: '/suggestions', label: 'اقتراحات الخدمات',   icon: '💡' },
+    ],
+  },
+  {
     label: 'الإدارة',
     items: [
       { href: '/notifications', label: 'الإشعارات',      icon: '🔔' },

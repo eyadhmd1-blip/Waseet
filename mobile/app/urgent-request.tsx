@@ -5,6 +5,7 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { SuccessModal } from '../src/components/SuccessModal';
+import { SuggestServiceModal } from '../src/components/SuggestServiceModal';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView,
@@ -13,6 +14,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { CATEGORY_GROUPS, CATEGORY_PLACEHOLDERS } from '../src/constants/categories';
+import { useCategories } from '../src/hooks/useCategories';
 import type { ServiceCategory } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { AppHeader } from '../src/components/AppHeader';
@@ -184,9 +186,12 @@ export default function UrgentRequestScreen() {
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
 
+  const { groups } = useCategories();
+
   const [step, setStep]               = useState<1 | 2>(1);
   const [selectedCat, setSelectedCat] = useState<ServiceCategory | null>(null);
   const [activeGroup, setActiveGroup] = useState('maintenance');
+  const [showSuggest, setShowSuggest] = useState(false);
   const [description, setDescription] = useState('');
   const [city, setCity]               = useState('');
   const [aiMin, setAiMin]             = useState<number | undefined>();
@@ -321,7 +326,7 @@ export default function UrgentRequestScreen() {
             <Text style={[styles.stepHint, { textAlign: ta }]}>{t('urgentRequest.step1Hint')}</Text>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupScroll}>
-              {CATEGORY_GROUPS.map(g => (
+              {groups.map(g => (
                 <TouchableOpacity
                   key={g.slug}
                   style={[styles.groupChip, activeGroup === g.slug && styles.groupChipActive]}
@@ -335,7 +340,7 @@ export default function UrgentRequestScreen() {
             </ScrollView>
 
             <View style={styles.catGrid}>
-              {CATEGORY_GROUPS.find(g => g.slug === activeGroup)?.categories.map(cat => (
+              {groups.find(g => g.slug === activeGroup)?.categories.map(cat => (
                 <TouchableOpacity
                   key={cat.slug}
                   style={[styles.catCard, selectedCat?.slug === cat.slug && styles.catCardActive]}
@@ -347,6 +352,10 @@ export default function UrgentRequestScreen() {
                 </TouchableOpacity>
               ))}
             </View>
+
+            <TouchableOpacity style={styles.suggestBtn} onPress={() => setShowSuggest(true)}>
+              <Text style={styles.suggestBtnText}>{t('suggestions.notFound')}</Text>
+            </TouchableOpacity>
           </ScrollView>
         )}
 
@@ -435,6 +444,7 @@ export default function UrgentRequestScreen() {
         onCancel={() => setShowConfirm(false)}
         loading={submitting}
       />
+      <SuggestServiceModal visible={showSuggest} onClose={() => setShowSuggest(false)} />
       <SuccessModal
         visible={showSuccess}
         title={t('urgentRequest.successTitle')}
@@ -525,5 +535,8 @@ function createStyles(colors: AppColors) {
   cancelBtnText:       { fontSize: 15, color: colors.textSecondary },
   urgentSubmitBtn:     { flex: 2, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   urgentSubmitBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+
+  suggestBtn:     { marginTop: 20, paddingVertical: 14, alignItems: 'center' as const, borderTopWidth: 1, borderTopColor: colors.border },
+  suggestBtnText: { fontSize: 13, color: colors.textMuted },
   });
 }
