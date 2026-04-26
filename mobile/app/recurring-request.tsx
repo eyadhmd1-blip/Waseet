@@ -228,10 +228,10 @@ export default function RecurringRequestScreen() {
   ];
 
   // Duration options
-  const durationOptions: { months: 3 | 6 | 12; label: string; sub: string; discount: string }[] = [
-    { months: 3,  label: t('recurringRequest.dur3Label'),  sub: t('recurringRequest.dur3Sub'),  discount: '' },
-    { months: 6,  label: t('recurringRequest.dur6Label'),  sub: t('recurringRequest.dur6Sub'),  discount: t('recurringRequest.dur5pct') },
-    { months: 12, label: t('recurringRequest.dur12Label'), sub: t('recurringRequest.dur12Sub'), discount: t('recurringRequest.dur10pct') },
+  const durationOptions: { months: 3 | 6 | 12; label: string; sub: string }[] = [
+    { months: 3,  label: t('recurringRequest.dur3Label'),  sub: t('recurringRequest.dur3Sub') },
+    { months: 6,  label: t('recurringRequest.dur6Label'),  sub: t('recurringRequest.dur6Sub') },
+    { months: 12, label: t('recurringRequest.dur12Label'), sub: t('recurringRequest.dur12Sub') },
   ];
 
   return (
@@ -386,11 +386,6 @@ export default function RecurringRequestScreen() {
                     <Text style={[styles.durationSub, durationMonths === opt.months && styles.durationSubActive]}>
                       {opt.sub}
                     </Text>
-                    {opt.discount ? (
-                      <View style={styles.discountBadge}>
-                        <Text style={styles.discountText}>{opt.discount}</Text>
-                      </View>
-                    ) : null}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -645,8 +640,6 @@ function createStyles(colors: AppColors) {
   durationSub:      { fontSize: 10, color: colors.textMuted, textAlign: 'center', marginBottom: 6 },
   durationTextActive: { color: CONTRACT_COLOR },
   durationSubActive:  { color: CONTRACT_COLOR + 'AA' },
-  discountBadge:    { backgroundColor: colors.accentDim, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
-  discountText:     { fontSize: 9, color: '#FCD34D', fontWeight: '700' },
 
   visitSummaryCard:  { marginHorizontal: 16, marginBottom: 20, backgroundColor: CONTRACT_DIM, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
   visitSummaryTitle: { fontSize: 13, fontWeight: '700', color: CONTRACT_COLOR, marginBottom: 10 },
