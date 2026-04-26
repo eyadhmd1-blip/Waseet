@@ -4,7 +4,7 @@
 
 export type UserRole = 'client' | 'provider' | 'admin';
 export type ReputationTier = 'new' | 'rising' | 'trusted' | 'expert' | 'elite';
-export type RequestStatus = 'open' | 'in_progress' | 'completed' | 'cancelled';
+export type RequestStatus = 'open' | 'reviewing' | 'in_progress' | 'completed' | 'cancelled';
 export type BidStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 export type JobStatus = 'active' | 'completed' | 'disputed' | 'cancelled';
 export type MsgType = 'text' | 'image' | 'video' | 'system' | 'audio' | 'location' | 'profile_card';
@@ -102,6 +102,9 @@ export interface ServiceRequest {
   is_urgent?: boolean;
   urgent_premium_pct?: number;
   urgent_expires_at?: string;
+  // bid closing
+  max_bids?: number;
+  bidding_ends_at?: string;
   // joined
   client?: User;
   category?: ServiceCategory;

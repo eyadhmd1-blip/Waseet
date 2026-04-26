@@ -36,6 +36,7 @@ type RequestWithMeta = ServiceRequest & {
 function getStatusColors(colors: AppColors): Record<RequestStatus, { bg: string; text: string }> {
   return {
     open:        { bg: colors.infoBg,    text: colors.infoSoft },
+    reviewing:   { bg: '#422006',        text: '#FED7AA' },
     in_progress: { bg: '#78350F',        text: '#FCD34D' },
     completed:   { bg: colors.successBg, text: colors.successSoft },
     cancelled:   { bg: '#3B0764',        text: '#C4B5FD' },
@@ -322,11 +323,21 @@ export default function RequestDetail() {
           )}
         </View>
 
-        {/* ── Bids section ── */}
-        {request.status === 'open' && (
+        {/* ── Reviewing banner: bidding closed, pick now ── */}
+        {request.status === 'reviewing' && myId === request.client_id && (
+          <View style={styles.reviewingBanner}>
+            <Text style={styles.reviewingBannerText}>🔔 {t('requests.reviewingBanner')}</Text>
+          </View>
+        )}
+
+        {/* ── Bids section (open OR reviewing) ── */}
+        {(request.status === 'open' || request.status === 'reviewing') && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { textAlign: ta }]}>
               {t('requests.bidsSection', { count: visibleBids.length })}
+              {request.max_bids ? (
+                <Text style={styles.bidsOf}> ({t('requests.bidsOf', { count: visibleBids.length, max: request.max_bids })})</Text>
+              ) : null}
             </Text>
 
             {visibleBids.length === 0 ? (
@@ -348,7 +359,7 @@ export default function RequestDetail() {
           </View>
         )}
 
-        {/* ── Cancel button (owner + open only) ── */}
+        {/* ── Cancel button (owner + open only, not while reviewing) ── */}
         {request.status === 'open' && myId === request.client_id && (
           <TouchableOpacity
             style={[styles.cancelBtn, cancelling && styles.cancelBtnDisabled]}
@@ -668,6 +679,9 @@ function createStyles(colors: AppColors) {
   reportSubmitBtn:     { flex: 1, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   reportSubmitDisabled:{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   reportSubmitText:    { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  reviewingBanner:     { backgroundColor: '#422006', borderRadius: 14, borderWidth: 1, borderColor: '#92400E', paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16 },
+  reviewingBannerText: { fontSize: 14, fontWeight: '700', color: '#FED7AA', textAlign: 'center' },
+  bidsOf:              { fontSize: 12, fontWeight: '400', color: colors.textMuted },
   });
 }
 

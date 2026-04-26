@@ -23,12 +23,14 @@ const H_PAD = 20;
 
 const STATUS_ACCENT: Record<string, string> = {
   open:        '#3B82F6',
+  reviewing:   '#F97316',
   in_progress: '#F59E0B',
   completed:   '#10B981',
   cancelled:   '#8B5CF6',
 };
 const STATUS_BG: Record<string, string> = {
   open:        'rgba(59,130,246,0.13)',
+  reviewing:   'rgba(249,115,22,0.13)',
   in_progress: 'rgba(245,158,11,0.13)',
   completed:   'rgba(16,185,129,0.13)',
   cancelled:   'rgba(139,92,246,0.13)',
@@ -65,6 +67,7 @@ export default function ClientRequests() {
 
   const STATUS_LABEL: Record<string, string> = {
     open:        t('requests.statusOpen'),
+    reviewing:   t('requests.statusReviewing'),
     in_progress: t('requests.statusInProgress'),
     completed:   t('requests.statusCompleted'),
     cancelled:   t('requests.statusCancelled'),
@@ -83,7 +86,8 @@ export default function ClientRequests() {
         .eq('client_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (filter !== 'all') query = query.eq('status', filter);
+      if (filter === 'open') query = query.in('status', ['open', 'reviewing']);
+      else if (filter !== 'all') query = query.eq('status', filter);
 
       const { data } = await query;
       if (data) setRequests(data);
@@ -114,7 +118,7 @@ export default function ClientRequests() {
   };
 
   const openCount = useMemo(
-    () => requests.filter(r => r.status === 'open').length,
+    () => requests.filter(r => r.status === 'open' || r.status === 'reviewing').length,
     [requests],
   );
 
