@@ -332,7 +332,7 @@
     "demoCompletedBid": "You bid {{amount}} JOD",
     "demoRealCTA": "Real requests are waiting",
     "demoExpiringSoon": "Don't miss your free demo",
-    "demoSkip": "Skip"
+    "demoSkip": "Got it, hide permanently"
   },
   "dashboard": {
     "title": "Dashboard",
