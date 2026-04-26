@@ -112,9 +112,18 @@ export default function VerifyScreen() {
 
       const { data: userData } = await supabase
         .from('users')
-        .select('role')
+        .select('role, is_suspended')
         .eq('id', sessionData.user.id)
         .single();
+
+      if (userData?.is_suspended) {
+        await supabase.auth.signOut();
+        Alert.alert(
+          t('common.error'),
+          'تم إيقاف حسابك مؤقتاً. للاستفسار تواصل مع فريق الدعم.',
+        );
+        return;
+      }
 
       if (!userData) {
         router.replace('/(auth)/onboarding' as any);
