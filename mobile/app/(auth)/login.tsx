@@ -12,20 +12,20 @@ import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
 
 export default function LoginScreen() {
-    useInsets();
+  useInsets();
   const router = useRouter();
-  const { t, ta, isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { colors } = useTheme();
   const [phone, setPhone]     = useState('');
   const [loading, setLoading] = useState(false);
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  // Rebuild styles whenever colors OR text direction changes
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const handleSendOtp = async () => {
     const raw = phone.trim().replace(/\s+/g, '');
     if (!raw) return;
 
-    // Normalise to E.164 (+962XXXXXXXX)
     const formatted = raw.startsWith('+')
       ? raw
       : `+962${raw.replace(/^0+/, '')}`;
@@ -50,7 +50,6 @@ export default function LoginScreen() {
         return;
       }
 
-      // DEV MODE: send-otp returns dev_code when Unifonic is not configured
       const params: Record<string, string> = { phone: formatted };
       if (data.dev_code) params.dev_code = String(data.dev_code);
 
@@ -67,15 +66,16 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* Back arrow — positioned to correct edge for RTL/LTR */}
       <TouchableOpacity style={styles.back} onPress={() => router.back()}>
         <Text style={styles.backText}>{isRTL ? '→' : '←'}</Text>
       </TouchableOpacity>
 
       <View style={styles.content}>
-        <Text style={[styles.title, { textAlign: ta }]}>{t('auth.enterPhone')}</Text>
-        <Text style={[styles.subtitle, { textAlign: ta }]}>{t('auth.phoneSubtitle')}</Text>
+        <Text style={styles.title}>{t('auth.enterPhone')}</Text>
+        <Text style={styles.subtitle}>{t('auth.phoneSubtitle')}</Text>
 
-        {/* Phone input */}
+        {/* Phone input — direction: ltr keeps +962 on left regardless of I18nManager */}
         <View style={styles.inputRow}>
           <Text style={styles.countryCode}>+962</Text>
           <TextInput
@@ -85,7 +85,6 @@ export default function LoginScreen() {
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
-            textAlign={ta}
             maxLength={10}
           />
         </View>
@@ -104,28 +103,69 @@ export default function LoginScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left';
+
   return StyleSheet.create({
-    container:   { flex: 1, backgroundColor: colors.bg },
-    back:        { padding: 24, paddingTop: HEADER_PAD },
-    backText:    { fontSize: 24, color: colors.textSecondary },
-    content:     { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
-    title:       { fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
-    subtitle:    { fontSize: 15, color: colors.textMuted, marginBottom: 40 },
-    inputRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: colors.surface,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      marginBottom: 24,
-      borderWidth: 1,
-      borderColor: colors.border,
+    container: { flex: 1, backgroundColor: colors.bg },
+
+    // Back arrow anchored to the correct edge
+    back: {
+      paddingHorizontal: 24,
+      paddingTop:        HEADER_PAD,
+      paddingBottom:     8,
+      alignItems:        isRTL ? 'flex-end' : 'flex-start',
     },
-    countryCode: { color: colors.textMuted, fontSize: 16, paddingRight: 12 },
-    input:       { flex: 1, color: colors.textPrimary, fontSize: 18, paddingVertical: 16, letterSpacing: 2 },
-    btn:         { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-    btnDisabled: { backgroundColor: colors.border },
-    btnText:     { fontSize: 17, fontWeight: '700', color: colors.bg },
+    backText: { fontSize: 24, color: colors.textSecondary },
+
+    content: { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
+
+    // Full-width + explicit alignment so textAlign is never ambiguous
+    title: {
+      fontSize:    28,
+      fontWeight:  '700',
+      color:       colors.textPrimary,
+      marginBottom: 8,
+      textAlign:   ta,
+      alignSelf:   'stretch',
+    },
+    subtitle: {
+      fontSize:    15,
+      color:       colors.textMuted,
+      marginBottom: 40,
+      textAlign:   ta,
+      alignSelf:   'stretch',
+    },
+
+    // direction: 'ltr' prevents I18nManager RTL from reversing +962 / input order
+    inputRow: {
+      direction:         'ltr',
+      flexDirection:     'row',
+      alignItems:        'center',
+      backgroundColor:   colors.surface,
+      borderRadius:      12,
+      paddingHorizontal: 16,
+      marginBottom:      24,
+      borderWidth:       1,
+      borderColor:       colors.border,
+    },
+    countryCode: {
+      color:       colors.textMuted,
+      fontSize:    16,
+      paddingRight: 12,
+    },
+    input: {
+      flex:          1,
+      color:         colors.textPrimary,
+      fontSize:      18,
+      paddingVertical: 16,
+      letterSpacing: 2,
+      // Numbers type right-to-left in Arabic context: right-aligned
+      textAlign:     isRTL ? 'right' : 'left',
+    },
+
+    btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
+    btnDisabled:{ backgroundColor: colors.border },
+    btnText:    { fontSize: 17, fontWeight: '700', color: colors.bg },
   });
 }
