@@ -367,7 +367,7 @@ export default function ClientHome() {
           </View>
 
           {/* ── Popular services ────────────────────────────────── */}
-          <View style={[styles.sectionRow, { flexDirection: flexRow(isRTL) }]}>
+          <View style={[styles.sectionRow, { flexDirection: 'row' }]}>
             <Text style={[styles.sectionTitle, { textAlign: ta }]}>
               🔥 {t('home.popularServices')}
             </Text>
@@ -392,7 +392,7 @@ export default function ClientHome() {
           {/* ── Recent requests ─────────────────────────────────── */}
           {requests.length > 0 && (
             <>
-              <View style={[styles.sectionRow, { flexDirection: flexRow(isRTL), marginTop: 4 }]}>
+              <View style={[styles.sectionRow, { flexDirection: 'row', marginTop: 4 }]}>
                 <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('home.recentRequests')}</Text>
                 <TouchableOpacity onPress={() => router.push('/(client)/requests')}>
                   <Text style={styles.seeAll}>{t('home.seeAll')}</Text>
