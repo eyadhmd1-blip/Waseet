@@ -653,22 +653,22 @@ function createStyles(colors: AppColors) {
   statusText:   { fontSize: 12, fontWeight: '700' },
   categoryText: { fontSize: 13, color: colors.textMuted },
 
-  requestTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, lineHeight: 28 },
+  requestTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, lineHeight: 28, alignSelf: 'stretch' },
 
   metaRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
   metaText:  { fontSize: 12, color: colors.textMuted },
 
   divider:   { height: 1, backgroundColor: colors.border, marginBottom: 14 },
 
-  descLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 6 },
-  descText:  { fontSize: 14, color: colors.textSecondary, lineHeight: 22 },
+  descLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 6, alignSelf: 'stretch' },
+  descText:  { fontSize: 14, color: colors.textSecondary, lineHeight: 22, alignSelf: 'stretch' },
 
   aiPriceBox:   { marginTop: 16, backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
   aiPriceLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
   aiPriceValue: { fontSize: 22, fontWeight: '700', color: colors.accent },
 
   section:      { marginBottom: 20 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch' },
 
   noBids:     { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   noBidsIcon: { fontSize: 40, marginBottom: 10 },
@@ -679,7 +679,7 @@ function createStyles(colors: AppColors) {
   providerAvatarLg:  { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   providerAvatarTextLg: { fontSize: 22, fontWeight: '700', color: colors.bg },
   acceptedInfo:      { flex: 1, gap: 4 },
-  acceptedName:      { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
+  acceptedName:      { fontSize: 16, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch' },
   tierPill:          { alignSelf: 'flex-end', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   tierPillText:      { fontSize: 11, fontWeight: '700' },
   verifiedText:      { fontSize: 12, color: '#7DD3FC' },
@@ -694,7 +694,7 @@ function createStyles(colors: AppColors) {
   shareProviderBtnTextAccent: { fontSize: 12, color: colors.accent, fontWeight: '700' },
 
   inProgressNote:     { backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
-  inProgressNoteText: { fontSize: 13, color: colors.accent, lineHeight: 20 },
+  inProgressNoteText: { fontSize: 13, color: colors.accent, lineHeight: 20, alignSelf: 'stretch' },
 
   cancelBtn:         { marginHorizontal: 0, marginBottom: 20, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.errorBg },
   cancelBtnDisabled: { opacity: 0.5 },
@@ -706,15 +706,15 @@ function createStyles(colors: AppColors) {
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: colors.border, padding: 24, paddingBottom: 48 },
-  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 20 },
-  modalProvider:{ fontSize: 15, color: colors.textSecondary, marginBottom: 16 },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 20, alignSelf: 'stretch' },
+  modalProvider:{ fontSize: 15, color: colors.textSecondary, marginBottom: 16, alignSelf: 'stretch' },
   modalAmountRow:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.bg, borderRadius: 12, padding: 16, marginBottom: 12 },
   modalAmountLabel:{ fontSize: 13, color: colors.textMuted },
   modalAmountValue:{ fontSize: 20, fontWeight: '700', color: colors.accent },
   modalNoteBox: { backgroundColor: colors.bg, borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-  modalNoteLabel:{ fontSize: 11, color: colors.textMuted, marginBottom: 4 },
-  modalNoteText: { fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
-  modalWarning: { fontSize: 12, color: '#F87171', lineHeight: 18, marginBottom: 20 },
+  modalNoteLabel:{ fontSize: 11, color: colors.textMuted, marginBottom: 4, alignSelf: 'stretch' },
+  modalNoteText: { fontSize: 13, color: colors.textSecondary, lineHeight: 20, alignSelf: 'stretch' },
+  modalWarning: { fontSize: 12, color: '#F87171', lineHeight: 18, marginBottom: 20, alignSelf: 'stretch' },
   modalBtns:    { flexDirection: 'row', gap: 12 },
   modalCancel:  { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   modalCancelText:{ fontSize: 15, color: colors.textSecondary },

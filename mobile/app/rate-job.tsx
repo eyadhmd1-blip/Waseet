@@ -185,8 +185,8 @@ function createStyles(colors: AppColors) {
     provChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 28, gap: 12, borderWidth: 1, borderColor: colors.border },
     provAvatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
     provAvatarText: { fontSize: 20, fontWeight: '700', color: colors.bg },
-    provName:       { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
-    provSub:        { fontSize: 12, color: colors.textMuted, marginTop: 2 },
+    provName:       { fontSize: 16, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch' },
+    provSub:        { fontSize: 12, color: colors.textMuted, marginTop: 2, alignSelf: 'stretch' },
 
     rateLabel:  { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'center', marginBottom: 20 },
     starsRow:   { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 8 },
@@ -194,7 +194,7 @@ function createStyles(colors: AppColors) {
     starActive: { opacity: 1 },
     starLabel:  { fontSize: 16, fontWeight: '700', color: colors.accent, textAlign: 'center', marginBottom: 20 },
 
-    tagsLabel: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 10 },
+    tagsLabel: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 10, alignSelf: 'stretch' },
     tagsWrap:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
     tag:       { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 1, borderColor: colors.border },
     tagActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },

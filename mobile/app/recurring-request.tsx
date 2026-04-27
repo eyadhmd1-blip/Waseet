@@ -581,8 +581,8 @@ function createStyles(colors: AppColors) {
   headerBadge:  { backgroundColor: CONTRACT_DIM, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 4, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
   headerBadgeText: { fontSize: 11, color: CONTRACT_COLOR, fontWeight: '700' },
 
-  stepTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginHorizontal: 16, marginBottom: 6, marginTop: 8 },
-  stepSub:   { fontSize: 13, color: colors.textMuted, marginHorizontal: 16, marginBottom: 20 },
+  stepTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginHorizontal: 16, marginBottom: 6, marginTop: 8, alignSelf: 'stretch' },
+  stepSub:   { fontSize: 13, color: colors.textMuted, marginHorizontal: 16, marginBottom: 20, alignSelf: 'stretch' },
 
   groupScroll:      { paddingHorizontal: 16, marginBottom: 16 },
   groupTab:         { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
@@ -642,7 +642,7 @@ function createStyles(colors: AppColors) {
   durationSubActive:  { color: CONTRACT_COLOR + 'AA' },
 
   visitSummaryCard:  { marginHorizontal: 16, marginBottom: 20, backgroundColor: CONTRACT_DIM, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
-  visitSummaryTitle: { fontSize: 13, fontWeight: '700', color: CONTRACT_COLOR, marginBottom: 10 },
+  visitSummaryTitle: { fontSize: 13, fontWeight: '700', color: CONTRACT_COLOR, marginBottom: 10, alignSelf: 'stretch' },
   visitSummaryRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: CONTRACT_COLOR + '22' },
   visitSummaryValue: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   visitSummaryLabel: { fontSize: 13, color: colors.textMuted },
@@ -663,8 +663,8 @@ function createStyles(colors: AppColors) {
   reviewCard:   { marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.surface, borderRadius: 16, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border },
 
   descCard:   { marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-  descLabel:  { fontSize: 12, color: colors.textMuted, marginBottom: 6 },
-  descText:   { fontSize: 14, color: colors.textPrimary, lineHeight: 22 },
+  descLabel:  { fontSize: 12, color: colors.textMuted, marginBottom: 6, alignSelf: 'stretch' },
+  descText:   { fontSize: 14, color: colors.textPrimary, lineHeight: 22, alignSelf: 'stretch' },
 
   trustRow:   { flexDirection: 'row', gap: 8, marginHorizontal: 16, marginBottom: 20 },
   trustBadge: { flex: 1, backgroundColor: colors.surface, borderRadius: 14, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 4 },

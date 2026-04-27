@@ -471,7 +471,7 @@ function createStyles(colors: AppColors) {
   stepDotActive: { backgroundColor: '#EF4444' },
 
   scrollContent: { padding: 20, paddingBottom: 48 },
-  stepHint:      { fontSize: 15, fontWeight: '600', color: colors.textSecondary, marginBottom: 16 },
+  stepHint:      { fontSize: 15, fontWeight: '600', color: colors.textSecondary, marginBottom: 16, alignSelf: 'stretch' },
 
   groupScroll:         { marginBottom: 16 },
   groupChip:           { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
@@ -491,14 +491,14 @@ function createStyles(colors: AppColors) {
 
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20, backgroundColor: colors.surface, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: colors.border },
   locationIcon:{ fontSize: 16 },
-  locationText:{ fontSize: 14, color: colors.textSecondary, flex: 1 },
+  locationText:{ fontSize: 14, color: colors.textSecondary, flex: 1, alignSelf: 'stretch' },
 
-  fieldLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 8 },
+  fieldLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 8, alignSelf: 'stretch' },
   descInput:  { backgroundColor: colors.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: '#7F1D1D', textAlignVertical: 'top', height: 120 },
-  charCount:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16 },
+  charCount:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16, alignSelf: 'stretch' },
 
   aiPreview:     { backgroundColor: colors.infoBg, borderRadius: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: colors.info },
-  aiPreviewText: { fontSize: 13, color: colors.infoSoft },
+  aiPreviewText: { fontSize: 13, color: colors.infoSoft, alignSelf: 'stretch' },
   aiPremiumText: { color: colors.errorSoft, fontWeight: '700' },
 
   guaranteeBadge: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.successBg, borderRadius: 12, padding: 14, marginBottom: 20, borderWidth: 1, borderColor: colors.success },
@@ -512,14 +512,14 @@ function createStyles(colors: AppColors) {
 
   modalBackdrop: { flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
   confirmSheet:  { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 44 },
-  confirmTitle:  { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 20 },
+  confirmTitle:  { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 20, alignSelf: 'stretch' },
 
   confirmRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
   confirmLabel: { fontSize: 13, color: colors.textMuted, flex: 0.35 },
   confirmValue: { fontSize: 14, color: colors.textPrimary, fontWeight: '600', flex: 0.65, textAlign: 'auto' },
 
   priceSummary:      { backgroundColor: colors.accentDim, borderRadius: 14, padding: 16, marginTop: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
-  priceSummaryTitle: { fontSize: 12, color: colors.textMuted, marginBottom: 10 },
+  priceSummaryTitle: { fontSize: 12, color: colors.textMuted, marginBottom: 10, alignSelf: 'stretch' },
   priceRow:          { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   priceBase:         { fontSize: 13, color: colors.textSecondary },
   priceBaseVal:      { fontSize: 13, color: colors.textSecondary },
@@ -528,7 +528,7 @@ function createStyles(colors: AppColors) {
   priceTotalRow:     { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 8, marginTop: 4 },
   priceTotalLabel:   { fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   priceTotalVal:     { fontSize: 14, fontWeight: '700', color: colors.accent },
-  priceNA:           { fontSize: 13, color: colors.textMuted },
+  priceNA:           { fontSize: 13, color: colors.textMuted, alignSelf: 'stretch' },
 
   confirmBtns:         { flexDirection: 'row', gap: 12, marginTop: 20 },
   cancelBtn:           { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },

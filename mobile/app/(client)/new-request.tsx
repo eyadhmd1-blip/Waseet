@@ -450,10 +450,10 @@ function createStyles(colors: AppColors) {
     selectedCatText:  { fontSize: 15, color: colors.accent, fontWeight: '600' },
     changeCat:        { fontSize: 13, color: colors.textMuted },
 
-    label:     { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16 },
+    label:     { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16, alignSelf: 'stretch' },
     input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
     inputMultiline: { height: 120, textAlignVertical: 'top', paddingTop: 14 },
-    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch' },
 
     cityScroll:    { marginBottom: 8 },
     cityChip:      { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },

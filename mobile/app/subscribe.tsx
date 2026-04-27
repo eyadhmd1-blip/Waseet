@@ -613,7 +613,7 @@ function createStyles(colors: AppColors) {
 
   featureList: { padding: 18, gap: 10 },
   featureRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'flex-end' },
-  featureText: { fontSize: 13, color: colors.textSecondary, flex: 1 },
+  featureText: { fontSize: 13, color: colors.textSecondary, flex: 1, alignSelf: 'stretch' },
   featureTextOff: { color: colors.textMuted },
 
   guaranteesRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 24, marginTop: 4 },
@@ -622,12 +622,12 @@ function createStyles(colors: AppColors) {
   guaranteeLabel:{ fontSize: 11, color: colors.textMuted },
 
   faqSection: { gap: 0 },
-  faqTitle:   { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  faqTitle:   { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch' },
   faqItem:    { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
   faqRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  faqQ:       { fontSize: 13, fontWeight: '600', color: colors.textPrimary, flex: 1 },
+  faqQ:       { fontSize: 13, fontWeight: '600', color: colors.textPrimary, flex: 1, alignSelf: 'stretch' },
   faqArrow:   { fontSize: 16, color: colors.textMuted, marginLeft: 8 },
-  faqA:       { fontSize: 12, color: colors.textMuted, lineHeight: 19, marginTop: 10 },
+  faqA:       { fontSize: 12, color: colors.textMuted, lineHeight: 19, marginTop: 10, alignSelf: 'stretch' },
 
   ctaBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -646,7 +646,7 @@ function createStyles(colors: AppColors) {
     backgroundColor: colors.surface, borderRadius: 16,
     padding: 16, borderWidth: 1, borderColor: colors.border,
   },
-  comingSoonTitle: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 12 },
+  comingSoonTitle: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 12, alignSelf: 'stretch' },
   comingSoonRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border,
