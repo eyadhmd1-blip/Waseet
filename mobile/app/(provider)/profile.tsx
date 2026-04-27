@@ -601,8 +601,8 @@ function createStyles(colors: AppColors) {
   sectionHeader:{ marginBottom: 12 },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
   sectionEmoji: { fontSize: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto' },
-  sectionLink:  { fontSize: 13, color: colors.accent, fontWeight: '600' },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', alignSelf: 'stretch' },
+  sectionLink:  { fontSize: 13, color: colors.accent, fontWeight: '600', alignSelf: 'stretch' },
 
   // ── Portfolio mini grid ──
   portfolioMiniStats: { flexDirection: 'row', gap: 16, justifyContent: 'flex-end', marginBottom: 10 },
@@ -677,7 +677,7 @@ function createStyles(colors: AppColors) {
 
   notifBtn:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 8, marginBottom: 8, backgroundColor: colors.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border },
   notifBtnIcon:  { fontSize: 18 },
-  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto' },
+  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto', alignSelf: 'stretch' },
   notifBtnArrow: { fontSize: 16, color: colors.textMuted },
 
   signOutBtn:  { marginHorizontal: 16, marginTop: 8, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#7F1D1D' },
@@ -687,7 +687,7 @@ function createStyles(colors: AppColors) {
   availRow:       { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
   availRowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
   availTextWrap:  { flex: 1 },
-  availLabel:     { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto', marginBottom: 2 },
-  availSub:       { fontSize: 12, color: colors.textMuted, textAlign: 'auto' },
+  availLabel:     { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto', marginBottom: 2, alignSelf: 'stretch' },
+  availSub:       { fontSize: 12, color: colors.textMuted, textAlign: 'auto', alignSelf: 'stretch' },
   });
 }

@@ -192,7 +192,7 @@ function createStyles(colors: AppColors) {
 
     content: { padding: 16, paddingBottom: 48 },
 
-    label: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginTop: 20, marginBottom: 10 },
+    label: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginTop: 20, marginBottom: 10, alignSelf: 'stretch' },
 
     catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     catCard:       { width: '30%', backgroundColor: colors.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6 },
@@ -209,12 +209,12 @@ function createStyles(colors: AppColors) {
 
     input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border },
     textarea:  { minHeight: 120, textAlignVertical: 'top', paddingTop: 12 },
-    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4 },
+    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch' },
 
     submitBtn:         { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
     submitBtnDisabled: { backgroundColor: colors.border },
     submitBtnText:     { fontSize: 16, fontWeight: '700', color: colors.bg },
 
-    footNote: { fontSize: 12, color: colors.textMuted, marginTop: 14, lineHeight: 18 },
+    footNote: { fontSize: 12, color: colors.textMuted, marginTop: 14, lineHeight: 18, alignSelf: 'stretch' },
   });
 }

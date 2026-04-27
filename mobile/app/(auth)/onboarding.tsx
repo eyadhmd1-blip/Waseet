@@ -678,8 +678,8 @@ function createStyles(colors: AppColors) {
   // Step common
   stepScroll:  { flex: 1 },
   stepContent: { padding: 24, paddingTop: 12 },
-  stepTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
-  stepSub:     { fontSize: rs(14, 12, 16), color: colors.textMuted, marginBottom: 28 },
+  stepTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: colors.textPrimary, marginBottom: 6, alignSelf: 'stretch' },
+  stepSub:     { fontSize: rs(14, 12, 16), color: colors.textMuted, marginBottom: 28, alignSelf: 'stretch' },
 
   // Role cards
   roleCards:       { gap: 14 },
@@ -694,7 +694,7 @@ function createStyles(colors: AppColors) {
   roleCheckMark:   { fontSize: 12, color: colors.bg, fontWeight: '700' },
 
   // Fields
-  fieldLabel:      { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16 },
+  fieldLabel:      { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16, alignSelf: 'stretch' },
   fieldLabelRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 },
   fieldLabelOptional: { fontSize: 11, color: colors.textMuted },
   input: {
@@ -722,7 +722,7 @@ function createStyles(colors: AppColors) {
     paddingVertical: 12, color: colors.textPrimary, fontSize: 15,
     borderWidth: 1, borderColor: colors.border, marginBottom: 20,
   },
-  groupLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 10, marginTop: 4 },
+  groupLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 10, marginTop: 4, alignSelf: 'stretch' },
   catGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
   catCard: {
     width: Math.max(80, Math.floor((width - 48 - 10) / 3)),
@@ -782,8 +782,8 @@ function createStyles(colors: AppColors) {
   // Done
   doneContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
   doneEmoji:   { fontSize: rs(64, 48, 80), marginBottom: 24 },
-  doneTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: colors.textPrimary, marginBottom: 14, textAlign: 'center' },
-  doneSub:     { fontSize: rs(15, 13, 17), color: colors.textMuted, textAlign: 'center', lineHeight: 24, marginBottom: 40 },
+  doneTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: colors.textPrimary, marginBottom: 14, textAlign: 'center', alignSelf: 'stretch' },
+  doneSub:     { fontSize: rs(15, 13, 17), color: colors.textMuted, textAlign: 'center', lineHeight: 24, marginBottom: 40, alignSelf: 'stretch' },
   doneBtn:     { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, paddingHorizontal: 48, alignItems: 'center' },
   doneBtnText: { fontSize: rs(17, 15, 19), fontWeight: '700', color: colors.bg },
 

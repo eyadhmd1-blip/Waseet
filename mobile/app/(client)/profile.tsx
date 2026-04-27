@@ -391,10 +391,10 @@ function createStyles(colors: AppColors) {
   statsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 24 },
 
   section:      { paddingHorizontal: 16, marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, alignSelf: 'stretch' },
 
   editCard:    { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-  fieldLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 8 },
+  fieldLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 8, alignSelf: 'stretch' },
   fieldInput:  { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
 
   cityScroll:        { marginBottom: 4 },

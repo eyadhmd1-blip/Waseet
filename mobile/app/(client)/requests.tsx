@@ -59,7 +59,7 @@ export default function ClientRequests() {
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
 
-  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark, isRTL]);
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'all',         label: t('requests.filterAll') },
@@ -329,8 +329,8 @@ function createStyles(colors: AppColors, isDark: boolean) {
     // ── Header
     header:      { paddingHorizontal: H_PAD, paddingTop: HEADER_PAD, paddingBottom: 12 },
     headerRow:   { alignItems: 'center', gap: 12 },
-    headerTitle: { fontSize: 26, fontWeight: '800', color: colors.textPrimary },
-    headerSub:   { fontSize: 13, color: colors.textMuted, marginTop: 2 },
+    headerTitle: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, alignSelf: 'stretch' },
+    headerSub:   { fontSize: 13, color: colors.textMuted, marginTop: 2, alignSelf: 'stretch' },
     newBtn: {
       backgroundColor: colors.accent,
       borderRadius:    12,
@@ -368,8 +368,8 @@ function createStyles(colors: AppColors, isDark: boolean) {
       paddingHorizontal: 16,
     },
     cardHeader: { alignItems: 'flex-start', marginBottom: 4 },
-    cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-    cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 10 },
+    cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch' },
+    cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 10, alignSelf: 'stretch' },
     cardFooter: { alignItems: 'center', justifyContent: 'space-between' },
     cardDate:   { fontSize: 12, color: colors.textMuted },
     footerEnd:  { alignItems: 'center', gap: 6 },
@@ -401,8 +401,8 @@ function createStyles(colors: AppColors, isDark: boolean) {
       marginBottom: 20,
     },
     emptyIcon:    { fontSize: 36 },
-    emptyTitle:   { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
-    emptyDesc:    { fontSize: 14, color: colors.textSecondary, marginBottom: 24, lineHeight: 20 },
+    emptyTitle:   { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, alignSelf: 'stretch' },
+    emptyDesc:    { fontSize: 14, color: colors.textSecondary, marginBottom: 24, lineHeight: 20, alignSelf: 'stretch' },
     emptyBtn: {
       backgroundColor:   colors.accent,
       borderRadius:      14,

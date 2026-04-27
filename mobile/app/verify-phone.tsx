@@ -237,8 +237,8 @@ function createStyles(colors: AppColors) {
     content:      { flex: 1, paddingHorizontal: 24, paddingTop: 80, alignItems: 'center' },
     iconWrap:     { marginBottom: 24 },
     icon:         { fontSize: 56 },
-    title:        { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, width: '100%' },
-    subtitle:     { fontSize: 15, color: colors.textMuted, marginBottom: 36, width: '100%' },
+    title:        { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, width: '100%', alignSelf: 'stretch' },
+    subtitle:     { fontSize: 15, color: colors.textMuted, marginBottom: 36, width: '100%', alignSelf: 'stretch' },
     inputRow: {
       flexDirection: 'row',
       alignItems: 'center',

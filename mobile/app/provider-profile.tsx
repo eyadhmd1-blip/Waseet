@@ -528,8 +528,8 @@ function createStyles(colors: AppColors) {
   avatar:   { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 30, fontWeight: '800' },
   heroInfo: { flex: 1, gap: 4 },
-  heroName: { fontSize: 20, fontWeight: '800', color: colors.textPrimary },
-  heroCity: { fontSize: 13, color: colors.textMuted },
+  heroName: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, alignSelf: 'stretch' },
+  heroCity: { fontSize: 13, color: colors.textMuted, alignSelf: 'stretch' },
 
   badgeRow:        { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
   tierPill:        { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
@@ -545,7 +545,7 @@ function createStyles(colors: AppColors) {
   statValue:{ fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   statLabel:{ fontSize: 9, color: colors.textMuted, textAlign: 'center' },
 
-  bio: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, marginBottom: 12 },
+  bio: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, marginBottom: 12, alignSelf: 'stretch' },
 
   catsRow:     { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   catChip:     { backgroundColor: colors.bg, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: colors.border },
@@ -562,7 +562,7 @@ function createStyles(colors: AppColors) {
   requestBtnText:  { fontSize: 13, fontWeight: '700', color: colors.bg },
 
   section:       { marginBottom: 20 },
-  sectionTitle:  { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  sectionTitle:  { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch' },
   portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   portfolioThumb:{ borderRadius: 10, overflow: 'hidden', backgroundColor: colors.surface },
   videoThumbBg:  { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
@@ -596,8 +596,8 @@ function createStyles(colors: AppColors) {
   reportOverlay:  { flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
   reportSheet:    { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
   reportHandle:   { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
-  reportTitle:    { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
-  reportSub:      { fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 20 },
+  reportTitle:    { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, alignSelf: 'stretch' },
+  reportSub:      { fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 20, alignSelf: 'stretch' },
   reportInput:    { backgroundColor: colors.bg, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 14, fontSize: 14, color: colors.textPrimary, minHeight: 110, textAlignVertical: 'top' },
   reportCounter:  { fontSize: 11, color: colors.textMuted, textAlign: 'right', marginTop: 4, marginBottom: 16 },
   reportBtns:     { flexDirection: 'row', gap: 10 },
