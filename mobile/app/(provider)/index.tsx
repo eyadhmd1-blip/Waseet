@@ -735,6 +735,170 @@ function createDemoSuccessStyles(colors: AppColors) {
   });
 }
 
+// ─── Empty Feed State ─────────────────────────────────────────
+
+function createEmptyStyles(colors: AppColors) {
+  return StyleSheet.create({
+    wrap:             { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 },
+
+    hero:             { alignItems: 'center', marginBottom: 20 },
+    heroEmoji:        { fontSize: 52, marginBottom: 10 },
+    heroTitle:        { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 },
+    heroSub:          { fontSize: 13, color: colors.textMuted, lineHeight: 20 },
+
+    stepsCard:        { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, marginBottom: 14, overflow: 'hidden' },
+    stepRow:          { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
+    stepRowBorder:    { borderBottomWidth: 1, borderBottomColor: colors.border },
+    stepNum:          { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+    stepNumDone:      { backgroundColor: '#10B981' },
+    stepNumText:      { fontSize: 12, fontWeight: '700', color: colors.textMuted },
+    stepNumTextDone:  { color: '#fff' },
+    stepInfo:         { flex: 1 },
+    stepLabel:        { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 1 },
+    stepLabelDone:    { color: colors.textMuted },
+    stepSub:          { fontSize: 11, color: colors.textMuted },
+    stepBtn:          { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 },
+    stepBtnText:      { fontSize: 11, fontWeight: '700', color: colors.bg },
+    stepArrow:        { fontSize: 14, color: colors.border },
+
+    tipCard:          { backgroundColor: 'rgba(201,168,76,0.07)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.22)', padding: 14 },
+    tipHeader:        { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+    tipTitle:         { fontSize: 13, fontWeight: '700', color: colors.accent },
+    tipText:          { fontSize: 12, color: colors.textSecondary, lineHeight: 19 },
+    tipHighlight:     { fontWeight: '700', color: colors.accent },
+
+    noReqWrap:        { alignItems: 'center', paddingTop: 48, paddingHorizontal: 28, paddingBottom: 32 },
+    noReqIcon:        { fontSize: 52, marginBottom: 14 },
+    noReqTitle:       { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
+    noReqSub:         { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 21, marginBottom: 20 },
+    noReqCard:        { backgroundColor: colors.surface, borderRadius: 16, padding: 16, width: '100%', borderWidth: 1, borderColor: colors.border },
+    noReqCardTitle:   { fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
+    noReqCardText:    { fontSize: 12, color: colors.textMuted, lineHeight: 19, marginBottom: 12 },
+    noReqCardBtn:     { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+    noReqCardBtnText: { fontSize: 12, fontWeight: '700', color: colors.bg },
+  });
+}
+
+function EmptyFeedState({
+  provider,
+  isRTL,
+  ta,
+  onSubscribe,
+  onProfile,
+}: {
+  provider: (Provider & { user: User }) | null;
+  isRTL: boolean;
+  ta: 'left' | 'right';
+  onSubscribe: () => void;
+  onProfile: () => void;
+}) {
+  const { colors } = useTheme();
+  const s = useMemo(() => createEmptyStyles(colors), [colors]);
+
+  const isNew        = (provider?.lifetime_jobs ?? 0) === 0;
+  const hasCredits   = (provider?.is_subscribed && (provider.bid_credits ?? 0) > 0) || provider?.subscription_tier === 'premium';
+  const hasBio       = !!(provider?.bio?.trim());
+  const hasPortfolio = (provider?.portfolio_urls?.length ?? 0) > 0;
+  const profileOk    = hasBio && hasPortfolio;
+
+  if (!isNew) {
+    return (
+      <View style={s.noReqWrap}>
+        <Text style={s.noReqIcon}>🔭</Text>
+        <Text style={s.noReqTitle}>لا توجد طلبات الآن</Text>
+        <Text style={s.noReqSub}>
+          سنرسل لك إشعاراً فور وصول طلب جديد في محافظتك وتخصصاتك
+        </Text>
+        <View style={s.noReqCard}>
+          <Text style={[s.noReqCardTitle, { textAlign: ta }]}>💡 حسّن ظهورك</Text>
+          <Text style={[s.noReqCardText, { textAlign: ta }]}>
+            المزودون الذين يضيفون صور أعمالهم ونبذة عنهم يحصلون على ضعف عدد الطلبات
+          </Text>
+          <TouchableOpacity style={s.noReqCardBtn} onPress={onProfile} activeOpacity={0.85}>
+            <Text style={s.noReqCardBtnText}>تحديث الملف الشخصي</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  const steps: { label: string; sub: string; done: boolean; action: (() => void) | null; actionLabel: string }[] = [
+    {
+      label:       'إنشاء حسابك',
+      sub:         'مكتمل',
+      done:        true,
+      action:      null,
+      actionLabel: '',
+    },
+    {
+      label:       'اشترك واحصل على رصيد',
+      sub:         hasCredits ? `${provider?.bid_credits ?? 0} رصيد متاح` : 'جرّب مجاناً أو ابدأ بـ 5 دنانير',
+      done:        hasCredits,
+      action:      hasCredits ? null : onSubscribe,
+      actionLabel: 'اشترك',
+    },
+    {
+      label:       'أكمل ملفك الشخصي',
+      sub:         profileOk ? 'ملفك مكتمل' : 'أضف نبذة وصور أعمالك',
+      done:        profileOk,
+      action:      profileOk ? null : onProfile,
+      actionLabel: 'أكمل',
+    },
+    {
+      label:       'أرسل أول عرض سعر',
+      sub:         'انتظر طلباً في منطقتك وتخصصك',
+      done:        false,
+      action:      null,
+      actionLabel: '',
+    },
+  ];
+
+  return (
+    <View style={s.wrap}>
+      <View style={s.hero}>
+        <Text style={s.heroEmoji}>🚀</Text>
+        <Text style={[s.heroTitle, { textAlign: ta }]}>مرحباً في وسيط!</Text>
+        <Text style={[s.heroSub, { textAlign: ta }]}>اتبع هذه الخطوات للحصول على أول طلب</Text>
+      </View>
+
+      <View style={s.stepsCard}>
+        {steps.map((step, i) => (
+          <View key={i} style={[s.stepRow, i < steps.length - 1 && s.stepRowBorder]}>
+            <View style={[s.stepNum, step.done && s.stepNumDone]}>
+              <Text style={[s.stepNumText, step.done && s.stepNumTextDone]}>
+                {step.done ? '✓' : i + 1}
+              </Text>
+            </View>
+            <View style={s.stepInfo}>
+              <Text style={[s.stepLabel, { textAlign: ta }]}>{step.label}</Text>
+              <Text style={[s.stepSub, { textAlign: ta }]}>{step.sub}</Text>
+            </View>
+            {step.action ? (
+              <TouchableOpacity style={s.stepBtn} onPress={step.action} activeOpacity={0.85}>
+                <Text style={s.stepBtnText}>{step.actionLabel}</Text>
+              </TouchableOpacity>
+            ) : !step.done ? (
+              <Text style={s.stepArrow}>{isRTL ? '◁' : '▷'}</Text>
+            ) : null}
+          </View>
+        ))}
+      </View>
+
+      <View style={s.tipCard}>
+        <View style={s.tipHeader}>
+          <Text style={{ fontSize: 18 }}>💡</Text>
+          <Text style={s.tipTitle}>نصيحة من وسيط</Text>
+        </View>
+        <Text style={[s.tipText, { textAlign: ta }]}>
+          المزودون الذين يردون على الطلبات خلال 5 دقائق يحصلون على{' '}
+          <Text style={s.tipHighlight}>3× طلبات أكثر</Text>
+          {'. '}فعّل الإشعارات وابقَ على اطلاع دائم.
+        </Text>
+      </View>
+    </View>
+  );
+}
+
 // ─── Main Screen ──────────────────────────────────────────────
 
 const MAX_CARDS = 30;
@@ -1328,10 +1492,13 @@ export default function ProviderFeed() {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
         }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>🔍</Text>
-            <Text style={styles.emptyText}>{t('providerFeed.emptyRequests')}</Text>
-          </View>
+          <EmptyFeedState
+            provider={provider}
+            isRTL={isRTL}
+            ta={ta}
+            onSubscribe={() => router.push('/subscribe' as any)}
+            onProfile={() => router.push('/(provider)/profile' as any)}
+          />
         }
         renderItem={({ item, index }) => (
           <RequestCard
@@ -1743,9 +1910,6 @@ function createStyles(colors: AppColors) {
     borderWidth: 1, borderColor: 'rgba(16,185,129,0.30)',
   },
   submittedChipText: { fontSize: 12, fontWeight: '700', color: '#10B981' },
-
-  empty:     { alignItems: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 16, color: colors.textMuted },
 
   // ── Modals
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
