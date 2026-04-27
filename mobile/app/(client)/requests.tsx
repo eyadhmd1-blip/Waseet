@@ -13,7 +13,6 @@ import { useLanguage }          from '../../src/hooks/useLanguage';
 import type { ServiceRequest }  from '../../src/types';
 import { useInsets }            from '../../src/hooks/useInsets';
 import { HEADER_PAD }           from '../../src/utils/layout';
-import { flexRow }              from '../../src/utils/rtl';
 import { useTheme }             from '../../src/context/ThemeContext';
 import type { AppColors }       from '../../src/constants/colors';
 
@@ -144,7 +143,7 @@ export default function ClientRequests() {
         onPress={() => router.push({ pathname: '/request-detail', params: { id: item.id } })}
       >
         {/* Title + badge */}
-        <View style={[styles.cardHeader, { flexDirection: flexRow(isRTL) }]}>
+        <View style={[styles.cardHeader, { flexDirection: 'row' }]}>
           <Text
             style={[styles.cardTitle, { textAlign: ta, flex: 1, ...(!isRTL ? { marginRight: 8 } : { marginLeft: 8 }) }]}
             numberOfLines={2}
@@ -164,7 +163,7 @@ export default function ClientRequests() {
         </Text>
 
         {/* Footer */}
-        <View style={[styles.cardFooter, { flexDirection: flexRow(isRTL) }]}>
+        <View style={[styles.cardFooter, { flexDirection: 'row' }]}>
           <Text style={styles.cardDate}>
             {new Date(item.created_at).toLocaleDateString(
               lang === 'ar' ? 'ar-JO' : 'en-GB',
@@ -172,7 +171,7 @@ export default function ClientRequests() {
             )}
           </Text>
 
-          <View style={[styles.footerEnd, { flexDirection: flexRow(isRTL) }]}>
+          <View style={[styles.footerEnd, { flexDirection: 'row' }]}>
             {item.status === 'open' && bidsCount > 0 && (
               <View style={[styles.bidsChip, { backgroundColor: colors.accentDim }]}>
                 <Text style={[styles.bidChipText, { color: colors.accent }]}>
@@ -218,7 +217,7 @@ export default function ClientRequests() {
       <Animated.View
         style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
       >
-        <View style={[styles.headerRow, { flexDirection: flexRow(isRTL) }]}>
+        <View style={[styles.headerRow, { flexDirection: 'row' }]}>
           <View style={{ flex: 1 }}>
             <Text style={[styles.headerTitle, { textAlign: ta }]}>
               {t('requests.title')}
@@ -245,7 +244,7 @@ export default function ClientRequests() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={[
             styles.filterScroll,
-            { flexDirection: flexRow(isRTL) },
+            { flexDirection: 'row' },
           ]}
         >
           {FILTERS.map(f => {

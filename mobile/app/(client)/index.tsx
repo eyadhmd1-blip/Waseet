@@ -13,7 +13,7 @@ import { CATEGORY_GROUPS }              from '../../src/constants/categories';
 import { useLanguage }                  from '../../src/hooks/useLanguage';
 import type { User, ServiceRequest }    from '../../src/types';
 import { useInsets }                    from '../../src/hooks/useInsets';
-import { flexRow, me }                  from '../../src/utils/rtl';
+import { me }                            from '../../src/utils/rtl';
 import { useTheme }                     from '../../src/context/ThemeContext';
 import { AppHeader }                    from '../../src/components/AppHeader';
 import type { AppColors }               from '../../src/constants/colors';
@@ -302,7 +302,7 @@ export default function ClientHome() {
 
           {/* ── Search ─────────────────────────────────────────── */}
           <TouchableOpacity
-            style={[styles.searchBar, { flexDirection: flexRow(isRTL) }]}
+            style={[styles.searchBar, { flexDirection: 'row' }]}
             onPress={() => goNew()}
             activeOpacity={0.8}
           >
@@ -317,7 +317,7 @@ export default function ClientHome() {
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.chipsScroll}
-            contentContainerStyle={[styles.chipsContent, { flexDirection: flexRow(isRTL) }]}
+            contentContainerStyle={[styles.chipsContent, { flexDirection: 'row' }]}
           >
             {CATEGORY_GROUPS.map(g => {
               const active = activeGroup === g.slug;
@@ -340,7 +340,7 @@ export default function ClientHome() {
           <Text style={[styles.sectionLabel, { textAlign: ta }]}>
             {t('home.quickAccess')}
           </Text>
-          <View style={[styles.shortcutsCard, { flexDirection: flexRow(isRTL) }]}>
+          <View style={[styles.shortcutsCard, { flexDirection: 'row' }]}>
             <ShortcutItem
               icon="❤️"
               label={t('home.saved')}
@@ -407,7 +407,7 @@ export default function ClientHome() {
                 return (
                   <TouchableOpacity
                     key={req.id}
-                    style={[styles.reqCard, { flexDirection: flexRow(isRTL) }]}
+                    style={[styles.reqCard, { flexDirection: 'row' }]}
                     onPress={() => router.push({ pathname: '/request-detail', params: { id: req.id } })}
                     activeOpacity={0.8}
                   >
@@ -448,7 +448,7 @@ export default function ClientHome() {
 
           {/* ── CTA Banner ──────────────────────────────────────── */}
           <TouchableOpacity
-            style={[styles.ctaBanner, { flexDirection: flexRow(isRTL) }]}
+            style={[styles.ctaBanner, { flexDirection: 'row' }]}
             onPress={() => goNew()}
             activeOpacity={0.88}
           >
