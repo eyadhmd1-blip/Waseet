@@ -20,7 +20,7 @@ export default function VerifyScreen() {
   useInsets();
   const router = useRouter();
   const { phone, dev_code } = useLocalSearchParams<{ phone: string; dev_code?: string }>();
-  const { t, ta, isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { colors } = useTheme();
 
   const [otp, setOtp]           = useState(['', '', '', '', '', '']);
@@ -30,7 +30,7 @@ export default function VerifyScreen() {
   const inputs = useRef<TextInput[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   // ── Countdown timer ───────────────────────────────────────────
   const startCountdown = useCallback(() => {
@@ -180,8 +180,8 @@ export default function VerifyScreen() {
       </TouchableOpacity>
 
       <View style={styles.content}>
-        <Text style={[styles.title, { textAlign: ta }]}>{t('auth.enterOtp')}</Text>
-        <Text style={[styles.subtitle, { textAlign: ta }]}>
+        <Text style={styles.title}>{t('auth.enterOtp')}</Text>
+        <Text style={styles.subtitle}>
           {t('auth.otpSentTo')} {phone}
         </Text>
 
@@ -217,7 +217,7 @@ export default function VerifyScreen() {
         <View style={styles.resendRow}>
           {countdown > 0 ? (
             // Countdown active
-            <Text style={[styles.resendHint, { textAlign: ta }]}>
+            <Text style={styles.resendHint}>
               {t('auth.resendIn')}{' '}
               <Text style={styles.resendCountdown}>
                 0:{String(countdown).padStart(2, '0')}
@@ -226,7 +226,7 @@ export default function VerifyScreen() {
           ) : (
             // Countdown done — show resend button
             <TouchableOpacity onPress={handleResend} disabled={!canResend}>
-              <Text style={[styles.resendBtn, !canResend && styles.resendBtnDisabled, { textAlign: ta }]}>
+              <Text style={[styles.resendBtn, !canResend && styles.resendBtnDisabled]}>
                 {resending ? t('auth.resending') : t('auth.resend')}
               </Text>
             </TouchableOpacity>
@@ -237,14 +237,20 @@ export default function VerifyScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left';
   return StyleSheet.create({
     container:  { flex: 1, backgroundColor: colors.bg },
-    back:       { padding: 24, paddingTop: HEADER_PAD },
+    back: {
+      paddingHorizontal: 24,
+      paddingTop:        HEADER_PAD,
+      paddingBottom:     8,
+      alignItems:        isRTL ? 'flex-end' : 'flex-start',
+    },
     backText:   { fontSize: 24, color: colors.textSecondary },
     content:    { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
-    title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
-    subtitle:   { fontSize: rs(15, 13, 17), color: colors.textMuted, marginBottom: 40 },
+    title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: ta, alignSelf: 'stretch' },
+    subtitle:   { fontSize: rs(15, 13, 17), color: colors.textMuted, marginBottom: 40, textAlign: ta, alignSelf: 'stretch' },
 
     otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
     otpInput: {
@@ -259,9 +265,9 @@ function createStyles(colors: AppColors) {
     btnText:    { fontSize: rs(17, 15, 19), fontWeight: '700', color: colors.bg },
 
     resendRow:       { marginTop: 24, alignItems: 'center' },
-    resendHint:      { fontSize: 13, color: colors.textMuted },
-    resendCountdown: { fontSize: 13, fontWeight: '700', color: colors.accent },
-    resendBtn:       { fontSize: 14, color: colors.accent, fontWeight: '600', paddingVertical: 4 },
+    resendHint:        { fontSize: 13, color: colors.textMuted, textAlign: ta, alignSelf: 'stretch' },
+    resendCountdown:   { fontSize: 13, fontWeight: '700', color: colors.accent },
+    resendBtn:         { fontSize: 14, color: colors.accent, fontWeight: '600', paddingVertical: 4, textAlign: ta },
     resendBtnDisabled: { color: colors.textMuted },
   });
 }
