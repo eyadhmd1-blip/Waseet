@@ -1194,6 +1194,12 @@ export default function ProviderFeed() {
         variant="root"
         userName={provider?.user?.full_name}
         userRole="provider"
+        providerScore={provider?.score}
+        providerRepTier={provider?.reputation_tier}
+        providerLifetimeJobs={provider?.lifetime_jobs}
+        providerBidCredits={provider?.bid_credits}
+        providerSubscriptionTier={provider?.subscription_tier}
+        providerIsAvailable={provider?.is_available}
         onNotifPress={() => router.push('/notification-settings' as any)}
         onAvatarPress={() => router.push('/(provider)/profile' as any)}
       />
