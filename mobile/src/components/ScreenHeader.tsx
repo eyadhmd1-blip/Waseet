@@ -15,7 +15,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useInsets } from '../hooks/useInsets';
 import { useLanguage } from '../hooks/useLanguage';
 import { useTheme } from '../context/ThemeContext';
-import { flexRow, textStart } from '../utils/rtl';
+import { textStart } from '../utils/rtl';
 
 interface ScreenHeaderProps {
   greeting?: string;
@@ -53,7 +53,7 @@ export function ScreenHeader({
   if (greeting !== undefined) {
     return (
       <View style={containerStyle}>
-        <View style={[styles.row, { flexDirection: flexRow(isRTL) }]}>
+        <View style={[styles.row, { flexDirection: 'row' }]}>
           <View style={styles.greetingBlock}>
             <Text style={[styles.greeting, { textAlign: ta, color: colors.textPrimary }]} numberOfLines={1}>
               {greeting}
@@ -74,7 +74,7 @@ export function ScreenHeader({
   // ── Stack back-button variant ─────────────────────────────
   return (
     <View style={containerStyle}>
-      <View style={[styles.row, { flexDirection: flexRow(isRTL) }]}>
+      <View style={[styles.row, { flexDirection: 'row' }]}>
         {onBack ? (
           <TouchableOpacity
             style={styles.navBtn}

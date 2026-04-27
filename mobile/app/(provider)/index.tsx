@@ -21,7 +21,7 @@ import { useInsets } from '../../src/hooks/useInsets';
 import { AppHeader }         from '../../src/components/AppHeader';
 import { ProviderSubHeader } from '../../src/components/ProviderSubHeader';
 import { calcUrgentPremium, calcContractTotal, sanitizeAmount } from '../../src/utils/pricing';
-import { flexRow, alignEnd, selfStart, me } from '../../src/utils/rtl';
+import { alignEnd, selfStart, me } from '../../src/utils/rtl';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
 
@@ -1377,7 +1377,7 @@ export default function ProviderFeed() {
       {/* ── Pending commitment banner ─────────────────────────── */}
       {pendingCommit && (
         <TouchableOpacity
-          style={[styles.commitBanner, pendingCommit.is_urgent && styles.commitBannerUrgent, { flexDirection: flexRow(isRTL) }]}
+          style={[styles.commitBanner, pendingCommit.is_urgent && styles.commitBannerUrgent, { flexDirection: 'row' }]}
           onPress={() => router.push({ pathname: '/provider-confirm', params: { job_id: pendingCommit.job_id } } as any)}
           activeOpacity={0.85}
         >
@@ -1395,14 +1395,14 @@ export default function ProviderFeed() {
 
       {/* ── Header ────────────────────────────────────────────── */}
       <Animated.View
-        style={[styles.header, { opacity: headerOp, transform: [{ translateY: headerY }], flexDirection: flexRow(isRTL) }]}
+        style={[styles.header, { opacity: headerOp, transform: [{ translateY: headerY }], flexDirection: 'row' }]}
       >
         <View style={{ flex: 1 }}>
           <Text style={[styles.greeting, { textAlign: ta }]}>
             {t('providerFeed.greeting', { name: provider?.user?.full_name?.split(' ')[0] })}
           </Text>
           {tierMeta && (
-            <View style={[styles.tierBadge, { backgroundColor: tierMeta.color + '22', flexDirection: flexRow(isRTL), alignSelf: selfStart(isRTL) }]}>
+            <View style={[styles.tierBadge, { backgroundColor: tierMeta.color + '22', flexDirection: 'row', alignSelf: selfStart(isRTL) }]}>
               <Text style={[styles.tierText, { color: tierMeta.color }]}>{tierMeta.label_ar}</Text>
               <Text style={styles.tierScore}>⭐ {provider?.score?.toFixed(1)}</Text>
               <Text style={styles.tierJobs}> · {t('providerFeed.lifetimeJobsBadge', { count: provider?.lifetime_jobs })}</Text>
@@ -1411,7 +1411,7 @@ export default function ProviderFeed() {
         </View>
 
         {/* Live feed indicator */}
-        <View style={[styles.liveRow, { flexDirection: flexRow(isRTL) }]}>
+        <View style={[styles.liveRow, { flexDirection: 'row' }]}>
           <Text style={[styles.liveText, me(4, isRTL) as any]}>
             {t('providerFeed.live')}
           </Text>
@@ -1659,17 +1659,17 @@ export default function ProviderFeed() {
             <Text style={[urgentStyles.acceptTitle, { textAlign: ta }]}>{t('providerFeed.urgentAcceptTitle')}</Text>
             <Text style={[urgentStyles.acceptSubtitle, { textAlign: ta }]}>{urgentModal.target?.title}</Text>
 
-            <View style={[urgentStyles.acceptRow, { flexDirection: flexRow(isRTL) }]}>
+            <View style={[urgentStyles.acceptRow, { flexDirection: 'row' }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentServiceLabel')}</Text>
               <Text style={urgentStyles.acceptValue}>
                 {urgentModal.target?.category?.name_ar ?? urgentModal.target?.category_slug}
               </Text>
             </View>
-            <View style={[urgentStyles.acceptRow, { flexDirection: flexRow(isRTL) }]}>
+            <View style={[urgentStyles.acceptRow, { flexDirection: 'row' }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentCityLabel')}</Text>
               <Text style={urgentStyles.acceptValue}>{urgentModal.target?.city}</Text>
             </View>
-            <View style={[urgentStyles.acceptRow, { flexDirection: flexRow(isRTL) }]}>
+            <View style={[urgentStyles.acceptRow, { flexDirection: 'row' }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentDescLabel')}</Text>
               <Text style={[urgentStyles.acceptValue, { flex: 0.65, textAlign: ta }]} numberOfLines={3}>
                 {urgentModal.target?.description}
