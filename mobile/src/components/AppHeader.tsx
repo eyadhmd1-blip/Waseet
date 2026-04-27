@@ -1,13 +1,10 @@
 // ============================================================
-// WASEET — AppHeader
-// Unified fixed header component — 3 variants:
-//   'root'  → Tab root screens (avatar + logo + bell)
-//   'stack' → Stack screens    (back  + title + action?)
-//   'modal' → Creation flows   (close + title + step?)
+// WASEET — AppHeader  (redesigned — rich root variant)
 //
-// RTL-aware: back/close slot flips automatically via React Native
-// RTL layout. Ionicons chevron direction is manually corrected.
-// Theme-aware: uses colors from ThemeContext.
+// Variants:
+//   'root'  → Rich 2-row header for tab home screens
+//   'stack' → Back + title + optional action
+//   'modal' → Close + title + optional step counter
 // ============================================================
 
 import React from 'react';
@@ -15,10 +12,38 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useTheme } from '../context/ThemeContext';
+import { useTheme }    from '../context/ThemeContext';
 import { useLanguage } from '../hooks/useLanguage';
-import { useInsets } from '../hooks/useInsets';
+import { useInsets }   from '../hooks/useInsets';
 import type { AppColors } from '../constants/colors';
+
+// ─── Reputation tier labels ────────────────────────────────
+const REP_LABEL: Record<string, string> = {
+  new:     'جديد',
+  rising:  'صاعد',
+  trusted: 'موثَّق',
+  expert:  'خبير',
+  elite:   'نخبة',
+};
+const REP_COLOR: Record<string, string> = {
+  new:     '#9CA3AF',
+  rising:  '#F59E0B',
+  trusted: '#3B82F6',
+  expert:  '#8B5CF6',
+  elite:   '#10B981',
+};
+
+function timeGreeting(lang: string): string {
+  const h = new Date().getHours();
+  if (lang === 'ar') {
+    if (h < 12) return 'صباح الخير';
+    if (h < 17) return 'مساء الخير';
+    return 'مساء النور';
+  }
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -27,20 +52,31 @@ export type AppHeaderVariant = 'root' | 'stack' | 'modal';
 export interface AppHeaderProps {
   variant: AppHeaderVariant;
 
-  // ── root only ──────────────────────────────────────────────
+  // ── root ───────────────────────────────────────────────────
   userName?:      string;
   userRole?:      'provider' | 'client';
   notifCount?:    number;
   onNotifPress?:  () => void;
   onAvatarPress?: () => void;
 
-  // ── stack only ─────────────────────────────────────────────
+  // root — client extras
+  userCity?: string;
+
+  // root — provider extras
+  providerScore?:            number;
+  providerRepTier?:          string;   // 'new' | 'rising' | 'trusted' | 'expert' | 'elite'
+  providerLifetimeJobs?:     number;
+  providerBidCredits?:       number;
+  providerSubscriptionTier?: string;   // 'trial' | 'basic' | 'pro' | 'premium'
+  providerIsAvailable?:      boolean;
+
+  // ── stack ──────────────────────────────────────────────────
   title?:      string;
   onBack?:     () => void;
   actionIcon?: React.ComponentProps<typeof Ionicons>['name'];
   onAction?:   () => void;
 
-  // ── modal only ─────────────────────────────────────────────
+  // ── modal ──────────────────────────────────────────────────
   onClose?:    () => void;
   step?:       number;
   totalSteps?: number;
@@ -49,65 +85,149 @@ export interface AppHeaderProps {
 // ─── Component ────────────────────────────────────────────────
 
 export function AppHeader(props: AppHeaderProps) {
-  const { colors }    = useTheme();
-  const { lang }      = useLanguage();
-  const { headerPad } = useInsets();
-  const isRTL         = lang === 'ar';
-  const s             = makeStyles(colors, headerPad);
+  const { colors, isDark } = useTheme();
+  const { lang }           = useLanguage();
+  const { headerPad }      = useInsets();
+  const isRTL              = lang === 'ar';
+  const s                  = makeStyles(colors, headerPad, isDark);
 
-  // In RTL layout, React Native flips row direction automatically.
-  // chevron-back points left (correct for LTR), chevron-forward
-  // points right (correct for RTL — "back" goes rightward).
   const backIcon: React.ComponentProps<typeof Ionicons>['name'] =
     isRTL ? 'chevron-forward' : 'chevron-back';
 
   // ── Root ───────────────────────────────────────────────────
   if (props.variant === 'root') {
-    const initial    = props.userName?.trim().charAt(0).toUpperCase() ?? '?';
     const isProvider = props.userRole === 'provider';
+    const firstName  = props.userName?.trim().split(' ')[0] ?? '';
+    const initial    = firstName.charAt(0).toUpperCase() || '?';
+    const greeting   = timeGreeting(lang);
     const count      = props.notifCount ?? 0;
 
+    // Provider stats
+    const tier      = props.providerRepTier ?? 'new';
+    const tierLabel = REP_LABEL[tier] ?? tier;
+    const tierColor = REP_COLOR[tier] ?? '#9CA3AF';
+    const score     = props.providerScore ?? 0;
+    const jobs      = props.providerLifetimeJobs ?? 0;
+    const credits   = props.providerBidCredits ?? 0;
+    const isPremium = props.providerSubscriptionTier === 'premium';
+    const isOnline  = props.providerIsAvailable !== false; // default true
+
     return (
-      <View style={[s.base, s.rootBase]}>
-        {/* Avatar + Role pill — taps to profile */}
-        <TouchableOpacity
-          style={s.avatarGroup}
-          onPress={props.onAvatarPress}
-          activeOpacity={0.7}
-          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-        >
-          <View style={s.avatarCircle}>
-            <Text style={s.avatarLetter}>{initial}</Text>
+      <View style={s.rootWrap}>
+        {/* ── Row 1: Avatar | Greeting + Name | Bell ─────────── */}
+        <View style={s.row1}>
+
+          {/* Avatar */}
+          <TouchableOpacity
+            onPress={props.onAvatarPress}
+            activeOpacity={0.75}
+            style={s.avatarBtn}
+          >
+            <View style={[s.avatar, isProvider ? s.avatarPro : s.avatarCli]}>
+              <Text style={s.avatarLetter}>{initial}</Text>
+            </View>
+            {/* Online dot for provider */}
+            {isProvider && (
+              <View style={[s.onlineDot, { backgroundColor: isOnline ? '#22C55E' : '#9CA3AF' }]} />
+            )}
+          </TouchableOpacity>
+
+          {/* Greeting + Name */}
+          <View style={s.greetBlock}>
+            <Text style={s.greetSmall} numberOfLines={1}>
+              {greeting} 👋
+            </Text>
+            <Text style={s.greetName} numberOfLines={1}>
+              {firstName || 'وسيط'}
+            </Text>
           </View>
+
+          {/* Bell */}
+          <TouchableOpacity
+            style={s.bellBtn}
+            onPress={props.onNotifPress}
+            activeOpacity={0.7}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          >
+            <Ionicons
+              name={count > 0 ? 'notifications' : 'notifications-outline'}
+              size={22}
+              color={count > 0 ? colors.accent : colors.textSecondary}
+            />
+            {count > 0 && (
+              <View style={s.badge}>
+                <Text style={s.badgeText}>{count > 9 ? '9+' : count}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Row 2: Role pill + contextual info chips ────────── */}
+        <View style={s.row2}>
+
+          {/* Role pill */}
           <View style={[s.rolePill, isProvider ? s.rolePillPro : s.rolePillCli]}>
             <Text style={[s.roleText, isProvider ? s.roleTextPro : s.roleTextCli]}>
               {isProvider
-                ? (isRTL ? 'مزود' : 'Provider')
-                : (isRTL ? 'عميل' : 'Client')}
+                ? (isRTL ? 'مزود الخدمة' : 'Service Provider')
+                : (isRTL ? 'طالب الخدمة' : 'Client')}
             </Text>
           </View>
-        </TouchableOpacity>
 
-        {/* Wordmark — always centered */}
-        <Text style={s.wordmark}>وسيط</Text>
+          {/* Separator */}
+          <View style={s.sep} />
 
-        {/* Notification bell */}
-        <TouchableOpacity
-          style={s.iconBtn}
-          onPress={props.onNotifPress}
-          activeOpacity={0.7}
-        >
-          <Ionicons
-            name={count > 0 ? 'notifications' : 'notifications-outline'}
-            size={22}
-            color={count > 0 ? colors.accent : colors.textSecondary}
-          />
-          {count > 0 && (
-            <View style={s.badge}>
-              <Text style={s.badgeText}>{count > 9 ? '9+' : count}</Text>
-            </View>
+          {isProvider ? (
+            /* ── Provider chips ── */
+            <>
+              {/* Reputation tier */}
+              <View style={[s.chip, { backgroundColor: tierColor + '20' }]}>
+                <Text style={[s.chipText, { color: tierColor }]}>
+                  {tierLabel}
+                </Text>
+              </View>
+
+              {/* Score */}
+              <View style={s.chip}>
+                <Text style={s.chipText}>⭐ {score.toFixed(1)}</Text>
+              </View>
+
+              {/* Jobs count */}
+              <View style={s.chip}>
+                <Text style={s.chipText}>
+                  {isRTL ? `${jobs} عمل` : `${jobs} jobs`}
+                </Text>
+              </View>
+
+              {/* Bid credits */}
+              {isPremium ? (
+                <View style={[s.chip, s.chipGold]}>
+                  <Text style={[s.chipText, s.chipGoldText]}>
+                    {isRTL ? '∞ غير محدود' : '∞ Unlimited'}
+                  </Text>
+                </View>
+              ) : (
+                <View style={[s.chip, credits === 0 ? s.chipRed : credits <= 3 ? s.chipAmber : s.chipGold]}>
+                  <Text style={[s.chipText, credits === 0 ? s.chipRedText : credits <= 3 ? s.chipAmberText : s.chipGoldText]}>
+                    💳 {isRTL ? `${credits} رصيد` : `${credits} cr`}
+                  </Text>
+                </View>
+              )}
+            </>
+          ) : (
+            /* ── Client chips ── */
+            <>
+              {props.userCity ? (
+                <View style={s.chip}>
+                  <Text style={s.chipText}>📍 {props.userCity}</Text>
+                </View>
+              ) : null}
+            </>
           )}
-        </TouchableOpacity>
+        </View>
+
+        {/* Bottom border */}
+        <View style={s.border} />
       </View>
     );
   }
@@ -167,87 +287,140 @@ export function AppHeader(props: AppHeaderProps) {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-const CONTENT_H = 52;
-const ICON_BTN  = 44;
+const ICON_BTN = 44;
 
-function makeStyles(colors: AppColors, headerPad: number) {
+function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
+  const surfaceTint = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.02)';
+
   return StyleSheet.create({
-    // Shared base
+
+    // ── Shared base (stack / modal) ─────────────────────────
     base: {
-      flexDirection:    'row',
-      alignItems:       'center',
-      paddingTop:       headerPad,
-      paddingBottom:    8,
+      flexDirection:     'row',
+      alignItems:        'center',
+      paddingTop:        headerPad,
+      paddingBottom:     8,
       paddingHorizontal: 8,
-      backgroundColor:  colors.bg,
-      minHeight:        headerPad + CONTENT_H,
+      backgroundColor:   colors.bg,
+      minHeight:         headerPad + 52,
     },
-    // Root additions
-    rootBase: {
-      justifyContent:   'space-between',
-      borderBottomWidth: 1,
-      borderBottomColor: colors.border,
-    },
-    // Stack additions
     stackBase: {
-      justifyContent:   'space-between',
+      justifyContent:    'space-between',
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
     },
-    // Modal additions
     modalBase: {
       justifyContent: 'space-between',
-      // No border — modal flows feel lighter without divider
     },
-
-    // ── Root elements ───────────────────────────────────────
-    avatarGroup: {
-      flexDirection: 'row',
-      alignItems:    'center',
-      gap:           7,
-    },
-    avatarCircle: {
-      width:           36,
-      height:          36,
-      borderRadius:    18,
-      backgroundColor: colors.accent,
-      alignItems:      'center',
-      justifyContent:  'center',
-    },
-    avatarLetter: {
-      fontSize:   15,
-      fontWeight: '700',
-      color:      '#000',
-    },
-    rolePill: {
-      borderRadius:      20,
-      paddingHorizontal: 8,
-      paddingVertical:   3,
-    },
-    rolePillPro: { backgroundColor: 'rgba(201,168,76,0.15)' },
-    rolePillCli: { backgroundColor: colors.infoBg },
-    roleText:    { fontSize: 11, fontWeight: '600' },
-    roleTextPro: { color: colors.accent },
-    roleTextCli: { color: colors.infoSoft },
-
-    wordmark: {
-      fontSize:      20,
-      fontWeight:    '800',
-      color:         colors.textPrimary,
-      letterSpacing: 0.3,
-    },
-
-    // Notification bell
     iconBtn: {
       width:          ICON_BTN,
       height:         ICON_BTN,
       alignItems:     'center',
       justifyContent: 'center',
     },
+    stackTitle: {
+      flex:       1,
+      fontSize:   17,
+      fontWeight: '600',
+      color:      colors.textPrimary,
+      textAlign:  'center',
+    },
+    modalTitle: {
+      flex:       1,
+      fontSize:   16,
+      fontWeight: '500',
+      color:      colors.textSecondary,
+      textAlign:  'center',
+    },
+    stepChip:  {},
+    stepText: {
+      fontSize:   13,
+      fontWeight: '600',
+      color:      colors.textMuted,
+    },
+
+    // ── Root wrapper ────────────────────────────────────────
+    rootWrap: {
+      backgroundColor:   colors.bg,
+      paddingTop:        headerPad,
+      paddingHorizontal: 16,
+      paddingBottom:     10,
+    },
+    border: {
+      height:          1,
+      backgroundColor: colors.border,
+      marginTop:       10,
+    },
+
+    // Row 1
+    row1: {
+      flexDirection:  'row',
+      alignItems:     'center',
+      gap:            10,
+      marginBottom:   6,
+    },
+
+    // Avatar
+    avatarBtn: {
+      position: 'relative',
+    },
+    avatar: {
+      width:          44,
+      height:         44,
+      borderRadius:   22,
+      alignItems:     'center',
+      justifyContent: 'center',
+    },
+    avatarPro: {
+      backgroundColor: colors.accent,
+    },
+    avatarCli: {
+      backgroundColor: '#2563EB',
+    },
+    avatarLetter: {
+      fontSize:   18,
+      fontWeight: '700',
+      color:      '#fff',
+    },
+    onlineDot: {
+      position:     'absolute',
+      bottom:       1,
+      right:        1,
+      width:        11,
+      height:       11,
+      borderRadius: 6,
+      borderWidth:  2,
+      borderColor:  colors.bg,
+    },
+
+    // Greeting
+    greetBlock: {
+      flex: 1,
+    },
+    greetSmall: {
+      fontSize:   12,
+      color:      colors.textMuted,
+      marginBottom: 1,
+    },
+    greetName: {
+      fontSize:   19,
+      fontWeight: '700',
+      color:      colors.textPrimary,
+    },
+
+    // Bell
+    bellBtn: {
+      width:          40,
+      height:         40,
+      alignItems:     'center',
+      justifyContent: 'center',
+      borderRadius:   20,
+      backgroundColor: surfaceTint,
+    },
     badge: {
       position:          'absolute',
-      top:               6,
-      right:             6,
+      top:               4,
+      right:             4,
       minWidth:          16,
       height:            16,
       borderRadius:      8,
@@ -262,30 +435,55 @@ function makeStyles(colors: AppColors, headerPad: number) {
       color:      '#FFF',
     },
 
-    // ── Stack elements ──────────────────────────────────────
-    stackTitle: {
-      flex:       1,
-      fontSize:   17,
-      fontWeight: '600',
-      color:      colors.textPrimary,
-      textAlign:  'center',
+    // Row 2
+    row2: {
+      flexDirection: 'row',
+      alignItems:    'center',
+      flexWrap:      'wrap',
+      gap:           6,
     },
 
-    // ── Modal elements ──────────────────────────────────────
-    modalTitle: {
-      flex:       1,
-      fontSize:   16,
-      fontWeight: '500',
-      color:      colors.textSecondary,
-      textAlign:  'center',
+    // Role pill
+    rolePill: {
+      borderRadius:      20,
+      paddingHorizontal: 10,
+      paddingVertical:   4,
     },
-    stepChip: {
-      // overrides iconBtn size to same dimensions
+    rolePillPro: { backgroundColor: 'rgba(201,168,76,0.15)' },
+    rolePillCli: { backgroundColor: 'rgba(59,130,246,0.12)' },
+    roleText:    { fontSize: 12, fontWeight: '700' },
+    roleTextPro: { color: colors.accent },
+    roleTextCli: { color: '#3B82F6' },
+
+    // Separator dot
+    sep: {
+      width:           4,
+      height:          4,
+      borderRadius:    2,
+      backgroundColor: colors.border,
     },
-    stepText: {
-      fontSize:   13,
+
+    // Info chips
+    chip: {
+      borderRadius:      16,
+      paddingHorizontal: 8,
+      paddingVertical:   3,
+      backgroundColor:   colors.surface,
+      borderWidth:       1,
+      borderColor:       colors.border,
+    },
+    chipText: {
+      fontSize:   11,
       fontWeight: '600',
-      color:      colors.textMuted,
+      color:      colors.textSecondary,
     },
+
+    // Colored credit chip variants
+    chipGold:      { backgroundColor: 'rgba(201,168,76,0.12)', borderColor: 'rgba(201,168,76,0.30)' },
+    chipGoldText:  { color: colors.accent },
+    chipAmber:     { backgroundColor: 'rgba(245,158,11,0.12)', borderColor: 'rgba(245,158,11,0.30)' },
+    chipAmberText: { color: '#F59E0B' },
+    chipRed:       { backgroundColor: 'rgba(239,68,68,0.10)', borderColor: 'rgba(239,68,68,0.25)' },
+    chipRedText:   { color: '#EF4444' },
   });
 }

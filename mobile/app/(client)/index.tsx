@@ -286,6 +286,7 @@ export default function ClientHome() {
         variant="root"
         userName={user?.full_name}
         userRole="client"
+        userCity={user?.city}
         onNotifPress={() => router.push('/notification-settings')}
         onAvatarPress={() => router.push('/(client)/profile' as any)}
       />
