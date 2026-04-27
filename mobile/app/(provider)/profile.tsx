@@ -80,6 +80,11 @@ export default function ProviderProfile() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 12000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();

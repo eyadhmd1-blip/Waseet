@@ -544,12 +544,8 @@ export default function OnboardingScreen() {
       if (planOverride !== undefined) setPlanChoice(planOverride);
 
       // Directly signal _layout.tsx with the real role so the route guard
-      // resolves instantly without waiting for onAuthStateChange / refreshSession.
+      // resolves instantly without waiting for onAuthStateChange.
       notifyRoleUpdate(role);
-
-      // Also refresh session in the background so onAuthStateChange eventually
-      // catches up (push token registration, etc.).
-      supabase.auth.refreshSession().catch(() => {});
 
       setDone(true);
     } catch (err: any) {
