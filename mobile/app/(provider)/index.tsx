@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST } from '../../src/constants/categories';
+import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST, ICON_MAP } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceRequest, Provider, User, RecurringContract } from '../../src/types';
 import { FREQ_VISITS_PER_MONTH } from '../../src/types';
@@ -28,29 +28,6 @@ import type { AppColors } from '../../src/constants/colors';
 const CONTRACT_COLOR = '#10B981';
 const CONTRACT_DIM   = '#10B98122';
 
-const ICON_MAP: Record<string, string> = {
-  // صيانة المنازل
-  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙',
-  'pen-tool': '✏️', car: '🚗', battery: '🔋', gauge: '⛽', snowflake: '🧊',
-  shield: '🛡️', droplet: '💧',
-  // صيانة المنازل — جديد
-  tile: '🔲', plaster: '🪣', iron: '⚒️', aluminium: '🪟', sofa: '🛋️',
-  gypsum: '🏗️', bricks: '🧱', 'glass-pane': '🔳',
-  // الخدمات الفنية
-  wifi: '📶', cctv: '📹', 'solar-panel': '☀️', 'fire-alarm': '🔔',
-  desktop: '🖥️', laptop: '💻',
-  // الصحة والعناية
-  massage: '💆', nurse: '🏥', haircut: '✂️',
-  // المناسبات والفعاليات
-  photo: '📸', cake: '🎂', party: '🎉',
-  // تصميم وأعمال حرة
-  'code-bracket': '⌨️', 'chart-up': '📈', document: '📝', calculator: '🧮',
-  // الحِرَف اليدوية
-  thread: '🧵', stitch: '🪡', shoe: '👟',
-  // الحيوانات الأليفة
-  paw: '🐾', 'dog-lead': '🦮', stethoscope: '🩺',
-};
 
 type RequestWithMeta = ServiceRequest & {
   category?: { name_ar: string; icon: string };

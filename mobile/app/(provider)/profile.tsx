@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, CATEGORY_GROUPS, REP_DISCOUNT } from '../../src/constants/categories';
+import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, CATEGORY_GROUPS, REP_DISCOUNT, ICON_MAP } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User, PortfolioItem } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -21,10 +21,6 @@ const MINI_CELL    = (W - 32 - 8) / 3; // 3 cols, 16px side padding, 4px gaps
 // LOYALTY_MILESTONES now lives in src/constants/loyalty.ts — imported via calcLoyaltyProgress
 const LOYALTY_MILESTONES = [10, 25, 50, 100];
 
-const ICON_MAP: Record<string, string> = {
-  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙', 'pen-tool': '✏️',
-};
 
 const TYPE_ICON: Record<string, string> = {
   single: '🖼', before_after: '🔄', video: '🎥',

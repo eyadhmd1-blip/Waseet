@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase }                     from '../../src/lib/supabase';
-import { CATEGORY_GROUPS }              from '../../src/constants/categories';
+import { CATEGORY_GROUPS, ICON_MAP }    from '../../src/constants/categories';
 import { useLanguage }                  from '../../src/hooks/useLanguage';
 import type { User, ServiceRequest }    from '../../src/types';
 import { useInsets }                    from '../../src/hooks/useInsets';
@@ -25,29 +25,6 @@ const CARD_GAP = 10;
 const CARD_W_3 = (W - H_PAD * 2 - CARD_GAP * 2) / 3;
 
 // ─── Maps ─────────────────────────────────────────────────────
-const ICON_MAP: Record<string, string> = {
-  // صيانة المنازل
-  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚',
-  moon: '🌙', 'pen-tool': '✏️', car: '🚗', battery: '🔋',
-  gauge: '⛽', snowflake: '🧊', shield: '🛡️', droplet: '💧',
-  // صيانة المنازل — جديد
-  tile: '🔲', plaster: '🪣', iron: '⚒️', aluminium: '🪟', sofa: '🛋️',
-  gypsum: '🏗️', bricks: '🧱', 'glass-pane': '🔳',
-  // الخدمات الفنية
-  wifi: '📶', cctv: '📹', 'solar-panel': '☀️', 'fire-alarm': '🔔',
-  desktop: '🖥️', laptop: '💻',
-  // الصحة والعناية
-  massage: '💆', nurse: '🏥', haircut: '✂️',
-  // المناسبات والفعاليات
-  photo: '📸', cake: '🎂', party: '🎉',
-  // تصميم وأعمال حرة
-  'code-bracket': '⌨️', 'chart-up': '📈', document: '📝', calculator: '🧮',
-  // الحِرَف اليدوية
-  thread: '🧵', stitch: '🪡', shoe: '👟',
-  // الحيوانات الأليفة
-  paw: '🐾', 'dog-lead': '🦮', stethoscope: '🩺',
-};
 
 const GROUP_COLORS: Record<string, string> = {
   maintenance:   '#3B82F6', // أزرق

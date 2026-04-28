@@ -6,7 +6,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Share } from 'react-native';
 import { supabase } from '../src/lib/supabase';
-import { TIER_META } from '../src/constants/categories';
+import { TIER_META, ICON_MAP } from '../src/constants/categories';
 import { useLanguage } from '../src/hooks/useLanguage';
 import type { ServiceRequest, Bid, RequestStatus } from '../src/types';
 import { useTheme } from '../src/context/ThemeContext';
@@ -44,10 +44,6 @@ function getStatusColors(colors: AppColors): Record<RequestStatus, { bg: string;
   };
 }
 
-const ICON_MAP: Record<string, string> = {
-  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙', 'pen-tool': '✏️',
-};
 
 // ─── Component ────────────────────────────────────────────────
 
