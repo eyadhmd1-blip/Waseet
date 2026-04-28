@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { CATEGORY_GROUPS, CATEGORY_PLACEHOLDERS } from '../src/constants/categories';
+import { CATEGORY_GROUPS, CATEGORY_PLACEHOLDERS, ICON_MAP } from '../src/constants/categories';
 import { useCategories } from '../src/hooks/useCategories';
 import type { ServiceCategory } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
@@ -24,11 +24,6 @@ import type { AppColors } from '../src/constants/colors';
 const URGENT_PREMIUM_PCT = 25;
 const URGENT_MINUTES     = 60;
 
-const ICON_MAP: Record<string, string> = {
-  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙', 'pen-tool': '✏️',
-  car: '🚗', battery: '🔋', gauge: '⛽', snowflake: '🧊', shield: '🛡️', droplet: '💧',
-};
 
 // ─── Pulsing siren ───────────────────────────────────────────
 

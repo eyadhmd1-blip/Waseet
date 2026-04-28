@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { JORDAN_CITIES, CATEGORY_PLACEHOLDERS } from '../src/constants/categories';
+import { JORDAN_CITIES, CATEGORY_PLACEHOLDERS, ICON_MAP } from '../src/constants/categories';
 import { useCategories } from '../src/hooks/useCategories';
 import {
   RecurrenceFrequency, FREQ_VISITS_PER_MONTH,
@@ -30,11 +30,6 @@ const CONTRACT_DIM   = '#10B98122';
 
 type Step = 1 | 2 | 3 | 4;
 
-const ICON_MAP: Record<string, string> = {
-  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚',
-  moon: '🌙', 'pen-tool': '✏️', car: '🚗', shield: '🛡️', droplet: '💧',
-};
 
 // Duration option months — labels built with t() in component
 const DURATION_MONTHS: (3 | 6 | 12)[] = [3, 6, 12];

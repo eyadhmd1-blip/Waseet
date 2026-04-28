@@ -11,7 +11,7 @@ import {
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { notifyRoleUpdate } from '../../src/lib/authEvents';
-import { JORDAN_CITIES, SUBSCRIPTION_PLANS } from '../../src/constants/categories';
+import { JORDAN_CITIES, SUBSCRIPTION_PLANS, ICON_MAP } from '../../src/constants/categories';
 import { useCategories } from '../../src/hooks/useCategories';
 import { SuggestServiceModal } from '../../src/components/SuggestServiceModal';
 import { useLanguage } from '../../src/hooks/useLanguage';
@@ -22,13 +22,6 @@ import type { AppColors } from '../../src/constants/colors';
 
 const { width } = Dimensions.get('window');
 
-// Icon map matching provider profile
-const ICON_MAP: Record<string, string> = {
-  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙',
-  'pen-tool': '✏️', car: '🚗', battery: '🔋', gauge: '⚙️', snowflake: '❄️',
-  shield: '🛡️', droplet: '💧',
-};
 
 type Role = 'client' | 'provider';
 type PlanChoice = 'trial' | 'basic' | 'pro' | 'premium' | null;

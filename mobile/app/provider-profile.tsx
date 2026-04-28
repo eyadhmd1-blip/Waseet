@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { TIER_META, CATEGORY_GROUPS } from '../src/constants/categories';
+import { TIER_META, CATEGORY_GROUPS, ICON_MAP } from '../src/constants/categories';
 import type { Provider, User, PortfolioItem, ShareChannel } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
@@ -22,11 +22,6 @@ import type { AppColors } from '../src/constants/colors';
 const { width: W } = Dimensions.get('window');
 const THUMB_SIZE   = (W - 40 - 8) / 3;
 
-const ICON_MAP: Record<string, string> = {
-  zap: '⚡', droplets: '🚿', wind: '❄️', hammer: '🔨', paintbrush: '🎨',
-  wrench: '🔧', sparkles: '✨', truck: '🚚', 'book-open': '📚', moon: '🌙', 'pen-tool': '✏️',
-  car: '🚗', battery: '🔋', gauge: '⛽', snowflake: '🧊', shield: '🛡️', droplet: '💧',
-};
 
 function capitalize(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
