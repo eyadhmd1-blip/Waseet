@@ -27,17 +27,52 @@ const CARD_W_3 = (W - H_PAD * 2 - CARD_GAP * 2) / 3;
 // ─── Maps ─────────────────────────────────────────────────────
 
 const GROUP_COLORS: Record<string, string> = {
-  maintenance:   '#3B82F6', // أزرق
-  cleaning:      '#10B981', // أخضر
-  technical:     '#06B6D4', // سماوي
-  health_beauty: '#EC4899', // وردي
-  events:        '#F97316', // برتقالي
-  education:     '#8B5CF6', // بنفسجي
-  freelance:     '#F59E0B', // ذهبي
-  handicrafts:   '#84CC16', // أخضر ليموني
-  pets:          '#A78BFA', // بنفسجي فاتح
-  car_services:  '#EF4444', // أحمر
+  maintenance:   '#3B82F6',
+  cleaning:      '#10B981',
+  technical:     '#06B6D4',
+  health_beauty: '#EC4899',
+  events:        '#F97316',
+  education:     '#8B5CF6',
+  freelance:     '#F59E0B',
+  handicrafts:   '#84CC16',
+  pets:          '#A78BFA',
+  car_services:  '#EF4444',
 };
+
+const GROUP_EMOJI: Record<string, string> = {
+  maintenance:   '🔧',
+  car_services:  '🚗',
+  cleaning:      '✨',
+  technical:     '💻',
+  events:        '🎉',
+  education:     '📚',
+  freelance:     '✏️',
+  health_beauty: '💆',
+  handicrafts:   '🧵',
+  pets:          '🐾',
+};
+
+const GROUP_SHORT_AR: Record<string, string> = {
+  maintenance:   'صيانة المنازل',
+  car_services:  'صيانة السيارات',
+  cleaning:      'تنظيف ونقل',
+  technical:     'الخدمات الفنية',
+  events:        'المناسبات',
+  education:     'تعليم',
+  freelance:     'تصميم وأعمال',
+  health_beauty: 'صحة وعناية',
+  handicrafts:   'الحِرَف',
+  pets:          'الحيوانات',
+};
+
+// ترتيب العرض حسب الأكثر طلباً
+const DISPLAY_ORDER = [
+  'maintenance', 'car_services', 'cleaning', 'technical',
+  'events', 'education', 'freelance', 'health_beauty', 'handicrafts', 'pets',
+];
+const SORTED_GROUPS = DISPLAY_ORDER
+  .map(slug => CATEGORY_GROUPS.find(g => g.slug === slug))
+  .filter(Boolean) as typeof CATEGORY_GROUPS;
 
 // ─── Status helpers ───────────────────────────────────────────
 const STATUS_BG: Record<string, string> = {
@@ -296,7 +331,7 @@ export default function ClientHome() {
             style={styles.chipsScroll}
             contentContainerStyle={[styles.chipsContent, { flexDirection: 'row' }]}
           >
-            {CATEGORY_GROUPS.map(g => {
+            {SORTED_GROUPS.map(g => {
               const active = activeGroup === g.slug;
               const col    = GROUP_COLORS[g.slug] ?? colors.accent;
               return (
@@ -304,9 +339,11 @@ export default function ClientHome() {
                   key={g.slug}
                   style={[styles.chip, active && { backgroundColor: col + '20', borderColor: col }]}
                   onPress={() => setActiveGroup(g.slug)}
+                  activeOpacity={0.75}
                 >
+                  <Text style={styles.chipEmoji}>{GROUP_EMOJI[g.slug]}</Text>
                   <Text style={[styles.chipText, active && { color: col, fontWeight: '700' }]}>
-                    {t(`categories.${g.slug}`, g.name_ar)}
+                    {GROUP_SHORT_AR[g.slug] ?? g.name_ar}
                   </Text>
                 </TouchableOpacity>
               );
@@ -475,14 +512,18 @@ function createStyles(colors: AppColors, isDark: boolean) {
 
     // ── Chips ───────────────────────────────────────────────────
     chipsScroll:  { marginBottom: 20 },
-    chipsContent: { paddingHorizontal: H_PAD, gap: 8, paddingVertical: 2 },
+    chipsContent: { paddingHorizontal: H_PAD, gap: 8, paddingVertical: 4 },
     chip: {
-      paddingHorizontal: 14, paddingVertical: 7,
-      borderRadius: 20, borderWidth: 1,
+      flexDirection:  'row',
+      alignItems:     'center',
+      gap:            5,
+      paddingHorizontal: 12, paddingVertical: 8,
+      borderRadius: 20, borderWidth: 1.5,
       borderColor: colors.border,
       backgroundColor: colors.surface,
     },
-    chipText: { fontSize: 12, color: colors.textSecondary, fontWeight: '500' },
+    chipEmoji: { fontSize: 13 },
+    chipText:  { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
 
     // ── Section labels ───────────────────────────────────────────
     sectionLabel: {
