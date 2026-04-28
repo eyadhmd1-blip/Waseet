@@ -23,7 +23,7 @@ type BidWithProvider = Bid & {
     badge_verified: boolean;
     lifetime_jobs: number;
     is_available: boolean;
-    user: { full_name: string; city: string };
+    user: { full_name: string; city: string } | null;
   };
 };
 
@@ -145,7 +145,7 @@ export default function RequestDetail() {
       pathname: '/grace-period',
       params: {
         job_id:        jobId,
-        provider_name: bid.provider.user.full_name,
+        provider_name: bid.provider.user?.full_name ?? '',
         provider_amt:  String(bid.amount),
         currency:      bid.currency,
         is_urgent:     isUrgent ? '1' : '0',
@@ -413,11 +413,11 @@ export default function RequestDetail() {
               <View style={styles.acceptedCard}>
                 <View style={styles.providerAvatarLg}>
                   <Text style={styles.providerAvatarTextLg}>
-                    {acceptedBid.provider.user.full_name.charAt(0)}
+                    {(acceptedBid.provider.user?.full_name ?? '?').charAt(0)}
                   </Text>
                 </View>
                 <View style={styles.acceptedInfo}>
-                  <Text style={[styles.acceptedName, { textAlign: ta }]}>{acceptedBid.provider.user.full_name}</Text>
+                  <Text style={[styles.acceptedName, { textAlign: ta }]}>{acceptedBid.provider.user?.full_name ?? ''}</Text>
                   <View style={[styles.tierPill, { backgroundColor: tier.color + '22' }]}>
                     <Text style={[styles.tierPillText, { color: tier.color }]}>
                       {t(`dashboard.tier${acceptedBid.provider.reputation_tier.charAt(0).toUpperCase() + acceptedBid.provider.reputation_tier.slice(1)}` as any)}
@@ -451,7 +451,7 @@ export default function RequestDetail() {
                       .select('username')
                       .eq('id', acceptedBid.provider.id)
                       .single();
-                    const name = acceptedBid.provider.user.full_name;
+                    const name = acceptedBid.provider.user?.full_name ?? '';
                     const link = `https://waseet.app/p/${prov?.username ?? acceptedBid.provider.id}`;
                     Share.share({ message: t('chat.recommendMsg', { name, link }), url: link });
                   }}
@@ -492,7 +492,7 @@ export default function RequestDetail() {
             {confirmBid && (
               <>
                 <Text style={[styles.modalProvider, { textAlign: ta }]}>
-                  {t('requests.confirmProvider', { name: confirmBid.provider.user.full_name })}
+                  {t('requests.confirmProvider', { name: confirmBid.provider.user?.full_name ?? '' })}
                 </Text>
                 <View style={styles.modalAmountRow}>
                   <Text style={styles.modalAmountLabel}>{t('requests.confirmedAmount')}</Text>
@@ -569,12 +569,12 @@ function BidCard({
         >
           <View style={bidStyles.avatar}>
             <Text style={bidStyles.avatarText}>
-              {bid.provider.user.full_name.charAt(0)}
+              {(bid.provider.user?.full_name ?? '?').charAt(0)}
             </Text>
           </View>
           <View style={bidStyles.providerInfo}>
             <View style={bidStyles.nameRow}>
-              <Text style={bidStyles.providerName}>{bid.provider.user.full_name}</Text>
+              <Text style={bidStyles.providerName}>{bid.provider.user?.full_name ?? ''}</Text>
               {bid.provider.badge_verified && (
                 <Text style={bidStyles.verified}>✓</Text>
               )}
@@ -590,7 +590,7 @@ function BidCard({
                 <Text style={bidStyles.score}>⭐ {bid.provider.score.toFixed(1)}</Text>
               )}
               <Text style={bidStyles.jobs}>{t('chat.jobsCount', { count: bid.provider.lifetime_jobs })}</Text>
-              {bid.provider.user.city ? (
+              {bid.provider.user?.city ? (
                 <Text style={bidStyles.city}>📍 {bid.provider.user.city}</Text>
               ) : null}
             </View>
