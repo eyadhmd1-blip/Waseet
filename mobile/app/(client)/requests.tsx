@@ -188,8 +188,8 @@ export default function ClientRequests() {
           </View>
         </View>
 
-        {/* Repost banner — only for expired requests */}
-        {item.status === 'expired' && (
+        {/* Repost banner — expired or cancelled */}
+        {(item.status === 'expired' || item.status === 'cancelled') && (
           <TouchableOpacity
             style={styles.repostBtn}
             activeOpacity={0.82}
