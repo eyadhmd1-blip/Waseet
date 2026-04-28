@@ -7,7 +7,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Animated, ScrollView,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase }             from '../../src/lib/supabase';
 import { useLanguage }          from '../../src/hooks/useLanguage';
 import type { ServiceRequest }  from '../../src/types';
@@ -102,6 +102,8 @@ export default function ClientRequests() {
   }, [filter]);
 
   useEffect(() => { load(); }, [load]);
+
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   useEffect(() => {
     Animated.parallel([
