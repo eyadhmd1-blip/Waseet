@@ -17,7 +17,6 @@ interface Prefs {
   seasonal:         boolean;
   lifecycle:        boolean;
   behavioral:       boolean;
-  win_back:         boolean;
   quiet_hour_start: number;
   quiet_hour_end:   number;
   max_per_week:     number;
@@ -28,7 +27,6 @@ const DEFAULTS: Prefs = {
   seasonal:         true,
   lifecycle:        true,
   behavioral:       true,
-  win_back:         true,
   quiet_hour_start: 22,
   quiet_hour_end:   8,
   max_per_week:     2,
@@ -50,7 +48,6 @@ const TYPE_EMOJI: Record<string, string> = {
   seasonal:  '📅',
   lifecycle: '🔄',
   behavioral:'🧠',
-  win_back:  '🎁',
   ai:        '✨',
 };
 
@@ -115,7 +112,6 @@ export default function NotificationSettingsScreen() {
           seasonal:         data.seasonal         ?? DEFAULTS.seasonal,
           lifecycle:        data.lifecycle        ?? DEFAULTS.lifecycle,
           behavioral:       data.behavioral       ?? DEFAULTS.behavioral,
-          win_back:         data.win_back         ?? DEFAULTS.win_back,
           quiet_hour_start: data.quiet_hour_start ?? DEFAULTS.quiet_hour_start,
           quiet_hour_end:   data.quiet_hour_end   ?? DEFAULTS.quiet_hour_end,
           max_per_week:     data.max_per_week     ?? DEFAULTS.max_per_week,
@@ -260,16 +256,6 @@ export default function NotificationSettingsScreen() {
               sub={t('notifSettings.behavioralSub')}
               value={prefs.behavioral}
               onChange={v => patch('behavioral', v)}
-              disabled={!prefs.enabled}
-              ta={ta}
-            />
-            <Divider />
-            <NotifToggle
-              icon="🎁"
-              title={t('notifSettings.winBackTitle')}
-              sub={t('notifSettings.winBackSub')}
-              value={prefs.win_back}
-              onChange={v => patch('win_back', v)}
               disabled={!prefs.enabled}
               ta={ta}
             />
