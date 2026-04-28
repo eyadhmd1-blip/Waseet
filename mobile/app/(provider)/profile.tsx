@@ -81,6 +81,20 @@ export default function ProviderProfile() {
     return () => clearTimeout(timer);
   }, []);
 
+  // ── These must live before any early return (Rules of Hooks) ──
+  const { nextMilestone, progress: loyaltyProgress } = useMemo(
+    () => calcLoyaltyProgress(provider?.lifetime_jobs ?? 0),
+    [provider?.lifetime_jobs],
+  );
+  const myCats = useMemo(
+    () => ALL_CATEGORIES.filter(c => provider?.categories?.includes(c.slug)),
+    [provider?.categories],
+  );
+  const { portfolioPreview, totalViews } = useMemo(() => ({
+    portfolioPreview: portfolioItems.slice(0, 8),
+    totalViews:       portfolioItems.reduce((s, i) => s + i.views_count, 0),
+  }), [portfolioItems]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();
@@ -154,23 +168,6 @@ export default function ProviderProfile() {
 
   const tierMeta = TIER_META[provider.reputation_tier];
   const plan     = SUBSCRIPTION_PLANS.find(p => p.tier === provider.subscription_tier);
-
-  // Memoized: recompute only when provider.lifetime_jobs changes
-  const { nextMilestone, prevMilestone: _prev, progress: loyaltyProgress } = useMemo(
-    () => calcLoyaltyProgress(provider.lifetime_jobs),
-    [provider.lifetime_jobs],
-  );
-  // Memoized: recompute only when provider.categories changes
-  const myCats = useMemo(
-    () => ALL_CATEGORIES.filter(c => provider.categories?.includes(c.slug)),
-    [provider.categories],
-  );
-
-  // Memoized: recompute only when portfolioItems changes
-  const { portfolioPreview, totalViews } = useMemo(() => ({
-    portfolioPreview: portfolioItems.slice(0, 8),
-    totalViews:       portfolioItems.reduce((s, i) => s + i.views_count, 0),
-  }), [portfolioItems]);
 
   return (
     <ScrollView
