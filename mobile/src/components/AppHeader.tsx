@@ -9,7 +9,7 @@
 
 import React from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
+  View, Text, TouchableOpacity, StyleSheet, I18nManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme }    from '../context/ThemeContext';
@@ -84,6 +84,13 @@ export interface AppHeaderProps {
 
 // ─── Component ────────────────────────────────────────────────
 
+// Safe row direction: works whether I18nManager.forceRTL has taken
+// effect (production / Android) or not (Expo Go on iOS first load).
+function rowDir(wantRTL: boolean): 'row' | 'row-reverse' {
+  if (!wantRTL) return 'row';
+  return I18nManager.isRTL ? 'row' : 'row-reverse';
+}
+
 export function AppHeader(props: AppHeaderProps) {
   const { colors, isDark } = useTheme();
   const { lang }           = useLanguage();
@@ -115,7 +122,7 @@ export function AppHeader(props: AppHeaderProps) {
     return (
       <View style={s.rootWrap}>
         {/* ── Row 1: Avatar | Greeting + Name | Bell ─────────── */}
-        <View style={s.row1}>
+        <View style={[s.row1, { flexDirection: rowDir(isRTL) }]}>
 
           {/* Avatar */}
           <TouchableOpacity
@@ -163,7 +170,7 @@ export function AppHeader(props: AppHeaderProps) {
         </View>
 
         {/* ── Row 2: Role pill + contextual info chips ────────── */}
-        <View style={s.row2}>
+        <View style={[s.row2, { flexDirection: rowDir(isRTL) }]}>
 
           {/* Role pill */}
           <View style={[s.rolePill, isProvider ? s.rolePillPro : s.rolePillCli]}>
