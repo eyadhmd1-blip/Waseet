@@ -180,6 +180,13 @@ export function AppHeader(props: AppHeaderProps) {
           {isProvider ? (
             /* ── Provider chips ── */
             <>
+              {/* Online status */}
+              <View style={[s.chip, { backgroundColor: isOnline ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.12)', borderColor: isOnline ? 'rgba(34,197,94,0.30)' : 'rgba(156,163,175,0.25)' }]}>
+                <Text style={[s.chipText, { color: isOnline ? '#22C55E' : '#9CA3AF' }]}>
+                  {isOnline ? '● ' : '⬤ '}{isRTL ? (isOnline ? 'مباشر' : 'غير متاح') : (isOnline ? 'Online' : 'Away')}
+                </Text>
+              </View>
+
               {/* Reputation tier */}
               <View style={[s.chip, { backgroundColor: tierColor + '20' }]}>
                 <Text style={[s.chipText, { color: tierColor }]}>

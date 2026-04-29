@@ -1370,32 +1370,6 @@ export default function ProviderFeed() {
         </TouchableOpacity>
       )}
 
-      {/* ── Header ────────────────────────────────────────────── */}
-      <Animated.View
-        style={[styles.header, { opacity: headerOp, transform: [{ translateY: headerY }], flexDirection: 'row' }]}
-      >
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.greeting, { textAlign: ta }]}>
-            {t('providerFeed.greeting', { name: provider?.user?.full_name?.split(' ')[0] })}
-          </Text>
-          {tierMeta && (
-            <View style={[styles.tierBadge, { backgroundColor: tierMeta.color + '22', flexDirection: 'row', alignSelf: selfStart(isRTL) }]}>
-              <Text style={[styles.tierText, { color: tierMeta.color }]}>{tierMeta.label_ar}</Text>
-              <Text style={styles.tierScore}>⭐ {provider?.score?.toFixed(1)}</Text>
-              <Text style={styles.tierJobs}> · {t('providerFeed.lifetimeJobsBadge', { count: provider?.lifetime_jobs })}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Live feed indicator */}
-        <View style={[styles.liveRow, { flexDirection: 'row' }]}>
-          <Text style={[styles.liveText, me(4, isRTL) as any]}>
-            {t('providerFeed.live')}
-          </Text>
-          <LiveDot />
-        </View>
-      </Animated.View>
-
       {/* ── Category filter ───────────────────────────────────── */}
       <Animated.View style={{ opacity: filterOp }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
