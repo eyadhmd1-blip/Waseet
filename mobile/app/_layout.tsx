@@ -209,6 +209,16 @@ function RootLayoutInner() {
     if (role !== undefined && i18nReady) SplashScreen.hideAsync();
   }, [role, i18nReady]);
 
+  // ── Safety timeout: force-hide splash after 8s ───────────────
+  // Prevents infinite splash on Xiaomi/Redmi (and similar) where
+  // aggressive battery optimisation kills the background process.
+  // On resume, onAuthStateChange can stall long enough that role
+  // stays undefined forever without this fallback.
+  useEffect(() => {
+    const t = setTimeout(() => SplashScreen.hideAsync(), 8000);
+    return () => clearTimeout(t);
+  }, []);
+
   // ── Route guard ───────────────────────────────────────────────
   useEffect(() => {
     // role === undefined means auth check hasn't completed yet — keep splash visible
