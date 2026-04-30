@@ -21,7 +21,7 @@ type Step = 1 | 2 | 3;
 
 export default function NewRequestScreen() {
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
   const { colors } = useTheme();
   const {
     category: preselectedCategory,
@@ -29,7 +29,7 @@ export default function NewRequestScreen() {
     repost_from: repostFromId,
   } = useLocalSearchParams<{ category?: string; notif_id?: string; repost_from?: string }>();
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const { groups } = useCategories();
 
   const [step, setStep]               = useState<Step>(preselectedCategory ? 2 : 1);
@@ -278,7 +278,7 @@ export default function NewRequestScreen() {
             <Text style={styles.changeCat}>{t('newRequest.changeCategory')}</Text>
           </TouchableOpacity>
 
-          <Text style={[styles.label, { textAlign: ta }]}>{t('newRequest.requestTitle')}</Text>
+          <Text style={styles.label}>{t('newRequest.requestTitle')}</Text>
           <TextInput
             style={[styles.input, { textAlign: ta }]}
             placeholder={
@@ -293,7 +293,7 @@ export default function NewRequestScreen() {
             maxLength={80}
           />
 
-          <Text style={[styles.label, { textAlign: ta }]}>{t('newRequest.description')}</Text>
+          <Text style={styles.label}>{t('newRequest.description')}</Text>
           <TextInput
             style={[styles.input, styles.inputMultiline, { textAlign: ta }]}
             placeholder={
@@ -309,9 +309,9 @@ export default function NewRequestScreen() {
             numberOfLines={4}
             maxLength={500}
           />
-          <Text style={[styles.charCount, { textAlign: ta }]}>{description.length}/500</Text>
+          <Text style={styles.charCount}>{description.length}/500</Text>
 
-          <Text style={[styles.label, { textAlign: ta }]}>{t('newRequest.city')}</Text>
+          <Text style={styles.label}>{t('newRequest.city')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cityScroll}>
             {JORDAN_CITIES.map(c => (
               <TouchableOpacity
@@ -326,7 +326,7 @@ export default function NewRequestScreen() {
             ))}
           </ScrollView>
 
-          <Text style={[styles.label, { textAlign: ta }]}>{t('newRequest.photosOptional')}</Text>
+          <Text style={styles.label}>{t('newRequest.photosOptional')}</Text>
           <View style={styles.imageRow}>
             {images.map((uri, i) => (
               <View key={i} style={styles.imagePlaceholder}>
@@ -420,7 +420,8 @@ function Row({ label, value, multiline }: { label: string; value: string; multil
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
 
@@ -445,10 +446,10 @@ function createStyles(colors: AppColors) {
     selectedCatText:  { fontSize: 15, color: colors.accent, fontWeight: '600' },
     changeCat:        { fontSize: 13, color: colors.textMuted },
 
-    label:     { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16, alignSelf: 'stretch' },
+    label:     { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16, alignSelf: 'stretch', textAlign: ta },
     input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
     inputMultiline: { height: 120, textAlignVertical: 'top', paddingTop: 14 },
-    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch' },
+    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch', textAlign: ta },
 
     cityScroll:    { marginBottom: 8 },
     cityChip:      { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
