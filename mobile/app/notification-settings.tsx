@@ -329,7 +329,7 @@ function NotifToggle({
 
 function createToggleSt(colors: AppColors) {
   return StyleSheet.create({
-  row:   { alignItems: 'center', paddingVertical: 12, gap: 12 },
+  row:   { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
   icon:  { fontSize: 22, width: 32, textAlign: 'center' },
   info:  { flex: 1 },
   title: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
@@ -356,19 +356,19 @@ function createSt(colors: AppColors) {
   cardDisabled: { opacity: 0.5 },
 
   masterCard:  { backgroundColor: colors.surface, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  masterLeft:  { alignItems: 'center', gap: 14 },
+  masterLeft:  { flexDirection: 'row', alignItems: 'center', gap: 14 },
   masterIcon:  { fontSize: 28 },
   masterTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
   masterSub:   { fontSize: 12, color: colors.textMuted },
 
-  radioRow:          { alignItems: 'center', gap: 12, paddingVertical: 12 },
+  radioRow:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   radioCircle:       { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   radioCircleActive: { borderColor: colors.accent },
   radioDot:          { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
   radioLabel:        { flex: 1, fontSize: 14, color: colors.textPrimary },
 
   quietDesc:           { fontSize: 12, color: colors.textMuted, marginBottom: 14 },
-  quietRow:            { alignItems: 'flex-start', gap: 8 },
+  quietRow:            { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
   quietCol:            { flex: 1 },
   quietLabel:          { fontSize: 11, color: colors.textMuted, textAlign: 'center', marginBottom: 8 },
   quietChips:          { gap: 6 },
@@ -380,7 +380,7 @@ function createSt(colors: AppColors) {
   quietSummary:        { marginTop: 14, backgroundColor: colors.bg, borderRadius: 10, padding: 10, alignItems: 'center' },
   quietSummaryText:    { fontSize: 12, color: colors.textMuted },
 
-  aiBadge: { alignItems: 'center', gap: 12, backgroundColor: colors.accentDim, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginTop: 20, marginBottom: 8 },
+  aiBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.accentDim, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginTop: 20, marginBottom: 8 },
   aiIcon:  { fontSize: 28 },
   aiTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 3 },
   aiSub:   { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
