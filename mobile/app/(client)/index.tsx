@@ -16,6 +16,7 @@ import { useInsets }                    from '../../src/hooks/useInsets';
 import { me }                            from '../../src/utils/rtl';
 import { useTheme }                     from '../../src/context/ThemeContext';
 import { AppHeader }                    from '../../src/components/AppHeader';
+import { useUnreadNotifCount }          from '../../src/hooks/useUnreadNotifCount';
 import type { AppColors }               from '../../src/constants/colors';
 
 // ─── Layout constants ─────────────────────────────────────────
@@ -209,6 +210,7 @@ export default function ClientHome() {
   const styles  = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const { contentPad } = useInsets();
   const router  = useRouter();
+  const { count: notifCount } = useUnreadNotifCount();
   const { t, ta, isRTL } = useLanguage();
 
   // ── State (unchanged) ────────────────────────────────────────
@@ -299,7 +301,8 @@ export default function ClientHome() {
         userName={user?.full_name}
         userRole="client"
         userCity={user?.city}
-        onNotifPress={() => router.push('/notification-settings')}
+        notifCount={notifCount}
+        onNotifPress={() => router.push('/notification-inbox' as any)}
         onAvatarPress={() => router.push('/(client)/profile' as any)}
       />
 

@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef, useCallback, useMemo} from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, TouchableOpacity,
   Switch, ActivityIndicator, Alert, Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -32,25 +32,6 @@ const DEFAULTS: Prefs = {
   max_per_week:     2,
 };
 
-// ─── Notification Log Row (for in-app center) ─────────────────
-
-interface NotifLogRow {
-  id: string;
-  title: string;
-  body: string;
-  notification_type: string;
-  sent_at: string;
-  opened_at: string | null;
-  converted_at: string | null;
-}
-
-const TYPE_EMOJI: Record<string, string> = {
-  seasonal:  '📅',
-  lifecycle: '🔄',
-  behavioral:'🧠',
-  ai:        '✨',
-};
-
 const QUIET_START_OPTIONS = [20, 21, 22, 23];
 const QUIET_END_OPTIONS   = [6, 7, 8, 9];
 
@@ -62,14 +43,9 @@ export default function NotificationSettingsScreen() {
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
 
-  const [prefs,       setPrefs]       = useState<Prefs>(DEFAULTS);
-  const [loading,     setLoading]     = useState(true);
-  const [saving,      setSaving]      = useState(false);
-  const [tab,         setTab]         = useState<'settings' | 'history'>('settings');
-  const [history,     setHistory]     = useState<NotifLogRow[]>([]);
-  const [histLoading, setHistLoading] = useState(false);
-
-  const locale = lang === 'ar' ? 'ar-JO' : 'en-GB';
+  const [prefs,   setPrefs]   = useState<Prefs>(DEFAULTS);
+  const [loading, setLoading] = useState(true);
+  const [saving,  setSaving]  = useState(false);
 
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -123,28 +99,7 @@ export default function NotificationSettingsScreen() {
     }
   }, []);
 
-  const loadHistory = useCallback(async () => {
-    setHistLoading(true);
-    const { data: { session: _ses } } = await supabase.auth.getSession();
-    const user = _ses?.user;
-    if (!user) { setHistLoading(false); return; }
-
-    const { data } = await supabase
-      .from('notification_log')
-      .select('id, title, body, notification_type, sent_at, opened_at, converted_at')
-      .eq('user_id', user.id)
-      .order('sent_at', { ascending: false })
-      .limit(30);
-
-    if (data) setHistory(data as NotifLogRow[]);
-    setHistLoading(false);
-  }, []);
-
   useEffect(() => { load(); }, [load]);
-
-  useEffect(() => {
-    if (tab === 'history' && history.length === 0) loadHistory();
-  }, [tab]);
 
   const save = async () => {
     setSaving(true);
@@ -181,32 +136,11 @@ export default function NotificationSettingsScreen() {
     <View style={st.container}>
       <AppHeader variant="stack" title={t('notifSettings.headerTitle')} onBack={() => router.back()} />
 
-      {/* ── Tabs ── */}
-      <View style={st.tabs}>
-        <TouchableOpacity
-          style={[st.tab, tab === 'settings' && st.tabActive]}
-          onPress={() => setTab('settings')}
-        >
-          <Text style={[st.tabText, tab === 'settings' && st.tabTextActive]}>
-            {t('notifSettings.tabSettings')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[st.tab, tab === 'history' && st.tabActive]}
-          onPress={() => setTab('history')}
-        >
-          <Text style={[st.tabText, tab === 'history' && st.tabTextActive]}>
-            {t('notifSettings.tabHistory')}
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {tab === 'settings' ? (
-        <Animated.ScrollView
-          style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
-          contentContainerStyle={st.scroll}
-          showsVerticalScrollIndicator={false}
-        >
+      <Animated.ScrollView
+        style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+        contentContainerStyle={st.scroll}
+        showsVerticalScrollIndicator={false}
+      >
           {/* ── Master toggle ── */}
           <View style={st.masterCard}>
             <View style={[st.masterLeft, {}]}>
@@ -359,53 +293,7 @@ export default function NotificationSettingsScreen() {
               : <Text style={st.saveBtnText}>{t('notifSettings.saveBtn')}</Text>
             }
           </TouchableOpacity>
-        </Animated.ScrollView>
-      ) : (
-        /* ── History tab ── */
-        <ScrollView
-          contentContainerStyle={st.scroll}
-          showsVerticalScrollIndicator={false}
-        >
-          {histLoading ? (
-            <View style={st.center}>
-              <ActivityIndicator color={colors.accent} />
-            </View>
-          ) : history.length === 0 ? (
-            <View style={st.emptyHistory}>
-              <Text style={st.emptyHistoryIcon}>🔔</Text>
-              <Text style={st.emptyHistoryText}>{t('notifSettings.historyEmpty')}</Text>
-              <Text style={st.emptyHistorySub}>{t('notifSettings.historyEmptySub')}</Text>
-            </View>
-          ) : (
-            history.map(n => (
-              <View key={n.id} style={[st.histCard, !n.opened_at && st.histCardUnread]}>
-                <View style={[st.histTop, {}]}>
-                  <Text style={st.histTime}>
-                    {new Date(n.sent_at).toLocaleDateString(locale, {
-                      day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-                    })}
-                  </Text>
-                  <View style={st.histBadges}>
-                    <View style={st.histTypeBadge}>
-                      <Text style={st.histTypeText}>
-                        {TYPE_EMOJI[n.notification_type] ?? '🔔'} {n.notification_type}
-                      </Text>
-                    </View>
-                    {n.converted_at && (
-                      <View style={st.histConvertBadge}>
-                        <Text style={st.histConvertText}>{t('notifSettings.historyConverted')}</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-                <Text style={[st.histTitle, { textAlign: ta }]}>{n.title}</Text>
-                <Text style={[st.histBody, { textAlign: ta }]} numberOfLines={2}>{n.body}</Text>
-                {!n.opened_at && <View style={[st.unreadDot, { [ta === 'right' ? 'left' : 'right']: 16 }]} />}
-              </View>
-            ))
-          )}
-        </ScrollView>
-      )}
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -462,13 +350,6 @@ function createSt(colors: AppColors) {
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll:    { padding: 16, paddingBottom: 48 },
 
-
-  tabs:          { flexDirection: 'row', margin: 16, backgroundColor: colors.surface, borderRadius: 12, padding: 3, borderWidth: 1, borderColor: colors.border },
-  tab:           { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 10 },
-  tabActive:     { backgroundColor: colors.bg },
-  tabText:       { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
-  tabTextActive: { color: colors.textPrimary },
-
   sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 8, marginTop: 16 },
 
   card:         { backgroundColor: colors.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.border },
@@ -506,24 +387,5 @@ function createSt(colors: AppColors) {
 
   saveBtn:     { backgroundColor: colors.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
   saveBtnText: { fontSize: 16, fontWeight: '800', color: colors.bg },
-
-  // ── History ──
-  emptyHistory:     { alignItems: 'center', paddingVertical: 60 },
-  emptyHistoryIcon: { fontSize: 60, marginBottom: 16 },
-  emptyHistoryText: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
-  emptyHistorySub:  { fontSize: 14, color: colors.textMuted, textAlign: 'center' },
-
-  histCard:         { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 10, borderWidth: 1, borderColor: colors.border, position: 'relative' },
-  histCardUnread:   { borderColor: colors.accent + '44' },
-  histTop:          { justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  histTime:         { fontSize: 11, color: colors.textMuted },
-  histBadges:       { flexDirection: 'row', gap: 6 },
-  histTypeBadge:    { backgroundColor: colors.bg, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  histTypeText:     { fontSize: 10, color: colors.textSecondary, fontWeight: '600' },
-  histConvertBadge: { backgroundColor: '#064E3B', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-  histConvertText:  { fontSize: 10, color: '#10B981', fontWeight: '700' },
-  histTitle:        { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
-  histBody:         { fontSize: 13, color: colors.textSecondary, lineHeight: 20 },
-  unreadDot:        { position: 'absolute', top: 16, width: 8, height: 8, borderRadius: 4, backgroundColor: colors.accent },
   });
 }

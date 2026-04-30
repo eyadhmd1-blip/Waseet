@@ -18,7 +18,8 @@ import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceRequest, Provider, User, RecurringContract } from '../../src/types';
 import { FREQ_VISITS_PER_MONTH } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
-import { AppHeader }         from '../../src/components/AppHeader';
+import { AppHeader }              from '../../src/components/AppHeader';
+import { useUnreadNotifCount }   from '../../src/hooks/useUnreadNotifCount';
 import { ProviderSubHeader } from '../../src/components/ProviderSubHeader';
 import { calcUrgentPremium, calcContractTotal, sanitizeAmount } from '../../src/utils/pricing';
 import { alignEnd, selfStart, me } from '../../src/utils/rtl';
@@ -888,6 +889,7 @@ export default function ProviderFeed() {
   const cBidStyles = useMemo(() => createCBidStyles(colors), [colors]);
   const { contentPad } = useInsets();
   const router = useRouter();
+  const { count: notifCount } = useUnreadNotifCount();
   const { t, ta, lang, isRTL } = useLanguage();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
   const [requests, setRequests]   = useState<RequestWithMeta[]>([]);
@@ -1341,7 +1343,8 @@ export default function ProviderFeed() {
         providerBidCredits={provider?.bid_credits}
         providerSubscriptionTier={provider?.subscription_tier}
         providerIsAvailable={provider?.is_available}
-        onNotifPress={() => router.push('/notification-settings' as any)}
+        notifCount={notifCount}
+        onNotifPress={() => router.push('/notification-inbox' as any)}
         onAvatarPress={() => router.push('/(provider)/profile' as any)}
       />
       <ProviderSubHeader

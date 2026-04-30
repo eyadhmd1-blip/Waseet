@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Notifications from 'expo-notifications';
 import { I18nextProvider } from 'react-i18next';
 import { supabase } from '../src/lib/supabase';
+import { handleNotifTap } from '../src/lib/notifRouting';
 import { setRoleUpdateHandler } from '../src/lib/authEvents';
 import { ROUTES } from '../src/constants/theme';
 import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
@@ -150,25 +151,13 @@ function RootLayoutInner() {
 
       if (data?.notif_id) markNotifOpened(String(data.notif_id));
 
-      const screen     = data?.screen      as string | undefined;
-      const notifId    = data?.notif_id    as string | undefined;
-      const providerId = data?.provider_id as string | undefined;
-      const jobId      = data?.job_id      as string | undefined;
-
-      if (screen === 'provider_confirm' && jobId) {
-        router.push({ pathname: '/provider-confirm', params: { job_id: jobId } } as any);
-      } else if (screen === 'new-request') {
-        const href = notifId ? `/(client)/new-request?notif_id=${notifId}` : '/(client)/new-request';
-        router.push(href as any);
-      } else if (screen === 'urgent') {
-        router.push('/(provider)');
-      } else if (screen === 'provider-profile' && providerId) {
-        router.push({ pathname: '/provider-profile', params: { provider_id: providerId } } as any);
-      } else if (screen === 'home') {
-        router.push('/(client)');
-      } else if (screen === 'support_thread' && jobId) {
-        router.push({ pathname: '/support-thread', params: { id: jobId } } as any);
-      }
+      handleNotifTap({
+        screen:      data?.screen      as string | undefined,
+        notif_id:    data?.notif_id    as string | undefined,
+        provider_id: data?.provider_id as string | undefined,
+        job_id:      data?.job_id      as string | undefined,
+        request_id:  data?.request_id  as string | undefined,
+      }, router);
     });
 
     return () => notifListenerRef.current?.remove();
@@ -300,6 +289,7 @@ function RootLayoutInner() {
         <Stack.Screen name="portfolio"               />
         <Stack.Screen name="portfolio-add"           />
         <Stack.Screen name="notification-settings"   />
+        <Stack.Screen name="notification-inbox"      />
         <Stack.Screen name="urgent-request"          />
         <Stack.Screen name="provider-profile"        />
         <Stack.Screen name="recurring-request"       />

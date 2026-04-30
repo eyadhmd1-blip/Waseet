@@ -10,6 +10,7 @@ import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Job } from '../../src/types';
 import { useTheme } from '../../src/context/ThemeContext';
 import { AppHeader } from '../../src/components/AppHeader';
+import { useUnreadNotifCount } from '../../src/hooks/useUnreadNotifCount';
 import type { AppColors } from '../../src/constants/colors';
 
 type JobTab = 'active' | 'completed';
@@ -23,6 +24,7 @@ export default function ProviderJobs() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
+  const { count: notifCount } = useUnreadNotifCount();
   const { t, ta, lang } = useLanguage();
   const [tab, setTab]             = useState<JobTab>('active');
   const [jobs, setJobs]           = useState<JobWithMeta[]>([]);
@@ -201,7 +203,8 @@ export default function ProviderJobs() {
         variant="root"
         userName={userName}
         userRole="provider"
-        onNotifPress={() => router.push('/notification-settings' as any)}
+        notifCount={notifCount}
+        onNotifPress={() => router.push('/notification-inbox' as any)}
         onAvatarPress={() => router.push('/(provider)/profile' as any)}
       />
 

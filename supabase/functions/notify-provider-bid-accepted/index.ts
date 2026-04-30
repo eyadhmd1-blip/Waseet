@@ -145,9 +145,10 @@ Deno.serve(async (req) => {
       user_id:  job.provider_id,
       title,
       body,
-      data:     message.data,
-      notification_type: "job_commit_request",
-    }).throwOnError().then(() => {}).catch(() => {}); // non-blocking
+      type:     "job_commit_request",
+      screen:   "provider_confirm",
+      metadata: { job_id, is_urgent },
+    }).then(() => {}).catch(() => {}); // non-blocking
 
     return json({ sent });
 
