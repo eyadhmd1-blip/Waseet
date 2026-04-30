@@ -1021,6 +1021,11 @@
     "historyEmptySub": "All your smart notifications will appear here",
     "historyConverted": "✓ Converted"
   },
+  "notifInbox": {
+    "headerTitle": "Notifications",
+    "emptyTitle": "No notifications yet",
+    "emptySub": "All your notifications will appear here"
+  },
   "supportNew": {
     "headerTitle": "New Ticket",
     "categoryLabel": "Problem type *",

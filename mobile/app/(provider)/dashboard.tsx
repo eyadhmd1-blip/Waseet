@@ -10,6 +10,7 @@ import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User } from '../../src/types';
 import { useTheme } from '../../src/context/ThemeContext';
 import { AppHeader } from '../../src/components/AppHeader';
+import { useUnreadNotifCount } from '../../src/hooks/useUnreadNotifCount';
 import type { AppColors } from '../../src/constants/colors';
 
 // ─── Types ────────────────────────────────────────────────────
@@ -55,6 +56,7 @@ export default function ProviderDashboard() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
+  const { count: notifCount } = useUnreadNotifCount();
   const { t, ta, lang } = useLanguage();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsRow[]>([]);
@@ -160,7 +162,8 @@ export default function ProviderDashboard() {
         variant="root"
         userName={provider?.user?.full_name}
         userRole="provider"
-        onNotifPress={() => router.push('/notification-settings' as any)}
+        notifCount={notifCount}
+        onNotifPress={() => router.push('/notification-inbox' as any)}
         onAvatarPress={() => router.push('/(provider)/profile' as any)}
       />
     <ScrollView

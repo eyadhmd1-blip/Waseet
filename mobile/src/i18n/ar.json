@@ -1025,6 +1025,11 @@
     "historyEmptySub": "ستظهر هنا جميع إشعاراتك الذكية",
     "historyConverted": "✓ تحوّل"
   },
+  "notifInbox": {
+    "headerTitle": "الإشعارات",
+    "emptyTitle": "لا توجد إشعارات بعد",
+    "emptySub": "ستظهر هنا جميع إشعاراتك"
+  },
   "supportNew": {
     "headerTitle": "تذكرة جديدة",
     "categoryLabel": "نوع المشكلة *",

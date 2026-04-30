@@ -197,11 +197,12 @@ Deno.serve(async (req) => {
         return l > 0 && l % 7 === 0;
       })
       .map((b) => ({
-        user_id:           b.provider_id,
-        title:             "🏆 مكافأة المثابرة — رصيد مجاني!",
-        body:              `تقدّمت ${b.provider.consecutive_losses} مرة بجدية — أُضيف رصيد مجاني إلى حسابك.`,
-        notification_type: "perseverance_reward",
-        data:              { screen: "provider_feed" },
+        user_id:  b.provider_id,
+        title:    "🏆 مكافأة المثابرة — رصيد مجاني!",
+        body:     `تقدّمت ${b.provider.consecutive_losses} مرة بجدية — أُضيف رصيد مجاني إلى حسابك.`,
+        type:     "perseverance_reward",
+        screen:   "provider_feed",
+        metadata: { consecutive_losses: b.provider.consecutive_losses },
       }));
 
     if (milestoneInserts.length > 0) {
