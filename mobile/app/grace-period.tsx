@@ -10,6 +10,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, Animated, Easing,
 } from 'react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
@@ -47,7 +48,6 @@ export default function GracePeriodScreen() {
   const [undoing, setUndoing]         = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const progress  = useRef(new Animated.Value(0)).current;
   const ringPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -77,8 +77,6 @@ export default function GracePeriodScreen() {
         const tick = () => {
           const remaining = Math.max(0, Math.round((expiresAt - Date.now()) / 1000));
           setSecondsLeft(remaining);
-          const pct = 1 - remaining / GRACE_SECONDS;
-          progress.setValue(pct);
           if (remaining <= 0) {
             clearInterval(intervalRef.current!);
             setLocked(true);
@@ -161,9 +159,13 @@ export default function GracePeriodScreen() {
     return m > 0 ? `${m}:${sec}` : `${s}`;
   };
 
-  const ringColor = isUrgent ? '#EF4444' : secondsLeft <= 10 ? '#EF4444' : colors.accent;
-  const ringSize  = 180;
-  const strokeW   = 10;
+  const ringColor      = isUrgent ? '#EF4444' : secondsLeft <= 10 ? '#EF4444' : colors.accent;
+  const ringSize       = 180;
+  const strokeW        = 10;
+  const radius         = ringSize / 2 - strokeW / 2;
+  const circumference  = 2 * Math.PI * radius;
+  // dashOffset = 0 → full ring (start), circumference → empty ring (end)
+  const dashOffset     = circumference * (1 - secondsLeft / GRACE_SECONDS);
 
   if (confirmed) {
     return (
@@ -249,17 +251,35 @@ export default function GracePeriodScreen() {
 
       {/* Ring countdown */}
       <Animated.View style={[styles.ringWrap, isUrgent && { transform: [{ scale: ringPulse }] }]}>
-        <View style={[styles.ringOuter, {
-          width: ringSize, height: ringSize, borderRadius: ringSize / 2,
-          borderWidth: strokeW,
-          borderColor: isUrgent ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)',
-        }]} />
-        <View style={[styles.ringProgress, {
-          width: ringSize, height: ringSize, borderRadius: ringSize / 2,
-          borderWidth: strokeW,
-          borderColor: ringColor,
-          opacity: 1 - (secondsLeft / GRACE_SECONDS) * 0.3 + 0.7,
-        }]} />
+        <Svg
+          width={ringSize}
+          height={ringSize}
+          style={StyleSheet.absoluteFill}
+        >
+          {/* Background track */}
+          <Circle
+            cx={ringSize / 2}
+            cy={ringSize / 2}
+            r={radius}
+            stroke={isUrgent ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)'}
+            strokeWidth={strokeW}
+            fill="none"
+          />
+          {/* Depleting progress arc — starts at top (−90°) */}
+          <Circle
+            cx={ringSize / 2}
+            cy={ringSize / 2}
+            r={radius}
+            stroke={ringColor}
+            strokeWidth={strokeW}
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            strokeLinecap="round"
+            rotation="-90"
+            origin={`${ringSize / 2}, ${ringSize / 2}`}
+          />
+        </Svg>
         <View style={styles.ringCenter}>
           <Text style={[styles.ringTime, { color: ringColor }]}>
             {fmtSec(secondsLeft)}
@@ -313,10 +333,8 @@ function createStyles(colors: AppColors) {
   providerAmt:        { fontSize: 18, fontWeight: '700', color: colors.accent, textAlign: 'auto', marginTop: 2 },
   providerStatus:     { fontSize: 11, color: colors.textMuted, textAlign: 'auto' },
 
-  ringWrap:     { alignItems: 'center', justifyContent: 'center', marginBottom: 32, width: 180, height: 180 },
-  ringOuter:    { position: 'absolute' },
-  ringProgress: { position: 'absolute' },
-  ringCenter:   { alignItems: 'center' },
+  ringWrap:   { alignItems: 'center', justifyContent: 'center', marginBottom: 32, width: 180, height: 180 },
+  ringCenter: { alignItems: 'center' },
   ringTime:     { fontSize: 48, fontWeight: '900' },
   ringLabel:    { fontSize: 13, color: colors.textMuted, marginTop: 4 },
 
