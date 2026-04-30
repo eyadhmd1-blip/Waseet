@@ -1560,7 +1560,7 @@ export default function ProviderFeed() {
               keyboardType="decimal-pad"
               value={contractModal.amount}
               onChangeText={text => setContractModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
-              textAlign="right"
+              textAlign={ta}
             />
             {contractModal.amount && contractModal.target && !isNaN(parseFloat(contractModal.amount)) && (
               <View style={cBidStyles.totalBox}>

@@ -457,7 +457,7 @@ export default function ProviderPublicProfile() {
               <Text style={[styles.reportTitle, { textAlign: ta }]}>{t('report.profileTitle')}</Text>
               <Text style={[styles.reportSub, { textAlign: ta }]}>{t('report.profileSub')}</Text>
               <TextInput
-                style={[styles.reportInput, { textAlign: ta === 'right' ? 'right' : 'left' }]}
+                style={[styles.reportInput, { textAlign: ta }]}
                 multiline
                 numberOfLines={4}
                 placeholder={t('report.profilePlaceholder')}
@@ -466,7 +466,7 @@ export default function ProviderPublicProfile() {
                 onChangeText={setReportText}
                 maxLength={500}
               />
-              <Text style={styles.reportCounter}>{reportText.length}/500</Text>
+              <Text style={[styles.reportCounter, { textAlign: ta }]}>{reportText.length}/500</Text>
               <View style={styles.reportBtns}>
                 <TouchableOpacity
                   style={styles.reportCancelBtn}
@@ -594,7 +594,7 @@ function createStyles(colors: AppColors) {
   reportTitle:    { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, alignSelf: 'stretch' },
   reportSub:      { fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 20, alignSelf: 'stretch' },
   reportInput:    { backgroundColor: colors.bg, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 14, fontSize: 14, color: colors.textPrimary, minHeight: 110, textAlignVertical: 'top' },
-  reportCounter:  { fontSize: 11, color: colors.textMuted, textAlign: 'right', marginTop: 4, marginBottom: 16 },
+  reportCounter:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16 },
   reportBtns:     { flexDirection: 'row', gap: 10 },
   reportCancelBtn:  { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   reportCancelText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
