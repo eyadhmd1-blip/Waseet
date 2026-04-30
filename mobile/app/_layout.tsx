@@ -78,19 +78,26 @@ async function registerPushToken(userId: string) {
 
     if (finalStatus !== 'granted') return;
 
-    const { data: token } = await Notifications.getExpoPushTokenAsync({
-      projectId: process.env.EXPO_PUBLIC_PROJECT_ID,
-    });
+    // projectId falls back to app.json extra.eas.projectId when env var is absent
+    const projectId = process.env.EXPO_PUBLIC_PROJECT_ID ?? 'ce995c3f-5df4-46fc-bc17-8cd30eefadbc';
+    const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
 
     if (!token) return;
 
-    await supabase
+    // onConflict must match the composite unique constraint (user_id, token)
+    // added in migration 030. Using 'user_id' alone caused a silent PG error
+    // because that single-column constraint was dropped.
+    const { error } = await supabase
       .from('push_tokens')
       .upsert(
         { user_id: userId, token, platform: 'expo', updated_at: new Date().toISOString() },
-        { onConflict: 'user_id' },
+        { onConflict: 'user_id,token' },
       );
-  } catch { /* non-blocking */ }
+
+    if (error) console.warn('[push] token upsert failed:', error.message);
+  } catch (e: any) {
+    console.warn('[push] registerPushToken error:', e?.message);
+  }
 }
 
 async function markNotifOpened(notifId: string) {
