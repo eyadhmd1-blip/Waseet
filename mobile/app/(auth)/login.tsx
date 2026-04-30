@@ -30,22 +30,42 @@ export default function LoginScreen() {
       ? raw
       : `+962${raw.replace(/^0+/, '')}`;
 
+    // Client-side validation — instant feedback, no network call needed
+    const jordanPattern = /^(\+962|00962|0)?7[789]\d{7}$/;
+    if (!jordanPattern.test(formatted)) {
+      Alert.alert(t('common.error'), 'رقم الهاتف غير صالح.\nأدخل رقماً أردنياً صحيحاً\nمثال: 0791234567');
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke('send-otp', {
         body: { phone: formatted },
       });
 
+      // supabase.functions.invoke puts non-2xx responses in `error` (FunctionsHttpError),
+      // not in `data` — so we parse the response body from the error context first.
+      let errCode: string | undefined;
+      if (error) {
+        try {
+          const body = await (error as any).context?.json?.();
+          errCode = body?.error;
+        } catch { /* non-JSON or no context, leave undefined */ }
+      } else if (!data?.success) {
+        errCode = data?.error;
+      }
+
       if (error || !data?.success) {
-        const errCode: string | undefined = data?.error;
         if (errCode === 'INVALID_JORDAN_PHONE' || errCode === 'INVALID_PHONE') {
-          Alert.alert(t('common.error'), 'رقم الهاتف غير صالح. أدخل رقماً أردنياً صحيحاً.');
+          Alert.alert(t('common.error'), 'رقم الهاتف غير صالح.\nأدخل رقماً أردنياً صحيحاً\nمثال: 0791234567');
         } else if (errCode === 'RATE_LIMITED' || errCode === 'TOO_MANY_REQUESTS') {
-          Alert.alert(t('common.error'), 'تجاوزت الحد المسموح. انتظر قليلاً وأعد المحاولة.');
+          Alert.alert(t('common.error'), 'تجاوزت الحد المسموح.\nانتظر قليلاً وأعد المحاولة.');
         } else if (errCode === 'DAILY_LIMIT_EXCEEDED') {
-          Alert.alert(t('common.error'), 'تجاوزت الحد اليومي لإرسال الرموز. حاول مجدداً غداً.');
+          Alert.alert(t('common.error'), 'تجاوزت الحد اليومي لإرسال الرموز.\nحاول مجدداً غداً.');
+        } else if (errCode === 'SMS_SEND_FAILED') {
+          Alert.alert(t('common.error'), 'تعذّر إرسال الرسالة النصية.\nحاول مرة أخرى.');
         } else {
-          Alert.alert(t('common.error'), 'فشل إرسال رمز التحقق. تحقق من اتصالك بالإنترنت.');
+          Alert.alert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
         }
         return;
       }
@@ -55,7 +75,7 @@ export default function LoginScreen() {
 
       router.push({ pathname: '/(auth)/verify', params });
     } catch {
-      Alert.alert(t('common.error'), 'فشل إرسال رمز التحقق. تحقق من اتصالك بالإنترنت.');
+      Alert.alert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
     } finally {
       setLoading(false);
     }
