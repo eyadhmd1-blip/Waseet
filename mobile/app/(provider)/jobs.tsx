@@ -22,10 +22,10 @@ type JobWithMeta = Job & {
 
 export default function ProviderJobs() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const router = useRouter();
   const { count: notifCount } = useUnreadNotifCount();
-  const { t, ta, lang } = useLanguage();
   const [tab, setTab]             = useState<JobTab>('active');
   const [jobs, setJobs]           = useState<JobWithMeta[]>([]);
   const [loading, setLoading]     = useState(true);
@@ -139,11 +139,11 @@ export default function ProviderJobs() {
 
   const renderActiveJob = ({ item }: { item: JobWithMeta }) => (
     <View style={styles.card}>
-      <Text style={[styles.cardTitle, { textAlign: ta }]}>{item.request?.title}</Text>
-      <Text style={[styles.cardMeta, { textAlign: ta }]}>
+      <Text style={styles.cardTitle}>{item.request?.title}</Text>
+      <Text style={styles.cardMeta}>
         {t(`cities.${item.request?.city}`, item.request?.city ?? '')} · {new Date(item.created_at).toLocaleDateString(lang === 'ar' ? 'ar-JO' : 'en-GB', { day: 'numeric', month: 'short' })}
       </Text>
-      <Text style={[styles.clientName, { textAlign: ta }]}>{t('profile.clientLabel')}: {item.client?.full_name}</Text>
+      <Text style={styles.clientName}>{t('profile.clientLabel')}: {item.client?.full_name}</Text>
 
       {item.confirm_code ? (
         <View style={styles.waitingBox}>
@@ -175,8 +175,8 @@ export default function ProviderJobs() {
       <View style={styles.completedBadge}>
         <Text style={styles.completedBadgeText}>{t('providerJobs.statusCompleted')}</Text>
       </View>
-      <Text style={[styles.cardTitle, { textAlign: ta }]}>{item.request?.title}</Text>
-      <Text style={[styles.cardMeta, { textAlign: ta }]}>{t(`cities.${item.request?.city}`, item.request?.city ?? '')}</Text>
+      <Text style={styles.cardTitle}>{item.request?.title}</Text>
+      <Text style={styles.cardMeta}>{t(`cities.${item.request?.city}`, item.request?.city ?? '')}</Text>
       {item.client_rating && (
         <View style={styles.ratingRow}>
           {[1, 2, 3, 4, 5].map(s => (
@@ -185,11 +185,11 @@ export default function ProviderJobs() {
             </Text>
           ))}
           {item.client_review && (
-            <Text style={[styles.reviewText, { textAlign: ta }]}>{item.client_review}</Text>
+            <Text style={styles.reviewText}>{item.client_review}</Text>
           )}
         </View>
       )}
-      <Text style={[styles.confirmedAt, { textAlign: ta }]}>
+      <Text style={styles.confirmedAt}>
         {t('profile.completedOn', {
           date: new Date(item.confirmed_at!).toLocaleDateString(lang === 'ar' ? 'ar-JO' : 'en-GB', { day: 'numeric', month: 'long' })
         })}
@@ -252,8 +252,8 @@ export default function ProviderJobs() {
       <Modal visible={!!confirmJob && codeSent} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            <Text style={[styles.modalTitle, { textAlign: ta }]}>{t('profile.confirmModal.title')}</Text>
-            <Text style={[styles.modalSub, { textAlign: ta }]}>{t('profile.confirmModal.subtitle')}</Text>
+            <Text style={styles.modalTitle}>{t('profile.confirmModal.title')}</Text>
+            <Text style={styles.modalSub}>{t('profile.confirmModal.subtitle')}</Text>
 
             <View style={styles.codeRow}>
               {codeInput.map((digit, i) => (
@@ -296,7 +296,8 @@ export default function ProviderJobs() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -312,9 +313,9 @@ function createStyles(colors: AppColors) {
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
 
   card:       { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-  cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
-  cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
-  clientName: { fontSize: 13, color: colors.textSecondary, marginBottom: 14 },
+  cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
+  cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 4, textAlign: ta },
+  clientName: { fontSize: 13, color: colors.textSecondary, marginBottom: 14, textAlign: ta },
 
   doneBtn:      { backgroundColor: colors.successBg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.success },
   doneBtnText:  { fontSize: 15, fontWeight: '700', color: colors.successSoft },
@@ -328,16 +329,16 @@ function createStyles(colors: AppColors) {
   completedBadge:     { alignSelf: 'flex-end', backgroundColor: colors.successBg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
   completedBadgeText: { fontSize: 11, color: colors.successSoft, fontWeight: '600' },
   ratingRow:          { flexDirection: 'row', alignItems: 'center', gap: 2, marginTop: 8, marginBottom: 4 },
-  reviewText:         { fontSize: 12, color: colors.textSecondary, marginStart: 8, flex: 1 },
-  confirmedAt:        { fontSize: 11, color: colors.textMuted, marginTop: 6 },
+  reviewText:         { fontSize: 12, color: colors.textSecondary, marginStart: 8, flex: 1, textAlign: ta },
+  confirmedAt:        { fontSize: 11, color: colors.textMuted, marginTop: 6, textAlign: ta },
 
   empty:     { alignItems: 'center', paddingTop: 80 },
   emptyText: { fontSize: 16, color: colors.textMuted },
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
-  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
-  modalSub:     { fontSize: 13, color: colors.textMuted, lineHeight: 20, marginBottom: 28 },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: ta },
+  modalSub:     { fontSize: 13, color: colors.textMuted, lineHeight: 20, marginBottom: 28, textAlign: ta },
   codeRow:      { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28 },
   codeBox:      { width: 48, height: 60, borderRadius: 12, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, fontSize: 24, fontWeight: '700', color: colors.textPrimary },
   codeBoxFilled:{ borderColor: colors.accent },

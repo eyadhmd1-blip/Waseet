@@ -207,11 +207,11 @@ const SHOW_CATS = 6;
 
 export default function ClientHome() {
   const { colors, isDark } = useTheme();
-  const styles  = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { t, ta, isRTL } = useLanguage();
+  const styles  = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const { contentPad } = useInsets();
   const router  = useRouter();
   const { count: notifCount } = useUnreadNotifCount();
-  const { t, ta, isRTL } = useLanguage();
 
   // ── State (unchanged) ────────────────────────────────────────
   const [user,        setUser]        = useState<User | null>(null);
@@ -324,7 +324,7 @@ export default function ClientHome() {
             <View style={styles.searchIconWrap}>
               <Text style={{ fontSize: 14 }}>🔍</Text>
             </View>
-            <Text style={[styles.searchHint, { textAlign: ta }]}>{t('home.searchPlaceholder')}</Text>
+            <Text style={styles.searchHint}>{t('home.searchPlaceholder')}</Text>
           </TouchableOpacity>
 
           {/* ── Group chips ─────────────────────────────────────── */}
@@ -354,7 +354,7 @@ export default function ClientHome() {
           </ScrollView>
 
           {/* ── Quick shortcuts ─────────────────────────────────── */}
-          <Text style={[styles.sectionLabel, { textAlign: ta }]}>
+          <Text style={styles.sectionLabel}>
             {t('home.quickAccess')}
           </Text>
           <View style={[styles.shortcutsCard, { flexDirection: 'row' }]}>
@@ -385,7 +385,7 @@ export default function ClientHome() {
 
           {/* ── Popular services ────────────────────────────────── */}
           <View style={[styles.sectionRow, { flexDirection: 'row' }]}>
-            <Text style={[styles.sectionTitle, { textAlign: ta }]}>
+            <Text style={styles.sectionTitle}>
               🔥 {t('home.popularServices')}
             </Text>
             <TouchableOpacity onPress={() => goNew()}>
@@ -410,7 +410,7 @@ export default function ClientHome() {
           {requests.length > 0 && (
             <>
               <View style={[styles.sectionRow, { flexDirection: 'row', marginTop: 4 }]}>
-                <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('home.recentRequests')}</Text>
+                <Text style={styles.sectionTitle}>{t('home.recentRequests')}</Text>
                 <TouchableOpacity onPress={() => router.push('/(client)/requests')}>
                   <Text style={styles.seeAll}>{t('home.seeAll')}</Text>
                 </TouchableOpacity>
@@ -432,8 +432,8 @@ export default function ClientHome() {
                       <Text style={{ fontSize: 20 }}>{catIcon}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.reqTitle, { textAlign: ta }]} numberOfLines={1}>{req.title}</Text>
-                      <Text style={[styles.reqMeta, { textAlign: ta }]}>
+                      <Text style={styles.reqTitle} numberOfLines={1}>{req.title}</Text>
+                      <Text style={styles.reqMeta}>
                         {String(t(`categories.${req.category_slug}`, (req as any).category?.name_ar ?? req.category_slug))} · {String(t(`cities.${req.city}`, req.city))}
                       </Text>
                       {req.is_urgent && req.urgent_expires_at && req.status === 'open' && (
@@ -470,8 +470,8 @@ export default function ClientHome() {
             activeOpacity={0.88}
           >
             <View style={{ flex: 1 }}>
-              <Text style={[styles.ctaTitle, { textAlign: ta }]}>{t('home.ctaTitle')}</Text>
-              <Text style={[styles.ctaSub, { textAlign: ta }]}>{t('home.ctaSub')}</Text>
+              <Text style={styles.ctaTitle}>{t('home.ctaTitle')}</Text>
+              <Text style={styles.ctaSub}>{t('home.ctaSub')}</Text>
             </View>
             <View style={styles.ctaBtn}>
               <Text style={styles.ctaBtnText}>{t('home.ctaBtnLabel')}</Text>
@@ -486,7 +486,8 @@ export default function ClientHome() {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isDark: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   const surf2   = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)';
   const border2 = isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.08)';
 
@@ -511,7 +512,7 @@ function createStyles(colors: AppColors, isDark: boolean) {
       backgroundColor: surf2,
       alignItems: 'center', justifyContent: 'center',
     },
-    searchHint: { fontSize: 14, color: colors.textMuted, flex: 1 },
+    searchHint: { fontSize: 14, color: colors.textMuted, flex: 1, textAlign: ta },
 
     // ── Chips ───────────────────────────────────────────────────
     chipsScroll:  { marginBottom: 20 },
@@ -531,13 +532,13 @@ function createStyles(colors: AppColors, isDark: boolean) {
     // ── Section labels ───────────────────────────────────────────
     sectionLabel: {
       fontSize: 14, fontWeight: '700', color: colors.textSecondary,
-      paddingHorizontal: H_PAD, marginBottom: 12,
+      paddingHorizontal: H_PAD, marginBottom: 12, textAlign: ta,
     },
     sectionRow: {
       paddingHorizontal: H_PAD, marginBottom: 14,
       justifyContent: 'space-between', alignItems: 'center',
     },
-    sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary },
+    sectionTitle: { fontSize: 16, fontWeight: '800', color: colors.textPrimary, textAlign: ta },
     seeAll:       { fontSize: 13, color: colors.accent, fontWeight: '600' },
 
     // ── Shortcuts card ───────────────────────────────────────────
@@ -574,8 +575,8 @@ function createStyles(colors: AppColors, isDark: boolean) {
       backgroundColor: surf2, borderWidth: 1, borderColor: border2,
       alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     },
-    reqTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 3 },
-    reqMeta:   { fontSize: 12, color: colors.textMuted },
+    reqTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 3, textAlign: ta },
+    reqMeta:   { fontSize: 12, color: colors.textMuted, textAlign: ta },
     badge:     { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4, flexShrink: 0, marginStart: 8 },
     badgeText: { fontSize: 11, fontWeight: '700' },
 
@@ -606,8 +607,8 @@ function createStyles(colors: AppColors, isDark: boolean) {
       borderWidth: 1, borderColor: 'rgba(201,168,76,0.28)',
       gap: 12,
     },
-    ctaTitle:   { fontSize: 14, fontWeight: '800', color: colors.accent, marginBottom: 4 },
-    ctaSub:     { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+    ctaTitle:   { fontSize: 14, fontWeight: '800', color: colors.accent, marginBottom: 4, textAlign: ta },
+    ctaSub:     { fontSize: 12, color: colors.textMuted, lineHeight: 18, textAlign: ta },
     ctaBtn: {
       backgroundColor: colors.accent, borderRadius: 12,
       paddingHorizontal: 16, paddingVertical: 10, flexShrink: 0,

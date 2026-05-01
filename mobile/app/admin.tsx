@@ -46,9 +46,9 @@ const CAT_ICON: Record<string, string> = {
 export default function AdminScreen() {
   const { headerPad } = useInsets();
   const router  = useRouter();
-  const { t, ta, lang } = useLanguage();
+  const { t, lang, isRTL } = useLanguage();
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const [tickets,    setTickets]    = useState<AdminTicket[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -174,7 +174,7 @@ export default function AdminScreen() {
               <View style={styles.ticketRow}>
                 <Text style={styles.catIcon}>{CAT_ICON[item.category] ?? '💬'}</Text>
                 <View style={styles.ticketBody}>
-                  <Text style={[styles.ticketSubject, { textAlign: ta }]} numberOfLines={1}>
+                  <Text style={styles.ticketSubject} numberOfLines={1}>
                     {item.subject}
                   </Text>
                   <Text style={styles.ticketMeta}>
@@ -210,7 +210,8 @@ export default function AdminScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 16 },
@@ -249,7 +250,7 @@ function createStyles(colors: AppColors) {
     ticketRow:   { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
     catIcon:     { fontSize: 22, marginTop: 2 },
     ticketBody:  { flex: 1, gap: 4 },
-    ticketSubject: { fontSize: 14, fontWeight: '600', color: colors.textPrimary },
+    ticketSubject: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: ta },
     ticketMeta:    { fontSize: 12, color: colors.textMuted },
 
     planRow:   { flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 2 },

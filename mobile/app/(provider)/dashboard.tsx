@@ -54,10 +54,10 @@ function capitalize(s: string): string {
 
 export default function ProviderDashboard() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const router = useRouter();
   const { count: notifCount } = useUnreadNotifCount();
-  const { t, ta, lang } = useLanguage();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
   const [analytics, setAnalytics] = useState<AnalyticsRow[]>([]);
   const [weekRows, setWeekRows]   = useState<AnalyticsRow[]>([]);
@@ -174,7 +174,7 @@ export default function ProviderDashboard() {
     >
       {/* ── Period toggle ── */}
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { textAlign: ta }]}>{t('dashboard.myStats')}</Text>
+        <Text style={styles.headerTitle}>{t('dashboard.myStats')}</Text>
         <View style={styles.periodToggle}>
           {(['7', '30'] as Period[]).map(p => (
             <TouchableOpacity
@@ -241,7 +241,7 @@ export default function ProviderDashboard() {
 
       {/* ── Weekly chart ── */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('dashboard.chartTitle')}</Text>
+        <Text style={styles.sectionTitle}>{t('dashboard.chartTitle')}</Text>
         <View style={styles.chartCard}>
           {chartData.every(d => d.jobs === 0) ? (
             <View style={styles.chartEmpty}>
@@ -271,7 +271,7 @@ export default function ProviderDashboard() {
 
       {/* ── Recent completed jobs ── */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('dashboard.recentJobsTitle')}</Text>
+        <Text style={styles.sectionTitle}>{t('dashboard.recentJobsTitle')}</Text>
 
         {recentJobs.length === 0 ? (
           <View style={styles.emptyBox}>
@@ -282,9 +282,9 @@ export default function ProviderDashboard() {
           recentJobs.map(job => (
             <View key={job.id} style={styles.jobRow}>
               <View style={styles.jobLeft}>
-                <Text style={[styles.jobTitle, { textAlign: ta }]} numberOfLines={1}>{job.request?.title}</Text>
+                <Text style={styles.jobTitle} numberOfLines={1}>{job.request?.title}</Text>
                 {job.confirmed_at && (
-                  <Text style={[styles.jobDate, { textAlign: ta }]}>
+                  <Text style={styles.jobDate}>
                     {new Date(job.confirmed_at).toLocaleDateString(locale, {
                       day: 'numeric', month: 'short',
                     })}
@@ -312,8 +312,8 @@ export default function ProviderDashboard() {
       {/* ── Subscription reminder ── */}
       {!provider.is_subscribed && (
         <View style={styles.subBanner}>
-          <Text style={[styles.subBannerTitle, { textAlign: ta }]}>🚀 {t('dashboard.subBannerTitle')}</Text>
-          <Text style={[styles.subBannerSub, { textAlign: ta }]}>{t('dashboard.subBannerSub')}</Text>
+          <Text style={styles.subBannerTitle}>🚀 {t('dashboard.subBannerTitle')}</Text>
+          <Text style={styles.subBannerSub}>{t('dashboard.subBannerSub')}</Text>
         </View>
       )}
     </ScrollView>
@@ -354,21 +354,22 @@ function KpiCard({
   accent?: boolean;
 }) {
   const { colors } = useTheme();
-  const kpiStyles = useMemo(() => createKpiStyles(colors), [colors]);
-  const { ta } = useLanguage();
+  const { ta, isRTL } = useLanguage();
+  const kpiStyles = useMemo(() => createKpiStyles(colors, isRTL), [colors, isRTL]);
   return (
     <View style={[kpiStyles.card, accent && kpiStyles.cardAccent, { alignItems: ta === 'right' ? 'flex-end' : 'flex-start' }]}>
       <Text style={kpiStyles.icon}>{icon}</Text>
       <Text style={[kpiStyles.value, accent && kpiStyles.valueAccent]}>{value}</Text>
-      <Text style={[kpiStyles.label, { textAlign: ta }]}>{label}</Text>
-      <Text style={[kpiStyles.sub, { textAlign: ta }]}>{sub}</Text>
+      <Text style={kpiStyles.label}>{label}</Text>
+      <Text style={kpiStyles.sub}>{sub}</Text>
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   outerContainer: { flex: 1, backgroundColor: colors.bg },
   container: { flex: 1 },
@@ -376,7 +377,7 @@ function createStyles(colors: AppColors) {
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
   header:       { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 16 },
-  headerTitle:  { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+  headerTitle:  { fontSize: 24, fontWeight: '700', color: colors.textPrimary, textAlign: ta },
   periodToggle: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 10, padding: 3, borderWidth: 1, borderColor: colors.border },
   periodBtn:         { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
   periodBtnActive:   { backgroundColor: colors.accent },
@@ -394,7 +395,7 @@ function createStyles(colors: AppColors) {
   kpiGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, gap: 10, marginBottom: 24 },
 
   section:      { paddingHorizontal: 16, marginBottom: 24 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, textAlign: ta },
 
   chartCard:  { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
   chartEmpty: { alignItems: 'center', paddingVertical: 28 },
@@ -409,8 +410,8 @@ function createStyles(colors: AppColors) {
 
   jobRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
   jobLeft:   { flex: 1, marginEnd: 12 },
-  jobTitle:  { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 4 },
-  jobDate:   { fontSize: 11, color: colors.textMuted },
+  jobTitle:  { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
+  jobDate:   { fontSize: 11, color: colors.textMuted, textAlign: ta },
   jobRight:  { alignItems: 'flex-end' },
   ratingRow: { flexDirection: 'row', gap: 1 },
   ratingStar:{ fontSize: 13 },
@@ -421,19 +422,20 @@ function createStyles(colors: AppColors) {
   emptyText: { fontSize: 14, color: colors.textMuted },
 
   subBanner:      { marginHorizontal: 16, backgroundColor: colors.accentDim, borderRadius: 16, padding: 18, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
-  subBannerTitle: { fontSize: 16, fontWeight: '700', color: colors.accent, marginBottom: 6 },
-  subBannerSub:   { fontSize: 13, color: colors.textMuted, lineHeight: 20 },
+  subBannerTitle: { fontSize: 16, fontWeight: '700', color: colors.accent, marginBottom: 6, textAlign: ta },
+  subBannerSub:   { fontSize: 13, color: colors.textMuted, lineHeight: 20, textAlign: ta },
   });
 }
 
-function createKpiStyles(colors: AppColors) {
+function createKpiStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   card:       { width: '47%', backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
   cardAccent: { borderColor: 'rgba(201,168,76,0.30)', backgroundColor: colors.accentDim },
   icon:       { fontSize: 24, marginBottom: 8 },
   value:      { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
   valueAccent:{ color: colors.accent },
-  label:      { fontSize: 12, color: colors.textSecondary, marginBottom: 2 },
-  sub:        { fontSize: 10, color: colors.textMuted },
+  label:      { fontSize: 12, color: colors.textSecondary, marginBottom: 2, textAlign: ta },
+  sub:        { fontSize: 10, color: colors.textMuted, textAlign: ta },
   });
 }

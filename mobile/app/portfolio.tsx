@@ -249,10 +249,10 @@ type LightboxState =
 
 export default function PortfolioScreen() {
   const { colors } = useTheme();
-  const st = useMemo(() => createSt(colors), [colors]);
+  const { t, lang, isRTL } = useLanguage();
+  const st = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
   const baStyles = useMemo(() => createBaStyles(colors), [colors]);
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
 
   const [items,      setItems]      = useState<PortfolioItem[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -359,7 +359,7 @@ export default function PortfolioScreen() {
               <StatCard label={t('portfolio.statVerified')} value={String(verifiedCount)}  icon="✓" accent />
             </View>
             {items.length > 0 && (
-              <Text style={[st.gridLabel, { textAlign: ta }]}>
+              <Text style={st.gridLabel}>
                 {t('portfolio.gridLabel', { count: items.length })}
               </Text>
             )}
@@ -368,8 +368,8 @@ export default function PortfolioScreen() {
         ListEmptyComponent={
           <View style={st.empty}>
             <Text style={st.emptyIcon}>🖼</Text>
-            <Text style={[st.emptyTitle, { textAlign: ta }]}>{t('portfolio.emptyTitle')}</Text>
-            <Text style={[st.emptySub, { textAlign: ta }]}>{t('portfolio.emptySub')}</Text>
+            <Text style={st.emptyTitle}>{t('portfolio.emptyTitle')}</Text>
+            <Text style={st.emptySub}>{t('portfolio.emptySub')}</Text>
             <TouchableOpacity
               style={st.emptyBtn}
               onPress={() => router.push('/portfolio-add')}
@@ -480,7 +480,8 @@ function createStCard(colors: AppColors) {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors) {
+function createSt(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container:   { flex: 1, backgroundColor: colors.bg },
   center:      { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -490,12 +491,12 @@ function createSt(colors: AppColors) {
   row:         { gap: GAP, marginBottom: GAP },
 
   statsRow:  { flexDirection: 'row', gap: 10, marginBottom: 24 },
-  gridLabel: { fontSize: 13, color: colors.textMuted, marginBottom: 12, fontWeight: '600' },
+  gridLabel: { fontSize: 13, color: colors.textMuted, marginBottom: 12, fontWeight: '600', textAlign: ta },
 
   empty:        { alignItems: 'center', paddingVertical: 64, paddingHorizontal: 32 },
   emptyIcon:    { fontSize: 72, marginBottom: 20 },
-  emptyTitle:   { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 10 },
-  emptySub:     { fontSize: 14, color: colors.textMuted, lineHeight: 22, marginBottom: 28 },
+  emptyTitle:   { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 10, textAlign: ta },
+  emptySub:     { fontSize: 14, color: colors.textMuted, lineHeight: 22, marginBottom: 28, textAlign: ta },
   emptyBtn:     { backgroundColor: colors.accent, borderRadius: 16, paddingHorizontal: 28, paddingVertical: 14 },
   emptyBtnText: { fontSize: 15, fontWeight: '800', color: colors.bg },
 

@@ -13,10 +13,11 @@ const RESEND_COOLDOWN = 60; // seconds
 
 export default function VerifyPhoneScreen() {
   const router   = useRouter();
-  const { t, ta } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const ta = isRTL ? 'right' : 'left' as const;
   const { colors } = useTheme();
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const [phone, setPhone]       = useState('');
   const [otp, setOtp]           = useState(['', '', '', '', '', '']);
@@ -146,10 +147,10 @@ export default function VerifyPhoneScreen() {
           <Text style={styles.icon}>📱</Text>
         </View>
 
-        <Text style={[styles.title, { textAlign: ta }]}>
+        <Text style={styles.title}>
           {t('verifyPhone.title')}
         </Text>
-        <Text style={[styles.subtitle, { textAlign: ta }]}>
+        <Text style={styles.subtitle}>
           {step === 'enter_phone'
             ? t('verifyPhone.subtitlePhone')
             : `${t('verifyPhone.subtitleCode')} ${phone}`}
@@ -231,14 +232,15 @@ export default function VerifyPhoneScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:    { flex: 1, backgroundColor: colors.bg },
     content:      { flex: 1, paddingHorizontal: 24, paddingTop: 80, alignItems: 'center' },
     iconWrap:     { marginBottom: 24 },
     icon:         { fontSize: 56 },
-    title:        { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, width: '100%', alignSelf: 'stretch' },
-    subtitle:     { fontSize: 15, color: colors.textMuted, marginBottom: 36, width: '100%', alignSelf: 'stretch' },
+    title:        { fontSize: 26, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, width: '100%', alignSelf: 'stretch', textAlign: ta },
+    subtitle:     { fontSize: 15, color: colors.textMuted, marginBottom: 36, width: '100%', alignSelf: 'stretch', textAlign: ta },
     inputRow: {
       flexDirection: 'row',
       alignItems: 'center',

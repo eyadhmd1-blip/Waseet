@@ -32,10 +32,10 @@ interface TicketSummary {
 
 export default function SupportScreen() {
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
   const { colors } = useTheme();
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const [faq,       setFaq]       = useState<FaqItem[]>([]);
   const [summary,   setSummary]   = useState<TicketSummary>({ open: 0, in_review: 0, total: 0 });
@@ -173,7 +173,7 @@ export default function SupportScreen() {
         {/* FAQ */}
         {faq.length > 0 && (
           <>
-            <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('support.sectionFaq')}</Text>
+            <Text style={styles.sectionTitle}>{t('support.sectionFaq')}</Text>
             {faq.map(item => {
               const question = lang === 'ar' ? item.question_ar : (item.question_en ?? item.question_ar);
               const answer   = lang === 'ar' ? item.answer_ar   : (item.answer_en   ?? item.answer_ar);
@@ -188,10 +188,10 @@ export default function SupportScreen() {
                     <Text style={styles.faqArrow}>
                       {openFaqId === item.id ? '▲' : '▼'}
                     </Text>
-                    <Text style={[styles.faqQ, { textAlign: ta }]}>{question}</Text>
+                    <Text style={styles.faqQ}>{question}</Text>
                   </View>
                   {openFaqId === item.id && (
-                    <Text style={[styles.faqA, { textAlign: ta }]}>{answer}</Text>
+                    <Text style={styles.faqA}>{answer}</Text>
                   )}
                 </TouchableOpacity>
               );
@@ -201,7 +201,7 @@ export default function SupportScreen() {
 
         {/* Contact note */}
         <View style={styles.contactNote}>
-          <Text style={[styles.contactNoteText, { textAlign: ta }]}>
+          <Text style={styles.contactNoteText}>
             {t('support.contactNote')}
           </Text>
           <TouchableOpacity
@@ -217,7 +217,8 @@ export default function SupportScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -243,16 +244,16 @@ function createStyles(colors: AppColors) {
     summaryLbl:     { fontSize: 11, color: colors.textMuted, marginTop: 3 },
     summaryDivider: { width: 1, backgroundColor: colors.border },
 
-    sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
+    sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, textAlign: ta },
 
     faqItem:   { backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
     faqHeader: { alignItems: 'center', gap: 10 },
     faqArrow:  { fontSize: 10, color: colors.textMuted, width: 14 },
-    faqQ:      { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20 },
-    faqA:      { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border },
+    faqQ:      { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20, textAlign: ta },
+    faqA:      { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border, textAlign: ta },
 
     contactNote:      { backgroundColor: colors.accentDim, borderRadius: 14, padding: 16, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
-    contactNoteText:  { fontSize: 13, color: '#FCD34D', lineHeight: 20, marginBottom: 14 },
+    contactNoteText:  { fontSize: 13, color: '#FCD34D', lineHeight: 20, marginBottom: 14, textAlign: ta },
     openTicketBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
     openTicketBtnText:{ fontSize: 14, fontWeight: '700', color: colors.bg },
 

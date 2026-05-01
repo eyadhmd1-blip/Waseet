@@ -58,7 +58,7 @@ export default function ClientRequests() {
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
 
-  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'all',         label: t('requests.filterAll') },
@@ -147,7 +147,7 @@ export default function ClientRequests() {
         {/* Title + badge */}
         <View style={[styles.cardHeader, { flexDirection: 'row' }]}>
           <Text
-            style={[styles.cardTitle, { textAlign: ta, flex: 1, ...(!isRTL ? { marginRight: 8 } : { marginLeft: 8 }) }]}
+            style={[styles.cardTitle, { flex: 1, ...(!isRTL ? { marginRight: 8 } : { marginLeft: 8 }) }]}
             numberOfLines={2}
           >
             {item.title}
@@ -160,7 +160,7 @@ export default function ClientRequests() {
         </View>
 
         {/* Category · City */}
-        <Text style={[styles.cardMeta, { textAlign: ta }]}>
+        <Text style={styles.cardMeta}>
           {getCategoryName(item)} · {t(`cities.${item.city}`, item.city)}
         </Text>
 
@@ -221,11 +221,11 @@ export default function ClientRequests() {
       >
         <View style={[styles.headerRow, { flexDirection: 'row' }]}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.headerTitle, { textAlign: ta }]}>
+            <Text style={styles.headerTitle}>
               {t('requests.title')}
             </Text>
             {openCount > 0 && (
-              <Text style={[styles.headerSub, { textAlign: ta }]}>
+              <Text style={styles.headerSub}>
                 {openCount} {t('requests.statusOpen')}
               </Text>
             )}
@@ -300,10 +300,10 @@ export default function ClientRequests() {
               <View style={styles.emptyIconWrap}>
                 <Text style={styles.emptyIcon}>📋</Text>
               </View>
-              <Text style={[styles.emptyTitle, { textAlign: ta }]}>
+              <Text style={styles.emptyTitle}>
                 {t('requests.noRequests')}
               </Text>
-              <Text style={[styles.emptyDesc, { textAlign: ta }]}>
+              <Text style={styles.emptyDesc}>
                 {t('requests.noRequestsDesc')}
               </Text>
               <TouchableOpacity
@@ -320,7 +320,8 @@ export default function ClientRequests() {
   );
 }
 
-function createStyles(colors: AppColors, isDark: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   const btnText = isDark ? '#000' : '#fff';
 
   return StyleSheet.create({
@@ -330,8 +331,8 @@ function createStyles(colors: AppColors, isDark: boolean) {
     // ── Header
     header:      { paddingHorizontal: H_PAD, paddingTop: HEADER_PAD, paddingBottom: 12 },
     headerRow:   { alignItems: 'center', gap: 12 },
-    headerTitle: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, alignSelf: 'stretch' },
-    headerSub:   { fontSize: 13, color: colors.textMuted, marginTop: 2, alignSelf: 'stretch' },
+    headerTitle: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },
+    headerSub:   { fontSize: 13, color: colors.textMuted, marginTop: 2, alignSelf: 'stretch', textAlign: ta },
     newBtn: {
       backgroundColor: colors.accent,
       borderRadius:    12,
@@ -369,8 +370,8 @@ function createStyles(colors: AppColors, isDark: boolean) {
       paddingHorizontal: 16,
     },
     cardHeader: { alignItems: 'flex-start', marginBottom: 4 },
-    cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch' },
-    cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 10, alignSelf: 'stretch' },
+    cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },
+    cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 10, alignSelf: 'stretch', textAlign: ta },
     cardFooter: { alignItems: 'center', justifyContent: 'space-between' },
     cardDate:   { fontSize: 12, color: colors.textMuted },
     footerEnd:  { alignItems: 'center', gap: 6 },
@@ -402,8 +403,8 @@ function createStyles(colors: AppColors, isDark: boolean) {
       marginBottom: 20,
     },
     emptyIcon:    { fontSize: 36 },
-    emptyTitle:   { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, alignSelf: 'stretch' },
-    emptyDesc:    { fontSize: 14, color: colors.textSecondary, marginBottom: 24, lineHeight: 20, alignSelf: 'stretch' },
+    emptyTitle:   { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, alignSelf: 'stretch', textAlign: ta },
+    emptyDesc:    { fontSize: 14, color: colors.textSecondary, marginBottom: 24, lineHeight: 20, alignSelf: 'stretch', textAlign: ta },
     emptyBtn: {
       backgroundColor:   colors.accent,
       borderRadius:      14,

@@ -21,14 +21,14 @@ type TagKey = typeof TAG_KEYS[number];
 
 export default function RateJobScreen() {
   const router = useRouter();
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
   const { colors } = useTheme();
   const { job_id, provider_name } = useLocalSearchParams<{
     job_id: string;
     provider_name: string;
   }>();
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const [rating, setRating]       = useState(0);
   const [hovered, setHovered]     = useState(0);
@@ -98,8 +98,8 @@ export default function RateJobScreen() {
             <Text style={styles.provAvatarText}>{provider_name?.charAt(0) ?? '?'}</Text>
           </View>
           <View>
-            <Text style={[styles.provName, { textAlign: ta }]}>{provider_name}</Text>
-            <Text style={[styles.provSub, { textAlign: ta }]}>{t('rateJob.providerSub')}</Text>
+            <Text style={styles.provName}>{provider_name}</Text>
+            <Text style={styles.provSub}>{t('rateJob.providerSub')}</Text>
           </View>
         </View>
 
@@ -129,7 +129,7 @@ export default function RateJobScreen() {
         {/* Quick tags */}
         {rating >= 4 && (
           <>
-            <Text style={[styles.tagsLabel, { textAlign: ta }]}>{t('rateJob.tagsLabel')}</Text>
+            <Text style={styles.tagsLabel}>{t('rateJob.tagsLabel')}</Text>
             <View style={styles.tagsWrap}>
               {TAG_KEYS.map(key => (
                 <TouchableOpacity
@@ -175,7 +175,8 @@ export default function RateJobScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
 
@@ -185,8 +186,8 @@ function createStyles(colors: AppColors) {
     provChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 28, gap: 12, borderWidth: 1, borderColor: colors.border },
     provAvatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
     provAvatarText: { fontSize: 20, fontWeight: '700', color: colors.bg },
-    provName:       { fontSize: 16, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch' },
-    provSub:        { fontSize: 12, color: colors.textMuted, marginTop: 2, alignSelf: 'stretch' },
+    provName:       { fontSize: 16, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },
+    provSub:        { fontSize: 12, color: colors.textMuted, marginTop: 2, alignSelf: 'stretch', textAlign: ta },
 
     rateLabel:  { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'center', marginBottom: 20 },
     starsRow:   { flexDirection: 'row', justifyContent: 'center', gap: 12, marginBottom: 8 },
@@ -194,7 +195,7 @@ function createStyles(colors: AppColors) {
     starActive: { opacity: 1 },
     starLabel:  { fontSize: 16, fontWeight: '700', color: colors.accent, textAlign: 'center', marginBottom: 20 },
 
-    tagsLabel: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 10, alignSelf: 'stretch' },
+    tagsLabel: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 10, alignSelf: 'stretch', textAlign: ta },
     tagsWrap:  { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
     tag:       { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, borderWidth: 1, borderColor: colors.border },
     tagActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },

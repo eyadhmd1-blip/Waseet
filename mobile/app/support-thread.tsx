@@ -47,10 +47,10 @@ const STATUS_COLOR: Record<string, string> = {
 export default function SupportThreadScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
   const { colors } = useTheme();
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const [ticket,            setTicket]            = useState<Ticket | null>(null);
   const [messages,          setMessages]          = useState<SupportMessage[]>([]);
@@ -280,7 +280,7 @@ export default function SupportThreadScreen() {
                   {msg.sender_id ? t('supportThread.adminLabel') : t('supportThread.botLabel')}
                 </Text>
               )}
-              <Text style={[styles.bubbleText, { textAlign: ta }]}>{msg.body}</Text>
+              <Text style={styles.bubbleText}>{msg.body}</Text>
               <Text style={[styles.bubbleTime, msg.is_admin ? styles.timeLeft : styles.timeRight]}>
                 {fmtDate(msg.created_at)}
               </Text>
@@ -370,7 +370,8 @@ export default function SupportThreadScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -394,7 +395,7 @@ function createStyles(colors: AppColors) {
     bubbleUser:  { backgroundColor: 'rgba(201,168,76,0.12)', borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)', borderTopRightRadius: 4 },
 
     adminLabel: { fontSize: 11, fontWeight: '700', color: '#38BDF8', marginBottom: 4 },
-    bubbleText: { fontSize: 14, color: colors.textPrimary, lineHeight: 20 },
+    bubbleText: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, textAlign: ta },
     bubbleTime: { fontSize: 10, marginTop: 6 },
     timeLeft:   { color: colors.textMuted },
     timeRight:  { color: 'rgba(201,168,76,0.6)', textAlign: 'auto' },

@@ -30,7 +30,8 @@ type PlanChoice = 'trial' | 'basic' | 'pro' | 'premium' | null;
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const pct = (current / total) * 100;
   return (
     <View style={styles.progressWrap}>
@@ -53,12 +54,12 @@ function Step1Role({
   role, onSelect,
 }: { role: Role; onSelect: (r: Role) => void }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   return (
     <View style={styles.stepContent}>
-      <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step1Title')}</Text>
-      <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step1Sub')}</Text>
+      <Text style={styles.stepTitle}>{t('onboarding.step1Title')}</Text>
+      <Text style={styles.stepSub}>{t('onboarding.step1Sub')}</Text>
 
       <View style={styles.roleCards}>
         <TouchableOpacity
@@ -106,19 +107,19 @@ function Step2Info({
   bio: string; setBio: (v: string) => void;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   return (
     <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <View style={styles.stepContent}>
-        <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step2Title')}</Text>
-        <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step2Sub')}</Text>
+        <Text style={styles.stepTitle}>{t('onboarding.step2Title')}</Text>
+        <Text style={styles.stepSub}>{t('onboarding.step2Sub')}</Text>
 
         {/* Full name */}
-        <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('auth.fullName')} *</Text>
+        <Text style={styles.fieldLabel}>{t('auth.fullName')} *</Text>
         <TextInput
-          style={[styles.input, { textAlign: ta }]}
+          style={styles.input}
           placeholder={t('auth.fullNamePlaceholder')}
           placeholderTextColor="#475569"
           value={fullName}
@@ -126,7 +127,7 @@ function Step2Info({
         />
 
         {/* City */}
-        <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('auth.city')} *</Text>
+        <Text style={styles.fieldLabel}>{t('auth.city')} *</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
           {JORDAN_CITIES.map(c => (
             <TouchableOpacity
@@ -146,10 +147,10 @@ function Step2Info({
           <>
             <View style={styles.fieldLabelRow}>
               <Text style={[styles.fieldLabelOptional]}>{t('onboarding.bioOptional')}</Text>
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('onboarding.bioLabel')}</Text>
+              <Text style={styles.fieldLabel}>{t('onboarding.bioLabel')}</Text>
             </View>
             <TextInput
-              style={[styles.inputMulti, { textAlign: ta }]}
+              style={styles.inputMulti}
               placeholder={t('onboarding.bioPlaceholder')}
               placeholderTextColor="#475569"
               value={bio}
@@ -177,8 +178,8 @@ function Step3Services({
   onSuggest: () => void;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const [search, setSearch] = useState('');
 
   const allCats = groups.flatMap(g => g.categories);
@@ -221,12 +222,12 @@ function Step3Services({
   return (
     <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <View style={styles.stepContent}>
-        <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step3Title')}</Text>
-        <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step3Sub')}</Text>
+        <Text style={styles.stepTitle}>{t('onboarding.step3Title')}</Text>
+        <Text style={styles.stepSub}>{t('onboarding.step3Sub')}</Text>
 
         {/* Search */}
         <TextInput
-          style={[styles.searchInput, { textAlign: ta }]}
+          style={styles.searchInput}
           placeholder={t('onboarding.searchServices')}
           placeholderTextColor="#475569"
           value={search}
@@ -240,7 +241,7 @@ function Step3Services({
         ) : (
           groups.map(group => (
             <View key={group.slug}>
-              <Text style={[styles.groupLabel, { textAlign: ta }]}>
+              <Text style={styles.groupLabel}>
                 {t(`categories.${group.slug}`, group.name_ar)}
               </Text>
               <View style={styles.catGrid}>
@@ -282,8 +283,8 @@ function Step4Plan({
   saving: boolean;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const creditsDesc: Record<string, string> = {
     basic:   t('onboarding.creditsDesc_basic'),
@@ -294,8 +295,8 @@ function Step4Plan({
   return (
     <ScrollView style={styles.stepScroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
       <View style={styles.stepContent}>
-        <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('onboarding.step4Title')}</Text>
-        <Text style={[styles.stepSub, { textAlign: ta }]}>{t('onboarding.step4Sub')}</Text>
+        <Text style={styles.stepTitle}>{t('onboarding.step4Title')}</Text>
+        <Text style={styles.stepSub}>{t('onboarding.step4Sub')}</Text>
 
         {/* Trial Card */}
         {!trialUsed && (
@@ -369,8 +370,8 @@ function StepDone({
   role, planChoice, onExplore,
 }: { role: Role; planChoice: PlanChoice; onExplore: () => void }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t, ta, isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const subText = role === 'client'
     ? t('onboarding.doneSubClient')
@@ -381,8 +382,8 @@ function StepDone({
   return (
     <ScrollView contentContainerStyle={[styles.stepContent, styles.doneContent]} showsVerticalScrollIndicator={false}>
       <Text style={styles.doneEmoji}>🎉</Text>
-      <Text style={[styles.doneTitle, { textAlign: ta }]}>{t('onboarding.doneTitle')}</Text>
-      <Text style={[styles.doneSub, { textAlign: ta }]}>{subText}</Text>
+      <Text style={styles.doneTitle}>{t('onboarding.doneTitle')}</Text>
+      <Text style={styles.doneSub}>{subText}</Text>
       <TouchableOpacity style={styles.doneBtn} onPress={onExplore} activeOpacity={0.85}>
         <Text style={styles.doneBtnText}>{t('onboarding.exploreCTA')} {isRTL ? '←' : '→'}</Text>
       </TouchableOpacity>
@@ -394,9 +395,9 @@ function StepDone({
 
 export default function OnboardingScreen() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
   const router = useRouter();
-  const { t, ta, isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const { contentPad } = useInsets();
 
   // Form state
@@ -650,7 +651,8 @@ export default function OnboardingScreen() {
 
 // ── Styles ────────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container:   { flex: 1, backgroundColor: colors.bg },
 
@@ -671,8 +673,8 @@ function createStyles(colors: AppColors) {
   // Step common
   stepScroll:  { flex: 1 },
   stepContent: { padding: 24, paddingTop: 12 },
-  stepTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: colors.textPrimary, marginBottom: 6, alignSelf: 'stretch' },
-  stepSub:     { fontSize: rs(14, 12, 16), color: colors.textMuted, marginBottom: 28, alignSelf: 'stretch' },
+  stepTitle:   { fontSize: rs(26, 20, 30), fontWeight: '700', color: colors.textPrimary, marginBottom: 6, alignSelf: 'stretch', textAlign: ta },
+  stepSub:     { fontSize: rs(14, 12, 16), color: colors.textMuted, marginBottom: 28, alignSelf: 'stretch', textAlign: ta },
 
   // Role cards
   roleCards:       { gap: 14 },

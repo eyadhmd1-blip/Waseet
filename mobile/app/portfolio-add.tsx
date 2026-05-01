@@ -125,9 +125,10 @@ function createUbSt(colors: AppColors) {
 
 export default function PortfolioAddScreen() {
   const { colors } = useTheme();
-  const st = useMemo(() => createSt(colors), [colors]);
+  const { t, lang, isRTL } = useLanguage();
+  const ta = isRTL ? 'right' : 'left' as const;
+  const st = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
 
   const [step,        setStep]        = useState<1 | 2 | 3>(1);
   const [itemType,    setItemType]    = useState<PortfolioItemType | null>(null);
@@ -254,8 +255,8 @@ export default function PortfolioAddScreen() {
 
   const renderStep1 = () => (
     <>
-      <Text style={[st.stepTitle, { textAlign: ta }]}>{t('portfolioAdd.step1Title')}</Text>
-      <Text style={[st.stepSub, { textAlign: ta }]}>{t('portfolioAdd.step1Sub')}</Text>
+      <Text style={st.stepTitle}>{t('portfolioAdd.step1Title')}</Text>
+      <Text style={st.stepSub}>{t('portfolioAdd.step1Sub')}</Text>
       <View style={st.typeGrid}>
         {TYPE_KEYS.map((opt, idx) => {
           const selected = itemType === opt.type;
@@ -271,9 +272,9 @@ export default function PortfolioAddScreen() {
                 onPress={() => selectType(opt.type, idx)}
                 activeOpacity={0.85}
               >
-                <Text style={[st.typeEmoji, { textAlign: ta }]}>{opt.emoji}</Text>
-                <Text style={[st.typeTitle, selected && st.typeTitleSelected, { textAlign: ta }]}>{t(titleKey)}</Text>
-                <Text style={[st.typeDesc, { textAlign: ta }]}>{t(descKey)}</Text>
+                <Text style={st.typeEmoji}>{opt.emoji}</Text>
+                <Text style={[st.typeTitle, selected && st.typeTitleSelected]}>{t(titleKey)}</Text>
+                <Text style={st.typeDesc}>{t(descKey)}</Text>
                 {selected && <View style={st.typeCheckmark}><Text style={{ fontSize: 14, color: colors.bg }}>✓</Text></View>}
               </TouchableOpacity>
             </Animated.View>
@@ -296,8 +297,8 @@ export default function PortfolioAddScreen() {
 
     return (
       <>
-        <Text style={[st.stepTitle, { textAlign: ta }]}>{step2Title}</Text>
-        <Text style={[st.stepSub, { textAlign: ta }]}>{step2Sub}</Text>
+        <Text style={st.stepTitle}>{step2Title}</Text>
+        <Text style={st.stepSub}>{step2Sub}</Text>
 
         {itemType === 'single' && (
           <UploadBox
@@ -361,10 +362,10 @@ export default function PortfolioAddScreen() {
 
   const renderStep3 = () => (
     <>
-      <Text style={[st.stepTitle, { textAlign: ta }]}>{t('portfolioAdd.step3Title')}</Text>
-      <Text style={[st.stepSub, { textAlign: ta }]}>{t('portfolioAdd.step3Sub')}</Text>
+      <Text style={st.stepTitle}>{t('portfolioAdd.step3Title')}</Text>
+      <Text style={st.stepSub}>{t('portfolioAdd.step3Sub')}</Text>
 
-      <Text style={[st.fieldLabel, { textAlign: ta }]}>{t('portfolioAdd.fieldCategory')}</Text>
+      <Text style={st.fieldLabel}>{t('portfolioAdd.fieldCategory')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={st.catScroll}>
         {CATEGORY_GROUPS.map(group =>
           group.categories.map(cat => {
@@ -384,7 +385,7 @@ export default function PortfolioAddScreen() {
         )}
       </ScrollView>
 
-      <Text style={[st.fieldLabel, { textAlign: ta, marginTop: 20 }]}>{t('portfolioAdd.fieldDesc')}</Text>
+      <Text style={[st.fieldLabel, { marginTop: 20 }]}>{t('portfolioAdd.fieldDesc')}</Text>
       <TextInput
         style={st.descInput}
         placeholder={t('portfolioAdd.descPlaceholder')}
@@ -467,22 +468,23 @@ export default function PortfolioAddScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors) {
+function createSt(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
 
   scroll:  { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 32 },
   footer:  { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 24, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg },
 
-  stepTitle: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 6 },
-  stepSub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22, marginBottom: 28 },
+  stepTitle: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 6, textAlign: ta },
+  stepSub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22, marginBottom: 28, textAlign: ta },
 
   typeGrid:          { gap: 12 },
   typeCard:          { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 2, borderColor: colors.border },
   typeCardSelected:  { borderColor: colors.accent, backgroundColor: colors.accentDim },
-  typeEmoji:         { fontSize: 32, marginBottom: 10 },
-  typeTitle:         { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 },
+  typeEmoji:         { fontSize: 32, marginBottom: 10, textAlign: ta },
+  typeTitle:         { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
   typeTitleSelected: { color: colors.accent },
-  typeDesc:          { fontSize: 13, color: colors.textMuted, lineHeight: 20 },
+  typeDesc:          { fontSize: 13, color: colors.textMuted, lineHeight: 20, textAlign: ta },
   typeCheckmark:     { position: 'absolute', top: 16, left: 16, width: 28, height: 28, borderRadius: 14, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
 
   singleBox:      { height: 220 },
@@ -495,7 +497,7 @@ function createSt(colors: AppColors) {
   videoBadge:     { marginTop: 12, backgroundColor: colors.successBg, borderRadius: 10, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: colors.success },
   videoBadgeText: { color: colors.successSoft, fontWeight: '700', fontSize: 13 },
 
-  fieldLabel:  { fontSize: 14, fontWeight: '700', color: colors.textSecondary, marginBottom: 12 },
+  fieldLabel:  { fontSize: 14, fontWeight: '700', color: colors.textSecondary, marginBottom: 12, textAlign: ta },
   catScroll:   { gap: 8, paddingVertical: 4 },
   catChip:     { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1.5 },
   catChipText: { fontSize: 13, fontWeight: '600' },
