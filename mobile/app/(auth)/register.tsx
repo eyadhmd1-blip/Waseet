@@ -24,7 +24,7 @@ export default function RegisterScreen() {
   const [city, setCity]         = useState('');
   const [loading, setLoading]   = useState(false);
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const handleRegister = async () => {
     if (!fullName.trim() || !city) {
@@ -82,10 +82,10 @@ export default function RegisterScreen() {
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[styles.title, { textAlign: ta }]}>{t('auth.completeRegister')}</Text>
+      <Text style={styles.title}>{t('auth.completeRegister')}</Text>
 
       {/* Role selector */}
-      <Text style={[styles.label, { textAlign: ta }]}>{t('auth.iAm')}</Text>
+      <Text style={styles.label}>{t('auth.iAm')}</Text>
       <View style={styles.roleRow}>
         <TouchableOpacity
           style={[styles.roleBtn, role === 'client' && styles.roleBtnActive]}
@@ -111,9 +111,9 @@ export default function RegisterScreen() {
       </View>
 
       {/* Full name */}
-      <Text style={[styles.label, { textAlign: ta }]}>{t('auth.fullName')}</Text>
+      <Text style={styles.label}>{t('auth.fullName')}</Text>
       <TextInput
-        style={[styles.input, { textAlign: ta }]}
+        style={styles.input}
         placeholder={t('auth.fullNamePlaceholder')}
         placeholderTextColor="#475569"
         value={fullName}
@@ -121,7 +121,7 @@ export default function RegisterScreen() {
       />
 
       {/* City */}
-      <Text style={[styles.label, { textAlign: ta }]}>{t('auth.city')}</Text>
+      <Text style={styles.label}>{t('auth.city')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cityScroll}>
         {JORDAN_CITIES.map(c => (
           <TouchableOpacity
@@ -150,12 +150,13 @@ export default function RegisterScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:     { flex: 1, backgroundColor: colors.bg },
     content:       { padding: 24, paddingTop: HEADER_PAD },
-    title:         { fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginBottom: 32 },
-    label:         { fontSize: 14, color: colors.textSecondary, marginBottom: 10, marginTop: 20 },
+    title:         { fontSize: 28, fontWeight: '700', color: colors.textPrimary, marginBottom: 32, textAlign: ta },
+    label:         { fontSize: 14, color: colors.textSecondary, marginBottom: 10, marginTop: 20, textAlign: ta },
     roleRow:       { flexDirection: 'row', gap: 12 },
     roleBtn:       { flex: 1, backgroundColor: colors.surface, borderRadius: 14, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
     roleBtnActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },
@@ -166,7 +167,7 @@ function createStyles(colors: AppColors) {
     input: {
       backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16,
       paddingVertical: 14, color: colors.textPrimary, fontSize: 16,
-      borderWidth: 1, borderColor: colors.border,
+      borderWidth: 1, borderColor: colors.border, textAlign: ta,
     },
     cityScroll:    { marginBottom: 8 },
     cityChip:      { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },

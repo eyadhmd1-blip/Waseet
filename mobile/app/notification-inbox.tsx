@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl,
@@ -67,9 +67,9 @@ const PAGE = 20;
 
 export default function NotificationInboxScreen() {
   const { colors }    = useTheme();
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
   const router        = useRouter();
-  const st            = useMemo(() => createSt(colors), [colors]);
+  const st            = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
   const locale        = lang === 'ar' ? 'ar' : 'en';
 
   const [items,      setItems]      = useState<NotifRow[]>([]);
@@ -116,7 +116,7 @@ export default function NotificationInboxScreen() {
     setLoading(false);
   }, [fetchPage]);
 
-  useEffect(() => { initialLoad(); }, [initialLoad]);
+  useState(() => { initialLoad(); });
 
   // ── Pull-to-refresh ─────────────────────────────────────────
   const onRefresh = useCallback(async () => {
@@ -176,20 +176,20 @@ export default function NotificationInboxScreen() {
       </View>
       <View style={st.cardBody}>
         <View style={st.cardTop}>
-          <Text style={[st.title, { textAlign: ta }]} numberOfLines={2}>
+          <Text style={st.title} numberOfLines={2}>
             {item.title}
           </Text>
           <Text style={st.time}>{relativeTime(item.created_at, locale)}</Text>
         </View>
         {!!item.body && (
-          <Text style={[st.body, { textAlign: ta }]} numberOfLines={2}>
+          <Text style={st.body} numberOfLines={2}>
             {item.body}
           </Text>
         )}
       </View>
       {!item.is_read && <View style={st.unreadDot} />}
     </TouchableOpacity>
-  ), [st, ta, locale, onTap]);
+  ), [st, locale, onTap]);
 
   const unreadCount = useMemo(() => items.filter(n => !n.is_read).length, [items]);
 
@@ -247,7 +247,8 @@ export default function NotificationInboxScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors) {
+function createSt(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:      { flex: 1, backgroundColor: colors.bg },
     center:         { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -283,9 +284,9 @@ function createSt(colors: AppColors) {
     icon:     { fontSize: 18 },
     cardBody: { flex: 1, gap: 4 },
     cardTop:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
-    title:    { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textPrimary, lineHeight: 20 },
+    title:    { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textPrimary, lineHeight: 20, textAlign: ta },
     time:     { fontSize: 11, color: colors.textMuted, flexShrink: 0 },
-    body:     { fontSize: 13, color: colors.textSecondary, lineHeight: 18 },
+    body:     { fontSize: 13, color: colors.textSecondary, lineHeight: 18, textAlign: ta },
 
     unreadDot: {
       position:        'absolute',

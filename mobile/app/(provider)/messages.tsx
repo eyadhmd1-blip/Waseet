@@ -29,13 +29,13 @@ const JOB_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 export default function ProviderMessages() {
     const { headerPad } = useInsets();
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
   const { colors } = useTheme();
   const [jobs, setJobs]             = useState<ConversationJob[]>([]);
   const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const JOB_STATUS_LABEL: Record<string, string> = {
     active:    t('providerJobs.statusActive'),
@@ -91,8 +91,8 @@ export default function ProviderMessages() {
         </View>
 
         <View style={styles.cardInfo}>
-          <Text style={[styles.clientName, { textAlign: ta }]} numberOfLines={1}>{clientName}</Text>
-          <Text style={[styles.jobTitle, { textAlign: ta }]} numberOfLines={1}>{item.request?.title}</Text>
+          <Text style={styles.clientName} numberOfLines={1}>{clientName}</Text>
+          <Text style={styles.jobTitle} numberOfLines={1}>{item.request?.title}</Text>
         </View>
 
         <View style={styles.cardRight}>
@@ -112,7 +112,7 @@ export default function ProviderMessages() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { textAlign: ta }]}>{t('chat.title')}</Text>
+        <Text style={styles.headerTitle}>{t('chat.title')}</Text>
       </View>
 
       {loading ? (
@@ -132,8 +132,8 @@ export default function ProviderMessages() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyIcon}>💬</Text>
-              <Text style={[styles.emptyTitle, { textAlign: ta }]}>{t('chat.noConversations')}</Text>
-              <Text style={[styles.emptySub, { textAlign: ta }]}>{t('providerJobs.noConvSub')}</Text>
+              <Text style={styles.emptyTitle}>{t('chat.noConversations')}</Text>
+              <Text style={styles.emptySub}>{t('providerJobs.noConvSub')}</Text>
             </View>
           }
         />
@@ -142,20 +142,21 @@ export default function ProviderMessages() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:   { flex: 1, backgroundColor: colors.bg },
     center:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-    headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+    headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, textAlign: ta },
     listContent: { paddingVertical: 8 },
 
     card:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 },
     avatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: '#7C3AED', alignItems: 'center', justifyContent: 'center' },
     avatarText: { fontSize: 20, fontWeight: '700', color: '#F5F3FF' },
     cardInfo:   { flex: 1 },
-    clientName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 3 },
-    jobTitle:   { fontSize: 12, color: colors.textMuted },
+    clientName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 3, textAlign: ta },
+    jobTitle:   { fontSize: 12, color: colors.textMuted, textAlign: ta },
 
     cardRight:   { alignItems: 'flex-end', gap: 6 },
     statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
@@ -164,7 +165,7 @@ function createStyles(colors: AppColors) {
 
     empty:      { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
     emptyIcon:  { fontSize: 56, marginBottom: 16 },
-    emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
-    emptySub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22 },
+    emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: ta },
+    emptySub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22, textAlign: ta },
   });
 }

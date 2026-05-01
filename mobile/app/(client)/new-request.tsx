@@ -280,7 +280,7 @@ export default function NewRequestScreen() {
 
           <Text style={styles.label}>{t('newRequest.requestTitle')}</Text>
           <TextInput
-            style={[styles.input, { textAlign: ta }]}
+            style={styles.input}
             placeholder={
               (lang === 'ar'
                 ? CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.title_ar
@@ -295,7 +295,7 @@ export default function NewRequestScreen() {
 
           <Text style={styles.label}>{t('newRequest.description')}</Text>
           <TextInput
-            style={[styles.input, styles.inputMultiline, { textAlign: ta }]}
+            style={[styles.input, styles.inputMultiline]}
             placeholder={
               (lang === 'ar'
                 ? CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.desc_ar
@@ -447,7 +447,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     changeCat:        { fontSize: 13, color: colors.textMuted },
 
     label:     { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16, alignSelf: 'stretch', textAlign: ta },
-    input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
+    input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border, textAlign: ta },
     inputMultiline: { height: 120, textAlignVertical: 'top', paddingTop: 14 },
     charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch', textAlign: ta },
 

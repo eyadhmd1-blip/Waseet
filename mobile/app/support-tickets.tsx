@@ -42,10 +42,10 @@ type Filter = 'all' | 'open' | 'in_review' | 'resolved';
 
 export default function SupportTicketsScreen() {
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
   const { colors } = useTheme();
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const [tickets,    setTickets]  = useState<Ticket[]>([]);
   const [loading,    setLoading]  = useState(true);
@@ -122,10 +122,10 @@ export default function SupportTicketsScreen() {
           </View>
         </View>
 
-        <Text style={[styles.ticketSubj, { textAlign: ta }]} numberOfLines={2}>{item.subject}</Text>
+        <Text style={styles.ticketSubj} numberOfLines={2}>{item.subject}</Text>
 
         {item.rating && (
-          <Text style={[styles.ticketRating, { textAlign: ta }]}>{'⭐'.repeat(item.rating)}</Text>
+          <Text style={styles.ticketRating}>{'⭐'.repeat(item.rating)}</Text>
         )}
 
         {item.priority === 'urgent' && (
@@ -194,7 +194,8 @@ export default function SupportTicketsScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
@@ -215,8 +216,8 @@ function createStyles(colors: AppColors) {
     ticketMeta:      { flexDirection: 'row', alignItems: 'center', gap: 8 },
     ticketDate:      { fontSize: 11, color: colors.textMuted },
     ticketCat:       { fontSize: 16 },
-    ticketSubj:      { fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20 },
-    ticketRating:    { fontSize: 14, marginTop: 6 },
+    ticketSubj:      { fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20, textAlign: ta },
+    ticketRating:    { fontSize: 14, marginTop: 6, textAlign: ta },
     urgentPill:      { alignSelf: 'flex-start', marginTop: 6, backgroundColor: 'rgba(239,68,68,0.12)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
     urgentPillText:  { fontSize: 11, color: '#F87171', fontWeight: '700' },
 

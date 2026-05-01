@@ -29,10 +29,10 @@ type Priority = 'normal' | 'urgent';
 
 export default function SupportNewScreen() {
   const router = useRouter();
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
   const { colors } = useTheme();
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const [category,   setCategory] = useState<CategoryKey | null>(null);
   const [priority,   setPriority] = useState<Priority>('normal');
@@ -98,7 +98,7 @@ export default function SupportNewScreen() {
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
         {/* Category */}
-        <Text style={[styles.label, { textAlign: ta }]}>{t('supportNew.categoryLabel')}</Text>
+        <Text style={styles.label}>{t('supportNew.categoryLabel')}</Text>
         <View style={styles.catGrid}>
           {CATEGORY_KEYS.map(c => (
             <TouchableOpacity
@@ -116,7 +116,7 @@ export default function SupportNewScreen() {
         </View>
 
         {/* Priority */}
-        <Text style={[styles.label, { textAlign: ta }]}>{t('supportNew.priorityLabel')}</Text>
+        <Text style={styles.label}>{t('supportNew.priorityLabel')}</Text>
         <View style={styles.priorityRow}>
           <TouchableOpacity
             style={[styles.priorityBtn, priority === 'normal' && styles.priorityBtnActive]}
@@ -137,7 +137,7 @@ export default function SupportNewScreen() {
         </View>
 
         {/* Subject */}
-        <Text style={[styles.label, { textAlign: ta }]}>{t('supportNew.subjectLabel')}</Text>
+        <Text style={styles.label}>{t('supportNew.subjectLabel')}</Text>
         <TextInput
           style={styles.input}
           placeholder={t('supportNew.subjectPlaceholder')}
@@ -147,10 +147,10 @@ export default function SupportNewScreen() {
           textAlign={ta}
           maxLength={120}
         />
-        <Text style={[styles.charCount, { textAlign: ta }]}>{subject.length}/120</Text>
+        <Text style={styles.charCount}>{subject.length}/120</Text>
 
         {/* Description */}
-        <Text style={[styles.label, { textAlign: ta }]}>{t('supportNew.descLabel')}</Text>
+        <Text style={styles.label}>{t('supportNew.descLabel')}</Text>
         <TextInput
           style={[styles.input, styles.textarea]}
           placeholder={t('supportNew.descPlaceholder')}
@@ -162,7 +162,7 @@ export default function SupportNewScreen() {
           numberOfLines={5}
           maxLength={1000}
         />
-        <Text style={[styles.charCount, { textAlign: ta }]}>{desc.length}/1000</Text>
+        <Text style={styles.charCount}>{desc.length}/1000</Text>
 
         {/* Submit */}
         <TouchableOpacity
@@ -176,7 +176,7 @@ export default function SupportNewScreen() {
           }
         </TouchableOpacity>
 
-        <Text style={[styles.footNote, { textAlign: ta }]}>
+        <Text style={styles.footNote}>
           {t('supportNew.footNote')}
         </Text>
 
@@ -185,14 +185,15 @@ export default function SupportNewScreen() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
 
 
     content: { padding: 16, paddingBottom: 48 },
 
-    label: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginTop: 20, marginBottom: 10, alignSelf: 'stretch' },
+    label: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginTop: 20, marginBottom: 10, alignSelf: 'stretch', textAlign: ta },
 
     catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
     catCard:       { width: '30%', backgroundColor: colors.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6 },
@@ -209,12 +210,12 @@ function createStyles(colors: AppColors) {
 
     input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border },
     textarea:  { minHeight: 120, textAlignVertical: 'top', paddingTop: 12 },
-    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch' },
+    charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch', textAlign: ta },
 
     submitBtn:         { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
     submitBtnDisabled: { backgroundColor: colors.border },
     submitBtnText:     { fontSize: 16, fontWeight: '700', color: colors.bg },
 
-    footNote: { fontSize: 12, color: colors.textMuted, marginTop: 14, lineHeight: 18, alignSelf: 'stretch' },
+    footNote: { fontSize: 12, color: colors.textMuted, marginTop: 14, lineHeight: 18, alignSelf: 'stretch', textAlign: ta },
   });
 }

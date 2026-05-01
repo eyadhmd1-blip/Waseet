@@ -28,10 +28,10 @@ type Stats = {
 
 export default function ClientProfile() {
   const { colors, theme, setTheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, lang, toggleLanguage, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const { contentPad } = useInsets();
   const router = useRouter();
-  const { t, ta, lang, toggleLanguage } = useLanguage();
   const [user, setUser]           = useState<User | null>(null);
   const [stats, setStats]         = useState<Stats>({ total: 0, open: 0, in_progress: 0, completed: 0 });
   const [loading, setLoading]     = useState(true);
@@ -211,11 +211,11 @@ export default function ClientProfile() {
       {/* ── Edit form ── */}
       {editing && (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('common.edit')} {t('profile.title')}</Text>
+          <Text style={styles.sectionTitle}>{t('common.edit')} {t('profile.title')}</Text>
           <View style={styles.editCard}>
-            <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('auth.fullName')}</Text>
+            <Text style={styles.fieldLabel}>{t('auth.fullName')}</Text>
             <TextInput
-              style={[styles.fieldInput, { textAlign: ta }]}
+              style={styles.fieldInput}
               value={editName}
               onChangeText={setEditName}
               placeholder={t('auth.fullNamePlaceholder')}
@@ -223,7 +223,7 @@ export default function ClientProfile() {
               maxLength={60}
             />
 
-            <Text style={[styles.fieldLabel, { textAlign: ta, marginTop: 16 }]}>{t('auth.city')}</Text>
+            <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t('auth.city')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -263,7 +263,7 @@ export default function ClientProfile() {
 
       {/* ── Account info ── */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('profile.title')}</Text>
+        <Text style={styles.sectionTitle}>{t('profile.title')}</Text>
         <View style={styles.infoCard}>
           <InfoRow label={t('profile.phone')} value={maskedPhone} />
           <InfoRow
@@ -277,14 +277,14 @@ export default function ClientProfile() {
       {/* ── Language switcher ── */}
       <TouchableOpacity style={styles.notifBtn} onPress={handleToggleLang}>
         <Text style={styles.notifBtnIcon}>🌐</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.language')}</Text>
+        <Text style={styles.notifBtnText}>{t('profile.language')}</Text>
         <Text style={styles.notifBtnBadge}>{lang === 'ar' ? t('profile.arabic') : t('profile.english')}</Text>
       </TouchableOpacity>
 
       {/* ── Theme picker ── */}
       <View style={styles.notifBtn}>
         <Text style={styles.notifBtnIcon}>🎨</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.theme')}</Text>
+        <Text style={styles.notifBtnText}>{t('profile.theme')}</Text>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {(['dark', 'light', 'system'] as const).map(opt => (
             <TouchableOpacity
@@ -307,28 +307,28 @@ export default function ClientProfile() {
       {/* ── Recurring contracts ── */}
       <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/recurring-request')}>
         <Text style={styles.notifBtnIcon}>🔄</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('recurringRequest.title')}</Text>
+        <Text style={styles.notifBtnText}>{t('recurringRequest.title')}</Text>
         <Text style={styles.notifBtnArrow}>›</Text>
       </TouchableOpacity>
 
       {/* ── Saved providers ── */}
       <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/(client)/saved-providers')}>
         <Text style={styles.notifBtnIcon}>🔖</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('saved.title')}</Text>
+        <Text style={styles.notifBtnText}>{t('saved.title')}</Text>
         <Text style={styles.notifBtnArrow}>›</Text>
       </TouchableOpacity>
 
       {/* ── Notification settings ── */}
       <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/notification-settings')}>
         <Text style={styles.notifBtnIcon}>🔔</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.notifications')}</Text>
+        <Text style={styles.notifBtnText}>{t('profile.notifications')}</Text>
         <Text style={styles.notifBtnArrow}>›</Text>
       </TouchableOpacity>
 
       {/* ── Support ── */}
       <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/support')}>
         <Text style={styles.notifBtnIcon}>🎧</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.support')}</Text>
+        <Text style={styles.notifBtnText}>{t('profile.support')}</Text>
         <Text style={styles.notifBtnArrow}>›</Text>
       </TouchableOpacity>
 
@@ -373,7 +373,8 @@ function InfoRow({
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content:   { paddingBottom: 24 },
@@ -391,11 +392,11 @@ function createStyles(colors: AppColors) {
   statsRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 24 },
 
   section:      { paddingHorizontal: 16, marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, alignSelf: 'stretch' },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, alignSelf: 'stretch', textAlign: ta },
 
   editCard:    { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-  fieldLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 8, alignSelf: 'stretch' },
-  fieldInput:  { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
+  fieldLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 8, alignSelf: 'stretch', textAlign: ta },
+  fieldInput:  { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border, textAlign: ta },
 
   cityScroll:        { marginBottom: 4 },
   cityChip:          { backgroundColor: colors.bg, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: colors.border },
@@ -414,7 +415,7 @@ function createStyles(colors: AppColors) {
 
   notifBtn:      { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: colors.border },
   notifBtnIcon:  { fontSize: 18, marginRight: 10 },
-  notifBtnText:  { flex: 1, fontSize: 15, color: colors.textPrimary, fontWeight: '500' },
+  notifBtnText:  { flex: 1, fontSize: 15, color: colors.textPrimary, fontWeight: '500', textAlign: ta },
   notifBtnArrow: { fontSize: 16, color: colors.textMuted, marginLeft: 8 },
   notifBtnBadge: { fontSize: 13, color: colors.accent, fontWeight: '600' },
 

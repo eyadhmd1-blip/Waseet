@@ -32,10 +32,10 @@ const VISIT_STATUS_COLOR: Record<string, string> = {
 
 export default function ContractDetailScreen() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const router = useRouter();
   const { contract_id } = useLocalSearchParams<{ contract_id: string }>();
-  const { t, ta, lang } = useLanguage();
 
   const [contract,   setContract]   = useState<RecurringContract | null>(null);
   const [bids,       setBids]       = useState<ContractBid[]>([]);
@@ -206,8 +206,8 @@ export default function ContractDetailScreen() {
               <Text style={styles.heroIcon}>🔄</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.heroTitle, { textAlign: ta }]}>{contract.title}</Text>
-              <Text style={[styles.heroCity, { textAlign: ta }]}>📍 {contract.city}</Text>
+              <Text style={styles.heroTitle}>{contract.title}</Text>
+              <Text style={styles.heroCity}>📍 {contract.city}</Text>
             </View>
             <View style={[styles.statusBadge, contract.status === 'active' && styles.statusBadgeActive]}>
               <Text style={styles.statusText}>{statusLabel(contract.status)}</Text>
@@ -227,7 +227,7 @@ export default function ContractDetailScreen() {
               <View style={styles.progressBg}>
                 <View style={[styles.progressFill, { width: `${progressPct}%` as any }]} />
               </View>
-              <Text style={[styles.progressText, { textAlign: ta }]}>
+              <Text style={styles.progressText}>
                 {t('contractDetail.progressText', { completed: contract.completed_visits, total: totalVisits })}
               </Text>
             </View>
@@ -247,11 +247,11 @@ export default function ContractDetailScreen() {
 
         {/* ── Details ── */}
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('contractDetail.sectionDetails')}</Text>
+          <Text style={styles.sectionTitle}>{t('contractDetail.sectionDetails')}</Text>
           <View style={styles.detailCard}>
             {contract.description && (
               <View style={styles.descBlock}>
-                <Text style={[styles.descText, { textAlign: ta }]}>{contract.description}</Text>
+                <Text style={styles.descText}>{contract.description}</Text>
               </View>
             )}
             <DetailRow
@@ -290,7 +290,7 @@ export default function ContractDetailScreen() {
         {/* ── Bids (client sees, if bidding status) ── */}
         {myRole === 'client' && contract.status === 'bidding' && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { textAlign: ta }]}>
+            <Text style={styles.sectionTitle}>
               {t('contractDetail.sectionBids')}
               {pendingBids.length > 0 && (
                 <Text style={styles.bidCount}> ({pendingBids.length})</Text>
@@ -318,7 +318,7 @@ export default function ContractDetailScreen() {
         {/* ── Accepted bid summary ── */}
         {acceptedBid && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('contractDetail.sectionProvider')}</Text>
+            <Text style={styles.sectionTitle}>{t('contractDetail.sectionProvider')}</Text>
             <View style={styles.acceptedCard}>
               <View style={styles.acceptedAvatar}>
                 <Text style={styles.acceptedAvatarText}>
@@ -326,10 +326,10 @@ export default function ContractDetailScreen() {
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.acceptedName, { textAlign: ta }]}>
+                <Text style={styles.acceptedName}>
                   {(acceptedBid.provider?.user as any)?.full_name ?? t('contractDetail.defaultProviderName')}
                 </Text>
-                <Text style={[styles.acceptedPrice, { textAlign: ta }]}>
+                <Text style={styles.acceptedPrice}>
                   {acceptedBid.price_per_visit} {acceptedBid.currency} / {t('contractDetail.pricePerVisit')}
                 </Text>
               </View>
@@ -345,7 +345,7 @@ export default function ContractDetailScreen() {
         {/* ── Visit timeline ── */}
         {visits.length > 0 && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('contractDetail.sectionVisits')}</Text>
+            <Text style={styles.sectionTitle}>{t('contractDetail.sectionVisits')}</Text>
             <View style={styles.timeline}>
               {visits.map((visit, idx) => (
                 <VisitRow
@@ -389,19 +389,21 @@ function createChip(colors: AppColors) {
 
 function DetailRow({ label, value, ta }: { label: string; value: string; ta: 'left' | 'right' }) {
   const { colors } = useTheme();
-  const dr = useMemo(() => createDr(colors), [colors]);
+  const isRTL = ta === 'right';
+  const dr = useMemo(() => createDr(colors, isRTL), [colors, isRTL]);
   return (
     <View style={[dr.row, {}]}>
-      <Text style={[dr.label, { textAlign: ta }]}>{label}</Text>
-      <Text style={[dr.value, { textAlign: ta }]}>{value}</Text>
+      <Text style={dr.label}>{label}</Text>
+      <Text style={dr.value}>{value}</Text>
     </View>
   );
 }
-function createDr(colors: AppColors) {
+function createDr(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   row:   { justifyContent: 'space-between', alignItems: 'center', paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: colors.border },
-  label: { fontSize: 13, color: colors.textMuted },
-  value: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', flex: 1, marginHorizontal: 8 },
+  label: { fontSize: 13, color: colors.textMuted, textAlign: ta },
+  value: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', flex: 1, marginHorizontal: 8, textAlign: ta },
   });
 }
 
@@ -414,8 +416,8 @@ function BidCard({
   accepting: boolean;
 }) {
   const { colors } = useTheme();
-  const bc = useMemo(() => createBc(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
+  const bc = useMemo(() => createBc(colors, isRTL), [colors, isRTL]);
   const provName = (bid.provider?.user as any)?.full_name ?? t('contractDetail.defaultProviderName');
   const total    = (bid.price_per_visit * totalVisits).toFixed(0);
   const score    = bid.provider?.score ?? 0;
@@ -432,14 +434,14 @@ function BidCard({
             <Text style={bc.name}>{provName}</Text>
             {verified && <Text style={bc.verified}>✓</Text>}
           </View>
-          {score > 0 && <Text style={[bc.score, { textAlign: ta }]}>⭐ {score.toFixed(1)}</Text>}
+          {score > 0 && <Text style={bc.score}>⭐ {score.toFixed(1)}</Text>}
         </View>
         <View style={bc.priceWrap}>
           <Text style={bc.price}>{bid.price_per_visit}</Text>
           <Text style={bc.priceSub}>{bid.currency}/{t('contractDetail.pricePerVisit')}</Text>
         </View>
       </View>
-      {bid.note && <Text style={[bc.note, { textAlign: ta }]}>{bid.note}</Text>}
+      {bid.note && <Text style={bc.note}>{bid.note}</Text>}
       <View style={[bc.bottom, {}]}>
         <Text style={bc.total}>{t('contractDetail.bidTotal', { total, currency: bid.currency })}</Text>
         <TouchableOpacity style={bc.acceptBtn} onPress={onAccept} disabled={accepting}>
@@ -452,7 +454,8 @@ function BidCard({
     </View>
   );
 }
-function createBc(colors: AppColors) {
+function createBc(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   card:          { backgroundColor: colors.surface, borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border },
   top:           { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
@@ -461,11 +464,11 @@ function createBc(colors: AppColors) {
   nameRow:       { alignItems: 'center', gap: 6, marginBottom: 2 },
   name:          { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   verified:      { fontSize: 12, color: colors.infoSoft, backgroundColor: colors.infoBg, borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
-  score:         { fontSize: 12, color: colors.textMuted },
+  score:         { fontSize: 12, color: colors.textMuted, textAlign: ta },
   priceWrap:     { alignItems: 'flex-end' },
   price:         { fontSize: 20, fontWeight: '800', color: CONTRACT_COLOR },
   priceSub:      { fontSize: 10, color: colors.textMuted },
-  note:          { fontSize: 13, color: colors.textSecondary, marginBottom: 10, lineHeight: 20 },
+  note:          { fontSize: 13, color: colors.textSecondary, marginBottom: 10, lineHeight: 20, textAlign: ta },
   bottom:        { alignItems: 'center', justifyContent: 'space-between' },
   total:         { fontSize: 12, color: colors.textMuted },
   acceptBtn:     { backgroundColor: CONTRACT_COLOR, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8 },
@@ -483,8 +486,8 @@ function VisitRow({
   ta: 'left' | 'right';
 }) {
   const { colors } = useTheme();
-  const vr = useMemo(() => createVr(colors), [colors]);
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const vr = useMemo(() => createVr(colors, isRTL), [colors, isRTL]);
   const color = VISIT_STATUS_COLOR[visit.status];
   const date  = new Date(visit.scheduled_at).toLocaleDateString(locale, {
     weekday: 'short', day: 'numeric', month: 'short',
@@ -502,10 +505,10 @@ function VisitRow({
           <Text style={vr.date}>{date}</Text>
         </View>
         {visit.client_rating && (
-          <Text style={[vr.rating, { textAlign: ta }]}>{'⭐'.repeat(visit.client_rating)} {visit.client_note ?? ''}</Text>
+          <Text style={vr.rating}>{'⭐'.repeat(visit.client_rating)} {visit.client_note ?? ''}</Text>
         )}
         {visit.postponed_to && (
-          <Text style={[vr.postponed, { textAlign: ta }]}>
+          <Text style={vr.postponed}>
             {t('contractDetail.postponedTo', { date: new Date(visit.postponed_to).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) })}
           </Text>
         )}
@@ -513,7 +516,8 @@ function VisitRow({
     </View>
   );
 }
-function createVr(colors: AppColors) {
+function createVr(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   row:          { flexDirection: 'row', gap: 12, marginBottom: 0 },
   timelineLeft: { alignItems: 'center', width: 20 },
@@ -523,14 +527,15 @@ function createVr(colors: AppColors) {
   top:          { justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
   status:       { fontSize: 13, fontWeight: '600' },
   date:         { fontSize: 12, color: colors.textMuted },
-  rating:       { fontSize: 13, color: colors.textMuted },
-  postponed:    { fontSize: 12, color: '#FBBF24', marginTop: 2 },
+  rating:       { fontSize: 13, color: colors.textMuted, textAlign: ta },
+  postponed:    { fontSize: 12, color: '#FBBF24', marginTop: 2, textAlign: ta },
   });
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   root:   { flex: 1, backgroundColor: colors.bg },
   center: { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -540,8 +545,8 @@ function createStyles(colors: AppColors) {
   heroTop:      { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 },
   heroIconWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: CONTRACT_COLOR, alignItems: 'center', justifyContent: 'center' },
   heroIcon:     { fontSize: 22 },
-  heroTitle:    { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 },
-  heroCity:     { fontSize: 13, color: colors.textMuted },
+  heroTitle:    { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
+  heroCity:     { fontSize: 13, color: colors.textMuted, textAlign: ta },
 
   statusBadge:       { backgroundColor: colors.bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: colors.border },
   statusBadgeActive: { borderColor: CONTRACT_COLOR, backgroundColor: CONTRACT_DIM },
@@ -552,7 +557,7 @@ function createStyles(colors: AppColors) {
   progressWrap: { marginTop: 4, marginBottom: 4 },
   progressBg:   { height: 6, backgroundColor: colors.bg, borderRadius: 3, marginBottom: 6, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: CONTRACT_COLOR, borderRadius: 3 },
-  progressText: { fontSize: 12, color: colors.textMuted },
+  progressText: { fontSize: 12, color: colors.textMuted, textAlign: ta },
 
   priceBox:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8, backgroundColor: colors.bg, borderRadius: 12, padding: 10 },
   priceValue: { fontSize: 18, fontWeight: '800', color: CONTRACT_COLOR },
@@ -560,12 +565,12 @@ function createStyles(colors: AppColors) {
   priceSep:   { fontSize: 18, color: colors.border },
 
   section:      { paddingHorizontal: 16, marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, textAlign: ta },
   bidCount:     { color: CONTRACT_COLOR },
 
   detailCard:  { backgroundColor: colors.surface, borderRadius: 16, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.border },
   descBlock:   { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
-  descText:    { fontSize: 14, color: colors.textPrimary, lineHeight: 22 },
+  descText:    { fontSize: 14, color: colors.textPrimary, lineHeight: 22, textAlign: ta },
 
   emptyBids:     { backgroundColor: colors.surface, borderRadius: 14, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   emptyBidsText: { fontSize: 16, color: colors.textMuted, marginBottom: 6 },
@@ -574,8 +579,8 @@ function createStyles(colors: AppColors) {
   acceptedCard:        { backgroundColor: colors.surface, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: CONTRACT_COLOR },
   acceptedAvatar:      { width: 44, height: 44, borderRadius: 22, backgroundColor: CONTRACT_DIM, alignItems: 'center', justifyContent: 'center' },
   acceptedAvatarText:  { fontSize: 20, fontWeight: '700', color: CONTRACT_COLOR },
-  acceptedName:        { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
-  acceptedPrice:       { fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600' },
+  acceptedName:        { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
+  acceptedPrice:       { fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600', textAlign: ta },
   verifiedBadge:       { backgroundColor: colors.infoBg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
   verifiedBadgeText:   { fontSize: 12, color: colors.infoSoft, fontWeight: '600' },
 

@@ -28,10 +28,10 @@ const TYPE_ICON: Record<string, string> = {
 
 export default function ProviderProfile() {
   const { colors, theme, setTheme } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
-  const { t, ta } = useLanguage();
   const [provider, setProvider]             = useState<(Provider & { user: User }) | null>(null);
   const [loading, setLoading]               = useState(true);
   const [refreshing, setRefreshing]         = useState(false);
@@ -209,7 +209,7 @@ export default function ProviderProfile() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <TouchableOpacity onPress={() => router.push('/portfolio')}>
-            <Text style={[styles.sectionLink, { textAlign: ta }]}>{t('profile.portfolioManage')} ›</Text>
+            <Text style={styles.sectionLink}>{t('profile.portfolioManage')} ›</Text>
           </TouchableOpacity>
           <View style={styles.sectionTitleRow}>
             <Text style={styles.sectionTitle}>{t('profile.portfolioMyGallery')}</Text>
@@ -467,8 +467,8 @@ export default function ProviderProfile() {
               thumbColor="#fff"
             />
             <View style={styles.availTextWrap}>
-              <Text style={[styles.availLabel, { textAlign: ta }]}>{t('profile.availableNow')}</Text>
-              <Text style={[styles.availSub, { textAlign: ta }]}>
+              <Text style={styles.availLabel}>{t('profile.availableNow')}</Text>
+              <Text style={styles.availSub}>
                 {isAvailable ? t('profile.visibleToClients') : t('profile.hiddenFromClients')}
               </Text>
             </View>
@@ -483,8 +483,8 @@ export default function ProviderProfile() {
                 thumbColor="#fff"
               />
               <View style={styles.availTextWrap}>
-                <Text style={[styles.availLabel, { textAlign: ta }]}>{t('profile.acceptUrgent')}</Text>
-                <Text style={[styles.availSub, { textAlign: ta }]}>
+                <Text style={styles.availLabel}>{t('profile.acceptUrgent')}</Text>
+                <Text style={styles.availSub}>
                   {urgentEnabled ? t('profile.urgentOn') : t('profile.urgentOff')}
                 </Text>
               </View>
@@ -502,7 +502,7 @@ export default function ProviderProfile() {
       {/* ── Theme picker ── */}
       <View style={styles.notifBtn}>
         <Text style={styles.notifBtnIcon}>🎨</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.theme')}</Text>
+        <Text style={styles.notifBtnText}>{t('profile.theme')}</Text>
         <View style={{ flexDirection: 'row', gap: 6 }}>
           {(['dark', 'light', 'system'] as const).map(opt => (
             <TouchableOpacity
@@ -528,7 +528,7 @@ export default function ProviderProfile() {
         onPress={() => router.push({ pathname: '/provider-profile', params: { provider_id: provider.id } })}
       >
         <Text style={styles.notifBtnIcon}>⬆️</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.sharePublicProfile')}</Text>
+        <Text style={styles.notifBtnText}>{t('profile.sharePublicProfile')}</Text>
         <Text style={styles.notifBtnArrow}>›</Text>
       </TouchableOpacity>
 
@@ -538,7 +538,7 @@ export default function ProviderProfile() {
         onPress={() => router.push('/notification-settings')}
       >
         <Text style={styles.notifBtnIcon}>🔔</Text>
-        <Text style={[styles.notifBtnText, { textAlign: ta }]}>{t('profile.notifications')}</Text>
+        <Text style={styles.notifBtnText}>{t('profile.notifications')}</Text>
         <Text style={styles.notifBtnArrow}>›</Text>
       </TouchableOpacity>
 
@@ -572,7 +572,8 @@ function createStatStyles(colors: AppColors) {
   });
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   content:   { paddingBottom: 24 },
@@ -595,7 +596,7 @@ function createStyles(colors: AppColors) {
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
   sectionEmoji: { fontSize: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', alignSelf: 'stretch' },
-  sectionLink:  { fontSize: 13, color: colors.accent, fontWeight: '600', alignSelf: 'stretch' },
+  sectionLink:  { fontSize: 13, color: colors.accent, fontWeight: '600', alignSelf: 'stretch', textAlign: ta },
 
   // ── Portfolio mini grid ──
   portfolioMiniStats: { flexDirection: 'row', gap: 16, justifyContent: 'flex-end', marginBottom: 10 },
@@ -670,7 +671,7 @@ function createStyles(colors: AppColors) {
 
   notifBtn:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 8, marginBottom: 8, backgroundColor: colors.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border },
   notifBtnIcon:  { fontSize: 18 },
-  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto', alignSelf: 'stretch' },
+  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: ta, alignSelf: 'stretch' },
   notifBtnArrow: { fontSize: 16, color: colors.textMuted },
 
   signOutBtn:  { marginHorizontal: 16, marginTop: 8, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#7F1D1D' },
@@ -680,7 +681,7 @@ function createStyles(colors: AppColors) {
   availRow:       { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
   availRowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
   availTextWrap:  { flex: 1 },
-  availLabel:     { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: 'auto', marginBottom: 2, alignSelf: 'stretch' },
-  availSub:       { fontSize: 12, color: colors.textMuted, textAlign: 'auto', alignSelf: 'stretch' },
+  availLabel:     { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: ta, marginBottom: 2, alignSelf: 'stretch' },
+  availSub:       { fontSize: 12, color: colors.textMuted, textAlign: ta, alignSelf: 'stretch' },
   });
 }

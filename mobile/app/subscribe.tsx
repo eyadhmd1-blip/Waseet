@@ -110,8 +110,8 @@ function PlanCard({
   onSelect: () => void;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const accentColor = PLAN_COLORS[plan.tier];
   const features    = PLAN_FEATURE_KEYS[plan.tier] ?? [];
   const finalPrice  = plan.is_trial ? 0 : +(plan.price_jod * (1 - discount / 100)).toFixed(2);
@@ -198,7 +198,7 @@ function PlanCard({
           {features.map((f, i) => (
             <View key={i} style={styles.featureRow}>
               <CheckIcon included={f.included} />
-              <Text style={[styles.featureText, { textAlign: ta }, !f.included && styles.featureTextOff]}>
+              <Text style={[styles.featureText, !f.included && styles.featureTextOff]}>
                 {t(`subscribe.${f.key}` as any)}
               </Text>
             </View>
@@ -212,8 +212,8 @@ function PlanCard({
 // ─── Savings Banner ───────────────────────────────────────────
 function SavingsBanner({ discount, plan }: { discount: number; plan: typeof SUBSCRIPTION_PLANS[0] }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const pulseOp = useRef(new Animated.Value(0.7)).current;
   useEffect(() => {
     Animated.loop(
@@ -239,10 +239,10 @@ function SavingsBanner({ discount, plan }: { discount: number; plan: typeof SUBS
 // ─── Main Screen ──────────────────────────────────────────────
 export default function SubscribeScreen() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const router   = useRouter();
   const params   = useLocalSearchParams<{ tier?: string }>();
-  const { t, ta, lang } = useLanguage();
   const [provider, setProvider]         = useState<(Provider & { user: User }) | null>(null);
   const [loading, setLoading]           = useState(true);
   const [selectedTier, setSelectedTier] = useState<string>(params.tier ?? 'pro');
@@ -446,7 +446,7 @@ export default function SubscribeScreen() {
 
         {/* ── FAQ ── */}
         <Animated.View style={[styles.faqSection, { opacity: ctaOp }]}>
-          <Text style={[styles.faqTitle, { textAlign: ta }]}>{t('subscribe.faqTitle')}</Text>
+          <Text style={styles.faqTitle}>{t('subscribe.faqTitle')}</Text>
           {faqs.map((item, i) => (
             <FAQItem key={i} q={item.q} a={item.a} />
           ))}
@@ -454,7 +454,7 @@ export default function SubscribeScreen() {
 
         {/* ── Coming Soon payment methods ── */}
         <Animated.View style={[styles.comingSoonSection, { opacity: ctaOp }]}>
-          <Text style={[styles.comingSoonTitle, { textAlign: ta }]}>
+          <Text style={styles.comingSoonTitle}>
             {t('subscribe.otherMethodsTitle')}
           </Text>
           {COMING_SOON_METHODS.map(m => (
@@ -518,8 +518,8 @@ export default function SubscribeScreen() {
 // ─── FAQ Item ─────────────────────────────────────────────────
 function FAQItem({ q, a }: { q: string; a: string }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { ta } = useLanguage();
+  const { ta, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const [open, setOpen] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -535,10 +535,10 @@ function FAQItem({ q, a }: { q: string; a: string }) {
     <TouchableOpacity style={styles.faqItem} onPress={toggle} activeOpacity={0.8}>
       <View style={styles.faqRow}>
         <Animated.Text style={[styles.faqArrow, { transform: [{ rotate: rot }] }]}>▾</Animated.Text>
-        <Text style={[styles.faqQ, { textAlign: ta }]}>{q}</Text>
+        <Text style={styles.faqQ}>{q}</Text>
       </View>
       <Animated.View style={{ maxHeight: maxH, overflow: 'hidden' }}>
-        <Text style={[styles.faqA, { textAlign: ta }]}>{a}</Text>
+        <Text style={styles.faqA}>{a}</Text>
       </Animated.View>
     </TouchableOpacity>
   );
@@ -546,7 +546,8 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
@@ -613,7 +614,7 @@ function createStyles(colors: AppColors) {
 
   featureList: { padding: 18, gap: 10 },
   featureRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, justifyContent: 'flex-end' },
-  featureText: { fontSize: 13, color: colors.textSecondary, flex: 1, alignSelf: 'stretch' },
+  featureText: { fontSize: 13, color: colors.textSecondary, flex: 1, alignSelf: 'stretch', textAlign: ta },
   featureTextOff: { color: colors.textMuted },
 
   guaranteesRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 24, marginTop: 4 },
@@ -622,12 +623,12 @@ function createStyles(colors: AppColors) {
   guaranteeLabel:{ fontSize: 11, color: colors.textMuted },
 
   faqSection: { gap: 0 },
-  faqTitle:   { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch' },
+  faqTitle:   { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },
   faqItem:    { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
   faqRow:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  faqQ:       { fontSize: 13, fontWeight: '600', color: colors.textPrimary, flex: 1, alignSelf: 'stretch' },
+  faqQ:       { fontSize: 13, fontWeight: '600', color: colors.textPrimary, flex: 1, alignSelf: 'stretch', textAlign: ta },
   faqArrow:   { fontSize: 16, color: colors.textMuted, marginLeft: 8 },
-  faqA:       { fontSize: 12, color: colors.textMuted, lineHeight: 19, marginTop: 10, alignSelf: 'stretch' },
+  faqA:       { fontSize: 12, color: colors.textMuted, lineHeight: 19, marginTop: 10, alignSelf: 'stretch', textAlign: ta },
 
   ctaBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
@@ -646,7 +647,7 @@ function createStyles(colors: AppColors) {
     backgroundColor: colors.surface, borderRadius: 16,
     padding: 16, borderWidth: 1, borderColor: colors.border,
   },
-  comingSoonTitle: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 12, alignSelf: 'stretch' },
+  comingSoonTitle: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },
   comingSoonRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border,

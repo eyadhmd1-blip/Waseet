@@ -22,8 +22,8 @@ function SavedCard({
   onView: () => void; onUnsave: () => void; onRequest: () => void;
   colors: AppColors;
 }) {
-  const { t, ta } = useLanguage();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const prov = item.provider;
   if (!prov) return null;
 
@@ -75,13 +75,13 @@ const MAX_CARDS = 50;
 export default function SavedProvidersScreen() {
   const { headerPad } = useInsets();
   const router    = useRouter();
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
   const { colors } = useTheme();
   const [saved, setSaved]       = useState<SavedProvider[]>([]);
   const [loading, setLoading]   = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const headerOp = useRef(new Animated.Value(0)).current;
   const cardAnims = useRef(
@@ -161,7 +161,7 @@ export default function SavedProvidersScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Text style={styles.backText}>→</Text>
         </TouchableOpacity>
-        <Text style={[styles.topTitle, { textAlign: ta }]}>{t('saved.title')}</Text>
+        <Text style={styles.topTitle}>{t('saved.title')}</Text>
         <View style={{ width: 36 }} />
       </Animated.View>
 
@@ -174,8 +174,8 @@ export default function SavedProvidersScreen() {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>🔖</Text>
-            <Text style={[styles.emptyTitle, { textAlign: ta }]}>{t('saved.noSaved')}</Text>
-            <Text style={[styles.emptySub, { textAlign: ta }]}>{t('saved.noSavedDesc')}</Text>
+            <Text style={styles.emptyTitle}>{t('saved.noSaved')}</Text>
+            <Text style={styles.emptySub}>{t('saved.noSavedDesc')}</Text>
           </View>
         }
         renderItem={({ item, index }) => (
@@ -198,7 +198,8 @@ export default function SavedProvidersScreen() {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:   { flex: 1, backgroundColor: colors.bg },
     center:      { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -206,7 +207,7 @@ function createStyles(colors: AppColors) {
     topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
     backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
     backText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
-    topTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary },
+    topTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary, textAlign: ta },
 
     listContent: { padding: 16, paddingBottom: 40 },
 
@@ -238,7 +239,7 @@ function createStyles(colors: AppColors) {
 
     empty:     { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
     emptyIcon: { fontSize: 52, marginBottom: 14 },
-    emptyTitle:{ fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 10 },
-    emptySub:  { fontSize: 14, color: colors.textMuted, lineHeight: 22 },
+    emptyTitle:{ fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, textAlign: ta },
+    emptySub:  { fontSize: 14, color: colors.textMuted, lineHeight: 22, textAlign: ta },
   });
 }

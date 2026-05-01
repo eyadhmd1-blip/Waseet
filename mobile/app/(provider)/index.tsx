@@ -65,7 +65,8 @@ function UrgentCountdown({ expiresAt }: { expiresAt: string }) {
   );
 }
 
-function createUrgentStyles(colors: AppColors) {
+function createUrgentStyles(colors: AppColors, isRTL = false) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   urgentCard:           { borderColor: '#EF4444', borderWidth: 2, backgroundColor: '#1A0808' },
   urgentTopBar:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
@@ -82,15 +83,15 @@ function createUrgentStyles(colors: AppColors) {
 
   // Accept modal
   acceptSheet:     { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 44 },
-  acceptTitle:     { fontSize: 20, fontWeight: '800', color: '#EF4444', textAlign: 'auto', marginBottom: 4 },
-  acceptSubtitle:  { fontSize: 14, color: colors.textMuted, textAlign: 'auto', marginBottom: 20 },
+  acceptTitle:     { fontSize: 20, fontWeight: '800', color: '#EF4444', textAlign: ta, marginBottom: 4 },
+  acceptSubtitle:  { fontSize: 14, color: colors.textMuted, textAlign: ta, marginBottom: 20 },
   acceptRow:       { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
   acceptLabel:     { fontSize: 13, color: colors.textMuted },
   acceptValue:     { fontSize: 13, color: colors.textPrimary, fontWeight: '600' },
   acceptPriceTip:  { backgroundColor: '#064E3B', borderRadius: 12, padding: 14, marginTop: 16, marginBottom: 8 },
-  acceptPriceTipText: { fontSize: 13, color: '#6EE7B7', textAlign: 'auto', lineHeight: 20 },
+  acceptPriceTipText: { fontSize: 13, color: '#6EE7B7', textAlign: ta, lineHeight: 20 },
   acceptCommitment:{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#450A0A', borderRadius: 10, padding: 12, marginTop: 12, marginBottom: 20 },
-  acceptCommitText:{ fontSize: 12, color: '#FCA5A5', textAlign: 'auto', flex: 1, lineHeight: 18 },
+  acceptCommitText:{ fontSize: 12, color: '#FCA5A5', textAlign: ta, flex: 1, lineHeight: 18 },
   acceptBtns:      { flexDirection: 'row', gap: 12 },
   acceptCancel:    { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   acceptCancelText:{ fontSize: 15, color: colors.textSecondary },
@@ -267,8 +268,8 @@ function BidButton({
   onPress: () => void;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
@@ -307,7 +308,8 @@ function UpsellModal({
   onSubscribe: (tier: string) => void;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const rocketY   = useRef(new Animated.Value(0)).current;
   const sheetY    = useRef(new Animated.Value(500)).current;
   const sheetOp   = useRef(new Animated.Value(0)).current;
@@ -335,7 +337,6 @@ function UpsellModal({
     }
   }, [visible]);
 
-  const { t } = useLanguage();
   const { contentPad: upsellContentPad } = useInsets();
   if (!visible) return null;
 
@@ -407,9 +408,9 @@ function RequestCard({
   onUrgentAccept: () => void;
 }) {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const urgentStyles = useMemo(() => createUrgentStyles(colors), [colors]);
-  const { t, lang } = useLanguage();
+  const { t, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const urgentStyles = useMemo(() => createUrgentStyles(colors, isRTL), [colors, isRTL]);
   const bidsCount     = item.bids_count?.[0]?.count ?? 0;
   const isNew         = Date.now() - new Date(item.created_at).getTime() < 60 * 60 * 1000;
   const isUrgent      = !!item.is_urgent;
@@ -550,8 +551,8 @@ function DemoRequestCard({
   onSkip: () => void;
 }) {
   const { colors } = useTheme();
-  const demoStyles = useMemo(() => createDemoStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
+  const demoStyles = useMemo(() => createDemoStyles(colors, isRTL), [colors, isRTL]);
 
   if (demo.status === 'submitted') {
     return (
@@ -560,7 +561,7 @@ function DemoRequestCard({
           <Text style={demoStyles.completedBadge}>{t('providerFeed.demoCompletedBadge')}</Text>
           <Text style={demoStyles.completedBadgeDot}>🎯 {t('providerFeed.demoBadge')}</Text>
         </View>
-        <Text style={[demoStyles.completedBid, { textAlign: ta }]}>
+        <Text style={demoStyles.completedBid}>
           {t('providerFeed.demoCompletedBid', { amount: demo.bid_amount })}
         </Text>
         <TouchableOpacity style={demoStyles.realCTABtn} onPress={onSkip}>
@@ -585,8 +586,8 @@ function DemoRequestCard({
       </View>
 
       {/* Request info */}
-      <Text style={[demoStyles.title, { textAlign: ta }]}>{req.title}</Text>
-      <Text style={[demoStyles.desc, { textAlign: ta }]} numberOfLines={2}>{req.description}</Text>
+      <Text style={demoStyles.title}>{req.title}</Text>
+      <Text style={demoStyles.desc} numberOfLines={2}>{req.description}</Text>
 
       <View style={demoStyles.metaRow}>
         <Text style={demoStyles.metaText}>📍 {req.city}{req.district ? ` — ${req.district}` : ''}</Text>
@@ -597,7 +598,7 @@ function DemoRequestCard({
 
       {/* Info box */}
       <View style={demoStyles.infoBox}>
-        <Text style={[demoStyles.infoText, { textAlign: ta }]}>
+        <Text style={demoStyles.infoText}>
           ℹ️  {t('providerFeed.demoInfoBox')}
         </Text>
         <Text style={demoStyles.freeNote}>✓ {t('providerFeed.demoFreeNote')}</Text>
@@ -611,7 +612,8 @@ function DemoRequestCard({
   );
 }
 
-function createDemoStyles(colors: AppColors) {
+function createDemoStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   card: {
     backgroundColor: DEMO_DIM, borderRadius: 16, margin: 16, marginBottom: 0,
@@ -621,15 +623,15 @@ function createDemoStyles(colors: AppColors) {
   badge:       { backgroundColor: DEMO_COLOR, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   badgeText:   { fontSize: 11, fontWeight: '800', color: '#fff' },
   skipText:    { fontSize: 12, color: '#475569' },
-  title:       { fontSize: 18, fontWeight: '700', color: '#F1F5F9', marginBottom: 6 },
-  desc:        { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginBottom: 10 },
+  title:       { fontSize: 18, fontWeight: '700', color: '#F1F5F9', marginBottom: 6, textAlign: ta },
+  desc:        { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginBottom: 10, textAlign: ta },
   metaRow:     { flexDirection: 'row', gap: 14, marginBottom: 12 },
   metaText:    { fontSize: 12, color: colors.textMuted },
   infoBox: {
     backgroundColor: DEMO_SOFT, borderRadius: 10, padding: 12,
     marginBottom: 14, borderWidth: 1, borderColor: DEMO_BORDER,
   },
-  infoText:    { fontSize: 12, color: DEMO_TEXT, lineHeight: 18, marginBottom: 4 },
+  infoText:    { fontSize: 12, color: DEMO_TEXT, lineHeight: 18, marginBottom: 4, textAlign: ta },
   freeNote:    { fontSize: 12, color: '#6EE7B7', fontWeight: '700' },
   bidBtn:      { backgroundColor: DEMO_COLOR, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   bidBtnText:  { fontSize: 15, fontWeight: '700', color: '#fff' },
@@ -642,7 +644,7 @@ function createDemoStyles(colors: AppColors) {
   completedRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   completedBadge: { fontSize: 11, color: '#6EE7B7', fontWeight: '700' },
   completedBadgeDot: { fontSize: 11, color: '#475569' },
-  completedBid:   { fontSize: 13, color: '#6EE7B7', marginBottom: 10 },
+  completedBid:   { fontSize: 13, color: '#6EE7B7', marginBottom: 10, textAlign: ta },
   realCTABtn:     { borderWidth: 1, borderColor: DEMO_BORDER, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
   realCTAText:    { fontSize: 13, color: DEMO_TEXT, fontWeight: '600' },
   });
@@ -654,8 +656,8 @@ function DemoSuccessModal({
   visible, credits, onClose,
 }: { visible: boolean; credits: number; onClose: () => void }) {
   const { colors } = useTheme();
-  const demoSuccessStyles = useMemo(() => createDemoSuccessStyles(colors), [colors]);
   const { t, ta, isRTL } = useLanguage();
+  const demoSuccessStyles = useMemo(() => createDemoSuccessStyles(colors, isRTL), [colors, isRTL]);
   const steps = [
     t('providerFeed.demoSuccessStep1'),
     t('providerFeed.demoSuccessStep2'),
@@ -668,20 +670,20 @@ function DemoSuccessModal({
       <View style={demoSuccessStyles.overlay}>
         <View style={demoSuccessStyles.sheet}>
           <Text style={demoSuccessStyles.emoji}>🎉</Text>
-          <Text style={[demoSuccessStyles.title, { textAlign: ta }]}>{t('providerFeed.demoSuccessTitle')}</Text>
+          <Text style={demoSuccessStyles.title}>{t('providerFeed.demoSuccessTitle')}</Text>
 
           <View style={demoSuccessStyles.stepsBox}>
-            <Text style={[demoSuccessStyles.stepsTitle, { textAlign: ta }]}>{t('providerFeed.demoHowItWorks')}</Text>
+            <Text style={demoSuccessStyles.stepsTitle}>{t('providerFeed.demoHowItWorks')}</Text>
             {steps.map((s, i) => (
               <View key={i} style={[demoSuccessStyles.stepRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
                 <Text style={demoSuccessStyles.stepNum}>{i + 1}.</Text>
-                <Text style={[demoSuccessStyles.step, { textAlign: ta }]}>{s}</Text>
+                <Text style={demoSuccessStyles.step}>{s}</Text>
               </View>
             ))}
           </View>
 
           <View style={demoSuccessStyles.creditsBox}>
-            <Text style={[demoSuccessStyles.creditsText, { textAlign: ta }]}>
+            <Text style={demoSuccessStyles.creditsText}>
               ✅ {t('providerFeed.demoSuccessCredits', { count: credits })}
             </Text>
           </View>
@@ -695,19 +697,20 @@ function DemoSuccessModal({
   );
 }
 
-function createDemoSuccessStyles(colors: AppColors) {
+function createDemoSuccessStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     overlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.75)', justifyContent: 'center', alignItems: 'center', padding: 24 },
     sheet:       { backgroundColor: colors.bg, borderRadius: 20, padding: 28, width: '100%', borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
     emoji:       { fontSize: 56, marginBottom: 16 },
-    title:       { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 20, width: '100%' },
+    title:       { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 20, width: '100%', textAlign: ta },
     stepsBox:    { backgroundColor: colors.surface, borderRadius: 14, padding: 16, marginBottom: 14, width: '100%' },
-    stepsTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, width: '100%' },
+    stepsTitle:  { fontSize: 14, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, width: '100%', textAlign: ta },
     stepRow:     { alignItems: 'flex-start', gap: 6, marginBottom: 2 },
     stepNum:     { fontSize: 13, color: colors.accent, fontWeight: '700', lineHeight: 22, minWidth: 20 },
-    step:        { fontSize: 13, color: colors.textSecondary, lineHeight: 22, flex: 1 },
+    step:        { fontSize: 13, color: colors.textSecondary, lineHeight: 22, flex: 1, textAlign: ta },
     creditsBox:  { backgroundColor: colors.successBg, borderRadius: 10, padding: 12, marginBottom: 20, width: '100%', borderWidth: 1, borderColor: colors.success },
-    creditsText: { fontSize: 13, color: colors.successSoft, width: '100%' },
+    creditsText: { fontSize: 13, color: colors.successSoft, width: '100%', textAlign: ta },
     ctaBtn:      { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 32, alignItems: 'center', width: '100%' },
     ctaBtnText:  { fontSize: 16, fontWeight: '700', color: colors.bg },
   });
@@ -715,14 +718,15 @@ function createDemoSuccessStyles(colors: AppColors) {
 
 // ─── Empty Feed State ─────────────────────────────────────────
 
-function createEmptyStyles(colors: AppColors) {
+function createEmptyStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     wrap:             { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 },
 
     hero:             { alignItems: 'center', marginBottom: 20 },
     heroEmoji:        { fontSize: 52, marginBottom: 10 },
-    heroTitle:        { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 4 },
-    heroSub:          { fontSize: 13, color: colors.textMuted, lineHeight: 20 },
+    heroTitle:        { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
+    heroSub:          { fontSize: 13, color: colors.textMuted, lineHeight: 20, textAlign: ta },
 
     stepsCard:        { backgroundColor: colors.surface, borderRadius: 18, borderWidth: 1, borderColor: colors.border, marginBottom: 14, overflow: 'hidden' },
     stepRow:          { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 12 },
@@ -732,9 +736,9 @@ function createEmptyStyles(colors: AppColors) {
     stepNumText:      { fontSize: 12, fontWeight: '700', color: colors.textMuted },
     stepNumTextDone:  { color: '#fff' },
     stepInfo:         { flex: 1 },
-    stepLabel:        { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 1 },
+    stepLabel:        { fontSize: 13, fontWeight: '600', color: colors.textPrimary, marginBottom: 1, textAlign: ta },
     stepLabelDone:    { color: colors.textMuted },
-    stepSub:          { fontSize: 11, color: colors.textMuted },
+    stepSub:          { fontSize: 11, color: colors.textMuted, textAlign: ta },
     stepBtn:          { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7 },
     stepBtnText:      { fontSize: 11, fontWeight: '700', color: colors.bg },
     stepArrow:        { fontSize: 14, color: colors.border },
@@ -742,7 +746,7 @@ function createEmptyStyles(colors: AppColors) {
     tipCard:          { backgroundColor: 'rgba(201,168,76,0.07)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.22)', padding: 14 },
     tipHeader:        { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
     tipTitle:         { fontSize: 13, fontWeight: '700', color: colors.accent },
-    tipText:          { fontSize: 12, color: colors.textSecondary, lineHeight: 19 },
+    tipText:          { fontSize: 12, color: colors.textSecondary, lineHeight: 19, textAlign: ta },
     tipHighlight:     { fontWeight: '700', color: colors.accent },
 
     noReqWrap:        { alignItems: 'center', paddingTop: 48, paddingHorizontal: 28, paddingBottom: 32 },
@@ -750,8 +754,8 @@ function createEmptyStyles(colors: AppColors) {
     noReqTitle:       { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
     noReqSub:         { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 21, marginBottom: 20 },
     noReqCard:        { backgroundColor: colors.surface, borderRadius: 16, padding: 16, width: '100%', borderWidth: 1, borderColor: colors.border },
-    noReqCardTitle:   { fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
-    noReqCardText:    { fontSize: 12, color: colors.textMuted, lineHeight: 19, marginBottom: 12 },
+    noReqCardTitle:   { fontSize: 13, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, textAlign: ta },
+    noReqCardText:    { fontSize: 12, color: colors.textMuted, lineHeight: 19, marginBottom: 12, textAlign: ta },
     noReqCardBtn:     { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
     noReqCardBtnText: { fontSize: 12, fontWeight: '700', color: colors.bg },
   });
@@ -771,7 +775,7 @@ function EmptyFeedState({
   onProfile: () => void;
 }) {
   const { colors } = useTheme();
-  const s = useMemo(() => createEmptyStyles(colors), [colors]);
+  const s = useMemo(() => createEmptyStyles(colors, isRTL), [colors, isRTL]);
 
   const isNew        = (provider?.lifetime_jobs ?? 0) === 0;
   const hasCredits   = (provider?.is_subscribed && (provider.bid_credits ?? 0) > 0) || provider?.subscription_tier === 'premium';
@@ -788,8 +792,8 @@ function EmptyFeedState({
           سنرسل لك إشعاراً فور وصول طلب جديد في محافظتك وتخصصاتك
         </Text>
         <View style={s.noReqCard}>
-          <Text style={[s.noReqCardTitle, { textAlign: ta }]}>💡 حسّن ظهورك</Text>
-          <Text style={[s.noReqCardText, { textAlign: ta }]}>
+          <Text style={s.noReqCardTitle}>💡 حسّن ظهورك</Text>
+          <Text style={s.noReqCardText}>
             المزودون الذين يضيفون صور أعمالهم ونبذة عنهم يحصلون على ضعف عدد الطلبات
           </Text>
           <TouchableOpacity style={s.noReqCardBtn} onPress={onProfile} activeOpacity={0.85}>
@@ -835,8 +839,8 @@ function EmptyFeedState({
     <View style={s.wrap}>
       <View style={s.hero}>
         <Text style={s.heroEmoji}>🚀</Text>
-        <Text style={[s.heroTitle, { textAlign: ta }]}>مرحباً في وسيط!</Text>
-        <Text style={[s.heroSub, { textAlign: ta }]}>اتبع هذه الخطوات للحصول على أول طلب</Text>
+        <Text style={s.heroTitle}>مرحباً في وسيط!</Text>
+        <Text style={s.heroSub}>اتبع هذه الخطوات للحصول على أول طلب</Text>
       </View>
 
       <View style={s.stepsCard}>
@@ -848,8 +852,8 @@ function EmptyFeedState({
               </Text>
             </View>
             <View style={s.stepInfo}>
-              <Text style={[s.stepLabel, { textAlign: ta }]}>{step.label}</Text>
-              <Text style={[s.stepSub, { textAlign: ta }]}>{step.sub}</Text>
+              <Text style={s.stepLabel}>{step.label}</Text>
+              <Text style={s.stepSub}>{step.sub}</Text>
             </View>
             {step.action ? (
               <TouchableOpacity style={s.stepBtn} onPress={step.action} activeOpacity={0.85}>
@@ -867,7 +871,7 @@ function EmptyFeedState({
           <Text style={{ fontSize: 18 }}>💡</Text>
           <Text style={s.tipTitle}>نصيحة من وسيط</Text>
         </View>
-        <Text style={[s.tipText, { textAlign: ta }]}>
+        <Text style={s.tipText}>
           المزودون الذين يردون على الطلبات خلال 5 دقائق يحصلون على{' '}
           <Text style={s.tipHighlight}>3× طلبات أكثر</Text>
           {'. '}فعّل الإشعارات وابقَ على اطلاع دائم.
@@ -883,14 +887,14 @@ const MAX_CARDS = 30;
 
 export default function ProviderFeed() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const urgentStyles = useMemo(() => createUrgentStyles(colors), [colors]);
-  const demoBidStyles = useMemo(() => createDemoBidStyles(colors), [colors]);
-  const cBidStyles = useMemo(() => createCBidStyles(colors), [colors]);
+  const { t, ta, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const urgentStyles = useMemo(() => createUrgentStyles(colors, isRTL), [colors, isRTL]);
+  const demoBidStyles = useMemo(() => createDemoBidStyles(colors, isRTL), [colors, isRTL]);
+  const cBidStyles = useMemo(() => createCBidStyles(colors, isRTL), [colors, isRTL]);
   const { contentPad } = useInsets();
   const router = useRouter();
   const { count: notifCount } = useUnreadNotifCount();
-  const { t, ta, lang, isRTL } = useLanguage();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
   const [requests, setRequests]   = useState<RequestWithMeta[]>([]);
   // Map<request_id, bid_amount> — tracks every request this provider has already bid on
@@ -1362,10 +1366,10 @@ export default function ProviderFeed() {
           activeOpacity={0.85}
         >
           <View style={{ flex: 1 }}>
-            <Text style={[styles.commitBannerTitle, pendingCommit.is_urgent && styles.commitBannerTitleUrgent, { textAlign: ta }]}>
+            <Text style={[styles.commitBannerTitle, pendingCommit.is_urgent && styles.commitBannerTitleUrgent]}>
               {pendingCommit.is_urgent ? t('providerFeed.commitBannerUrgentTitle') : t('providerFeed.commitBannerNormal')}
             </Text>
-            <Text style={[styles.commitBannerSub, { textAlign: ta }]} numberOfLines={1}>{pendingCommit.title}</Text>
+            <Text style={styles.commitBannerSub} numberOfLines={1}>{pendingCommit.title}</Text>
           </View>
           <Text style={[styles.commitBannerArrow, pendingCommit.is_urgent && { color: '#F87171' }]}>
             {isRTL ? '←' : '→'}
@@ -1472,11 +1476,11 @@ export default function ProviderFeed() {
       <Modal visible={!!bidModal.target} transparent animationType="slide">
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={[styles.modalSheet, { paddingBottom: contentPad }]}>
-            <Text style={[styles.modalTitle, { textAlign: ta }]}>{t('providerFeed.submitBid')}</Text>
-            <Text style={[styles.modalSubtitle, { textAlign: ta }]}>{bidModal.target?.title}</Text>
+            <Text style={styles.modalTitle}>{t('providerFeed.submitBid')}</Text>
+            <Text style={styles.modalSubtitle}>{bidModal.target?.title}</Text>
 
             {bidModal.target?.ai_suggested_price_min && (
-              <Text style={[styles.modalAiHint, { textAlign: ta }]}>
+              <Text style={styles.modalAiHint}>
                 {t('providerFeed.aiPrice', { min: bidModal.target.ai_suggested_price_min, max: bidModal.target.ai_suggested_price_max })}
               </Text>
             )}
@@ -1495,7 +1499,7 @@ export default function ProviderFeed() {
               </View>
             )}
 
-            <Text style={[styles.modalLabel, { textAlign: ta }]}>{t('providerFeed.bidAmountLabel')}</Text>
+            <Text style={styles.modalLabel}>{t('providerFeed.bidAmountLabel')}</Text>
             <TextInput
               style={styles.modalInput}
               placeholder="0.00"
@@ -1506,7 +1510,7 @@ export default function ProviderFeed() {
               textAlign={ta}
             />
 
-            <Text style={[styles.modalLabel, { textAlign: ta }]}>{t('providerFeed.bidNote')}</Text>
+            <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
@@ -1543,16 +1547,16 @@ export default function ProviderFeed() {
             <View style={cBidStyles.header}>
               <Text style={cBidStyles.badge}>{t('providerFeed.contractBadge')}</Text>
             </View>
-            <Text style={[styles.modalTitle, { textAlign: ta }]}>{contractModal.target?.title}</Text>
+            <Text style={styles.modalTitle}>{contractModal.target?.title}</Text>
             {contractModal.target && (
               <View style={cBidStyles.summary}>
-                <Text style={[cBidStyles.summaryText, { textAlign: ta }]}>
+                <Text style={cBidStyles.summaryText}>
                   {t(`providerFeed.freq${contractModal.target.frequency.charAt(0).toUpperCase() + contractModal.target.frequency.slice(1)}` as any)} · {contractModal.target.duration_months} · {' '}
                   {t('providerFeed.contractVisitCount', { count: FREQ_VISITS_PER_MONTH[contractModal.target.frequency] * contractModal.target.duration_months })}
                 </Text>
               </View>
             )}
-            <Text style={[styles.modalLabel, { textAlign: ta }]}>{t('providerFeed.contractVisitPriceLabel')}</Text>
+            <Text style={styles.modalLabel}>{t('providerFeed.contractVisitPriceLabel')}</Text>
             <TextInput
               style={styles.modalInput}
               placeholder="0.00"
@@ -1570,7 +1574,7 @@ export default function ProviderFeed() {
                 </Text>
               </View>
             )}
-            <Text style={[styles.modalLabel, { textAlign: ta }]}>{t('providerFeed.bidNote')}</Text>
+            <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.contractNotePlaceholder')}
@@ -1610,8 +1614,8 @@ export default function ProviderFeed() {
       <Modal visible={!!urgentModal.target} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={urgentStyles.acceptSheet}>
-            <Text style={[urgentStyles.acceptTitle, { textAlign: ta }]}>{t('providerFeed.urgentAcceptTitle')}</Text>
-            <Text style={[urgentStyles.acceptSubtitle, { textAlign: ta }]}>{urgentModal.target?.title}</Text>
+            <Text style={urgentStyles.acceptTitle}>{t('providerFeed.urgentAcceptTitle')}</Text>
+            <Text style={urgentStyles.acceptSubtitle}>{urgentModal.target?.title}</Text>
 
             <View style={[urgentStyles.acceptRow, { flexDirection: 'row' }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentServiceLabel')}</Text>
@@ -1638,7 +1642,7 @@ export default function ProviderFeed() {
               );
               return (
                 <View style={urgentStyles.acceptPriceTip}>
-                  <Text style={[urgentStyles.acceptPriceTipText, { textAlign: ta }]}>
+                  <Text style={urgentStyles.acceptPriceTipText}>
                     {t('providerFeed.urgentPriceTip', {
                       min: urgent.min,
                       max: urgent.max,
@@ -1651,7 +1655,7 @@ export default function ProviderFeed() {
 
             <View style={urgentStyles.acceptCommitment}>
               <Text style={{ fontSize: 20 }}>⚠️</Text>
-              <Text style={[urgentStyles.acceptCommitText, { textAlign: ta }]}>
+              <Text style={urgentStyles.acceptCommitText}>
                 {t('providerFeed.urgentCommitText')}
               </Text>
             </View>
@@ -1689,13 +1693,13 @@ export default function ProviderFeed() {
                 <Text style={demoBidStyles.badgeText}>🎯 {t('providerFeed.demoBidSheetTitle')}</Text>
               </View>
             </View>
-            <Text style={[styles.modalSubtitle, { textAlign: ta }]}>
+            <Text style={styles.modalSubtitle}>
               {demoStatus?.request?.title}
             </Text>
 
             {/* Free note */}
             <View style={demoBidStyles.freeBox}>
-              <Text style={[demoBidStyles.freeText, { textAlign: ta }]}>
+              <Text style={demoBidStyles.freeText}>
                 💡 {t('providerFeed.demoBidSheetInfo')}
               </Text>
             </View>
@@ -1709,7 +1713,7 @@ export default function ProviderFeed() {
               </View>
             )}
 
-            <Text style={[styles.modalLabel, { textAlign: ta }]}>{t('providerFeed.bidAmountLabel')}</Text>
+            <Text style={styles.modalLabel}>{t('providerFeed.bidAmountLabel')}</Text>
             <TextInput
               style={styles.modalInput}
               placeholder="0.00"
@@ -1720,7 +1724,7 @@ export default function ProviderFeed() {
               textAlign={ta}
             />
 
-            <Text style={[styles.modalLabel, { textAlign: ta }]}>{t('providerFeed.bidNote')}</Text>
+            <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
               style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
@@ -1761,13 +1765,14 @@ export default function ProviderFeed() {
   );
 }
 
-function createDemoBidStyles(_colors: AppColors) {
+function createDemoBidStyles(_colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   header:     { marginBottom: 4 },
   badge:      { backgroundColor: DEMO_COLOR, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 8 },
   badgeText:  { fontSize: 11, fontWeight: '800', color: '#fff' },
   freeBox:    { backgroundColor: DEMO_SOFT, borderRadius: 10, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: DEMO_BORDER },
-  freeText:   { fontSize: 12, color: DEMO_TEXT, lineHeight: 18 },
+  freeText:   { fontSize: 12, color: DEMO_TEXT, lineHeight: 18, textAlign: ta },
   submitBtn:  { flex: 2, backgroundColor: DEMO_COLOR, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   submitBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
   });
@@ -1775,7 +1780,8 @@ function createDemoBidStyles(_colors: AppColors) {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -1783,9 +1789,9 @@ function createStyles(colors: AppColors) {
   // ── Pending commit banner
   commitBanner:           { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0C4A6E', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(56,189,248,0.25)', gap: 10 },
   commitBannerUrgent:     { backgroundColor: '#450A0A', borderBottomColor: 'rgba(239,68,68,0.3)' },
-  commitBannerTitle:      { fontSize: 13, fontWeight: '800', color: '#7DD3FC', textAlign: 'auto' },
+  commitBannerTitle:      { fontSize: 13, fontWeight: '800', color: '#7DD3FC', textAlign: ta },
   commitBannerTitleUrgent:{ color: '#FCA5A5' },
-  commitBannerSub:        { fontSize: 11, color: '#475569', textAlign: 'auto', marginTop: 2 },
+  commitBannerSub:        { fontSize: 11, color: '#475569', textAlign: ta, marginTop: 2 },
   commitBannerArrow:      { fontSize: 18, color: '#38BDF8', fontWeight: '700' },
 
   // ── Header
@@ -1868,10 +1874,10 @@ function createStyles(colors: AppColors) {
   // ── Modals
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 4 },
-  modalSubtitle:{ fontSize: 14, color: colors.textMuted, textAlign: 'auto', marginBottom: 16 },
-  modalAiHint:  { fontSize: 13, color: colors.accent, textAlign: 'auto', marginBottom: 16, fontWeight: '600' },
-  modalLabel:   { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', marginBottom: 8, marginTop: 12 },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, textAlign: ta, marginBottom: 4 },
+  modalSubtitle:{ fontSize: 14, color: colors.textMuted, textAlign: ta, marginBottom: 16 },
+  modalAiHint:  { fontSize: 13, color: colors.accent, textAlign: ta, marginBottom: 16, fontWeight: '600' },
+  modalLabel:   { fontSize: 13, color: colors.textSecondary, textAlign: ta, marginBottom: 8, marginTop: 12 },
   modalInput:   { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
   modalBtns:    { flexDirection: 'row', gap: 12, marginTop: 20 },
   modalCancel:      { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
@@ -1903,12 +1909,13 @@ function createStyles(colors: AppColors) {
   });
 }
 // ── Contract bid modal styles
-function createCBidStyles(colors: AppColors) {
+function createCBidStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   header:     { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 8 },
   badge:      { backgroundColor: CONTRACT_DIM, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: CONTRACT_COLOR },
   summary:    { backgroundColor: CONTRACT_DIM, borderRadius: 10, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
-  summaryText:{ fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600', textAlign: 'auto' },
+  summaryText:{ fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600', textAlign: ta },
   totalBox:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: CONTRACT_DIM, borderRadius: 10, padding: 12, marginVertical: 8, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
   totalLabel: { fontSize: 13, color: colors.textMuted },
   totalValue: { fontSize: 18, fontWeight: '800', color: CONTRACT_COLOR },

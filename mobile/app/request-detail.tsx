@@ -49,9 +49,9 @@ function getStatusColors(colors: AppColors): Record<RequestStatus, { bg: string;
 
 export default function RequestDetail() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const router  = useRouter();
-  const { t, ta, lang } = useLanguage();
   const locale  = lang === 'ar' ? 'ar-JO' : 'en-GB';
   const { id }  = useLocalSearchParams<{ id: string }>();
 
@@ -299,7 +299,7 @@ export default function RequestDetail() {
             </Text>
           </View>
 
-          <Text style={[styles.requestTitle, { textAlign: ta }]}>{request.title}</Text>
+          <Text style={styles.requestTitle}>{request.title}</Text>
 
           <View style={styles.metaRow}>
             <Text style={styles.metaText}>📍 {request.city}</Text>
@@ -312,8 +312,8 @@ export default function RequestDetail() {
 
           <View style={styles.divider} />
 
-          <Text style={[styles.descLabel, { textAlign: ta }]}>{t('requests.descLabel')}</Text>
-          <Text style={[styles.descText, { textAlign: ta }]}>{request.description}</Text>
+          <Text style={styles.descLabel}>{t('requests.descLabel')}</Text>
+          <Text style={styles.descText}>{request.description}</Text>
 
           {request.ai_suggested_price_min && request.ai_suggested_price_max && (
             <View style={styles.aiPriceBox}>
@@ -335,7 +335,7 @@ export default function RequestDetail() {
         {/* ── Bids section (open OR reviewing) ── */}
         {(request.status === 'open' || request.status === 'reviewing') && (
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { textAlign: ta }]}>
+            <Text style={styles.sectionTitle}>
               {t('requests.bidsSection', { count: visibleBids.length })}
               {request.max_bids ? (
                 <Text style={styles.bidsOf}> ({t('requests.bidsOf', { count: visibleBids.length, max: request.max_bids })})</Text>
@@ -409,7 +409,7 @@ export default function RequestDetail() {
           const tier = TIER_META[acceptedBid.provider.reputation_tier as keyof typeof TIER_META];
           return (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { textAlign: ta }]}>{t('requests.chosenProvider')}</Text>
+              <Text style={styles.sectionTitle}>{t('requests.chosenProvider')}</Text>
               <View style={styles.acceptedCard}>
                 <View style={styles.providerAvatarLg}>
                   <Text style={styles.providerAvatarTextLg}>
@@ -417,7 +417,7 @@ export default function RequestDetail() {
                   </Text>
                 </View>
                 <View style={styles.acceptedInfo}>
-                  <Text style={[styles.acceptedName, { textAlign: ta }]}>{acceptedBid.provider.user?.full_name ?? ''}</Text>
+                  <Text style={styles.acceptedName}>{acceptedBid.provider.user?.full_name ?? ''}</Text>
                   <View style={[styles.tierPill, { backgroundColor: tier.color + '22' }]}>
                     <Text style={[styles.tierPillText, { color: tier.color }]}>
                       {t(`dashboard.tier${acceptedBid.provider.reputation_tier.charAt(0).toUpperCase() + acceptedBid.provider.reputation_tier.slice(1)}` as any)}
@@ -461,7 +461,7 @@ export default function RequestDetail() {
               </View>
 
               <View style={styles.inProgressNote}>
-                <Text style={[styles.inProgressNoteText, { textAlign: ta }]}>
+                <Text style={styles.inProgressNoteText}>
                   {t('requests.inProgressNote')}
                 </Text>
               </View>
@@ -487,11 +487,11 @@ export default function RequestDetail() {
       <Modal visible={!!confirmBid} transparent animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            <Text style={[styles.modalTitle, { textAlign: ta }]}>{t('requests.confirmTitle')}</Text>
+            <Text style={styles.modalTitle}>{t('requests.confirmTitle')}</Text>
 
             {confirmBid && (
               <>
-                <Text style={[styles.modalProvider, { textAlign: ta }]}>
+                <Text style={styles.modalProvider}>
                   {t('requests.confirmProvider', { name: confirmBid.provider.user?.full_name ?? '' })}
                 </Text>
                 <View style={styles.modalAmountRow}>
@@ -502,11 +502,11 @@ export default function RequestDetail() {
                 </View>
                 {confirmBid.note ? (
                   <View style={styles.modalNoteBox}>
-                    <Text style={[styles.modalNoteLabel, { textAlign: ta }]}>{t('requests.providerNote')}</Text>
-                    <Text style={[styles.modalNoteText, { textAlign: ta }]}>{confirmBid.note}</Text>
+                    <Text style={styles.modalNoteLabel}>{t('requests.providerNote')}</Text>
+                    <Text style={styles.modalNoteText}>{confirmBid.note}</Text>
                   </View>
                 ) : null}
-                <Text style={[styles.modalWarning, { textAlign: ta }]}>
+                <Text style={styles.modalWarning}>
                   {(request as any)?.is_urgent ? t('requests.urgentWarning') : t('requests.normalWarning')}
                 </Text>
               </>
@@ -552,8 +552,8 @@ function BidCard({
   onViewProfile: () => void;
 }) {
   const { colors } = useTheme();
-  const bidStyles = useMemo(() => createBidStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
+  const { t, ta, isRTL } = useLanguage();
+  const bidStyles = useMemo(() => createBidStyles(colors, isRTL), [colors, isRTL]);
   const tier = TIER_META[bid.provider.reputation_tier as keyof typeof TIER_META];
   const [noteExpanded, setNoteExpanded] = useState(false);
   const noteLines = noteExpanded ? undefined : 3;
@@ -609,10 +609,10 @@ function BidCard({
           onPress={() => setNoteExpanded(v => !v)}
           activeOpacity={0.8}
         >
-          <Text style={[bidStyles.note, { textAlign: ta }]} numberOfLines={noteLines}>
+          <Text style={bidStyles.note} numberOfLines={noteLines}>
             {bid.note}
           </Text>
-          <Text style={[bidStyles.readMore, { textAlign: ta }]}>
+          <Text style={bidStyles.readMore}>
             {noteExpanded ? t('requests.readLess') : t('requests.readMore')}
           </Text>
         </TouchableOpacity>
@@ -632,7 +632,8 @@ function BidCard({
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -649,22 +650,22 @@ function createStyles(colors: AppColors) {
   statusText:   { fontSize: 12, fontWeight: '700' },
   categoryText: { fontSize: 13, color: colors.textMuted },
 
-  requestTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, lineHeight: 28, alignSelf: 'stretch' },
+  requestTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 10, lineHeight: 28, alignSelf: 'stretch', textAlign: ta },
 
   metaRow:   { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14 },
   metaText:  { fontSize: 12, color: colors.textMuted },
 
   divider:   { height: 1, backgroundColor: colors.border, marginBottom: 14 },
 
-  descLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 6, alignSelf: 'stretch' },
-  descText:  { fontSize: 14, color: colors.textSecondary, lineHeight: 22, alignSelf: 'stretch' },
+  descLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 6, alignSelf: 'stretch', textAlign: ta },
+  descText:  { fontSize: 14, color: colors.textSecondary, lineHeight: 22, alignSelf: 'stretch', textAlign: ta },
 
   aiPriceBox:   { marginTop: 16, backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
   aiPriceLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
   aiPriceValue: { fontSize: 22, fontWeight: '700', color: colors.accent },
 
   section:      { marginBottom: 20 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch' },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },
 
   noBids:     { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   noBidsIcon: { fontSize: 40, marginBottom: 10 },
@@ -675,7 +676,7 @@ function createStyles(colors: AppColors) {
   providerAvatarLg:  { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   providerAvatarTextLg: { fontSize: 22, fontWeight: '700', color: colors.bg },
   acceptedInfo:      { flex: 1, gap: 4 },
-  acceptedName:      { fontSize: 16, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch' },
+  acceptedName:      { fontSize: 16, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },
   tierPill:          { alignSelf: 'flex-end', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   tierPillText:      { fontSize: 11, fontWeight: '700' },
   verifiedText:      { fontSize: 12, color: '#7DD3FC' },
@@ -690,7 +691,7 @@ function createStyles(colors: AppColors) {
   shareProviderBtnTextAccent: { fontSize: 12, color: colors.accent, fontWeight: '700' },
 
   inProgressNote:     { backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
-  inProgressNoteText: { fontSize: 13, color: colors.accent, lineHeight: 20, alignSelf: 'stretch' },
+  inProgressNoteText: { fontSize: 13, color: colors.accent, lineHeight: 20, alignSelf: 'stretch', textAlign: ta },
 
   cancelBtn:         { marginHorizontal: 0, marginBottom: 20, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.errorBg },
   cancelBtnDisabled: { opacity: 0.5 },
@@ -702,15 +703,15 @@ function createStyles(colors: AppColors) {
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: colors.border, padding: 24, paddingBottom: 48 },
-  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 20, alignSelf: 'stretch' },
-  modalProvider:{ fontSize: 15, color: colors.textSecondary, marginBottom: 16, alignSelf: 'stretch' },
+  modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 20, alignSelf: 'stretch', textAlign: ta },
+  modalProvider:{ fontSize: 15, color: colors.textSecondary, marginBottom: 16, alignSelf: 'stretch', textAlign: ta },
   modalAmountRow:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.bg, borderRadius: 12, padding: 16, marginBottom: 12 },
   modalAmountLabel:{ fontSize: 13, color: colors.textMuted },
   modalAmountValue:{ fontSize: 20, fontWeight: '700', color: colors.accent },
   modalNoteBox: { backgroundColor: colors.bg, borderRadius: 12, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
-  modalNoteLabel:{ fontSize: 11, color: colors.textMuted, marginBottom: 4, alignSelf: 'stretch' },
-  modalNoteText: { fontSize: 13, color: colors.textSecondary, lineHeight: 20, alignSelf: 'stretch' },
-  modalWarning: { fontSize: 12, color: '#F87171', lineHeight: 18, marginBottom: 20, alignSelf: 'stretch' },
+  modalNoteLabel:{ fontSize: 11, color: colors.textMuted, marginBottom: 4, alignSelf: 'stretch', textAlign: ta },
+  modalNoteText: { fontSize: 13, color: colors.textSecondary, lineHeight: 20, alignSelf: 'stretch', textAlign: ta },
+  modalWarning: { fontSize: 12, color: '#F87171', lineHeight: 18, marginBottom: 20, alignSelf: 'stretch', textAlign: ta },
   modalBtns:    { flexDirection: 'row', gap: 12 },
   modalCancel:  { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   modalCancelText:{ fontSize: 15, color: colors.textSecondary },
@@ -748,7 +749,8 @@ function createStyles(colors: AppColors) {
   });
 }
 
-function createBidStyles(colors: AppColors) {
+function createBidStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   card:         { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
   providerRow:  { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
@@ -769,8 +771,8 @@ function createBidStyles(colors: AppColors) {
   amountBox:    { alignItems: 'center', minWidth: 60, marginStart: 8 },
   amountValue:  { fontSize: 20, fontWeight: '700', color: colors.accent },
   amountCur:    { fontSize: 11, color: colors.textMuted },
-  note:         { fontSize: 13, color: colors.textSecondary, lineHeight: 20, paddingHorizontal: 4 },
-  readMore:     { fontSize: 12, color: colors.accent, paddingHorizontal: 4, marginTop: 4, marginBottom: 12 },
+  note:         { fontSize: 13, color: colors.textSecondary, lineHeight: 20, paddingHorizontal: 4, textAlign: ta },
+  readMore:     { fontSize: 12, color: colors.accent, paddingHorizontal: 4, marginTop: 4, marginBottom: 12, textAlign: ta },
   actionRow:    { flexDirection: 'row', gap: 8, marginTop: 12 },
   reportBtn:    { flex: 0, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#7F1D1D', alignItems: 'center', justifyContent: 'center' },
   reportBtnText:{ fontSize: 12, color: '#FCA5A5' },

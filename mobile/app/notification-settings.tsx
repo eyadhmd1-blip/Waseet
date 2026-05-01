@@ -39,9 +39,9 @@ const QUIET_END_OPTIONS   = [6, 7, 8, 9];
 
 export default function NotificationSettingsScreen() {
   const { colors } = useTheme();
-  const st = useMemo(() => createSt(colors), [colors]);
+  const { t, isRTL } = useLanguage();
+  const st = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
 
   const [prefs,   setPrefs]   = useState<Prefs>(DEFAULTS);
   const [loading, setLoading] = useState(true);
@@ -146,8 +146,8 @@ export default function NotificationSettingsScreen() {
             <View style={[st.masterLeft, {}]}>
               <Text style={st.masterIcon}>🔔</Text>
               <View>
-                <Text style={[st.masterTitle, { textAlign: ta }]}>{t('notifSettings.masterTitle')}</Text>
-                <Text style={[st.masterSub, { textAlign: ta }]}>
+                <Text style={st.masterTitle}>{t('notifSettings.masterTitle')}</Text>
+                <Text style={st.masterSub}>
                   {prefs.enabled ? t('notifSettings.masterEnabled') : t('notifSettings.masterDisabled')}
                 </Text>
               </View>
@@ -161,7 +161,7 @@ export default function NotificationSettingsScreen() {
           </View>
 
           {/* ── Categories ── */}
-          <Text style={[st.sectionTitle, { textAlign: ta }]}>{t('notifSettings.sectionCategories')}</Text>
+          <Text style={st.sectionTitle}>{t('notifSettings.sectionCategories')}</Text>
 
           <View style={[st.card, !prefs.enabled && st.cardDisabled]}>
             <NotifToggle
@@ -171,7 +171,6 @@ export default function NotificationSettingsScreen() {
               value={prefs.seasonal}
               onChange={v => patch('seasonal', v)}
               disabled={!prefs.enabled}
-              ta={ta}
             />
             <Divider />
             <NotifToggle
@@ -181,7 +180,6 @@ export default function NotificationSettingsScreen() {
               value={prefs.lifecycle}
               onChange={v => patch('lifecycle', v)}
               disabled={!prefs.enabled}
-              ta={ta}
             />
             <Divider />
             <NotifToggle
@@ -191,12 +189,11 @@ export default function NotificationSettingsScreen() {
               value={prefs.behavioral}
               onChange={v => patch('behavioral', v)}
               disabled={!prefs.enabled}
-              ta={ta}
             />
           </View>
 
           {/* ── Frequency ── */}
-          <Text style={[st.sectionTitle, { textAlign: ta }]}>{t('notifSettings.sectionFrequency')}</Text>
+          <Text style={st.sectionTitle}>{t('notifSettings.sectionFrequency')}</Text>
           <View style={[st.card, !prefs.enabled && st.cardDisabled]}>
             {frequencyOptions.map(opt => (
               <TouchableOpacity
@@ -211,7 +208,7 @@ export default function NotificationSettingsScreen() {
                 ]}>
                   {prefs.max_per_week === opt.value && <View style={st.radioDot} />}
                 </View>
-                <Text style={[st.radioLabel, !prefs.enabled && { color: colors.textMuted }, { textAlign: ta }]}>
+                <Text style={[st.radioLabel, !prefs.enabled && { color: colors.textMuted }]}>
                   {opt.label}
                 </Text>
               </TouchableOpacity>
@@ -219,9 +216,9 @@ export default function NotificationSettingsScreen() {
           </View>
 
           {/* ── Quiet Hours ── */}
-          <Text style={[st.sectionTitle, { textAlign: ta }]}>{t('notifSettings.sectionQuietHours')}</Text>
+          <Text style={st.sectionTitle}>{t('notifSettings.sectionQuietHours')}</Text>
           <View style={[st.card, !prefs.enabled && st.cardDisabled]}>
-            <Text style={[st.quietDesc, { textAlign: ta }]}>{t('notifSettings.quietDesc')}</Text>
+            <Text style={st.quietDesc}>{t('notifSettings.quietDesc')}</Text>
             <View style={[st.quietRow, {}]}>
               <View style={st.quietCol}>
                 <Text style={st.quietLabel}>{t('notifSettings.quietStart')}</Text>
@@ -277,8 +274,8 @@ export default function NotificationSettingsScreen() {
           <View style={[st.aiBadge, {}]}>
             <Text style={st.aiIcon}>✨</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[st.aiTitle, { textAlign: ta }]}>{t('notifSettings.aiTitle')}</Text>
-              <Text style={[st.aiSub, { textAlign: ta }]}>{t('notifSettings.aiSub')}</Text>
+              <Text style={st.aiTitle}>{t('notifSettings.aiTitle')}</Text>
+              <Text style={st.aiSub}>{t('notifSettings.aiSub')}</Text>
             </View>
           </View>
 
@@ -301,20 +298,20 @@ export default function NotificationSettingsScreen() {
 // ─── Sub-components ───────────────────────────────────────────
 
 function NotifToggle({
-  icon, title, sub, value, onChange, disabled, ta,
+  icon, title, sub, value, onChange, disabled,
 }: {
   icon: string; title: string; sub: string;
   value: boolean; onChange: (v: boolean) => void; disabled: boolean;
-  ta: 'left' | 'right';
 }) {
   const { colors } = useTheme();
-  const toggleSt = useMemo(() => createToggleSt(colors), [colors]);
+  const { isRTL } = useLanguage();
+  const toggleSt = useMemo(() => createToggleSt(colors, isRTL), [colors, isRTL]);
   return (
     <View style={[toggleSt.row, {}]}>
       <Text style={toggleSt.icon}>{icon}</Text>
       <View style={toggleSt.info}>
-        <Text style={[toggleSt.title, disabled && { color: colors.textMuted }, { textAlign: ta }]}>{title}</Text>
-        <Text style={[toggleSt.sub, { textAlign: ta }]}>{sub}</Text>
+        <Text style={[toggleSt.title, disabled && { color: colors.textMuted }]}>{title}</Text>
+        <Text style={toggleSt.sub}>{sub}</Text>
       </View>
       <Switch
         value={value && !disabled}
@@ -327,13 +324,14 @@ function NotifToggle({
   );
 }
 
-function createToggleSt(colors: AppColors) {
+function createToggleSt(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
-  row:   { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 12 },
+  row:   { alignItems: 'center', paddingVertical: 12, gap: 12 },
   icon:  { fontSize: 22, width: 32, textAlign: 'center' },
   info:  { flex: 1 },
-  title: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 2 },
-  sub:   { fontSize: 11, color: colors.textMuted, lineHeight: 16 },
+  title: { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 2, textAlign: ta },
+  sub:   { fontSize: 11, color: colors.textMuted, lineHeight: 16, textAlign: ta },
   });
 }
 
@@ -344,31 +342,32 @@ function Divider() {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors) {
+function createSt(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll:    { padding: 16, paddingBottom: 48 },
 
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 8, marginTop: 16 },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 8, marginTop: 16, textAlign: ta },
 
   card:         { backgroundColor: colors.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.border },
   cardDisabled: { opacity: 0.5 },
 
   masterCard:  { backgroundColor: colors.surface, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
-  masterLeft:  { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  masterLeft:  { alignItems: 'center', gap: 14 },
   masterIcon:  { fontSize: 28 },
-  masterTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 2 },
-  masterSub:   { fontSize: 12, color: colors.textMuted },
+  masterTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 2, textAlign: ta },
+  masterSub:   { fontSize: 12, color: colors.textMuted, textAlign: ta },
 
-  radioRow:          { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  radioRow:          { alignItems: 'center', gap: 12, paddingVertical: 12 },
   radioCircle:       { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
   radioCircleActive: { borderColor: colors.accent },
   radioDot:          { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
-  radioLabel:        { flex: 1, fontSize: 14, color: colors.textPrimary },
+  radioLabel:        { flex: 1, fontSize: 14, color: colors.textPrimary, textAlign: ta },
 
-  quietDesc:           { fontSize: 12, color: colors.textMuted, marginBottom: 14 },
-  quietRow:            { flexDirection: 'row', alignItems: 'flex-start', gap: 8 },
+  quietDesc:           { fontSize: 12, color: colors.textMuted, marginBottom: 14, textAlign: ta },
+  quietRow:            { alignItems: 'flex-start', gap: 8 },
   quietCol:            { flex: 1 },
   quietLabel:          { fontSize: 11, color: colors.textMuted, textAlign: 'center', marginBottom: 8 },
   quietChips:          { gap: 6 },
@@ -380,10 +379,10 @@ function createSt(colors: AppColors) {
   quietSummary:        { marginTop: 14, backgroundColor: colors.bg, borderRadius: 10, padding: 10, alignItems: 'center' },
   quietSummaryText:    { fontSize: 12, color: colors.textMuted },
 
-  aiBadge: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.accentDim, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginTop: 20, marginBottom: 8 },
+  aiBadge: { alignItems: 'center', gap: 12, backgroundColor: colors.accentDim, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', marginTop: 20, marginBottom: 8 },
   aiIcon:  { fontSize: 28 },
-  aiTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 3 },
-  aiSub:   { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  aiTitle: { fontSize: 14, fontWeight: '700', color: colors.accent, marginBottom: 3, textAlign: ta },
+  aiSub:   { fontSize: 12, color: colors.textMuted, lineHeight: 18, textAlign: ta },
 
   saveBtn:     { backgroundColor: colors.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center', marginTop: 20 },
   saveBtnText: { fontSize: 16, fontWeight: '800', color: colors.bg },

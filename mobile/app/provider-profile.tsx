@@ -137,10 +137,10 @@ function ShareSheet({
       <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
       <Animated.View style={[styles.shareSheet, { transform: [{ translateY: slideY }] }]}>
         <View style={styles.sheetHandle} />
-        <Text style={[styles.sheetTitle, { textAlign: ta }]}>
+        <Text style={styles.sheetTitle}>
           {t('providerProfile.shareSheetTitle', { name: providerName })}
         </Text>
-        <Text style={[styles.sheetLink, { textAlign: ta }]}>{deepLink}</Text>
+        <Text style={styles.sheetLink}>{deepLink}</Text>
 
         <View style={styles.channelRow}>
           {channels.map(ch => (
@@ -166,10 +166,10 @@ function ShareSheet({
 
 export default function ProviderPublicProfile() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const router = useRouter();
   const { provider_id } = useLocalSearchParams<{ provider_id: string }>();
-  const { t, ta, lang } = useLanguage();
 
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
@@ -321,8 +321,8 @@ export default function ProviderPublicProfile() {
             </View>
 
             <View style={styles.heroInfo}>
-              <Text style={[styles.heroName, { textAlign: ta }]}>{provider.user?.full_name}</Text>
-              <Text style={[styles.heroCity, { textAlign: ta }]}>📍 {provider.user?.city}</Text>
+              <Text style={styles.heroName}>{provider.user?.full_name}</Text>
+              <Text style={styles.heroCity}>📍 {provider.user?.city}</Text>
               <View style={[styles.badgeRow, { justifyContent: ta === 'right' ? 'flex-end' : 'flex-start' }]}>
                 <View style={[styles.tierPill, { backgroundColor: tier.color + '22' }]}>
                   <Text style={[styles.tierPillText, { color: tier.color }]}>{tierLabel}</Text>
@@ -350,7 +350,7 @@ export default function ProviderPublicProfile() {
           </View>
 
           {provider.bio && (
-            <Text style={[styles.bio, { textAlign: ta }]}>{provider.bio}</Text>
+            <Text style={styles.bio}>{provider.bio}</Text>
           )}
 
           {myCats.length > 0 && (
@@ -404,7 +404,7 @@ export default function ProviderPublicProfile() {
         <Animated.View style={{ opacity: bodyOp }}>
           {portfolio.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { textAlign: ta }]}>
+              <Text style={styles.sectionTitle}>
                 {t('providerProfile.portfolioSection', { count: portfolio.length })}
               </Text>
               <View style={styles.portfolioGrid}>
@@ -454,10 +454,10 @@ export default function ProviderPublicProfile() {
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <View style={styles.reportSheet}>
               <View style={styles.reportHandle} />
-              <Text style={[styles.reportTitle, { textAlign: ta }]}>{t('report.profileTitle')}</Text>
-              <Text style={[styles.reportSub, { textAlign: ta }]}>{t('report.profileSub')}</Text>
+              <Text style={styles.reportTitle}>{t('report.profileTitle')}</Text>
+              <Text style={styles.reportSub}>{t('report.profileSub')}</Text>
               <TextInput
-                style={[styles.reportInput, { textAlign: ta }]}
+                style={styles.reportInput}
                 multiline
                 numberOfLines={4}
                 placeholder={t('report.profilePlaceholder')}
@@ -466,7 +466,7 @@ export default function ProviderPublicProfile() {
                 onChangeText={setReportText}
                 maxLength={500}
               />
-              <Text style={[styles.reportCounter, { textAlign: ta }]}>{reportText.length}/500</Text>
+              <Text style={styles.reportCounter}>{reportText.length}/500</Text>
               <View style={styles.reportBtns}>
                 <TouchableOpacity
                   style={styles.reportCancelBtn}
@@ -507,7 +507,8 @@ export default function ProviderPublicProfile() {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL = false) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -523,8 +524,8 @@ function createStyles(colors: AppColors) {
   avatar:   { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 30, fontWeight: '800' },
   heroInfo: { flex: 1, gap: 4 },
-  heroName: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, alignSelf: 'stretch' },
-  heroCity: { fontSize: 13, color: colors.textMuted, alignSelf: 'stretch' },
+  heroName: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },
+  heroCity: { fontSize: 13, color: colors.textMuted, alignSelf: 'stretch', textAlign: ta },
 
   badgeRow:        { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
   tierPill:        { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
@@ -540,7 +541,7 @@ function createStyles(colors: AppColors) {
   statValue:{ fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   statLabel:{ fontSize: 9, color: colors.textMuted, textAlign: 'center' },
 
-  bio: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, marginBottom: 12, alignSelf: 'stretch' },
+  bio: { fontSize: 14, color: colors.textSecondary, lineHeight: 22, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },
 
   catsRow:     { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
   catChip:     { backgroundColor: colors.bg, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: colors.border },
@@ -557,7 +558,7 @@ function createStyles(colors: AppColors) {
   requestBtnText:  { fontSize: 13, fontWeight: '700', color: colors.bg },
 
   section:       { marginBottom: 20 },
-  sectionTitle:  { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch' },
+  sectionTitle:  { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },
   portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   portfolioThumb:{ borderRadius: 10, overflow: 'hidden', backgroundColor: colors.surface },
   videoThumbBg:  { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
@@ -577,8 +578,8 @@ function createStyles(colors: AppColors) {
   sheetBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
   shareSheet:    { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 24, paddingBottom: 48, paddingTop: 12 },
   sheetHandle:   { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
-  sheetTitle:    { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 6 },
-  sheetLink:     { fontSize: 12, color: colors.textMuted, marginBottom: 20, fontFamily: 'monospace' },
+  sheetTitle:    { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, textAlign: ta },
+  sheetLink:     { fontSize: 12, color: colors.textMuted, marginBottom: 20, fontFamily: 'monospace', textAlign: ta },
 
   channelRow:   { flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap', gap: 12 },
   channelBtn:   { alignItems: 'center', gap: 6, minWidth: 56 },
@@ -591,10 +592,10 @@ function createStyles(colors: AppColors) {
   reportOverlay:  { flex: 1, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
   reportSheet:    { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
   reportHandle:   { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
-  reportTitle:    { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, alignSelf: 'stretch' },
-  reportSub:      { fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 20, alignSelf: 'stretch' },
-  reportInput:    { backgroundColor: colors.bg, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 14, fontSize: 14, color: colors.textPrimary, minHeight: 110, textAlignVertical: 'top' },
-  reportCounter:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16 },
+  reportTitle:    { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, alignSelf: 'stretch', textAlign: ta },
+  reportSub:      { fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 20, alignSelf: 'stretch', textAlign: ta },
+  reportInput:    { backgroundColor: colors.bg, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 14, fontSize: 14, color: colors.textPrimary, minHeight: 110, textAlignVertical: 'top', textAlign: ta },
+  reportCounter:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16, textAlign: ta },
   reportBtns:     { flexDirection: 'row', gap: 10 },
   reportCancelBtn:  { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   reportCancelText: { fontSize: 14, fontWeight: '600', color: colors.textSecondary },

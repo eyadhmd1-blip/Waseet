@@ -29,13 +29,13 @@ const JOB_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 export default function ClientMessages() {
     const { headerPad } = useInsets();
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
+  const { t, ta, lang, isRTL } = useLanguage();
   const { colors } = useTheme();
   const [jobs, setJobs]           = useState<ConversationJob[]>([]);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const JOB_STATUS_LABEL: Record<string, string> = {
     active:    t('providerJobs.statusActive'),
@@ -91,8 +91,8 @@ export default function ClientMessages() {
         </View>
 
         <View style={styles.cardInfo}>
-          <Text style={[styles.providerName, { textAlign: ta }]} numberOfLines={1}>{providerName}</Text>
-          <Text style={[styles.jobTitle, { textAlign: ta }]} numberOfLines={1}>{item.request?.title}</Text>
+          <Text style={styles.providerName} numberOfLines={1}>{providerName}</Text>
+          <Text style={styles.jobTitle} numberOfLines={1}>{item.request?.title}</Text>
         </View>
 
         <View style={styles.cardRight}>
@@ -112,7 +112,7 @@ export default function ClientMessages() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, { textAlign: ta }]}>{t('chat.title')}</Text>
+        <Text style={styles.headerTitle}>{t('chat.title')}</Text>
       </View>
 
       {loading ? (
@@ -142,20 +142,21 @@ export default function ClientMessages() {
   );
 }
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:   { flex: 1, backgroundColor: colors.bg },
     center:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
     header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-    headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary },
+    headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, textAlign: ta },
     listContent: { paddingVertical: 8 },
 
     card:       { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 },
     avatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
     avatarText: { fontSize: 20, fontWeight: '700', color: colors.bg },
     cardInfo:   { flex: 1 },
-    providerName:{ fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 3 },
-    jobTitle:   { fontSize: 12, color: colors.textMuted },
+    providerName:{ fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 3, textAlign: ta },
+    jobTitle:   { fontSize: 12, color: colors.textMuted, textAlign: ta },
 
     cardRight:   { alignItems: 'flex-end', gap: 6 },
     statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },

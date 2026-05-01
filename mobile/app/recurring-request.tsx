@@ -85,9 +85,9 @@ function createProg(colors: AppColors) {
 
 export default function RecurringRequestScreen() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const { t, ta, lang, isRTL } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const router = useRouter();
-  const { t, ta, lang } = useLanguage();
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const { groups } = useCategories();
@@ -244,8 +244,8 @@ export default function RecurringRequestScreen() {
           {/* ═══════════════ STEP 1: Category ═══════════════ */}
           {step === 1 && (
             <View>
-              <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('recurringRequest.step1Title')}</Text>
-              <Text style={[styles.stepSub, { textAlign: ta }]}>{t('recurringRequest.step1Sub')}</Text>
+              <Text style={styles.stepTitle}>{t('recurringRequest.step1Title')}</Text>
+              <Text style={styles.stepSub}>{t('recurringRequest.step1Sub')}</Text>
 
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupScroll}>
                 {groups.map(g => (
@@ -285,15 +285,15 @@ export default function RecurringRequestScreen() {
           {/* ═══════════════ STEP 2: Schedule ═══════════════ */}
           {step === 2 && (
             <View>
-              <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('recurringRequest.step2Title')}</Text>
-              <Text style={[styles.stepSub, { textAlign: ta }]}>{t('recurringRequest.step2Sub')}</Text>
+              <Text style={styles.stepTitle}>{t('recurringRequest.step2Title')}</Text>
+              <Text style={styles.stepSub}>{t('recurringRequest.step2Sub')}</Text>
 
               <View style={styles.catSummary}>
                 <Text style={styles.catSummaryIcon}>{catIcon}</Text>
                 <Text style={styles.catSummaryName}>{catName}</Text>
               </View>
 
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('recurringRequest.freqLabel')}</Text>
+              <Text style={styles.fieldLabel}>{t('recurringRequest.freqLabel')}</Text>
               <View style={styles.freqRow}>
                 {(['weekly','biweekly','monthly'] as RecurrenceFrequency[]).map(f => (
                   <TouchableOpacity
@@ -311,7 +311,7 @@ export default function RecurringRequestScreen() {
                 ))}
               </View>
 
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>
+              <Text style={styles.fieldLabel}>
                 {t('recurringRequest.dayLabel')}{' '}
                 <Text style={styles.optionalTag}>({t('common.optional')})</Text>
               </Text>
@@ -327,7 +327,7 @@ export default function RecurringRequestScreen() {
                 ))}
               </View>
 
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('recurringRequest.timeLabel')}</Text>
+              <Text style={styles.fieldLabel}>{t('recurringRequest.timeLabel')}</Text>
               <View style={styles.timeRow}>
                 {['morning','afternoon','evening','flexible'].map(key => (
                   <TouchableOpacity
@@ -342,7 +342,7 @@ export default function RecurringRequestScreen() {
                 ))}
               </View>
 
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('recurringRequest.cityLabel')}</Text>
+              <Text style={styles.fieldLabel}>{t('recurringRequest.cityLabel')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cityScroll}>
                 {JORDAN_CITIES.map(c => (
                   <TouchableOpacity
@@ -364,10 +364,10 @@ export default function RecurringRequestScreen() {
           {/* ═══════════════ STEP 3: Duration & Details ═══════════════ */}
           {step === 3 && (
             <View>
-              <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('recurringRequest.step3Title')}</Text>
-              <Text style={[styles.stepSub, { textAlign: ta }]}>{t('recurringRequest.step3Sub')}</Text>
+              <Text style={styles.stepTitle}>{t('recurringRequest.step3Title')}</Text>
+              <Text style={styles.stepSub}>{t('recurringRequest.step3Sub')}</Text>
 
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('recurringRequest.durationLabel')}</Text>
+              <Text style={styles.fieldLabel}>{t('recurringRequest.durationLabel')}</Text>
               <View style={styles.durationRow}>
                 {durationOptions.map(opt => (
                   <TouchableOpacity
@@ -386,7 +386,7 @@ export default function RecurringRequestScreen() {
               </View>
 
               <View style={styles.visitSummaryCard}>
-                <Text style={[styles.visitSummaryTitle, { textAlign: ta }]}>{t('recurringRequest.visitSummaryTitle')}</Text>
+                <Text style={styles.visitSummaryTitle}>{t('recurringRequest.visitSummaryTitle')}</Text>
                 <View style={styles.visitSummaryRow}>
                   <Text style={styles.visitSummaryValue}>{totalVisits}</Text>
                   <Text style={styles.visitSummaryLabel}>{t('recurringRequest.visitSummaryTotal')}</Text>
@@ -401,7 +401,7 @@ export default function RecurringRequestScreen() {
                 </View>
               </View>
 
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('recurringRequest.titleLabel')}</Text>
+              <Text style={styles.fieldLabel}>{t('recurringRequest.titleLabel')}</Text>
               <TextInput
                 style={styles.input}
                 value={title}
@@ -417,7 +417,7 @@ export default function RecurringRequestScreen() {
                 maxLength={80}
               />
 
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>{t('recurringRequest.descLabel')}</Text>
+              <Text style={styles.fieldLabel}>{t('recurringRequest.descLabel')}</Text>
               <TextInput
                 style={[styles.input, styles.inputMulti]}
                 value={description}
@@ -430,7 +430,7 @@ export default function RecurringRequestScreen() {
                 maxLength={600}
               />
 
-              <Text style={[styles.fieldLabel, { textAlign: ta }]}>
+              <Text style={styles.fieldLabel}>
                 {t('recurringRequest.notesLabel')}{' '}
                 <Text style={styles.optionalTag}>({t('common.optional')})</Text>
               </Text>
@@ -455,8 +455,8 @@ export default function RecurringRequestScreen() {
           {/* ═══════════════ STEP 4: Review & Submit ═══════════════ */}
           {step === 4 && (
             <View>
-              <Text style={[styles.stepTitle, { textAlign: ta }]}>{t('recurringRequest.step4Title')}</Text>
-              <Text style={[styles.stepSub, { textAlign: ta }]}>{t('recurringRequest.step4Sub')}</Text>
+              <Text style={styles.stepTitle}>{t('recurringRequest.step4Title')}</Text>
+              <Text style={styles.stepSub}>{t('recurringRequest.step4Sub')}</Text>
 
               <View style={styles.heroCard}>
                 <Text style={styles.heroIcon}>{catIcon}</Text>
@@ -496,8 +496,8 @@ export default function RecurringRequestScreen() {
               </View>
 
               <View style={styles.descCard}>
-                <Text style={[styles.descLabel, { textAlign: ta }]}>{t('recurringRequest.descLabel')}</Text>
-                <Text style={[styles.descText, { textAlign: ta }]}>{description}</Text>
+                <Text style={styles.descLabel}>{t('recurringRequest.descLabel')}</Text>
+                <Text style={styles.descText}>{description}</Text>
               </View>
 
               <View style={styles.trustRow}>
@@ -548,27 +548,29 @@ export default function RecurringRequestScreen() {
 
 function ReviewRow({ label, value }: { label: string; value: string }) {
   const { colors } = useTheme();
-  const rrStyles = useMemo(() => createRrStyles(colors), [colors]);
-  const { ta } = useLanguage();
+  const { isRTL } = useLanguage();
+  const rrStyles = useMemo(() => createRrStyles(colors, isRTL), [colors, isRTL]);
   return (
     <View style={rrStyles.row}>
-      <Text style={[rrStyles.value, { textAlign: ta }]}>{value}</Text>
+      <Text style={rrStyles.value}>{value}</Text>
       <Text style={rrStyles.label}>{label}</Text>
     </View>
   );
 }
 
-function createRrStyles(colors: AppColors) {
+function createRrStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     row:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
     label: { fontSize: 13, color: colors.textMuted },
-    value: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', flex: 1, marginEnd: 8 },
+    value: { fontSize: 14, color: colors.textPrimary, fontWeight: '500', flex: 1, marginEnd: 8, textAlign: ta },
   });
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   root:    { flex: 1, backgroundColor: colors.bg },
   content: { flex: 1 },
@@ -576,8 +578,8 @@ function createStyles(colors: AppColors) {
   headerBadge:  { backgroundColor: CONTRACT_DIM, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 4, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
   headerBadgeText: { fontSize: 11, color: CONTRACT_COLOR, fontWeight: '700' },
 
-  stepTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginHorizontal: 16, marginBottom: 6, marginTop: 8, alignSelf: 'stretch' },
-  stepSub:   { fontSize: 13, color: colors.textMuted, marginHorizontal: 16, marginBottom: 20, alignSelf: 'stretch' },
+  stepTitle: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, marginHorizontal: 16, marginBottom: 6, marginTop: 8, alignSelf: 'stretch', textAlign: ta },
+  stepSub:   { fontSize: 13, color: colors.textMuted, marginHorizontal: 16, marginBottom: 20, alignSelf: 'stretch', textAlign: ta },
 
   groupScroll:      { paddingHorizontal: 16, marginBottom: 16 },
   groupTab:         { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
@@ -596,7 +598,7 @@ function createStyles(colors: AppColors) {
   catSummaryIcon: { fontSize: 24 },
   catSummaryName: { fontSize: 16, fontWeight: '700', color: CONTRACT_COLOR },
 
-  fieldLabel:   { fontSize: 13, color: colors.textMuted, marginHorizontal: 16, marginBottom: 10, marginTop: 4 },
+  fieldLabel:   { fontSize: 13, color: colors.textMuted, marginHorizontal: 16, marginBottom: 10, marginTop: 4, textAlign: ta },
   optionalTag:  { fontSize: 11, color: colors.textMuted, fontWeight: '400' },
 
   freqRow:         { flexDirection: 'row', gap: 8, marginHorizontal: 16, marginBottom: 20 },
@@ -637,7 +639,7 @@ function createStyles(colors: AppColors) {
   durationSubActive:  { color: CONTRACT_COLOR + 'AA' },
 
   visitSummaryCard:  { marginHorizontal: 16, marginBottom: 20, backgroundColor: CONTRACT_DIM, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: CONTRACT_COLOR + '44' },
-  visitSummaryTitle: { fontSize: 13, fontWeight: '700', color: CONTRACT_COLOR, marginBottom: 10, alignSelf: 'stretch' },
+  visitSummaryTitle: { fontSize: 13, fontWeight: '700', color: CONTRACT_COLOR, marginBottom: 10, alignSelf: 'stretch', textAlign: ta },
   visitSummaryRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: CONTRACT_COLOR + '22' },
   visitSummaryValue: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   visitSummaryLabel: { fontSize: 13, color: colors.textMuted },
@@ -658,8 +660,8 @@ function createStyles(colors: AppColors) {
   reviewCard:   { marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.surface, borderRadius: 16, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border },
 
   descCard:   { marginHorizontal: 16, marginBottom: 16, backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-  descLabel:  { fontSize: 12, color: colors.textMuted, marginBottom: 6, alignSelf: 'stretch' },
-  descText:   { fontSize: 14, color: colors.textPrimary, lineHeight: 22, alignSelf: 'stretch' },
+  descLabel:  { fontSize: 12, color: colors.textMuted, marginBottom: 6, alignSelf: 'stretch', textAlign: ta },
+  descText:   { fontSize: 14, color: colors.textPrimary, lineHeight: 22, alignSelf: 'stretch', textAlign: ta },
 
   trustRow:   { flexDirection: 'row', gap: 8, marginHorizontal: 16, marginBottom: 20 },
   trustBadge: { flex: 1, backgroundColor: colors.surface, borderRadius: 14, padding: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 4 },
