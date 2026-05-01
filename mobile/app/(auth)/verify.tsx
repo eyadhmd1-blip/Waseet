@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput,
-  TouchableOpacity, Alert, Dimensions,
+  TouchableOpacity, Alert, useWindowDimensions,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -11,9 +11,6 @@ import { HEADER_PAD, rs } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
 
-const { width: SCREEN_W } = Dimensions.get('window');
-const OTP_BOX_SIZE = Math.max(38, Math.floor((SCREEN_W - 48) / 6) - 6);
-
 const RESEND_COOLDOWN = 60; // seconds
 
 export default function VerifyScreen() {
@@ -22,6 +19,8 @@ export default function VerifyScreen() {
   const { phone, dev_code } = useLocalSearchParams<{ phone: string; dev_code?: string }>();
   const { t, isRTL } = useLanguage();
   const { colors } = useTheme();
+  const { width: screenW } = useWindowDimensions();
+  const otpBoxSize = Math.min(64, Math.max(38, Math.floor((screenW - 48) / 6) - 6));
 
   const [otp, setOtp]           = useState(['', '', '', '', '', '']);
   const [loading, setLoading]   = useState(false);
@@ -30,7 +29,7 @@ export default function VerifyScreen() {
   const inputs = useRef<TextInput[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, otpBoxSize), [colors, isRTL, otpBoxSize]);
 
   // ── Countdown timer ───────────────────────────────────────────
   const startCountdown = useCallback(() => {
@@ -237,7 +236,7 @@ export default function VerifyScreen() {
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, otpBoxSize: number) {
   const ta = isRTL ? 'right' : 'left';
   return StyleSheet.create({
     container:  { flex: 1, backgroundColor: colors.bg },
@@ -254,7 +253,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
     otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
     otpInput: {
-      width: OTP_BOX_SIZE, height: OTP_BOX_SIZE + 8, borderRadius: 12,
+      width: otpBoxSize, height: otpBoxSize + 8, borderRadius: 12,
       backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
       fontSize: rs(24, 18, 28), fontWeight: '700', color: colors.textPrimary,
     },
