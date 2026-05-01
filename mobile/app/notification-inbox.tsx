@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl,
@@ -116,7 +116,7 @@ export default function NotificationInboxScreen() {
     setLoading(false);
   }, [fetchPage]);
 
-  useState(() => { initialLoad(); });
+  useEffect(() => { initialLoad(); }, [initialLoad]);
 
   // ── Pull-to-refresh ─────────────────────────────────────────
   const onRefresh = useCallback(async () => {
