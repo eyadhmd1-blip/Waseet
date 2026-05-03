@@ -1145,6 +1145,12 @@ export default function ProviderFeed() {
     [requests, catFilter],
   );
 
+  // Only show chips for categories that actually have requests in the current feed
+  const feedCategories = useMemo(() => {
+    const slugs = new Set(requests.map(r => r.category_slug));
+    return ALL_CATEGORIES.filter(c => slugs.has(c.slug));
+  }, [requests]);
+
   const handleBidPress = (req: RequestWithMeta, index: number) => {
     if (myBidAmounts.has(req.id)) return; // already bid — chip is shown instead
     if (!provider?.is_subscribed && index > 0) {
@@ -1401,7 +1407,7 @@ export default function ProviderFeed() {
               {t('providerFeed.allFilter')}
             </Text>
           </TouchableOpacity>
-          {ALL_CATEGORIES.map(cat => (
+          {feedCategories.map(cat => (
             <TouchableOpacity
               key={cat.slug}
               style={[styles.filterChip, catFilter === cat.slug && styles.filterChipActive]}
