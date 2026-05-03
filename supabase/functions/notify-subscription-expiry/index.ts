@@ -53,13 +53,20 @@ serve(async () => {
       .gte("bid_credits", 1)
       .lte("bid_credits", 3);
 
-    // ── 4. Zero credits (not premium) ────────────────────────
+    // ── 4. Zero credits (not premium) ────────────────────────────
     const { data: noCredits } = await admin
       .from("providers")
       .select("id")
       .eq("is_subscribed", true)
       .neq("subscription_tier", "premium")
       .eq("bid_credits", 0);
+
+    // ── 5. Trial ended (not subscribed, trial was used) ──────────
+    const { data: trialEnded } = await admin
+      .from("providers")
+      .select("id")
+      .eq("is_subscribed", false)
+      .eq("trial_used", true);
 
     // ── Build notification queue ──────────────────────────────
     type QueueItem = {
@@ -103,6 +110,15 @@ serve(async () => {
         provider_id: p.id,
         title: "🔴 نفد رصيدك",
         body:  "لا يمكنك تقديم عروض الآن — جدّد اشتراكك للاستمرار",
+        data:  { screen: "subscribe" },
+      });
+    }
+
+    for (const p of trialEnded ?? []) {
+      queue.push({
+        provider_id: p.id,
+        title: "🎁 انتهت فترتك التجريبية",
+        body:  "اشترك الآن لتواصل تلقّي طلبات العملاء والمزايدة عليها",
         data:  { screen: "subscribe" },
       });
     }

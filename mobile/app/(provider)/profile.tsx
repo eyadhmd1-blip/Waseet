@@ -361,6 +361,18 @@ export default function ProviderProfile() {
                 </Text>
               </View>
             )}
+
+            {/* Upgrade / Renew button */}
+            <TouchableOpacity
+              style={styles.upgradeBtn}
+              onPress={() => router.push('/subscribe' as any)}
+            >
+              <Text style={styles.upgradeBtnText}>
+                {plan.tier === 'premium'
+                  ? t('profile.renewBtn')
+                  : t('profile.upgradeBtn')}
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.noSubCard}>
@@ -641,6 +653,9 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   creditsBadgeText: { fontSize: 13, fontWeight: '700', color: colors.accent, textAlign: 'auto' },
   winDiscountText:  { fontSize: 13, color: '#86EFAC', marginTop: 8, textAlign: 'auto' },
   repDiscountText:  { fontSize: 13, color: '#7DD3FC', marginTop: 4, textAlign: 'auto' },
+
+  upgradeBtn:     { marginTop: 14, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 11, alignItems: 'center' },
+  upgradeBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
 
   noSubCard:    { backgroundColor: colors.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.border, alignItems: 'center', gap: 12 },
   noSubText:    { fontSize: 14, color: colors.textMuted },
