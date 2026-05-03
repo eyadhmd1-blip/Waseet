@@ -110,7 +110,7 @@ export default async function SupportPage({
 
       {/* Filters */}
       <form method="get" className="flex gap-3 flex-wrap">
-        <select name="status" defaultValue={sp.status ?? ''} onChange={(e) => e.currentTarget.form?.submit()}
+        <select name="status" defaultValue={sp.status ?? ''}
           className="bg-slate-900 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-400/50">
           <option value="">كل الحالات</option>
           <option value="open">مفتوحة</option>

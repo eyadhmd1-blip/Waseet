@@ -79,46 +79,41 @@ export default async function AuditPage({
       </div>
 
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap flex-row-reverse">
-        {/* Action filter */}
-        <form method="get" className="flex gap-2">
-          {target && <input type="hidden" name="target" value={target} />}
-          <select
-            name="action"
-            defaultValue={action}
-            onChange={e => (e.target.form as HTMLFormElement).submit()}
-            className="bg-slate-900 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-400/50"
-          >
-            <option value="">كل الإجراءات</option>
-            {Object.entries(ACTION_META).map(([key, { label }]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
+      <form method="get" className="flex gap-3 flex-wrap">
+        <select
+          name="action"
+          defaultValue={action}
+          className="bg-slate-900 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-400/50"
+        >
+          <option value="">كل الإجراءات</option>
+          {Object.entries(ACTION_META).map(([key, { label }]) => (
+            <option key={key} value={key}>{label}</option>
+          ))}
+        </select>
 
-          <select
-            name="target"
-            defaultValue={target}
-            onChange={e => (e.target.form as HTMLFormElement).submit()}
-            className="bg-slate-900 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-400/50"
-          >
-            <option value="">كل الأنواع</option>
-            <option value="user">مستخدم</option>
-            <option value="provider">مزود</option>
-            <option value="request">طلب</option>
-            <option value="contract">عقد</option>
-            <option value="system">نظام</option>
-          </select>
+        <select
+          name="target"
+          defaultValue={target}
+          className="bg-slate-900 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-400/50"
+        >
+          <option value="">كل الأنواع</option>
+          <option value="user">مستخدم</option>
+          <option value="provider">مزود</option>
+          <option value="request">طلب</option>
+          <option value="contract">عقد</option>
+          <option value="system">نظام</option>
+        </select>
 
-          {(action || target) && (
-            <a
-              href="/audit"
-              className="px-3 py-2 rounded-xl bg-slate-800 text-slate-400 text-sm hover:bg-slate-700 transition-colors"
-            >
-              مسح
-            </a>
-          )}
-        </form>
-      </div>
+        <button type="submit" className="px-4 py-2 rounded-xl bg-amber-500 text-slate-900 text-sm font-bold">تصفية</button>
+        {(action || target) && (
+          <a
+            href="/audit"
+            className="px-4 py-2 rounded-xl bg-slate-800 text-slate-400 text-sm hover:bg-slate-700 transition-colors"
+          >
+            مسح
+          </a>
+        )}
+      </form>
 
       {/* Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">

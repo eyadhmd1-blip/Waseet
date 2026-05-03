@@ -27,16 +27,21 @@ const STATUS_META: Record<string, { label: string; variant: 'info' | 'warning' |
 };
 
 async function getTicket(id: string) {
-  const { data } = await supabaseAdmin
+  const { data: ticket, error } = await supabaseAdmin
     .from('support_tickets')
-    .select(`
-      id, category, priority, status, subject, rating, rating_note,
-      opened_at, resolved_at,
-      user:users(id, full_name, phone, role, city)
-    `)
+    .select('id, category, priority, status, subject, rating, rating_note, opened_at, resolved_at, user_id')
     .eq('id', id)
     .single();
-  return data;
+
+  if (error || !ticket) return null;
+
+  const { data: user } = await supabaseAdmin
+    .from('users')
+    .select('id, full_name, phone, role, city')
+    .eq('id', (ticket as any).user_id)
+    .single();
+
+  return { ...ticket, user: user ?? null };
 }
 
 async function getMessages(ticketId: string) {
