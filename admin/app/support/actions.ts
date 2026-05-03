@@ -4,10 +4,27 @@ import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
 import { revalidatePath } from 'next/cache';
 
+const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+
+async function sendPushToUser(userId: string, title: string, body: string, data?: object) {
+  const { data: tokenRow } = await supabaseAdmin
+    .from('push_tokens')
+    .select('token')
+    .eq('user_id', userId)
+    .single();
+  if (!tokenRow?.token) return;
+
+  await fetch(EXPO_PUSH_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body:    JSON.stringify([{ to: tokenRow.token, title, body, sound: 'default', channelId: 'default', data }]),
+  });
+}
+
 export async function replyToTicket(ticketId: string, body: string) {
   await supabaseAdmin.from('support_messages').insert({
     ticket_id: ticketId,
-    sender_id: null,       // system/admin sender
+    sender_id: null,
     is_admin:  true,
     body,
   });
@@ -16,7 +33,23 @@ export async function replyToTicket(ticketId: string, body: string) {
     .from('support_tickets')
     .update({ status: 'in_review' })
     .eq('id', ticketId)
-    .eq('status', 'open');  // only move open → in_review, not resolved
+    .eq('status', 'open');
+
+  // Notify the ticket owner so they see the reply even if the app is in background
+  const { data: ticket } = await supabaseAdmin
+    .from('support_tickets')
+    .select('user_id, subject')
+    .eq('id', ticketId)
+    .single();
+
+  if (ticket?.user_id) {
+    await sendPushToUser(
+      ticket.user_id,
+      'رد جديد على تذكرتك 💬',
+      body.length > 80 ? body.slice(0, 80) + '…' : body,
+      { screen: 'support', ticketId },
+    );
+  }
 
   revalidatePath('/support');
   revalidatePath(`/support/${ticketId}`);
