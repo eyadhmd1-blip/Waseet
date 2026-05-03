@@ -50,6 +50,13 @@ export default function NewRequestScreen() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [repostBanner, setRepostBanner] = useState(false);
 
+  // Courier-specific fields
+  const [pickupAddress,  setPickupAddress]  = useState('');
+  const [dropoffAddress, setDropoffAddress] = useState('');
+  const [packageSize,    setPackageSize]    = useState<'small' | 'medium' | 'large' | ''>('');
+
+  const isCourier = selectedCat?.slug === 'courier';
+
   // Pre-fill fields when reposting from an expired request
   useEffect(() => {
     if (!repostFromId) return;
@@ -91,6 +98,9 @@ export default function NewRequestScreen() {
       setAiLoading(false);
       setSubmitting(false);
       setRepostBanner(false);
+      setPickupAddress('');
+      setDropoffAddress('');
+      setPackageSize('');
     }, [preselectedCategory, repostFromId])
   );
 
@@ -143,6 +153,11 @@ export default function NewRequestScreen() {
     if (!title.trim()) { Alert.alert(t('common.attention'), t('newRequest.titleRequired')); return; }
     if (!description.trim() || description.length < 20) { Alert.alert(t('common.attention'), t('newRequest.descRequired')); return; }
     if (!city) { Alert.alert(t('common.attention'), t('newRequest.cityRequired')); return; }
+    if (isCourier) {
+      if (!pickupAddress.trim())  { Alert.alert(t('common.attention'), t('newRequest.pickupRequired'));  return; }
+      if (!dropoffAddress.trim()) { Alert.alert(t('common.attention'), t('newRequest.dropoffRequired')); return; }
+      if (!packageSize)           { Alert.alert(t('common.attention'), t('newRequest.sizeRequired'));    return; }
+    }
     fetchAiPrice();
     setStep(3);
   };
@@ -194,6 +209,11 @@ export default function NewRequestScreen() {
       ai_suggested_price_max:  aiPrice?.max ?? null,
       ai_suggested_currency:   'JOD',
       status:                  'open',
+      ...(isCourier && {
+        pickup_address:  pickupAddress.trim(),
+        dropoff_address: dropoffAddress.trim(),
+        package_size:    packageSize,
+      }),
     });
 
     setSubmitting(false);
@@ -326,6 +346,51 @@ export default function NewRequestScreen() {
             ))}
           </ScrollView>
 
+          {/* ── Courier fields ── */}
+          {isCourier && (
+            <>
+              <Text style={styles.label}>{t('newRequest.pickupAddress')}</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t('newRequest.pickupPlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                value={pickupAddress}
+                onChangeText={setPickupAddress}
+                maxLength={200}
+                textAlign={ta}
+              />
+
+              <Text style={styles.label}>{t('newRequest.dropoffAddress')}</Text>
+              <TextInput
+                style={styles.input}
+                placeholder={t('newRequest.dropoffPlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                value={dropoffAddress}
+                onChangeText={setDropoffAddress}
+                maxLength={200}
+                textAlign={ta}
+              />
+
+              <Text style={styles.label}>{t('newRequest.packageSize')}</Text>
+              <View style={styles.sizeRow}>
+                {(['small', 'medium', 'large'] as const).map(size => (
+                  <TouchableOpacity
+                    key={size}
+                    style={[styles.sizeChip, packageSize === size && styles.sizeChipActive]}
+                    onPress={() => setPackageSize(size)}
+                  >
+                    <Text style={styles.sizeIcon}>
+                      {size === 'small' ? '📬' : size === 'medium' ? '📦' : '🗳️'}
+                    </Text>
+                    <Text style={[styles.sizeText, packageSize === size && styles.sizeTextActive]}>
+                      {t(`newRequest.size_${size}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
+
           <Text style={styles.label}>{t('newRequest.photosOptional')}</Text>
           <View style={styles.imageRow}>
             {images.map((uri, i) => (
@@ -377,6 +442,9 @@ export default function NewRequestScreen() {
             <Row label={t('newRequest.summaryService')} value={selectedCat ? getCatName(selectedCat) : ''} isRTL={ta === 'right'} />
             <Row label={t('newRequest.summaryTitle')}   value={title}        isRTL={ta === 'right'} />
             <Row label={t('newRequest.summaryCity')}    value={t(`cities.${city}`, city)} isRTL={ta === 'right'} />
+            {isCourier && pickupAddress  && <Row label={t('newRequest.pickupAddress')}  value={pickupAddress}  isRTL={ta === 'right'} />}
+            {isCourier && dropoffAddress && <Row label={t('newRequest.dropoffAddress')} value={dropoffAddress} isRTL={ta === 'right'} />}
+            {isCourier && packageSize    && <Row label={t('newRequest.packageSize')}    value={t(`newRequest.size_${packageSize}`)} isRTL={ta === 'right'} />}
             <Row label={t('newRequest.summaryDesc')}    value={description}  isRTL={ta === 'right'} multiline />
             {images.length > 0 && (
               <Row label={t('newRequest.photos')} value={t('newRequest.summaryPhotos', { count: images.length })} isRTL={ta === 'right'} />
@@ -473,6 +541,13 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
     btnDisabled:{ backgroundColor: colors.border },
     btnText:    { fontSize: 17, fontWeight: '700', color: colors.bg },
+
+    sizeRow:         { flexDirection: 'row', gap: 10, marginBottom: 4 },
+    sizeChip:        { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 4 },
+    sizeChipActive:  { borderColor: colors.accent, backgroundColor: colors.accentDim },
+    sizeIcon:        { fontSize: 22 },
+    sizeText:        { fontSize: 12, color: colors.textSecondary, textAlign: 'center' },
+    sizeTextActive:  { color: colors.accent, fontWeight: '700' },
 
     suggestBtn:     { marginTop: 20, paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border },
     suggestBtnText: { fontSize: 13, color: colors.textMuted },
