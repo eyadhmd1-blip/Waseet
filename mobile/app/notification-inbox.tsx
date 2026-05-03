@@ -77,6 +77,7 @@ export default function NotificationInboxScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore,    setHasMore]    = useState(true);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const cursorRef = useRef<string | null>(null);
 
   // ── Fetch page ──────────────────────────────────────────────
@@ -136,6 +137,7 @@ export default function NotificationInboxScreen() {
 
   // ── Tap notification ────────────────────────────────────────
   const onTap = useCallback(async (item: NotifRow) => {
+    // Mark as read
     if (!item.is_read) {
       setItems(prev => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
       const { data: { session } } = await supabase.auth.getSession();
@@ -146,15 +148,34 @@ export default function NotificationInboxScreen() {
         });
       }
     }
-    const data = {
+
+    const routeData = {
       screen:      item.screen      ?? undefined,
       job_id:      (item.metadata?.job_id      as string) ?? undefined,
       provider_id: (item.metadata?.provider_id as string) ?? undefined,
       notif_id:    (item.metadata?.notif_id    as string) ?? undefined,
       request_id:  (item.metadata?.request_id  as string) ?? undefined,
     };
-    handleNotifTap(data, router);
-  }, [router]);
+
+    const isLong = (item.body?.length ?? 0) > 60 || item.title.length > 60;
+    const isExpanded = expandedIds.has(item.id);
+
+    if (isLong && !isExpanded) {
+      // First tap on a long notification: expand to show full text
+      setExpandedIds(prev => new Set(prev).add(item.id));
+    } else {
+      // Already expanded or short: navigate (if actionable), else collapse
+      if (item.screen) {
+        handleNotifTap(routeData, router);
+      } else {
+        setExpandedIds(prev => {
+          const next = new Set(prev);
+          next.delete(item.id);
+          return next;
+        });
+      }
+    }
+  }, [router, expandedIds]);
 
   // ── Mark all read ───────────────────────────────────────────
   const markAllRead = useCallback(async () => {
@@ -165,31 +186,43 @@ export default function NotificationInboxScreen() {
   }, []);
 
   // ── Render item ─────────────────────────────────────────────
-  const renderItem = useCallback(({ item }: { item: NotifRow }) => (
-    <TouchableOpacity
-      style={[st.card, !item.is_read && st.cardUnread]}
-      onPress={() => onTap(item)}
-      activeOpacity={0.75}
-    >
-      <View style={st.cardLeft}>
-        <Text style={st.icon}>{notifIcon(item.type)}</Text>
-      </View>
-      <View style={st.cardBody}>
-        <View style={st.cardTop}>
-          <Text style={st.title} numberOfLines={2}>
-            {item.title}
-          </Text>
-          <Text style={st.time}>{relativeTime(item.created_at, locale)}</Text>
+  const renderItem = useCallback(({ item }: { item: NotifRow }) => {
+    const expanded = expandedIds.has(item.id);
+    const isLong   = (item.body?.length ?? 0) > 60 || item.title.length > 60;
+    const showHint = isLong && !expanded;
+
+    return (
+      <TouchableOpacity
+        style={[st.card, !item.is_read && st.cardUnread, expanded && st.cardExpanded]}
+        onPress={() => onTap(item)}
+        activeOpacity={0.75}
+      >
+        <View style={st.cardLeft}>
+          <Text style={st.icon}>{notifIcon(item.type)}</Text>
         </View>
-        {!!item.body && (
-          <Text style={st.body} numberOfLines={2}>
-            {item.body}
-          </Text>
-        )}
-      </View>
-      {!item.is_read && <View style={st.unreadDot} />}
-    </TouchableOpacity>
-  ), [st, locale, onTap]);
+        <View style={st.cardBody}>
+          <View style={st.cardTop}>
+            <Text style={st.title} numberOfLines={expanded ? undefined : 2}>
+              {item.title}
+            </Text>
+            <Text style={st.time}>{relativeTime(item.created_at, locale)}</Text>
+          </View>
+          {!!item.body && (
+            <Text style={st.body} numberOfLines={expanded ? undefined : 2}>
+              {item.body}
+            </Text>
+          )}
+          {showHint && (
+            <Text style={st.expandHint}>اضغط للقراءة كاملاً ▾</Text>
+          )}
+          {expanded && !item.screen && (
+            <Text style={st.expandHint}>اضغط للإغلاق ▴</Text>
+          )}
+        </View>
+        {!item.is_read && <View style={st.unreadDot} />}
+      </TouchableOpacity>
+    );
+  }, [st, locale, onTap, expandedIds]);
 
   const unreadCount = useMemo(() => items.filter(n => !n.is_read).length, [items]);
 
@@ -286,7 +319,9 @@ function createSt(colors: AppColors, isRTL: boolean) {
     cardTop:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
     title:    { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textPrimary, lineHeight: 20, textAlign: ta },
     time:     { fontSize: 11, color: colors.textMuted, flexShrink: 0 },
-    body:     { fontSize: 13, color: colors.textSecondary, lineHeight: 18, textAlign: ta },
+    body:        { fontSize: 13, color: colors.textSecondary, lineHeight: 18, textAlign: ta },
+    cardExpanded: { borderColor: colors.accent + '88' },
+    expandHint:  { fontSize: 11, color: colors.accent, marginTop: 6, textAlign: ta },
 
     unreadDot: {
       position:        'absolute',
