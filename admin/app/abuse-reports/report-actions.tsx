@@ -1,12 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+import { updateReportStatus, suspendUser, unsuspendUser } from './actions';
 
 // ── Report status actions ─────────────────────────────────────
 
@@ -27,18 +22,10 @@ export function ReportActions({
   const [notes, setNotes]         = useState('');
   const [showNotes, setShowNotes] = useState(false);
 
-  const updateStatus = async (newStatus: string) => {
+  const handleStatus = async (newStatus: string) => {
     setLoading(newStatus);
-    await supabase
-      .from('reports')
-      .update({
-        status:      newStatus,
-        admin_notes: notes.trim() || null,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq('id', reportId);
+    await updateReportStatus(reportId, newStatus, notes);
     setLoading(null);
-    window.location.reload();
   };
 
   return (
@@ -62,7 +49,7 @@ export function ReportActions({
         </button>
         {currentStatus === 'pending' && (
           <button
-            onClick={() => updateStatus('reviewed')}
+            onClick={() => handleStatus('reviewed')}
             disabled={!!loading}
             className="text-xs px-3 py-1.5 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/30 hover:bg-sky-500/25 transition-colors disabled:opacity-50"
           >
@@ -70,21 +57,20 @@ export function ReportActions({
           </button>
         )}
         <button
-          onClick={() => updateStatus('resolved')}
+          onClick={() => handleStatus('resolved')}
           disabled={!!loading}
           className="text-xs px-3 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors disabled:opacity-50"
         >
           {loading === 'resolved' ? '...' : 'تم الحل ✓'}
         </button>
         <button
-          onClick={() => updateStatus('dismissed')}
+          onClick={() => handleStatus('dismissed')}
           disabled={!!loading}
           className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-500 border border-slate-700 hover:bg-slate-700 transition-colors disabled:opacity-50"
         >
           {loading === 'dismissed' ? '...' : 'رفض البلاغ'}
         </button>
 
-        {/* Inline suspend shortcut */}
         {reportedUserId && (
           <SuspendActions
             userId={reportedUserId}
@@ -115,7 +101,7 @@ export function SuspendActions({
   const [showReason, setShowReason] = useState(false);
   const [reason, setReason]         = useState('');
 
-  const suspend = async () => {
+  const handleSuspend = async () => {
     if (!reason.trim() && !isSuspended) {
       setShowReason(true);
       return;
@@ -128,20 +114,19 @@ export function SuspendActions({
 
     setLoading(true);
     if (isSuspended) {
-      await supabase.rpc('unsuspend_user', { p_user_id: userId });
+      await unsuspendUser(userId);
     } else {
-      await supabase.rpc('suspend_user', { p_user_id: userId, p_reason: reason.trim() || null });
+      await suspendUser(userId, reason);
     }
     setLoading(false);
     setShowReason(false);
     setReason('');
-    window.location.reload();
   };
 
   if (compact) {
     return (
       <button
-        onClick={suspend}
+        onClick={handleSuspend}
         disabled={loading}
         className={`text-xs px-3 py-1.5 rounded-lg border transition-colors disabled:opacity-50 ${
           isSuspended
@@ -164,12 +149,15 @@ export function SuspendActions({
           placeholder="سبب الإيقاف..."
           value={reason}
           onChange={e => setReason(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') suspend(); if (e.key === 'Escape') setShowReason(false); }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') handleSuspend();
+            if (e.key === 'Escape') setShowReason(false);
+          }}
           dir="rtl"
         />
       )}
       <button
-        onClick={suspend}
+        onClick={handleSuspend}
         disabled={loading}
         className={`text-xs px-4 py-2 rounded-xl border font-medium transition-colors disabled:opacity-50 ${
           isSuspended

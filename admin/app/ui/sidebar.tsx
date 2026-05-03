@@ -24,6 +24,7 @@ const NAV_GROUPS = [
     items: [
       { href: '/requests',  label: 'الطلبات',        icon: '📋' },
       { href: '/contracts', label: 'عقود دورية',     icon: '🔄' },
+      { href: '/support',   label: 'الدعم والمدفوعات', icon: '💳' },
     ],
   },
   {
