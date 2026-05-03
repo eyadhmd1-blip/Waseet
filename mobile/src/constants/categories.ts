@@ -33,8 +33,9 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     name_ar: 'تنظيف ونقل',
     name_en: 'Cleaning & Moving',
     categories: [
-      { id: '', slug: 'cleaning', name_ar: 'تنظيف منزلي',       name_en: 'Home Cleaning',     group_slug: 'cleaning', group_ar: 'تنظيف ونقل', group_en: 'Cleaning & Moving', icon: 'sparkles', sort_order: 15, is_active: true },
-      { id: '', slug: 'moving',   name_ar: 'نقل عفش وتوصيل',    name_en: 'Moving & Delivery', group_slug: 'cleaning', group_ar: 'تنظيف ونقل', group_en: 'Cleaning & Moving', icon: 'truck',    sort_order: 16, is_active: true },
+      { id: '', slug: 'cleaning', name_ar: 'تنظيف منزلي',         name_en: 'Home Cleaning',              group_slug: 'cleaning', group_ar: 'تنظيف ونقل', group_en: 'Cleaning & Moving', icon: 'sparkles', sort_order: 15, is_active: true },
+      { id: '', slug: 'moving',   name_ar: 'نقل عفش وتوصيل',    name_en: 'Moving & Delivery',          group_slug: 'cleaning', group_ar: 'تنظيف ونقل', group_en: 'Cleaning & Moving', icon: 'truck',    sort_order: 16, is_active: true },
+      { id: '', slug: 'courier',  name_ar: 'توصيل طرود وبضائع', name_en: 'Parcel & Goods Delivery',    group_slug: 'cleaning', group_ar: 'تنظيف ونقل', group_en: 'Cleaning & Moving', icon: 'package',  sort_order: 17, is_active: true },
     ],
   },
 
@@ -165,6 +166,7 @@ export const ICON_MAP: Record<string, string> = {
   // تنظيف ونقل
   sparkles:       '✨',  // تنظيف منزلي
   truck:          '🚚',  // نقل عفش وتوصيل
+  package:        '📦',  // توصيل طرود وبضائع
   // الخدمات الفنية
   wifi:           '📡',  // شبكات وإنترنت
   cctv:           '📹',  // كاميرات مراقبة
@@ -227,6 +229,7 @@ export const CATEGORY_PLACEHOLDERS: Record<string, { title_ar: string; title_en:
   glass:               { title_ar: 'مثال: استبدال زجاج نافذة مكسورة',           title_en: 'e.g. Replace broken window glass',                   desc_ar: 'أذكر القياسات ونوع الزجاج المطلوب',                             desc_en: 'Mention dimensions and type of glass required' },
   cleaning:            { title_ar: 'مثال: تنظيف عميق لشقة بعد فترة سفر',       title_en: 'e.g. Deep cleaning after a long trip',               desc_ar: 'حدد عدد الغرف والمساحة والخدمات المطلوبة',                     desc_en: 'Specify number of rooms, area, and required services' },
   moving:              { title_ar: 'مثال: نقل أثاث من عمان إلى إربد',           title_en: 'e.g. Moving furniture from Amman to Irbid',          desc_ar: 'أذكر العنوانين وعدد القطع الكبيرة والطابق',                     desc_en: 'Mention both addresses, number of large items, and floor' },
+  courier:             { title_ar: 'مثال: توصيل طرد من الزرقاء إلى عمان',       title_en: 'e.g. Deliver a parcel from Zarqa to Amman',          desc_ar: 'صِف محتوى الطرد ووزنه التقريبي وأي تعليمات خاصة',              desc_en: 'Describe the parcel contents, approximate weight, and any special instructions' },
   networking:          { title_ar: 'مثال: تمديد شبكة إنترنت بالأسلاك للشقة',   title_en: 'e.g. Wired internet network for apartment',          desc_ar: 'حدد عدد الأجهزة والغرف وسرعة الإنترنت المطلوبة',                desc_en: 'Specify number of devices, rooms, and required internet speed' },
   cctv:                { title_ar: 'مثال: تركيب 4 كاميرات مراقبة',              title_en: 'e.g. Install 4 surveillance cameras',               desc_ar: 'حدد عدد الكاميرات والمواقع وهل تريد تسجيلاً',                  desc_en: 'Specify number of cameras, locations, and recording needs' },
   solar:               { title_ar: 'مثال: نظام طاقة شمسية 5 كيلوواط',           title_en: 'e.g. 5 kW solar energy system',                     desc_ar: 'أذكر استهلاكك الشهري من الكهرباء ونوع الاستخدام',               desc_en: 'Mention your monthly electricity consumption and usage type' },

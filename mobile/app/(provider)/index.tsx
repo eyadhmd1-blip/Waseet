@@ -476,6 +476,19 @@ function RequestCard({
         {/* Title */}
         <Text style={styles.cardTitle}>{item.title}</Text>
 
+        {/* Courier route — pickup → dropoff */}
+        {item.category_slug === 'courier' && (item as any).pickup_address && (
+          <View style={styles.courierRoute}>
+            <Text style={styles.courierRouteText} numberOfLines={1}>
+              📍 {(item as any).pickup_address}
+            </Text>
+            <Text style={styles.courierArrow}>↓</Text>
+            <Text style={styles.courierRouteText} numberOfLines={1}>
+              📌 {(item as any).dropoff_address}
+            </Text>
+          </View>
+        )}
+
         {/* Description — obscured if locked */}
         {isLocked ? (
           <View style={styles.blurContainer}>
@@ -1837,8 +1850,11 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   cardTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   cardCat:    { fontSize: 12, color: colors.textMuted },
   cardTime:   { fontSize: 12, color: colors.textMuted },
-  cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 8 },
-  cardDesc:   { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', lineHeight: 20, marginBottom: 12 },
+  cardTitle:       { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 8 },
+  cardDesc:        { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', lineHeight: 20, marginBottom: 12 },
+  courierRoute:    { backgroundColor: colors.accentDim, borderRadius: 10, padding: 10, marginBottom: 10, gap: 2, borderWidth: 1, borderColor: colors.accent + '33' },
+  courierRouteText:{ fontSize: 12, color: colors.textPrimary, fontWeight: '600' },
+  courierArrow:    { fontSize: 11, color: colors.textMuted, marginStart: 4 },
 
   blurContainer: { marginBottom: 12, position: 'relative' },
   blurText:      { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', lineHeight: 20 },
