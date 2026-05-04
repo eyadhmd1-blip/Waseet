@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         title:    "طلبك لم يصله أي عرض بعد",
         body:     `${row.request_title} — اضغط لإعادة النشر أو تعديل الميزانية`,
         sound:    "default",
-        priority: "normal",
+        priority: "high",
         data: {
           screen:     "my_requests",
           request_id: row.request_id,

@@ -65,6 +65,25 @@ Notifications.setNotificationHandler({
   }),
 });
 
+// Android requires channels to be created before notifications can play sound.
+// Must run before any notification is received.
+if (Platform.OS === 'android') {
+  Notifications.setNotificationChannelAsync('default', {
+    name:        'الإشعارات العامة',
+    importance:  Notifications.AndroidImportance.MAX,
+    sound:       'default',
+    vibrationPattern: [0, 250, 250, 250],
+    lightColor:  '#C9A84C',
+  });
+  Notifications.setNotificationChannelAsync('urgent', {
+    name:        'الطلبات الطارئة',
+    importance:  Notifications.AndroidImportance.MAX,
+    sound:       'default',
+    vibrationPattern: [0, 100, 100, 100, 100, 100],
+    lightColor:  '#EF4444',
+  });
+}
+
 // ── Register push token ───────────────────────────────────────
 
 async function registerPushToken(userId: string) {

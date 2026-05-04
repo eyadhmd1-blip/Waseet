@@ -118,7 +118,7 @@ Deno.serve(async (req) => {
       title,
       body,
       sound:     "default",
-      priority:  "normal",
+      priority:  "high",
       data: {
         screen:     "new-request",
         request_id,
