@@ -1,6 +1,6 @@
 import 'intl-pluralrules';   // polyfill — must be first import
-import { Component, useEffect, useState, useRef } from 'react';
-import { Platform, View, Text, StatusBar, TouchableOpacity } from 'react-native';
+import { Component, useEffect, useState, useRef, useCallback } from 'react';
+import { Platform, View, Text, StatusBar, TouchableOpacity, AppState } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
@@ -182,35 +182,66 @@ function RootLayoutInner() {
     return () => notifListenerRef.current?.remove();
   }, []);
 
+  // ── Resolve role from a valid session ────────────────────────
+  const resolveRole = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from('users')
+      .select('role, phone_verified')
+      .eq('id', userId)
+      .single();
+
+    if (!data) {
+      setRole('onboarding' as any);
+    } else if (!data.phone_verified) {
+      setRole('unverified' as any);
+    } else {
+      setRole(data.role);
+    }
+    registerPushToken(userId);
+  }, []);
+
   // ── Auth state management ─────────────────────────────────────
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) {
-        setRole(null);
-      } else {
-        const { data } = await supabase
-          .from('users')
-          .select('role, phone_verified')
-          .eq('id', session.user.id)
-          .single();
-
-        if (!data) {
-          // No users row yet — new user in onboarding
-          setRole('onboarding' as any);
-        } else if (!data.phone_verified) {
-          // Phone not yet verified — route to verification gate
-          setRole('unverified' as any);
-        } else {
-          setRole(data.role);
-        }
-        registerPushToken(session.user.id);
+        // Only sign the user out on an explicit SIGNED_OUT event.
+        // INITIAL_SESSION with null means the token is expired and a
+        // refresh is in progress — setting role=null here would flash
+        // the auth screen before TOKEN_REFRESHED arrives.
+        if (event === 'SIGNED_OUT') setRole(null);
+        return;
       }
-      // NOTE: SplashScreen is hidden in the route guard below,
-      // AFTER navigation is decided — prevents flash of wrong screen.
+      resolveRole(session.user.id);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [resolveRole]);
+
+  // ── Restart auto-refresh + recover role on foreground ─────────
+  // When battery-optimization kills the background process and the
+  // user re-opens the app, the token refresh may not have run.
+  // We call startAutoRefresh() and re-check the session so the role
+  // is restored without showing the auth screen.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (nextState) => {
+      if (nextState === 'active') {
+        supabase.auth.startAutoRefresh();
+        // If role was wiped by a spurious null session event, restore it
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setRole(prev => {
+            if (prev === null || prev === undefined) {
+              resolveRole(session.user.id);
+            }
+            return prev;
+          });
+        }
+      } else {
+        supabase.auth.stopAutoRefresh();
+      }
+    });
+    return () => sub.remove();
+  }, [resolveRole]);
 
   // ── Hide splash only after both auth + i18n are ready ────────
   useEffect(() => {
