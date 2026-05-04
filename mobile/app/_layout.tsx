@@ -352,6 +352,7 @@ function RootLayoutInner() {
         <Stack.Screen name="support-tickets"         />
         <Stack.Screen name="support-thread"          />
         <Stack.Screen name="verify-phone"            />
+        <Stack.Screen name="p/[username]"            />
       </Stack>
     </I18nextProvider>
     </SafeAreaProvider>
