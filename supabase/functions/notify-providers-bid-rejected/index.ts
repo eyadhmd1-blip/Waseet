@@ -68,7 +68,7 @@ function buildMessage(
     title,
     body,
     sound:     "default",
-    priority:  "normal",
+    priority:  "high",
     data: {
       screen:      "provider_feed",   // opens feed, not generic home
       notif_id:    `bid_rejected_${providerId}`,

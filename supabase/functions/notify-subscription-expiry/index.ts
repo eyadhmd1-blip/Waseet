@@ -144,7 +144,7 @@ serve(async () => {
         title:     q.title,
         body:      q.body,
         sound:     "default",
-        priority:  "normal",
+        priority:  "high",
         data:      q.data,
         channelId: "default",
       }));

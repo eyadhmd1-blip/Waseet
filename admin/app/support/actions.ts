@@ -17,7 +17,7 @@ async function sendPushToUser(userId: string, title: string, body: string, data?
   await fetch(EXPO_PUSH_URL, {
     method:  'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body:    JSON.stringify([{ to: tokenRow.token, title, body, sound: 'default', channelId: 'default', data }]),
+    body:    JSON.stringify([{ to: tokenRow.token, title, body, sound: 'default', priority: 'high', channelId: 'default', data }]),
   });
 }
 

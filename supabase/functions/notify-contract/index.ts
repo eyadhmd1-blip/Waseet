@@ -46,7 +46,7 @@ serve(async (req) => {
       body:     `${contract?.title ?? 'عقد خدمة دورية'} — ${city}`,
       data:     { screen: 'contract_feed', contract_id },
       sound:    'default',
-      priority: 'normal',
+      priority: 'high',
     }));
 
     let sent = 0;
