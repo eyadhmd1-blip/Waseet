@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from './app/login/actions';
 
 const COOKIE_NAME  = 'waseet_admin_session';
-const PUBLIC_PATHS = ['/login', '/_next', '/favicon.ico'];
+const PUBLIC_PATHS = ['/login', '/_next', '/favicon.ico', '/p/', '/.well-known/'];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
