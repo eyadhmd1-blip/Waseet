@@ -180,8 +180,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
       fontSize:      18,
       paddingVertical: 16,
       letterSpacing: 2,
-      // Numbers type right-to-left in Arabic context: right-aligned
-      textAlign:     ta,
+      textAlign:     'left',
     },
 
     btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
