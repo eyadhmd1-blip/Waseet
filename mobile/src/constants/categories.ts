@@ -275,9 +275,9 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 // Credit cost per bid type
 export const CREDIT_COST = { normal: 1, urgent: 2, contract: 3 } as const;
 
-// Renewal discount by reputation tier (%)
-export const REP_DISCOUNT: Record<string, number> = {
-  new: 0, rising: 2, trusted: 5, expert: 8, elite: 12,
+// Bid credits awarded on reputation tier upgrade
+export const TIER_UPGRADE_CREDITS: Record<string, number> = {
+  new: 0, rising: 5, trusted: 10, expert: 15, elite: 25,
 };
 
 // ─── Reputation Tier Meta ────────────────────────────────────

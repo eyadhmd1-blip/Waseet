@@ -35,10 +35,6 @@ const TIER_PRICE_JOD: Record<string, number> = {
   premium: 22,
 };
 
-// Reputation tier discount (%)
-const REP_DISCOUNT: Record<string, number> = {
-  new: 0, rising: 2, trusted: 5, expert: 8, elite: 12,
-};
 
 async function verifyPaddleSignature(
   req: Request,
@@ -131,22 +127,17 @@ Deno.serve(async (req) => {
           break;
         }
 
-        // Load provider for discount computation
+        // Load provider to check trial eligibility
         const { data: providerRow } = await supabaseAdmin
           .from("providers")
-          .select("loyalty_discount, win_discount_pct, reputation_tier, trial_used")
+          .select("trial_used")
           .eq("id", providerId)
           .single();
 
         // Block trial re-use
         if (tier === "trial" && providerRow?.trial_used) break;
 
-        const loyaltyDisc  = providerRow?.loyalty_discount ?? 0;
-        const winDisc      = providerRow?.win_discount_pct ?? 0;
-        const repDisc      = REP_DISCOUNT[providerRow?.reputation_tier ?? "new"] ?? 0;
-        const totalDisc    = Math.min(loyaltyDisc + winDisc + repDisc, 40);
-        const basePrice    = TIER_PRICE_JOD[tier] ?? 5;
-        const amountPaid   = +(basePrice * (1 - totalDisc / 100)).toFixed(2);
+        const amountPaid = TIER_PRICE_JOD[tier] ?? 5;
 
         // Activate subscription via RPC (handles credits, trial_used, discount resets)
         await supabaseAdmin.rpc("activate_provider_subscription", {
@@ -161,7 +152,7 @@ Deno.serve(async (req) => {
           tier,
           amount_paid:   amountPaid,
           currency:      "JOD",
-          discount_pct:  totalDisc,
+          discount_pct:  0,
           period_start:  new Date().toISOString(),
           period_end:    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           paddle_txn_id: data.id,

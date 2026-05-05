@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
-import { SUBSCRIPTION_PLANS, REP_DISCOUNT } from '../src/constants/categories';
+import { SUBSCRIPTION_PLANS } from '../src/constants/categories';
 import type { Provider, User } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
@@ -99,13 +99,11 @@ function createFeatureStyles(colors: AppColors) {
 function PlanCard({
   plan,
   selected,
-  discount,
   anim,
   onSelect,
 }: {
   plan: typeof SUBSCRIPTION_PLANS[0];
   selected: boolean;
-  discount: number;
   anim: Animated.Value;
   onSelect: () => void;
 }) {
@@ -114,7 +112,6 @@ function PlanCard({
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const accentColor = PLAN_COLORS[plan.tier];
   const features    = PLAN_FEATURE_KEYS[plan.tier] ?? [];
-  const finalPrice  = plan.is_trial ? 0 : +(plan.price_jod * (1 - discount / 100)).toFixed(2);
   const popular     = PLAN_POPULAR[plan.tier];
   const planName    = lang === 'ar' ? plan.name_ar : (plan.name_en ?? plan.name_ar);
 
@@ -154,11 +151,8 @@ function PlanCard({
           <View style={styles.planLeft}>
             {/* Price */}
             <View style={styles.priceRow}>
-              {!plan.is_trial && discount > 0 && (
-                <Text style={styles.originalPrice}>{plan.price_jod} {t('common.jod')}</Text>
-              )}
               <Text style={[styles.price, { color: selected ? accentColor : colors.textPrimary }]}>
-                {plan.is_trial ? t('subscribe.trialBadge') : `${finalPrice} ${t('common.jod')}`}
+                {plan.is_trial ? t('subscribe.trialBadge') : `${plan.price_jod} ${t('common.jod')}`}
               </Text>
               {!plan.is_trial && <Text style={styles.pricePer}>{t('subscribe.perMonth')}</Text>}
             </View>
@@ -170,11 +164,6 @@ function PlanCard({
             </Text>
             {plan.is_unlimited && (
               <Text style={styles.unlimitedNote}>{t('subscribe.unlimitedNote')}</Text>
-            )}
-            {!plan.is_trial && discount > 0 && (
-              <View style={styles.discountTag}>
-                <Text style={styles.discountTagText}>{t('subscribe.discountLabel', { pct: discount })}</Text>
-              </View>
             )}
           </View>
 
@@ -205,33 +194,6 @@ function PlanCard({
           ))}
         </View>
       </TouchableOpacity>
-    </Animated.View>
-  );
-}
-
-// ─── Savings Banner ───────────────────────────────────────────
-function SavingsBanner({ discount, plan }: { discount: number; plan: typeof SUBSCRIPTION_PLANS[0] }) {
-  const { colors } = useTheme();
-  const { t, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
-  const pulseOp = useRef(new Animated.Value(0.7)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseOp, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(pulseOp, { toValue: 0.7, duration: 900, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
-  const saving = +(plan.price_jod * discount / 100).toFixed(2);
-
-  return (
-    <Animated.View style={[styles.savingsBanner, { opacity: pulseOp }]}>
-      <Text style={styles.savingsIcon}>🎁</Text>
-      <Text style={styles.savingsText}>
-        {t('subscribe.savingsText', { pct: discount, saving })}
-      </Text>
     </Animated.View>
   );
 }
@@ -331,7 +293,7 @@ export default function SubscribeScreen() {
 
       const plan        = SUBSCRIPTION_PLANS.find(p => p.tier === selectedTier)!;
       const planName    = lang === 'ar' ? plan.name_ar : (plan.name_en ?? plan.name_ar);
-      const amountFixed = +(plan.price_jod * (1 - discount / 100)).toFixed(2);
+      const amountFixed = plan.price_jod;
       const subject     = `شحن رصيد — باقة ${planName} (${amountFixed} د.أ)`;
 
       const { data: ticket, error: ticketErr } = await supabase
@@ -372,14 +334,7 @@ export default function SubscribeScreen() {
     return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
 
-  const repDiscount    = REP_DISCOUNT[provider?.reputation_tier ?? 'new'] ?? 0;
-  const discount       = Math.min(
-    (provider?.loyalty_discount ?? 0) + (provider?.win_discount_pct ?? 0) + repDiscount,
-    40
-  );
-  const winDisc        = provider?.win_discount_pct ?? 0;
   const selectedPlan   = SUBSCRIPTION_PLANS.find(p => p.tier === selectedTier)!;
-  const finalPrice     = selectedPlan?.is_trial ? 0 : +(selectedPlan.price_jod * (1 - discount / 100)).toFixed(2);
   const accentColor    = PLAN_COLORS[selectedTier];
   const selectedPlanName = lang === 'ar' ? selectedPlan.name_ar : (selectedPlan.name_en ?? selectedPlan.name_ar);
   const visiblePlans   = SUBSCRIPTION_PLANS.filter(p => !(p.is_trial && provider?.trial_used));
@@ -404,22 +359,6 @@ export default function SubscribeScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* ── Savings banner (only if discount > 0) ── */}
-        {discount > 0 && (
-          <Animated.View style={{ opacity: headerOp }}>
-            <SavingsBanner discount={discount} plan={selectedPlan} />
-          </Animated.View>
-        )}
-
-        {/* ── Discount breakdown banner ── */}
-        {(winDisc > 0 || repDiscount > 0) && (
-          <Animated.View style={[styles.discountBreakdownBanner, { opacity: headerOp }]}>
-            <Text style={styles.discountBreakdownText}>
-              {t('subscribe.discountBreakdown', { win: winDisc, rep: repDiscount, total: Math.min(winDisc + repDiscount + (provider?.loyalty_discount ?? 0), 40) })}
-            </Text>
-          </Animated.View>
-        )}
-
         {/* ── Plan cards ── */}
         <Animated.View style={{ opacity: cardsOp, transform: [{ translateY: cardsY }] }}>
           {visiblePlans.map(plan => (
@@ -427,7 +366,6 @@ export default function SubscribeScreen() {
               key={plan.tier}
               plan={plan}
               selected={selectedTier === plan.tier}
-              discount={plan.is_trial ? 0 : discount}
               anim={planAnims[plan.tier] ?? new Animated.Value(plan.tier === selectedTier ? 1 : 0)}
               onSelect={() => selectPlan(plan.tier)}
             />
@@ -477,11 +415,8 @@ export default function SubscribeScreen() {
         <View style={styles.orderSummary}>
           <Text style={styles.orderLabel}>{t('subscribe.orderLabel')}</Text>
           <View style={styles.orderPriceRow}>
-            {!selectedPlan?.is_trial && discount > 0 && (
-              <Text style={styles.orderOriginal}>{selectedPlan.price_jod} {t('common.jod')}</Text>
-            )}
             <Text style={[styles.orderPrice, { color: accentColor }]}>
-              {selectedPlan?.is_trial ? t('subscribe.trialBadge') : `${finalPrice} ${t('common.jod')}`}
+              {selectedPlan?.is_trial ? t('subscribe.trialBadge') : `${selectedPlan.price_jod} ${t('common.jod')}`}
             </Text>
           </View>
         </View>

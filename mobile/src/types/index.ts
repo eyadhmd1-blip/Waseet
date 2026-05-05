@@ -9,7 +9,7 @@ export type BidStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 export type JobStatus = 'active' | 'completed' | 'disputed' | 'cancelled';
 export type MsgType = 'text' | 'image' | 'video' | 'system' | 'audio' | 'location' | 'profile_card';
 export type SubscriptionTier = 'trial' | 'basic' | 'pro' | 'premium';
-export type LoyaltyEventType = 'discount_20' | 'discount_30' | 'free_month' | 'elite_status';
+export type LoyaltyEventType = 'credits_job' | 'credits_tier' | 'credits_milestone' | 'credits_five_star';
 
 // ─── Service Categories ──────────────────────────────────────
 
@@ -60,14 +60,11 @@ export interface Provider {
   subscription_tier?: SubscriptionTier;
   subscription_ends?: string;
   badge_verified: boolean;
-  loyalty_discount: number;
-  free_months_earned: number;
   portfolio_urls: string[];
-  // bid credits (migration 019)
+  // bid credits
   bid_credits: number;
   trial_used: boolean;
   bid_rejection_rate: number;
-  win_discount_pct: number;
   // availability
   is_available?: boolean;
   urgent_enabled?: boolean;
