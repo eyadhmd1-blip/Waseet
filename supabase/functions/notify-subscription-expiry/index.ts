@@ -44,22 +44,22 @@ serve(async () => {
       .gte("subscription_ends", now.toISOString())
       .lte("subscription_ends", in1Day.toISOString());
 
-    // ── 3. Low credits (1–3, not premium) ────────────────────
+    // ── 3. Low subscription credits (1–3, not premium) ──────────
     const { data: lowCredits } = await admin
       .from("providers")
       .select("id")
       .eq("is_subscribed", true)
       .neq("subscription_tier", "premium")
-      .gte("bid_credits", 1)
-      .lte("bid_credits", 3);
+      .gte("subscription_credits", 1)
+      .lte("subscription_credits", 3);
 
-    // ── 4. Zero credits (not premium) ────────────────────────────
+    // ── 4. Zero subscription credits (not premium) ───────────────
     const { data: noCredits } = await admin
       .from("providers")
-      .select("id")
+      .select("id, bonus_credits")
       .eq("is_subscribed", true)
       .neq("subscription_tier", "premium")
-      .eq("bid_credits", 0);
+      .eq("subscription_credits", 0);
 
     // ── 5. Trial ended (not subscribed, trial was used) ──────────
     const { data: trialEnded } = await admin
@@ -106,10 +106,13 @@ serve(async () => {
     }
 
     for (const p of noCredits ?? []) {
+      const bonusMsg = (p.bonus_credits ?? 0) > 0
+        ? ` — ${p.bonus_credits} رصيد مكافأة بانتظارك 🏆`
+        : "";
       queue.push({
         provider_id: p.id,
-        title: "🔴 نفد رصيدك",
-        body:  "لا يمكنك تقديم عروض الآن — جدّد اشتراكك للاستمرار",
+        title: "🔴 نفد رصيد اشتراكك",
+        body:  `لا يمكنك تقديم عروض الآن — جدّد للاستمرار${bonusMsg}`,
         data:  { screen: "subscribe" },
       });
     }
