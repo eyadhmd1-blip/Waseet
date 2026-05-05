@@ -160,7 +160,7 @@ function PlanCard({
             <Text style={[styles.creditsHint, { color: accentColor }]}>
               {plan.is_unlimited
                 ? t('subscribe.unlimitedCredits')
-                : t('subscribe.creditsLabel', { count: plan.bid_credits })}
+                : t('subscribe.creditsLabel', { count: plan.subscription_credits })}
             </Text>
             {plan.is_unlimited && (
               <Text style={styles.unlimitedNote}>{t('subscribe.unlimitedNote')}</Text>

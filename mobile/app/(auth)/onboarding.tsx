@@ -345,7 +345,7 @@ function Step4Plan({
                   <Text style={styles.planCredits}>
                     {plan.is_unlimited
                       ? t('subscribe.unlimitedCredits')
-                      : t('subscribe.creditsLabel', { count: plan.bid_credits })}
+                      : t('subscribe.creditsLabel', { count: plan.subscription_credits })}
                   </Text>
                 </View>
                 <View style={styles.planRight}>
@@ -517,7 +517,7 @@ export default function OnboardingScreen() {
         if (finalPlan === 'trial') {
           providerPayload.is_subscribed     = true;
           providerPayload.subscription_tier = 'trial';
-          providerPayload.bid_credits       = 10;
+          providerPayload.subscription_credits = 10;
           providerPayload.trial_used        = true;
           providerPayload.subscription_ends = new Date(
             Date.now() + 30 * 24 * 60 * 60 * 1000

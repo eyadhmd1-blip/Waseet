@@ -61,8 +61,9 @@ export interface Provider {
   subscription_ends?: string;
   badge_verified: boolean;
   portfolio_urls: string[];
-  // bid credits
-  bid_credits: number;
+  // bid credits — two-wallet system
+  subscription_credits: number;  // replaced each renewal cycle
+  bonus_credits: number;         // accumulates from achievements, frozen when subscription lapses
   trial_used: boolean;
   bid_rejection_rate: number;
   // availability
@@ -223,7 +224,7 @@ export interface SubscriptionPlan {
   name_ar: string;
   name_en?: string;
   price_jod: number;
-  bid_credits: number;   // -1 = unlimited
+  subscription_credits: number;  // credits awarded per plan; 0 = unlimited (premium)
   is_unlimited: boolean;
   is_trial: boolean;
 }

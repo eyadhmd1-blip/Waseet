@@ -44,7 +44,7 @@ export default function ProviderLayout() {
 
     const { data: p } = await supabase
       .from('providers')
-      .select('is_subscribed, subscription_tier, subscription_ends, bid_credits, trial_used')
+      .select('is_subscribed, subscription_tier, subscription_ends, subscription_credits, bonus_credits, trial_used')
       .eq('id', session.user.id)
       .single();
 
@@ -71,10 +71,10 @@ export default function ProviderLayout() {
       }
     }
 
-    // 3. Credits ≤ 3 (skip premium — unlimited)
-    if (p.subscription_tier !== 'premium' && (p.bid_credits ?? 0) <= 3) {
+    // 3. Subscription credits ≤ 3 (skip premium — unlimited)
+    if (p.subscription_tier !== 'premium' && (p.subscription_credits ?? 0) <= 3) {
       _alertShownThisSession = true;
-      setAlert({ kind: 'creditsLow', count: p.bid_credits ?? 0 });
+      setAlert({ kind: 'creditsLow', count: p.subscription_credits ?? 0 });
     }
   }, []);
 

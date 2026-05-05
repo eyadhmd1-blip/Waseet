@@ -1,15 +1,14 @@
 // ============================================================
 // WASEET — ProviderSubHeader
-// Sticky status bar rendered BELOW the AppHeader on provider
-// tab screens. Shows bid credit status with color coding:
+// Two-wallet credit display below AppHeader on provider screens.
 //
-//   Credits = 0        → red   (cannot bid)
-//   Credits 1–3        → amber (low warning)
-//   Credits 4+         → subtle surface (normal)
-//   tier = 'premium'   → hidden (unlimited)
-//   !isSubscribed      → red   (must subscribe)
-//
-// Tapping always navigates to subscribe screen via onUpgrade.
+// Layout per state:
+//   Not subscribed    → red bar, subscribe CTA
+//   Subscription exp  → red bar, bonus credits shown frozen 🔒
+//   Zero sub credits  → red bar + bonus credits hint
+//   Low sub (1-3)     → amber bar + bonus credits hint
+//   Normal            → surface bar: 📦 sub | 🏆 bonus
+//   Premium           → surface bar: ♾️ unlimited | 🏆 bonus → +N slots
 // ============================================================
 
 import React from 'react';
@@ -19,29 +18,53 @@ import { useLanguage } from '../hooks/useLanguage';
 import type { AppColors } from '../constants/colors';
 
 interface Props {
-  bidCredits:       number;
-  subscriptionTier: string;
-  isSubscribed:     boolean;
-  onUpgrade:        () => void;
+  subscriptionCredits: number;
+  bonusCredits:        number;
+  subscriptionTier:    string;
+  isSubscribed:        boolean;
+  subscriptionEnds?:   string;
+  onUpgrade:           () => void;
 }
 
 export function ProviderSubHeader({
-  bidCredits, subscriptionTier, isSubscribed, onUpgrade,
+  subscriptionCredits, bonusCredits, subscriptionTier,
+  isSubscribed, subscriptionEnds, onUpgrade,
 }: Props) {
   const { colors } = useTheme();
   const { lang }   = useLanguage();
   const isRTL      = lang === 'ar';
 
-  // Premium = unlimited → bar is irrelevant, hide it
-  if (subscriptionTier === 'premium') return null;
+  const isExpired = isSubscribed && subscriptionEnds
+    ? new Date(subscriptionEnds) < new Date()
+    : false;
 
-  // Not subscribed at all
+  // ── Premium ─────────────────────────────────────────────────
+  if (subscriptionTier === 'premium' && isSubscribed && !isExpired) {
+    const extraSlots = Math.floor(bonusCredits / 5);
+    const totalSlots = Math.min(5 + extraSlots, 8);
+    return (
+      <View style={[s.bar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
+        <Text style={[s.text, { color: colors.textMuted }]}>
+          {isRTL ? '♾️ غير محدود' : '♾️ Unlimited'}
+        </Text>
+        {bonusCredits > 0 && (
+          <Text style={[s.right, { color: colors.textMuted }]}>
+            {isRTL
+              ? `🏆 ${bonusCredits} مكافأة → ${totalSlots} خانات`
+              : `🏆 ${bonusCredits} bonus → ${totalSlots} slots`}
+          </Text>
+        )}
+      </View>
+    );
+  }
+
+  // ── Not subscribed ───────────────────────────────────────────
   if (!isSubscribed) {
     return (
       <Bar
         bg={colors.errorBg}
         border="rgba(239,68,68,0.3)"
-        text={isRTL ? '⚠️ غير مشترك — اشترك للبدء في تقديم العروض' : '⚠️ Not subscribed — subscribe to start bidding'}
+        text={isRTL ? '⚠️ غير مشترك — اشترك للبدء' : '⚠️ Not subscribed — subscribe to start'}
         cta={isRTL ? 'اشترك ›' : 'Subscribe ›'}
         ctaColor={colors.errorSoft}
         textColor={colors.errorSoft}
@@ -50,14 +73,22 @@ export function ProviderSubHeader({
     );
   }
 
-  // Zero credits
-  if (bidCredits === 0) {
+  // ── Subscription expired (bonus frozen) ─────────────────────
+  if (isExpired) {
     return (
       <Bar
         bg={colors.errorBg}
         border="rgba(239,68,68,0.3)"
-        text={isRTL ? '🔴 نفد رصيدك — لا يمكنك تقديم عروض الآن' : '🔴 No credits left — renew to continue bidding'}
-        cta={isRTL ? 'جدّد الآن ›' : 'Renew ›'}
+        text={
+          isRTL
+            ? bonusCredits > 0
+              ? `🔒 ${bonusCredits} رصيد مكافأة مجمَّد — جدّد للاستخدام`
+              : '⚠️ انتهى اشتراكك — جدّد الآن'
+            : bonusCredits > 0
+              ? `🔒 ${bonusCredits} bonus credits frozen — renew to unlock`
+              : '⚠️ Subscription expired — renew now'
+        }
+        cta={isRTL ? 'جدّد ›' : 'Renew ›'}
         ctaColor={colors.errorSoft}
         textColor={colors.errorSoft}
         onPress={onUpgrade}
@@ -65,13 +96,40 @@ export function ProviderSubHeader({
     );
   }
 
-  // Low credits (1–3)
-  if (bidCredits <= 3) {
+  // ── Zero subscription credits ────────────────────────────────
+  if (subscriptionCredits === 0) {
+    return (
+      <Bar
+        bg={colors.errorBg}
+        border="rgba(239,68,68,0.3)"
+        text={
+          isRTL
+            ? bonusCredits > 0
+              ? `🔴 نفد رصيد الاشتراك  •  🏆 ${bonusCredits} مكافأة متبقية`
+              : '🔴 نفد رصيد الاشتراك — جدّد الآن'
+            : bonusCredits > 0
+              ? `🔴 No subscription credits  •  🏆 ${bonusCredits} bonus left`
+              : '🔴 No subscription credits — renew now'
+        }
+        cta={isRTL ? 'جدّد ›' : 'Renew ›'}
+        ctaColor={colors.errorSoft}
+        textColor={colors.errorSoft}
+        onPress={onUpgrade}
+      />
+    );
+  }
+
+  // ── Low subscription credits (1–3) ──────────────────────────
+  if (subscriptionCredits <= 3) {
     return (
       <Bar
         bg="#78350F"
         border="rgba(245,158,11,0.3)"
-        text={isRTL ? `⚠️ تبقّى ${bidCredits} رصيد فقط` : `⚠️ Only ${bidCredits} credits left`}
+        text={
+          isRTL
+            ? `⚠️ ${subscriptionCredits} رصيد اشتراك  •  🏆 ${bonusCredits} مكافأة`
+            : `⚠️ ${subscriptionCredits} sub credits  •  🏆 ${bonusCredits} bonus`
+        }
         cta={isRTL ? 'جدّد ›' : 'Renew ›'}
         ctaColor="#FCD34D"
         textColor="#FCD34D"
@@ -80,11 +138,18 @@ export function ProviderSubHeader({
     );
   }
 
-  // Normal state (4+ credits) — informational only, no CTA
+  // ── Normal state ─────────────────────────────────────────────
   return (
     <View style={[s.bar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
       <Text style={[s.text, { color: colors.textMuted }]}>
-        {isRTL ? `💳 ${bidCredits} رصيد متبقٍ` : `💳 ${bidCredits} credits remaining`}
+        {isRTL
+          ? `📦 ${subscriptionCredits} اشتراك`
+          : `📦 ${subscriptionCredits} sub`}
+      </Text>
+      <Text style={[s.right, { color: colors.textMuted }]}>
+        {isRTL
+          ? `🏆 ${bonusCredits} مكافأة`
+          : `🏆 ${bonusCredits} bonus`}
       </Text>
     </View>
   );
@@ -132,6 +197,11 @@ const s = StyleSheet.create({
     fontSize:   13,
     fontWeight: '500',
     flex:       1,
+  },
+  right: {
+    fontSize:   13,
+    fontWeight: '500',
+    marginStart: 8,
   },
   cta: {
     fontSize:    13,

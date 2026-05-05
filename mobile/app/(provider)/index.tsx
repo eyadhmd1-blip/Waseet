@@ -791,7 +791,8 @@ function EmptyFeedState({
   const s = useMemo(() => createEmptyStyles(colors, isRTL), [colors, isRTL]);
 
   const isNew        = (provider?.lifetime_jobs ?? 0) === 0;
-  const hasCredits   = (provider?.is_subscribed && (provider.bid_credits ?? 0) > 0) || provider?.subscription_tier === 'premium';
+  const hasCredits   = (provider?.subscription_tier === 'premium' ||
+    !!(provider?.is_subscribed && ((provider.subscription_credits ?? 0) + (provider.bonus_credits ?? 0)) > 0));
   const hasBio       = !!(provider?.bio?.trim());
   const hasPortfolio = (provider?.portfolio_urls?.length ?? 0) > 0;
   const profileOk    = hasBio && hasPortfolio;
@@ -827,7 +828,7 @@ function EmptyFeedState({
     },
     {
       label:       'اشترك واحصل على رصيد',
-      sub:         hasCredits ? `${provider?.bid_credits ?? 0} رصيد متاح` : 'جرّب مجاناً أو ابدأ بـ 5 دنانير',
+      sub:         hasCredits ? `${(provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0)} رصيد متاح` : 'جرّب مجاناً أو ابدأ بـ 5 دنانير',
       done:        hasCredits,
       action:      hasCredits ? null : onSubscribe,
       actionLabel: 'اشترك',
@@ -1363,7 +1364,7 @@ export default function ProviderFeed() {
         providerScore={provider?.score}
         providerRepTier={provider?.reputation_tier}
         providerLifetimeJobs={provider?.lifetime_jobs}
-        providerBidCredits={provider?.bid_credits}
+        providerBidCredits={(provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0)}
         providerSubscriptionTier={provider?.subscription_tier}
         providerIsAvailable={provider?.is_available}
         notifCount={notifCount}
@@ -1371,9 +1372,11 @@ export default function ProviderFeed() {
         onAvatarPress={() => router.push('/(provider)/profile' as any)}
       />
       <ProviderSubHeader
-        bidCredits={provider?.bid_credits ?? 0}
+        subscriptionCredits={provider?.subscription_credits ?? 0}
+        bonusCredits={provider?.bonus_credits ?? 0}
         subscriptionTier={provider?.subscription_tier ?? ''}
         isSubscribed={provider?.is_subscribed ?? false}
+        subscriptionEnds={provider?.subscription_ends}
         onUpgrade={() => router.push('/subscribe' as any)}
       />
 
@@ -1512,7 +1515,7 @@ export default function ProviderFeed() {
                     ? t('providerFeed.creditCostUrgent')
                     : t('providerFeed.creditCostNormal')}
                   {provider.subscription_tier !== 'premium' && (
-                    ` • ${t('providerFeed.creditsRemaining', { count: Math.max(0, (provider.bid_credits ?? 0) - (bidModal.target?.is_urgent ? CREDIT_COST.urgent : CREDIT_COST.normal)) })}`
+                    ` • ${t('providerFeed.creditsRemaining', { count: Math.max(0, (provider.subscription_credits ?? 0) + (provider.bonus_credits ?? 0) - (bidModal.target?.is_urgent ? CREDIT_COST.urgent : CREDIT_COST.normal)) })}`
                   )}
                 </Text>
               </View>
@@ -1727,7 +1730,7 @@ export default function ProviderFeed() {
             {provider?.is_subscribed && (
               <View style={styles.creditCostHint}>
                 <Text style={styles.creditCostHintText}>
-                  {t('providerFeed.demoCreditsSafe', { count: provider.bid_credits ?? 0 })}
+                  {t('providerFeed.demoCreditsSafe', { count: (provider.subscription_credits ?? 0) + (provider.bonus_credits ?? 0) })}
                 </Text>
               </View>
             )}
@@ -1776,7 +1779,7 @@ export default function ProviderFeed() {
       {/* ── Demo Success Modal ────────────────────────────────── */}
       <DemoSuccessModal
         visible={demoSuccess}
-        credits={provider?.bid_credits ?? 0}
+        credits={(provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0)}
         onClose={() => setDemoSuccess(false)}
       />
 

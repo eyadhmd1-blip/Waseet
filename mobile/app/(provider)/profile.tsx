@@ -330,14 +330,30 @@ export default function ProviderProfile() {
               : <Text style={styles.subPrice}>{plan.price_jod} {t('common.jod')}{t('common.perMonth')}</Text>
             }
 
-            {/* Remaining credits */}
-            <View style={styles.creditsBadge}>
-              <Text style={styles.creditsBadgeText}>
-                {plan.is_unlimited
-                  ? t('profile.creditsUnlimited')
-                  : t('profile.creditsRemaining', { count: provider.bid_credits ?? 0 })}
-              </Text>
-            </View>
+            {/* Two-wallet credit display */}
+            {plan.is_unlimited ? (
+              <View style={styles.creditsBadge}>
+                <Text style={styles.creditsBadgeText}>{t('profile.creditsUnlimited')}</Text>
+                {(provider.bonus_credits ?? 0) > 0 && (
+                  <Text style={[styles.creditsBadgeText, { marginTop: 4, opacity: 0.8 }]}>
+                    {t('profile.bonusCredits', { count: provider.bonus_credits ?? 0 })}
+                    {' → '}
+                    {t('profile.premiumSlots', { count: Math.min(5 + Math.floor((provider.bonus_credits ?? 0) / 5), 8) })}
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <View style={styles.creditsBadge}>
+                <Text style={styles.creditsBadgeText}>
+                  {t('profile.subscriptionCredits', { count: provider.subscription_credits ?? 0 })}
+                </Text>
+                {(provider.bonus_credits ?? 0) > 0 && (
+                  <Text style={[styles.creditsBadgeText, { marginTop: 4, opacity: 0.8 }]}>
+                    {t('profile.bonusCredits', { count: provider.bonus_credits ?? 0 })}
+                  </Text>
+                )}
+              </View>
+            )}
 
             {/* Next tier credit reward hint */}
             {provider.reputation_tier !== 'elite' && (
