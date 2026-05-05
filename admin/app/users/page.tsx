@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { Badge } from '../ui/badge';
 import { UserActions } from './user-actions';
+import { FilterBar } from '../ui/filter-bar';
+import type { FilterConfig } from '../ui/filter-bar';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-JO', {
@@ -14,21 +16,74 @@ const ROLE_META: Record<string, { label: string; variant: 'info' | 'violet' | 'd
   admin:    { label: 'مدير',  variant: 'danger' },
 };
 
-async function getUsers() {
-  const { data } = await supabaseAdmin
+const FILTERS: FilterConfig[] = [
+  {
+    key: 'role',
+    label: 'الدور',
+    options: [
+      { value: 'client',   label: 'عميل' },
+      { value: 'provider', label: 'مزود' },
+      { value: 'admin',    label: 'مدير' },
+    ],
+  },
+  {
+    key: 'status',
+    label: 'الحالة',
+    options: [
+      { value: 'active',   label: 'نشط' },
+      { value: 'disabled', label: 'موقوف' },
+    ],
+  },
+  {
+    key: 'verified',
+    label: 'التحقق',
+    options: [
+      { value: 'yes', label: 'موثّق' },
+      { value: 'no',  label: 'غير موثّق' },
+    ],
+  },
+];
+
+async function getUsers(params: { q?: string; role?: string; status?: string; verified?: string }) {
+  let query = supabaseAdmin
     .from('users')
     .select('id, full_name, phone, role, city, phone_verified, created_at, is_disabled, disabled_reason')
     .order('created_at', { ascending: false });
+
+  if (params.q) {
+    query = query.or(`full_name.ilike.%${params.q}%,phone.ilike.%${params.q}%`);
+  }
+  if (params.role) {
+    query = query.eq('role', params.role);
+  }
+  if (params.status === 'active')   query = query.eq('is_disabled', false);
+  if (params.status === 'disabled') query = query.eq('is_disabled', true);
+  if (params.verified === 'yes')    query = query.eq('phone_verified', true);
+  if (params.verified === 'no')     query = query.eq('phone_verified', false);
+
+  const { data } = await query;
   return data ?? [];
 }
 
-export default async function UsersPage() {
-  const users = await getUsers();
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; role?: string; status?: string; verified?: string }>;
+}) {
+  const sp    = await searchParams;
+  const users = await getUsers(sp);
 
   const clients   = users.filter((u: any) => u.role === 'client').length;
   const providers = users.filter((u: any) => u.role === 'provider').length;
   const disabled  = users.filter((u: any) => u.is_disabled).length;
   const verified  = users.filter((u: any) => u.phone_verified).length;
+
+  const current: Record<string, string> = {
+    q:        sp.q        ?? '',
+    role:     sp.role     ?? '',
+    status:   sp.status   ?? '',
+    verified: sp.verified ?? '',
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -54,6 +109,9 @@ export default async function UsersPage() {
         </div>
       </div>
 
+      {/* Search & filter bar */}
+      <FilterBar current={current} searchPlaceholder="بحث بالاسم أو الهاتف..." filters={FILTERS} />
+
       {/* Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
         <table className="w-full text-sm">
@@ -72,7 +130,7 @@ export default async function UsersPage() {
           <tbody>
             {users.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center py-12 text-slate-600">لا يوجد مستخدمون بعد</td>
+                <td colSpan={8} className="text-center py-12 text-slate-600">لا توجد نتائج</td>
               </tr>
             )}
             {users.map((u: any) => {
