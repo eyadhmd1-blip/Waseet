@@ -203,7 +203,7 @@ function CategoryCard({ icon, name, color, onPress }: {
 
 // ─── Main screen ──────────────────────────────────────────────
 
-const SHOW_CATS = 6;
+const SHOW_CATS = 9;
 
 export default function ClientHome() {
   const { colors, isDark } = useTheme();
