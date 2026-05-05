@@ -3,18 +3,19 @@ import { SuccessModal } from '../src/components/SuccessModal';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
   TextInput, ActivityIndicator, Alert, Animated, Dimensions,
-  KeyboardAvoidingView, Platform, Image,
+  KeyboardAvoidingView, Platform, Image, Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem  from 'expo-file-system';
-import { supabase }     from '../src/lib/supabase';
-import { CATEGORY_GROUPS } from '../src/constants/categories';
+import * as ImagePicker    from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import * as FileSystem      from 'expo-file-system';
+import { supabase }         from '../src/lib/supabase';
+import { CATEGORY_GROUPS }  from '../src/constants/categories';
 import type { PortfolioItemType } from '../src/types';
-import { useLanguage } from '../src/hooks/useLanguage';
-import { useTheme } from '../src/context/ThemeContext';
-import { AppHeader } from '../src/components/AppHeader';
-import type { AppColors } from '../src/constants/colors';
+import { useLanguage }      from '../src/hooks/useLanguage';
+import { useTheme }         from '../src/context/ThemeContext';
+import { AppHeader }        from '../src/components/AppHeader';
+import type { AppColors }   from '../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
 
@@ -63,6 +64,129 @@ async function uploadToStorage(
 
   return publicUrl;
 }
+
+// ─── Image Preview Modal ──────────────────────────────────────
+// Replaces the system cropper entirely. Shows a full-screen
+// preview with clear Confirm / Re-pick controls in app colors.
+
+interface PreviewState {
+  uri:       string;
+  asset:     ImagePicker.ImagePickerAsset;
+  onConfirm: (uri: string) => void;
+}
+
+function ImagePreviewModal({
+  preview, onConfirm, onRepick,
+}: {
+  preview:   PreviewState;
+  onConfirm: () => Promise<void>;
+  onRepick:  () => void;
+}) {
+  const { colors }        = useTheme();
+  const { isRTL }         = useLanguage();
+  const [loading, setLoading] = useState(false);
+
+  const handleConfirm = async () => {
+    setLoading(true);
+    try { await onConfirm(); } finally { setLoading(false); }
+  };
+
+  return (
+    <Modal visible animationType="slide" statusBarTranslucent>
+      <View style={pm.root}>
+
+        {/* ── Header ── */}
+        <View style={pm.header}>
+          <TouchableOpacity
+            style={pm.repickBtn}
+            onPress={onRepick}
+            disabled={loading}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text style={pm.repickText}>
+              {isRTL ? '↩  إعادة الاختيار' : '↩  Re-pick'}
+            </Text>
+          </TouchableOpacity>
+
+          <Text style={pm.headerTitle}>
+            {isRTL ? 'معاينة الصورة' : 'Preview'}
+          </Text>
+
+          {/* Spacer to balance header */}
+          <View style={{ width: 120 }} />
+        </View>
+
+        {/* ── Image preview ── */}
+        <View style={pm.imageWrap}>
+          <Image
+            source={{ uri: preview.uri }}
+            style={pm.image}
+            resizeMode="contain"
+          />
+          {/* 4:3 frame indicator */}
+          <View style={pm.frameOverlay} pointerEvents="none">
+            <View style={pm.frameCornerTL} />
+            <View style={pm.frameCornerTR} />
+            <View style={pm.frameCornerBL} />
+            <View style={pm.frameCornerBR} />
+          </View>
+        </View>
+
+        {/* ── Footer ── */}
+        <View style={[pm.footer, { backgroundColor: '#111' }]}>
+          <Text style={pm.cropHint}>
+            {isRTL
+              ? '✂️ سيتم اقتصاص الصورة تلقائياً بنسبة 4:3'
+              : '✂️ Image will be auto-cropped to 4:3'}
+          </Text>
+
+          <TouchableOpacity
+            style={[pm.confirmBtn, { backgroundColor: '#22C55E' }, loading && pm.confirmBtnLoading]}
+            onPress={handleConfirm}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading ? (
+              <View style={pm.confirmInner}>
+                <ActivityIndicator color="#fff" size="small" />
+                <Text style={pm.confirmText}>
+                  {isRTL ? 'جارٍ المعالجة...' : 'Processing...'}
+                </Text>
+              </View>
+            ) : (
+              <Text style={pm.confirmText}>
+                {isRTL ? '✓  تأكيد واستخدام الصورة' : '✓  Confirm & Use Photo'}
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+      </View>
+    </Modal>
+  );
+}
+
+const pm = StyleSheet.create({
+  root:              { flex: 1, backgroundColor: '#000' },
+  header:            { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'ios' ? 56 : 20, paddingBottom: 16, backgroundColor: 'rgba(0,0,0,0.85)' },
+  headerTitle:       { fontSize: 16, fontWeight: '700', color: '#fff', textAlign: 'center', flex: 1 },
+  repickBtn:         { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, minWidth: 120 },
+  repickText:        { color: '#fff', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  imageWrap:         { flex: 1, justifyContent: 'center', alignItems: 'center', position: 'relative' },
+  image:             { width: W, height: W * (3 / 4) },
+  // Corner frame markers
+  frameOverlay:      { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
+  frameCornerTL:     { position: 'absolute', top: '12.5%', left: '0%', width: 24, height: 24, borderTopWidth: 3, borderLeftWidth: 3, borderColor: '#22C55E', borderTopLeftRadius: 4 },
+  frameCornerTR:     { position: 'absolute', top: '12.5%', right: '0%', width: 24, height: 24, borderTopWidth: 3, borderRightWidth: 3, borderColor: '#22C55E', borderTopRightRadius: 4 },
+  frameCornerBL:     { position: 'absolute', bottom: '12.5%', left: '0%', width: 24, height: 24, borderBottomWidth: 3, borderLeftWidth: 3, borderColor: '#22C55E', borderBottomLeftRadius: 4 },
+  frameCornerBR:     { position: 'absolute', bottom: '12.5%', right: '0%', width: 24, height: 24, borderBottomWidth: 3, borderRightWidth: 3, borderColor: '#22C55E', borderBottomRightRadius: 4 },
+  footer:            { paddingHorizontal: 20, paddingTop: 20, paddingBottom: Platform.OS === 'ios' ? 44 : 28, gap: 14 },
+  cropHint:          { color: 'rgba(255,255,255,0.6)', fontSize: 13, textAlign: 'center' },
+  confirmBtn:        { borderRadius: 18, paddingVertical: 18, alignItems: 'center', justifyContent: 'center' },
+  confirmBtnLoading: { opacity: 0.7 },
+  confirmInner:      { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  confirmText:       { color: '#fff', fontSize: 17, fontWeight: '800' },
+});
 
 // ─── Step Dots ────────────────────────────────────────────────
 
@@ -140,6 +264,7 @@ export default function PortfolioAddScreen() {
   const [description, setDescription] = useState('');
   const [submitting,  setSubmitting]  = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [preview,     setPreview]     = useState<PreviewState | null>(null);
 
   const typeAnims = useRef(TYPE_KEYS.map(() => new Animated.Value(1))).current;
   const fadeAnim  = useRef(new Animated.Value(1)).current;
@@ -159,23 +284,90 @@ export default function PortfolioAddScreen() {
     ]).start();
   };
 
-  // ── Image pickers ─────────────────────────────────────────
+  // ── Image picker — two-step: source sheet → preview modal ──
 
-  const pickImage = async (onPick: (uri: string) => void) => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert(t('portfolioAdd.permissionTitle'), t('portfolioAdd.permissionPhoto'));
-      return;
+  const launchPicker = async (
+    source: 'camera' | 'gallery',
+    onPick: (uri: string) => void,
+  ) => {
+    let result: ImagePicker.ImagePickerResult;
+
+    if (source === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(t('portfolioAdd.permissionTitle'), t('portfolioAdd.permissionPhoto'));
+        return;
+      }
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.92,
+        allowsEditing: false,
+      });
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(t('portfolioAdd.permissionTitle'), t('portfolioAdd.permissionPhoto'));
+        return;
+      }
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.92,
+        allowsEditing: false,
+      });
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.88,
-      allowsEditing: true,
-      aspect: [4, 3],
-    });
+
     if (!result.canceled && result.assets[0]) {
-      onPick(result.assets[0].uri);
+      setPreview({ uri: result.assets[0].uri, asset: result.assets[0], onConfirm: onPick });
     }
+  };
+
+  const pickImage = (onPick: (uri: string) => void) => {
+    Alert.alert(
+      isRTL ? 'اختر مصدر الصورة' : 'Choose Image Source',
+      '',
+      [
+        {
+          text: isRTL ? '📷  الكاميرا' : '📷  Camera',
+          onPress: () => launchPicker('camera', onPick),
+        },
+        {
+          text: isRTL ? '🖼️  معرض الصور' : '🖼️  Photo Library',
+          onPress: () => launchPicker('gallery', onPick),
+        },
+        { text: isRTL ? 'إلغاء' : 'Cancel', style: 'cancel' },
+      ],
+    );
+  };
+
+  // Auto center-crop to 4:3, applied on confirm in preview modal
+  const confirmPreview = async () => {
+    if (!preview) return;
+    const { asset, onConfirm } = preview;
+
+    const targetRatio = 4 / 3;
+    const imgRatio    = asset.width / asset.height;
+    let cropX: number, cropY: number, cropW: number, cropH: number;
+
+    if (imgRatio > targetRatio) {
+      cropH = asset.height;
+      cropW = Math.floor(asset.height * targetRatio);
+      cropX = Math.floor((asset.width - cropW) / 2);
+      cropY = 0;
+    } else {
+      cropW = asset.width;
+      cropH = Math.floor(asset.width / targetRatio);
+      cropX = 0;
+      cropY = Math.floor((asset.height - cropH) / 2);
+    }
+
+    const manipulated = await ImageManipulator.manipulateAsync(
+      asset.uri,
+      [{ crop: { originX: cropX, originY: cropY, width: cropW, height: cropH } }],
+      { compress: 0.88, format: ImageManipulator.SaveFormat.JPEG },
+    );
+
+    setPreview(null);
+    onConfirm(manipulated.uri);
   };
 
   const pickVideo = async () => {
@@ -455,6 +647,16 @@ export default function PortfolioAddScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* ── Image preview modal (replaces system cropper) ── */}
+      {preview && (
+        <ImagePreviewModal
+          preview={preview}
+          onConfirm={confirmPreview}
+          onRepick={() => setPreview(null)}
+        />
+      )}
+
       <SuccessModal
         visible={showSuccess}
         title={t('portfolioAdd.successTitle')}
