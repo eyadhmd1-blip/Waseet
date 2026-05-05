@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { Badge } from '../ui/badge';
 import { ProviderActions } from './provider-actions';
+import { FilterBar } from '../ui/filter-bar';
+import type { FilterConfig } from '../ui/filter-bar';
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-JO', {
@@ -22,8 +24,63 @@ const SUB_META: Record<string, { label: string; variant: 'muted' | 'warning' | '
   premium: { label: 'متميز',   variant: 'violet' },
 };
 
-async function getProviders() {
-  const { data } = await supabaseAdmin
+const FILTERS: FilterConfig[] = [
+  {
+    key: 'status',
+    label: 'الحالة',
+    options: [
+      { value: 'active',    label: 'نشط' },
+      { value: 'suspended', label: 'موقوف' },
+    ],
+  },
+  {
+    key: 'tier',
+    label: 'الرتبة',
+    options: [
+      { value: 'new',     label: 'جديد' },
+      { value: 'rising',  label: 'صاعد' },
+      { value: 'trusted', label: 'موثوق' },
+      { value: 'expert',  label: 'خبير' },
+      { value: 'elite',   label: 'نخبة' },
+    ],
+  },
+  {
+    key: 'sub',
+    label: 'الاشتراك',
+    options: [
+      { value: 'none',    label: 'مجاني' },
+      { value: 'basic',   label: 'أساسية' },
+      { value: 'pro',     label: 'محترف' },
+      { value: 'premium', label: 'متميز' },
+    ],
+  },
+  {
+    key: 'badge',
+    label: 'الشارة',
+    options: [
+      { value: 'yes', label: 'موثّق' },
+      { value: 'no',  label: 'غير موثّق' },
+    ],
+  },
+];
+
+async function getProviders(params: {
+  q?: string; status?: string; tier?: string; sub?: string; badge?: string;
+}) {
+  // Step 1: if text search, resolve matching user IDs first
+  let userIds: string[] | null = null;
+  if (params.q) {
+    const { data: matchedUsers } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('role', 'provider')
+      .or(`full_name.ilike.%${params.q}%,phone.ilike.%${params.q}%`);
+    userIds = (matchedUsers ?? []).map((u: any) => u.id);
+    if (userIds.length === 0) return [];
+  }
+
+  // Step 2: build provider query
+  let query = supabaseAdmin
     .from('providers')
     .select(`
       id, score, reputation_tier, lifetime_jobs,
@@ -34,18 +91,47 @@ async function getProviders() {
       user:users(id, full_name, phone, city, is_disabled)
     `)
     .order('lifetime_jobs', { ascending: false });
+
+  if (userIds !== null) {
+    query = query.in('user_id', userIds);
+  }
+  if (params.status === 'active')    query = query.eq('is_active', true);
+  if (params.status === 'suspended') query = query.eq('is_active', false);
+  if (params.tier)                   query = query.eq('reputation_tier', params.tier);
+  if (params.badge === 'yes')        query = query.eq('badge_verified', true);
+  if (params.badge === 'no')         query = query.eq('badge_verified', false);
+  if (params.sub === 'none') {
+    query = query.eq('is_subscribed', false);
+  } else if (params.sub) {
+    query = query.eq('is_subscribed', true).eq('subscription_tier', params.sub);
+  }
+
+  const { data } = await query;
   return data ?? [];
 }
 
-export default async function ProvidersPage() {
-  const providers = await getProviders();
+export default async function ProvidersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; status?: string; tier?: string; sub?: string; badge?: string }>;
+}) {
+  const sp        = await searchParams;
+  const providers = await getProviders(sp);
 
-  const subscribed  = providers.filter((p: any) => p.is_subscribed).length;
-  const verified    = providers.filter((p: any) => p.badge_verified).length;
-  const suspended   = providers.filter((p: any) => !p.is_active).length;
-  const avgScore    = providers.length > 0
+  const subscribed = providers.filter((p: any) => p.is_subscribed).length;
+  const verified   = providers.filter((p: any) => p.badge_verified).length;
+  const suspended  = providers.filter((p: any) => !p.is_active).length;
+  const avgScore   = providers.length > 0
     ? (providers.reduce((s: number, p: any) => s + Number(p.score ?? 0), 0) / providers.length).toFixed(1)
     : '—';
+
+  const current: Record<string, string> = {
+    q:      sp.q      ?? '',
+    status: sp.status ?? '',
+    tier:   sp.tier   ?? '',
+    sub:    sp.sub    ?? '',
+    badge:  sp.badge  ?? '',
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -71,6 +157,9 @@ export default async function ProvidersPage() {
         </div>
       </div>
 
+      {/* Search & filter bar */}
+      <FilterBar current={current} searchPlaceholder="بحث بالاسم أو الهاتف..." filters={FILTERS} />
+
       {/* Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
@@ -91,7 +180,7 @@ export default async function ProvidersPage() {
             <tbody>
               {providers.length === 0 && (
                 <tr>
-                  <td colSpan={9} className="text-center py-12 text-slate-600">لا يوجد مزودون بعد</td>
+                  <td colSpan={9} className="text-center py-12 text-slate-600">لا توجد نتائج</td>
                 </tr>
               )}
               {providers.map((p: any) => {
