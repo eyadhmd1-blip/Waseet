@@ -1312,6 +1312,7 @@
   },
   "suggestions": {
     "notFound": "Can't find your service? Suggest one",
+    "notFoundSub": "We'll review your suggestion and add it soon",
     "modalTitle": "Suggest a New Service",
     "modalSub": "Tell us what you're looking for and we'll work on adding it",
     "placeholder": "e.g. Motorcycle repair, personal training...",
