@@ -6,7 +6,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, CATEGORY_GROUPS, REP_DISCOUNT, ICON_MAP } from '../../src/constants/categories';
+import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, CATEGORY_GROUPS, TIER_UPGRADE_CREDITS, ICON_MAP } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User, PortfolioItem } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -339,27 +339,17 @@ export default function ProviderProfile() {
               </Text>
             </View>
 
-            {/* Win discount earned */}
-            {(provider.win_discount_pct ?? 0) > 0 && (
-              <Text style={styles.winDiscountText}>
-                {t('profile.winDiscount', { pct: provider.win_discount_pct })}
-              </Text>
-            )}
-
-            {/* Reputation discount */}
-            {REP_DISCOUNT[provider.reputation_tier] > 0 && (
+            {/* Next tier credit reward hint */}
+            {provider.reputation_tier !== 'elite' && (
               <Text style={styles.repDiscountText}>
-                {t('profile.repDiscount', { pct: REP_DISCOUNT[provider.reputation_tier] })}
+                {t('profile.nextTierCredits', {
+                  credits: TIER_UPGRADE_CREDITS[
+                    ['new','rising','trusted','expert','elite'][
+                      ['new','rising','trusted','expert','elite'].indexOf(provider.reputation_tier) + 1
+                    ] ?? 'elite'
+                  ] ?? 25,
+                })}
               </Text>
-            )}
-
-            {/* Legacy loyalty discount banner */}
-            {provider.loyalty_discount > 0 && (
-              <View style={styles.discountBanner}>
-                <Text style={styles.discountText}>
-                  {t('profile.discountBanner', { pct: provider.loyalty_discount })}
-                </Text>
-              </View>
             )}
 
             {/* Upgrade / Renew button */}

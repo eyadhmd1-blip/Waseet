@@ -4,7 +4,6 @@
 // ============================================================
 
 import { LOYALTY_MILESTONES } from '../constants/loyalty';
-import { REP_DISCOUNT } from '../constants/categories';
 
 // ─── Urgent Premium ──────────────────────────────────────────
 
@@ -47,20 +46,6 @@ export function calcLoyaltyProgress(lifetimeJobs: number): {
     prevMilestone: prev,
     progress: next ? (lifetimeJobs - prev) / (next - prev) : 1,
   };
-}
-
-// ─── Renewal Discount ────────────────────────────────────────
-
-const MAX_DISCOUNT_PCT = 40;
-
-export function calcRenewalDiscount(params: {
-  loyaltyDiscount: number;
-  winDiscountPct:  number;
-  reputationTier:  string;
-}): number {
-  const rep  = REP_DISCOUNT[params.reputationTier] ?? 0;
-  const total = params.loyaltyDiscount + params.winDiscountPct + rep;
-  return Math.min(total, MAX_DISCOUNT_PCT);
 }
 
 // ─── Request Status Counts (single-pass) ─────────────────────
