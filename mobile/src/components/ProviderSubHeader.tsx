@@ -1,34 +1,36 @@
 // ============================================================
 // WASEET — ProviderSubHeader
-// Two-wallet credit display below AppHeader on provider screens.
+// Two-wallet credit display + active-bids indicator.
 //
 // Layout per state:
 //   Not subscribed    → red bar, subscribe CTA
 //   Subscription exp  → red bar, bonus credits shown frozen 🔒
 //   Zero sub credits  → red bar + bonus credits hint
 //   Low sub (1-3)     → amber bar + bonus credits hint
-//   Normal            → surface bar: 📦 sub | 🏆 bonus
-//   Premium           → surface bar: ♾️ unlimited | 🏆 bonus → +N slots
+//   Normal            → surface bar: 📦 sub | 🏆 bonus | 🎯 X/Y
+//   Premium           → surface bar: ♾️ unlimited | 🏆 bonus → +N slots | 🎯 X/Y
 // ============================================================
 
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../hooks/useLanguage';
+import { CONCURRENT_BID_CAP } from '../constants/categories';
 import type { AppColors } from '../constants/colors';
 
 interface Props {
-  subscriptionCredits: number;
-  bonusCredits:        number;
-  subscriptionTier:    string;
-  isSubscribed:        boolean;
-  subscriptionEnds?:   string;
-  onUpgrade:           () => void;
+  subscriptionCredits:  number;
+  bonusCredits:         number;
+  subscriptionTier:     string;
+  isSubscribed:         boolean;
+  subscriptionEnds?:    string;
+  activeBidCount?:      number;   // current pending bids
+  onUpgrade:            () => void;
 }
 
 export function ProviderSubHeader({
   subscriptionCredits, bonusCredits, subscriptionTier,
-  isSubscribed, subscriptionEnds, onUpgrade,
+  isSubscribed, subscriptionEnds, activeBidCount = 0, onUpgrade,
 }: Props) {
   const { colors } = useTheme();
   const { lang }   = useLanguage();
@@ -38,21 +40,40 @@ export function ProviderSubHeader({
     ? new Date(subscriptionEnds) < new Date()
     : false;
 
+  // Compute max concurrent bids for this tier
+  const maxBids = subscriptionTier === 'premium'
+    ? Math.min(8 + Math.floor(bonusCredits / 5), 12)
+    : (CONCURRENT_BID_CAP[subscriptionTier] ?? 2);
+
+  // Indicator colour: green ok, amber 1-away, red at-cap
+  const atCap      = activeBidCount >= maxBids;
+  const nearCap    = !atCap && activeBidCount >= maxBids - 1;
+  const indicatorColor = atCap ? '#EF4444' : nearCap ? '#F59E0B' : '#22C55E';
+
+  const bidIndicator = isSubscribed && !isExpired
+    ? (isRTL
+        ? `🎯 ${activeBidCount}/${maxBids} عروض`
+        : `🎯 ${activeBidCount}/${maxBids} bids`)
+    : null;
+
   // ── Premium ─────────────────────────────────────────────────
   if (subscriptionTier === 'premium' && isSubscribed && !isExpired) {
     const extraSlots = Math.floor(bonusCredits / 5);
-    const totalSlots = Math.min(5 + extraSlots, 8);
+    const totalSlots = Math.min(8 + extraSlots, 12);
     return (
       <View style={[s.bar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <Text style={[s.text, { color: colors.textMuted }]}>
           {isRTL ? '♾️ غير محدود' : '♾️ Unlimited'}
         </Text>
         {bonusCredits > 0 && (
-          <Text style={[s.right, { color: colors.textMuted }]}>
+          <Text style={[s.mid, { color: colors.textMuted }]}>
             {isRTL
-              ? `🏆 ${bonusCredits} مكافأة → ${totalSlots} خانات`
-              : `🏆 ${bonusCredits} bonus → ${totalSlots} slots`}
+              ? `🏆 ${bonusCredits} → ${totalSlots} خانات`
+              : `🏆 ${bonusCredits} → ${totalSlots} slots`}
           </Text>
+        )}
+        {bidIndicator && (
+          <Text style={[s.right, { color: indicatorColor }]}>{bidIndicator}</Text>
         )}
       </View>
     );
@@ -97,19 +118,29 @@ export function ProviderSubHeader({
   }
 
   // ── Zero subscription credits ────────────────────────────────
-  if (subscriptionCredits === 0) {
+  if (subscriptionCredits === 0 && bonusCredits === 0) {
+    return (
+      <Bar
+        bg={colors.errorBg}
+        border="rgba(239,68,68,0.3)"
+        text={isRTL ? '🔴 نفد الرصيد — جدّد الآن' : '🔴 No credits left — renew now'}
+        cta={isRTL ? 'جدّد ›' : 'Renew ›'}
+        ctaColor={colors.errorSoft}
+        textColor={colors.errorSoft}
+        onPress={onUpgrade}
+      />
+    );
+  }
+
+  if (subscriptionCredits === 0 && bonusCredits > 0) {
     return (
       <Bar
         bg={colors.errorBg}
         border="rgba(239,68,68,0.3)"
         text={
           isRTL
-            ? bonusCredits > 0
-              ? `🔴 نفد رصيد الاشتراك  •  🏆 ${bonusCredits} مكافأة متبقية`
-              : '🔴 نفد رصيد الاشتراك — جدّد الآن'
-            : bonusCredits > 0
-              ? `🔴 No subscription credits  •  🏆 ${bonusCredits} bonus left`
-              : '🔴 No subscription credits — renew now'
+            ? `🔴 نفد رصيد الاشتراك  •  🏆 ${bonusCredits} مكافأة متبقية`
+            : `🔴 No subscription credits  •  🏆 ${bonusCredits} bonus left`
         }
         cta={isRTL ? 'جدّد ›' : 'Renew ›'}
         ctaColor={colors.errorSoft}
@@ -142,15 +173,14 @@ export function ProviderSubHeader({
   return (
     <View style={[s.bar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
       <Text style={[s.text, { color: colors.textMuted }]}>
-        {isRTL
-          ? `📦 ${subscriptionCredits} اشتراك`
-          : `📦 ${subscriptionCredits} sub`}
+        {isRTL ? `📦 ${subscriptionCredits} اشتراك` : `📦 ${subscriptionCredits} sub`}
       </Text>
-      <Text style={[s.right, { color: colors.textMuted }]}>
-        {isRTL
-          ? `🏆 ${bonusCredits} مكافأة`
-          : `🏆 ${bonusCredits} bonus`}
+      <Text style={[s.mid, { color: colors.textMuted }]}>
+        {isRTL ? `🏆 ${bonusCredits} مكافأة` : `🏆 ${bonusCredits} bonus`}
       </Text>
+      {bidIndicator && (
+        <Text style={[s.right, { color: indicatorColor }]}>{bidIndicator}</Text>
+      )}
     </View>
   );
 }
@@ -198,9 +228,14 @@ const s = StyleSheet.create({
     fontWeight: '500',
     flex:       1,
   },
+  mid: {
+    fontSize:    13,
+    fontWeight:  '500',
+    marginStart: 8,
+  },
   right: {
-    fontSize:   13,
-    fontWeight: '500',
+    fontSize:    13,
+    fontWeight:  '700',
     marginStart: 8,
   },
   cta: {

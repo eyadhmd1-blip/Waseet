@@ -729,6 +729,199 @@ function createDemoSuccessStyles(colors: AppColors, isRTL: boolean) {
   });
 }
 
+// ─── Active Bids Cap Modal ────────────────────────────────────
+
+interface CapModalProps {
+  visible:              boolean;
+  capError:             { max: number; active_count: number; tier: string; next_tier?: string; next_tier_max?: number; next_tier_price?: number } | null;
+  providerId:           string;
+  onRetractSuccess:     (creditsRefunded: number) => void;
+  onRetractedAndResume: () => void;
+  onClose:              () => void;
+  onUpgrade:            () => void;
+}
+
+type ActiveBid = { id: string; request_title: string; client_name: string };
+
+function ActiveBidsCapModal({
+  visible, capError, providerId,
+  onRetractSuccess, onRetractedAndResume, onClose, onUpgrade,
+}: CapModalProps) {
+  const { colors }      = useTheme();
+  const { t, isRTL }    = useLanguage();
+  const { contentPad }  = useInsets();
+  const [bids, setBids]       = useState<ActiveBid[]>([]);
+  const [retracting, setRetracting] = useState<string | null>(null);
+  const [feedback, setFeedback]     = useState<string | null>(null);
+  const slotFreed = useRef(false);
+
+  useEffect(() => {
+    if (!visible || !providerId) return;
+    slotFreed.current = false;
+    setFeedback(null);
+    supabase
+      .from('bids')
+      .select('id, requests(title, users(full_name))')
+      .eq('provider_id', providerId)
+      .eq('status', 'pending')
+      .then(({ data }) => {
+        if (data) {
+          setBids(data.map((b: any) => ({
+            id:            b.id,
+            request_title: b.requests?.title ?? '—',
+            client_name:   b.requests?.users?.full_name ?? '—',
+          })));
+        }
+      });
+  }, [visible, providerId]);
+
+  const retract = async (bidId: string) => {
+    setRetracting(bidId);
+    const { data } = await supabase.rpc('retract_bid', {
+      p_bid_id:      bidId,
+      p_provider_id: providerId,
+    });
+    setRetracting(null);
+
+    if (data?.error) {
+      Alert.alert(t('common.error'), data.error);
+      return;
+    }
+
+    const refunded: number = data?.credits_refunded ?? 0;
+    setBids(prev => prev.filter(b => b.id !== bidId));
+    onRetractSuccess(refunded);
+    slotFreed.current = true;
+
+    if (refunded > 0) {
+      setFeedback(t('providerFeed.retractSuccess', { credits: refunded }));
+    }
+
+    // If a slot is now free and we have a pending bid context, resume after brief delay
+    const newCount = (capError?.active_count ?? 1) - 1;
+    if (newCount < (capError?.max ?? 99)) {
+      setTimeout(() => onRetractedAndResume(), 900);
+    }
+  };
+
+  if (!capError) return null;
+
+  const isPremiumMax = capError.tier === 'premium' && !capError.next_tier;
+
+  return (
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={capS.overlay}>
+        <View style={[capS.sheet, { paddingBottom: contentPad + 16 }]}>
+
+          {/* Header */}
+          <View style={capS.headerRow}>
+            <Text style={[capS.title, { color: colors.textPrimary }]}>
+              {t('providerFeed.capModalTitle', { active: capError.active_count, max: capError.max })}
+            </Text>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={{ fontSize: 20, color: colors.textMuted }}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={[capS.sub, { color: colors.textMuted }]}>
+            {t('providerFeed.capModalBidsList')}
+          </Text>
+
+          {/* Feedback line */}
+          {feedback && (
+            <Text style={[capS.feedback, { color: '#22C55E' }]}>{feedback}</Text>
+          )}
+
+          {/* Active bids list */}
+          <ScrollView style={capS.list} showsVerticalScrollIndicator={false}>
+            {bids.length === 0 ? (
+              <Text style={[capS.emptyText, { color: colors.textMuted }]}>
+                {isRTL ? 'لا توجد عروض نشطة' : 'No active bids'}
+              </Text>
+            ) : (
+              bids.map(bid => (
+                <View key={bid.id} style={[capS.bidRow, { borderBottomColor: colors.border }]}>
+                  <View style={capS.bidInfo}>
+                    <Text style={[capS.bidTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {bid.request_title}
+                    </Text>
+                    <Text style={[capS.bidClient, { color: colors.textMuted }]} numberOfLines={1}>
+                      {bid.client_name}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[capS.retractBtn, { borderColor: '#EF4444' }]}
+                    onPress={() => {
+                      Alert.alert(
+                        t('providerFeed.retractBid'),
+                        t('providerFeed.retractConfirm'),
+                        [
+                          { text: t('common.cancel'), style: 'cancel' },
+                          { text: t('providerFeed.retractBid'), style: 'destructive', onPress: () => retract(bid.id) },
+                        ],
+                      );
+                    }}
+                    disabled={retracting === bid.id}
+                  >
+                    {retracting === bid.id
+                      ? <ActivityIndicator size="small" color="#EF4444" />
+                      : <Text style={capS.retractBtnText}>{t('providerFeed.retractBid')}</Text>
+                    }
+                  </TouchableOpacity>
+                </View>
+              ))
+            )}
+          </ScrollView>
+
+          {/* Upgrade CTA — hidden for Premium at max */}
+          {!isPremiumMax && capError.next_tier && (
+            <TouchableOpacity
+              style={[capS.upgradeBtn, { backgroundColor: colors.accent }]}
+              onPress={onUpgrade}
+              activeOpacity={0.85}
+            >
+              <Text style={[capS.upgradeBtnText, { color: colors.bg }]}>
+                {t('providerFeed.capUpgradeHint', {
+                  tier:  capError.next_tier,
+                  max:   capError.next_tier_max,
+                  price: capError.next_tier_price,
+                })}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {isPremiumMax && (
+            <Text style={[capS.premiumMaxText, { color: colors.textMuted }]}>
+              {t('providerFeed.capPremiumMax', { max: capError.max })}
+            </Text>
+          )}
+
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+const capS = StyleSheet.create({
+  overlay:        { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+  sheet:          { backgroundColor: '#1C1C1E', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 20, paddingHorizontal: 20, maxHeight: '80%' },
+  headerRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 },
+  title:          { fontSize: 16, fontWeight: '700', flex: 1, marginEnd: 12 },
+  sub:            { fontSize: 13, marginBottom: 12 },
+  feedback:       { fontSize: 13, fontWeight: '600', marginBottom: 10 },
+  list:           { maxHeight: 240, marginBottom: 16 },
+  emptyText:      { fontSize: 13, textAlign: 'center', paddingVertical: 20 },
+  bidRow:         { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, gap: 10 },
+  bidInfo:        { flex: 1 },
+  bidTitle:       { fontSize: 14, fontWeight: '600', marginBottom: 2 },
+  bidClient:      { fontSize: 12 },
+  retractBtn:     { borderWidth: 1.5, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7, minWidth: 56, alignItems: 'center' },
+  retractBtnText: { fontSize: 13, fontWeight: '700', color: '#EF4444' },
+  upgradeBtn:     { borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginBottom: 8 },
+  upgradeBtnText: { fontSize: 14, fontWeight: '700' },
+  premiumMaxText: { fontSize: 13, textAlign: 'center', paddingVertical: 10 },
+});
+
 // ─── Empty Feed State ─────────────────────────────────────────
 
 function createEmptyStyles(colors: AppColors, isRTL: boolean) {
@@ -936,6 +1129,14 @@ export default function ProviderFeed() {
 
   const [showUpsell, setShowUpsell] = useState(false);
 
+  // Cap modal — shown when MAX_ACTIVE_BIDS error is returned by RPC
+  const [capModal, setCapModal] = useState<{
+    visible:     boolean;
+    capError:    { max: number; active_count: number; tier: string; next_tier?: string; next_tier_max?: number; next_tier_price?: number } | null;
+    pendingBid:  { target: RequestWithMeta; amount: string; note: string; creditCost: number } | null;
+  }>({ visible: false, capError: null, pendingBid: null });
+  const [activeBidCount, setActiveBidCount] = useState(0);
+
   // Recurring contracts
   const [contracts, setContracts] = useState<RecurringContract[]>([]);
 
@@ -1013,6 +1214,7 @@ export default function ProviderFeed() {
         { data: contractsData },
         { data: demoData },
         { data: myBidsData },
+        { count: activeBids },
       ] = await Promise.all([
         supabase.from('providers').select('*, user:users(*)').eq('id', authUser.id).single(),
         supabase
@@ -1029,9 +1231,11 @@ export default function ProviderFeed() {
           .limit(20),
         supabase.rpc('get_provider_demo', { p_provider_id: authUser.id }),
         supabase.from('bids').select('request_id, amount').eq('provider_id', authUser.id),
+        supabase.from('bids').select('id', { count: 'exact', head: true }).eq('provider_id', authUser.id).eq('status', 'pending'),
       ]);
 
       if (providerData)  setProvider(providerData);
+      setActiveBidCount(activeBids ?? 0);
       if (requestsData)  setRequests(requestsData);
       if (contractsData) setContracts(contractsData as RecurringContract[]);
       if (demoData)      setDemoStatus(demoData as DemoStatus);
@@ -1190,11 +1394,24 @@ export default function ProviderFeed() {
     setDemoSuccess(true);
   };
 
-  const showBidError = useCallback((code: string, closeModal: () => void) => {
+  const showBidError = useCallback((
+    code: string,
+    closeModal: () => void,
+    rpcResult?: any,
+    pendingBidCtx?: { target: RequestWithMeta; amount: string; note: string; creditCost: number },
+  ) => {
+    if (code === 'MAX_ACTIVE_BIDS') {
+      closeModal();
+      setCapModal({
+        visible:    true,
+        capError:   rpcResult ?? null,
+        pendingBid: pendingBidCtx ?? null,
+      });
+      return;
+    }
     const msgMap: Record<string, string> = {
       NO_CREDITS:        t('providerFeed.errNoCredits'),
       COOLDOWN_ACTIVE:   t('providerFeed.errCooldown'),
-      MAX_ACTIVE_BIDS:   t('providerFeed.errMaxActiveBids'),
       NOT_SUBSCRIBED:    t('providerFeed.mustSubscribe'),
       ALREADY_BID:       t('providerFeed.errAlreadyBid'),
       REQUEST_NOT_FOUND: t('common.error'),
@@ -1237,10 +1454,11 @@ export default function ProviderFeed() {
     if (error) { Alert.alert(t('common.error'), error.message); return; }
     const result = rpcResult as { error?: string; bid_id?: string };
     if (result?.error) {
-      showBidError(result.error, () => setUrgentModal({ target: null, loading: false }));
+      showBidError(result.error, () => setUrgentModal({ target: null, loading: false }), result);
       return;
     }
     const submittedId = target.id;
+    setActiveBidCount(prev => prev + 1);
     setUrgentModal({ target: null, loading: false });
     setMyBidAmounts(prev => new Map([...prev, [submittedId, premiumMin ?? 0]]));
     supabase.functions.invoke('notify-client-new-bid', {
@@ -1289,11 +1507,17 @@ export default function ProviderFeed() {
     if (error) { Alert.alert(t('common.error'), error.message); return; }
     const result = rpcResult as { error?: string; bid_id?: string };
     if (result?.error) {
-      showBidError(result.error, () => setBidModal({ target: null, amount: '', note: '', loading: false }));
+      showBidError(
+        result.error,
+        () => setBidModal({ target: null, amount: '', note: '', loading: false }),
+        result,
+        { target, amount: amountStr, note, creditCost: creditCost },
+      );
       return;
     }
     const submittedId     = target.id;
     const submittedAmount = amount;
+    setActiveBidCount(prev => prev + 1);
     setBidModal({ target: null, amount: '', note: '', loading: false });
     setMyBidAmounts(prev => new Map([...prev, [submittedId, submittedAmount]]));
     supabase.functions.invoke('notify-client-new-bid', {
@@ -1377,6 +1601,7 @@ export default function ProviderFeed() {
         subscriptionTier={provider?.subscription_tier ?? ''}
         isSubscribed={provider?.is_subscribed ?? false}
         subscriptionEnds={provider?.subscription_ends}
+        activeBidCount={activeBidCount}
         onUpgrade={() => router.push('/subscribe' as any)}
       />
 
@@ -1781,6 +2006,28 @@ export default function ProviderFeed() {
         visible={demoSuccess}
         credits={(provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0)}
         onClose={() => setDemoSuccess(false)}
+      />
+
+      {/* ── Active-Bids Cap Modal ──────────────────────────── */}
+      <ActiveBidsCapModal
+        visible={capModal.visible}
+        capError={capModal.capError}
+        providerId={provider?.id ?? ''}
+        onRetractSuccess={(creditsRefunded) => {
+          setActiveBidCount(prev => Math.max(0, prev - 1));
+          setProvider(prev => prev ? {
+            ...prev,
+            subscription_credits: prev.subscription_credits + creditsRefunded,
+          } : prev);
+        }}
+        onClose={() => setCapModal({ visible: false, capError: null, pendingBid: null })}
+        onUpgrade={() => { setCapModal({ visible: false, capError: null, pendingBid: null }); router.push('/subscribe' as any); }}
+        onRetractedAndResume={() => {
+          // Slot freed — re-open bid modal for the pending request
+          const ctx = capModal.pendingBid;
+          setCapModal({ visible: false, capError: null, pendingBid: null });
+          if (ctx) setBidModal({ target: ctx.target, amount: ctx.amount, note: ctx.note, loading: false });
+        }}
       />
 
     </View>

@@ -162,8 +162,14 @@ function PlanCard({
                 ? t('subscribe.unlimitedCredits')
                 : t('subscribe.creditsLabel', { count: plan.subscription_credits })}
             </Text>
+            {/* Concurrent bids badge */}
+            <Text style={[styles.unlimitedNote, { color: accentColor + 'CC' }]}>
+              {plan.is_unlimited
+                ? t('subscribe.concurrentBidsDynamic', { min: 8, max: 12 })
+                : t('subscribe.concurrentBids', { count: plan.max_concurrent_bids })}
+            </Text>
             {plan.is_unlimited && (
-              <Text style={styles.unlimitedNote}>{t('subscribe.unlimitedNote')}</Text>
+              <Text style={styles.unlimitedNote}>{t('subscribe.concurrentBidsNote', { absMax: 12 })}</Text>
             )}
           </View>
 

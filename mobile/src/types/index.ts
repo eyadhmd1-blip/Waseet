@@ -66,6 +66,8 @@ export interface Provider {
   bonus_credits: number;         // accumulates from achievements, frozen when subscription lapses
   trial_used: boolean;
   bid_rejection_rate: number;
+  // active bids
+  active_bid_count?: number;
   // availability
   is_available?: boolean;
   urgent_enabled?: boolean;
@@ -224,7 +226,8 @@ export interface SubscriptionPlan {
   name_ar: string;
   name_en?: string;
   price_jod: number;
-  subscription_credits: number;  // credits awarded per plan; 0 = unlimited (premium)
+  subscription_credits: number;   // credits awarded per plan; 0 = unlimited (premium)
+  max_concurrent_bids: number;    // -1 = dynamic (premium: 8→12 via bonus_credits)
   is_unlimited: boolean;
   is_trial: boolean;
 }
