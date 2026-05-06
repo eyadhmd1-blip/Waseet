@@ -10,9 +10,9 @@ import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, CATEGORY_GROUPS, TIER_UP
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User, PortfolioItem } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
-import { HEADER_PAD } from '../../src/utils/layout';
 import { calcLoyaltyProgress } from '../../src/utils/pricing';
 import { useTheme } from '../../src/context/ThemeContext';
+import { AppHeader } from '../../src/components/AppHeader';
 import type { AppColors } from '../../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
@@ -170,8 +170,16 @@ export default function ProviderProfile() {
   const plan     = SUBSCRIPTION_PLANS.find(p => p.tier === provider.subscription_tier);
 
   return (
+    <View style={styles.container}>
+      <AppHeader
+        variant="stack"
+        title={t('profile.title')}
+        onBack={() => {}}
+        actionIcon="settings-outline"
+        onAction={() => router.push('/notification-settings')}
+      />
     <ScrollView
-      style={styles.container}
+      style={styles.scrollView}
       contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
       showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
@@ -202,12 +210,12 @@ export default function ProviderProfile() {
         <StatBox label={t('dashboard.rating')}    value={provider.score > 0 ? `${provider.score.toFixed(1)} ⭐` : '—'} />
         <StatBox label={t('dashboard.totalJobs')} value={String(provider.lifetime_jobs)} />
         <StatBox label={t('dashboard.views')}     value={String(provider.profile_views ?? 0)} />
-        <StatBox label={t('dashboard.views')}     value={String(provider.share_count ?? 0)} />
+        <StatBox label={t('profile.statShares')}  value={String(provider.share_count ?? 0)} />
       </View>
 
       {/* ── Portfolio Mini Gallery ── */}
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
+        <View style={[styles.sectionHeader, styles.sectionHeaderRow]}>
           <TouchableOpacity onPress={() => router.push('/portfolio')}>
             <Text style={styles.sectionLink}>{t('profile.portfolioManage')} ›</Text>
           </TouchableOpacity>
@@ -395,7 +403,7 @@ export default function ProviderProfile() {
 
       {/* ── My categories ── */}
       <View style={styles.section}>
-        <View style={[styles.sectionHeader, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+        <View style={[styles.sectionHeader, styles.sectionHeaderRow]}>
           <TouchableOpacity onPress={openCatModal}>
             <Text style={styles.sectionLink}>{t('profile.editSpecialties')} ✏️</Text>
           </TouchableOpacity>
@@ -568,6 +576,7 @@ export default function ProviderProfile() {
         <Text style={styles.signOutText}>{t('profile.logout')}</Text>
       </TouchableOpacity>
     </ScrollView>
+    </View>
   );
 }
 
@@ -593,11 +602,12 @@ function createStatStyles(colors: AppColors) {
 function createStyles(colors: AppColors, isRTL: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bg },
-  content:   { paddingBottom: 24 },
+  container:  { flex: 1, backgroundColor: colors.bg },
+  scrollView: { flex: 1, backgroundColor: colors.bg },
+  content:    { paddingBottom: 24 },
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  heroCard:   { alignItems: 'center', paddingTop: HEADER_PAD, paddingBottom: 24, paddingHorizontal: 20 },
+  heroCard:   { alignItems: 'center', paddingTop: 24, paddingBottom: 24, paddingHorizontal: 20 },
   avatar:     { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   avatarText: { fontSize: 32, fontWeight: '700', color: colors.bg },
   name:       { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
@@ -610,7 +620,8 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 20 },
 
   section:      { paddingHorizontal: 16, marginBottom: 20 },
-  sectionHeader:{ marginBottom: 12 },
+  sectionHeader:    { marginBottom: 12 },
+  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   sectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
   sectionEmoji: { fontSize: 16 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', alignSelf: 'stretch' },
