@@ -266,11 +266,16 @@ export const CATEGORY_PLACEHOLDERS: Record<string, { title_ar: string; title_en:
 // ─── Subscription Plans ──────────────────────────────────────
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
-  { tier: 'trial',   name_ar: 'تجريبية', name_en: 'Trial',   price_jod: 0,  subscription_credits: 10, is_unlimited: false, is_trial: true  },
-  { tier: 'basic',   name_ar: 'أساسية',  name_en: 'Basic',   price_jod: 5,  subscription_credits: 20, is_unlimited: false, is_trial: false },
-  { tier: 'pro',     name_ar: 'محترف',   name_en: 'Pro',     price_jod: 12, subscription_credits: 50, is_unlimited: false, is_trial: false },
-  { tier: 'premium', name_ar: 'نخبة',    name_en: 'Elite',   price_jod: 22, subscription_credits: 0,  is_unlimited: true,  is_trial: false },
+  { tier: 'trial',   name_ar: 'تجريبية', name_en: 'Trial',   price_jod: 0,  subscription_credits: 10, max_concurrent_bids: 2,  is_unlimited: false, is_trial: true  },
+  { tier: 'basic',   name_ar: 'أساسية',  name_en: 'Basic',   price_jod: 5,  subscription_credits: 20, max_concurrent_bids: 4,  is_unlimited: false, is_trial: false },
+  { tier: 'pro',     name_ar: 'محترف',   name_en: 'Pro',     price_jod: 12, subscription_credits: 50, max_concurrent_bids: 6,  is_unlimited: false, is_trial: false },
+  { tier: 'premium', name_ar: 'نخبة',    name_en: 'Elite',   price_jod: 22, subscription_credits: 0,  max_concurrent_bids: -1, is_unlimited: true,  is_trial: false },
 ];
+
+// Base concurrent cap per tier — used in UI without a full plan object
+export const CONCURRENT_BID_CAP: Record<string, number> = {
+  trial: 2, basic: 4, pro: 6, premium: 8,
+};
 
 // Credit cost per bid type
 export const CREDIT_COST = { normal: 1, urgent: 2, contract: 3 } as const;
