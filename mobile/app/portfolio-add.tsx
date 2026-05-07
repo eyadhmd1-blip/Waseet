@@ -426,6 +426,7 @@ export default function PortfolioAddScreen() {
       const { error } = await supabase
         .from('portfolio_items')
         .insert({
+          provider_id:    user.id,
           item_type:      itemType,
           media_urls,
           video_url,
@@ -436,7 +437,8 @@ export default function PortfolioAddScreen() {
       if (error) throw error;
 
       setShowSuccess(true);
-    } catch {
+    } catch (err) {
+      console.error('[portfolio-add] submit error:', err);
       Alert.alert(t('common.error'), t('portfolioAdd.errSubmit'));
     } finally {
       setSubmitting(false);
