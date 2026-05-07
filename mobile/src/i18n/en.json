@@ -484,7 +484,10 @@
       "subtitle": "The code was sent to the client. Ask them for the code and enter it below",
       "confirm": "Confirm Completion",
       "successTitle": "Well done!",
-      "successMsg": "Completion confirmed. Client rating will arrive soon"
+      "successMsg": "Completion confirmed. Client rating will arrive soon",
+      "inboxOnlyTitle": "Code sent to inbox",
+      "inboxOnlySub": "Push notification could not be delivered, but the code is in the client's in-app notification inbox — ask them to open the app and check notifications",
+      "sendFailedMsg": "Could not send the code — contact the client via chat and share the code manually"
     },
     "tabActive": "Active",
     "tabCompleted": "Completed",

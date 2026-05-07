@@ -92,13 +92,28 @@ export default function ProviderJobs() {
       return;
     }
 
-    await supabase.functions.invoke('send-confirm-notification', {
+    const { data: notifResult } = await supabase.functions.invoke('send-confirm-notification', {
       body: { job_id: job.id, client_id: job.client_id, code },
     });
 
     setSendingCode(false);
     setCodeSent(true);
     setConfirmJob(job);
+
+    // If push notification failed but inbox delivery succeeded — inform provider
+    if (notifResult && !notifResult.sent && notifResult.inbox) {
+      Alert.alert(
+        '📬 ' + t('profile.confirmModal.inboxOnlyTitle'),
+        t('profile.confirmModal.inboxOnlySub'),
+      );
+    }
+    // If both failed — show warning
+    if (notifResult && !notifResult.sent && !notifResult.inbox) {
+      Alert.alert(
+        t('common.error'),
+        t('profile.confirmModal.sendFailedMsg'),
+      );
+    }
   };
 
   const handleCodeChange = (value: string, index: number) => {
