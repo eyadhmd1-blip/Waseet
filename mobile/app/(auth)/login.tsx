@@ -11,6 +11,12 @@ import { HEADER_PAD } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
 
+function normalizeDigits(s: string): string {
+  return s
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0));
+}
+
 export default function LoginScreen() {
   useInsets();
   const router = useRouter();
@@ -23,7 +29,7 @@ export default function LoginScreen() {
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const handleSendOtp = async () => {
-    const raw = phone.trim().replace(/\s+/g, '');
+    const raw = normalizeDigits(phone).trim().replace(/\s+/g, '');
     if (!raw) return;
 
     const formatted = raw.startsWith('+')
