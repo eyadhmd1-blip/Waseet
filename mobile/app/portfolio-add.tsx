@@ -15,6 +15,7 @@ import type { PortfolioItemType } from '../src/types';
 import { useLanguage }      from '../src/hooks/useLanguage';
 import { useTheme }         from '../src/context/ThemeContext';
 import { AppHeader }        from '../src/components/AppHeader';
+import { useInsets }        from '../src/hooks/useInsets';
 import type { AppColors }   from '../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
@@ -250,8 +251,9 @@ function createUbSt(colors: AppColors) {
 export default function PortfolioAddScreen() {
   const { colors } = useTheme();
   const { t, lang, isRTL } = useLanguage();
+  const { bottom: bottomInset } = useInsets();
   const ta = isRTL ? 'right' : 'left' as const;
-  const st = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
+  const st = useMemo(() => createSt(colors, isRTL, bottomInset), [colors, isRTL, bottomInset]);
   const router = useRouter();
 
   const [step,        setStep]        = useState<1 | 2 | 3>(1);
@@ -672,12 +674,12 @@ export default function PortfolioAddScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors, isRTL: boolean) {
+function createSt(colors: AppColors, isRTL: boolean, bottomInset: number) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
 
   scroll:  { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 32 },
-  footer:  { paddingHorizontal: 20, paddingBottom: Platform.OS === 'ios' ? 40 : 24, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg },
+  footer:  { paddingHorizontal: 20, paddingBottom: bottomInset + 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg },
 
   stepTitle: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 6, textAlign: ta },
   stepSub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22, marginBottom: 28, textAlign: ta },
