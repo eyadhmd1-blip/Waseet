@@ -240,8 +240,9 @@ function createStyles(colors: AppColors) {
   orbitWheel:   { position: 'absolute', top: 0, left: 0, width: ORBIT_RADIUS * 2, height: ORBIT_RADIUS * 2 },
   orbitIcon:    { position: 'absolute', fontSize: rs(22, 16, 26) },
   glow:         { position: 'absolute', top: ORBIT_RADIUS - GLOW_SIZE / 2, left: ORBIT_RADIUS - GLOW_SIZE / 2, width: GLOW_SIZE, height: GLOW_SIZE, borderRadius: GLOW_SIZE / 2, backgroundColor: colors.accent },
-  // Logo font scales with screen width — min 44 on SE, max 72 on tablets
-  logoAr:       { fontSize: rs(54, 40, 64), fontWeight: '800', color: colors.accent, letterSpacing: 0, maxWidth: GLOW_SIZE * 0.80, textShadowColor: 'rgba(201,168,76,0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 20 },
+  // adjustsFontSizeToFit requires an explicit `width` (not maxWidth) to know the shrink target.
+  // maxWidth was the root cause of the text being clipped on iPhone 14 Pro Max.
+  logoAr:       { fontSize: rs(48, 38, 58), fontWeight: '800', color: colors.accent, letterSpacing: 0, width: GLOW_SIZE * 0.85, textAlign: 'center', textShadowColor: 'rgba(201,168,76,0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 20 },
   logoEn:       { fontSize: rs(18, 14, 22), fontWeight: '300', color: colors.textSecondary, letterSpacing: 9, marginTop: 2 },
   tagline:      { fontSize: rs(14, 12, 16), color: colors.textMuted, marginTop: 4, textAlign: 'center', letterSpacing: 0.5, paddingHorizontal: width * 0.08 },
   connRow:      { flexDirection: 'row', alignItems: 'center', marginTop: 36, paddingHorizontal: 12 },
