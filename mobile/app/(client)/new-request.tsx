@@ -248,7 +248,7 @@ export default function NewRequestScreen() {
       {/* ── Step 1: Category ── */}
       {step === 1 && (
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupScroll}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.groupScroll} contentContainerStyle={styles.groupScrollContent}>
             {groups.map(g => (
               <TouchableOpacity
                 key={g.slug}
@@ -507,7 +507,8 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
     scrollContent: { padding: 20, paddingBottom: 40 },
 
-    groupScroll:         { marginBottom: 20 },
+    groupScroll:         { marginBottom: 20, marginEnd: -20 },
+    groupScrollContent:  { paddingEnd: 20 },
     groupChip:           { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
     groupChipActive:     { borderColor: colors.accent, backgroundColor: colors.accentDim },
     groupChipText:       { color: colors.textSecondary, fontSize: 13 },
