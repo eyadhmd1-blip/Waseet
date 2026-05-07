@@ -46,11 +46,14 @@ const FILTERS: FilterConfig[] = [
   },
 ];
 
-async function getUsers(params: { q?: string; role?: string; status?: string; verified?: string }) {
+const PAGE_SIZE = 50;
+
+async function getUsers(params: { q?: string; role?: string; status?: string; verified?: string; page: number }) {
   let query = supabaseAdmin
     .from('users')
-    .select('id, full_name, phone, role, city, phone_verified, created_at, is_disabled, disabled_reason')
-    .order('created_at', { ascending: false });
+    .select('id, full_name, phone, role, city, phone_verified, created_at, is_disabled, disabled_reason', { count: 'exact' })
+    .order('created_at', { ascending: false })
+    .range(params.page * PAGE_SIZE, (params.page + 1) * PAGE_SIZE - 1);
 
   if (params.q) {
     query = query.or(`full_name.ilike.%${params.q}%,phone.ilike.%${params.q}%`);
@@ -63,28 +66,35 @@ async function getUsers(params: { q?: string; role?: string; status?: string; ve
   if (params.verified === 'yes')    query = query.eq('phone_verified', true);
   if (params.verified === 'no')     query = query.eq('phone_verified', false);
 
-  const { data } = await query;
-  return data ?? [];
+  const { data, count } = await query;
+  return { users: data ?? [], total: count ?? 0 };
 }
 
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; role?: string; status?: string; verified?: string }>;
+  searchParams: Promise<{ q?: string; role?: string; status?: string; verified?: string; page?: string }>;
 }) {
-  const sp    = await searchParams;
-  const users = await getUsers(sp);
+  const sp   = await searchParams;
+  const page = Math.max(0, parseInt(sp.page ?? '0', 10));
+  const { users, total } = await getUsers({ ...sp, page });
 
   const clients   = users.filter((u: any) => u.role === 'client').length;
   const providers = users.filter((u: any) => u.role === 'provider').length;
   const disabled  = users.filter((u: any) => u.is_disabled).length;
   const verified  = users.filter((u: any) => u.phone_verified).length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const current: Record<string, string> = {
     q:        sp.q        ?? '',
     role:     sp.role     ?? '',
     status:   sp.status   ?? '',
     verified: sp.verified ?? '',
+  };
+
+  const pageUrl = (p: number) => {
+    const params = new URLSearchParams({ ...current, page: String(p) });
+    return `/users?${params}`;
   };
 
   return (
@@ -94,7 +104,7 @@ export default async function UsersPage({
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">إدارة المستخدمين</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{users.length} مستخدم مسجّل</p>
+          <p className="text-slate-500 text-sm mt-0.5">{total} مستخدم مسجّل</p>
         </div>
         <div className="flex gap-3 flex-wrap">
           {[
@@ -176,7 +186,9 @@ export default async function UsersPage({
                   </td>
                   <td className="px-5 py-3 text-slate-500 text-xs">{fmtDate(u.created_at)}</td>
                   <td className="px-5 py-3">
-                    {u.role !== 'admin' && (
+                    {u.role === 'admin' ? (
+                      <span className="text-xs text-slate-600 italic">مدير النظام</span>
+                    ) : (
                       <UserActions
                         userId={u.id}
                         userName={u.full_name}
@@ -189,6 +201,21 @@ export default async function UsersPage({
             })}
           </tbody>
         </table>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t border-slate-800 px-5 py-3 flex items-center justify-between">
+            <span className="text-slate-500 text-xs">صفحة {page + 1} من {totalPages}</span>
+            <div className="flex gap-2">
+              {page > 0 && (
+                <a href={pageUrl(page - 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
+              )}
+              {page < totalPages - 1 && (
+                <a href={pageUrl(page + 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

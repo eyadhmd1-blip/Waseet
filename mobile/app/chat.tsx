@@ -14,6 +14,8 @@ import * as FileSystem     from 'expo-file-system';
 import * as ImagePicker    from 'expo-image-picker';
 import { supabase }        from '../src/lib/supabase';
 import { useLanguage }     from '../src/hooks/useLanguage';
+import { useTheme }        from '../src/context/ThemeContext';
+import { useInsets }       from '../src/hooks/useInsets';
 import type { Message }    from '../src/types';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -764,7 +766,7 @@ export default function ChatScreen() {
           ) : (
             <View style={[styles.bubble, isMine ? styles.bubbleMine : styles.bubbleTheirs]}>
               <Text style={[styles.bubbleText, isMine ? styles.bubbleTextMine : styles.bubbleTextTheirs]}>
-                {item.content}
+                {filterPhoneNumbers(item.content ?? '')}
               </Text>
               <Text style={[styles.bubbleTime, isMine ? styles.bubbleTimeMine : styles.bubbleTimeTheirs]}>
                 {formatTime(item.created_at, locale)}
@@ -1111,8 +1113,6 @@ function ProfileCardBubble({
 
 // Import TIER_META for colors — inline map used above, import needed for type safety
 import { TIER_META } from '../src/constants/categories';
-import { useInsets } from '../src/hooks/useInsets';
-import { useTheme } from '../src/context/ThemeContext';
 import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 

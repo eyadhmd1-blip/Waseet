@@ -159,7 +159,7 @@ export default function SavedProvidersScreen() {
     <View style={styles.container}>
       <Animated.View style={[styles.topBar, { opacity: headerOp }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backText}>→</Text>
+          <Text style={styles.backText}>{isRTL ? '→' : '←'}</Text>
         </TouchableOpacity>
         <Text style={styles.topTitle}>{t('saved.title')}</Text>
         <View style={{ width: 36 }} />
@@ -206,7 +206,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
     topBar:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: HEADER_PAD, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
     backBtn:   { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-    backText:  { fontSize: 22, color: colors.textSecondary, transform: [{ scaleX: -1 }] },
+    backText:  { fontSize: 22, color: colors.textSecondary },
     topTitle:  { fontSize: 17, fontWeight: '700', color: colors.textPrimary, textAlign: ta },
 
     listContent: { padding: 16, paddingBottom: 40 },

@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         body,
         type:     "confirm_job",
         screen:   "/(client)/jobs",
-        metadata: { job_id, code },
+        metadata: { job_id },
       });
 
     const inbox = !inboxErr;
@@ -107,7 +107,7 @@ Deno.serve(async (req) => {
       sound: "default",
       title,
       body,
-      data:  { job_id, code, type: "confirm_job" },
+      data:  { job_id, type: "confirm_job" },
       ttl:   1800,
     };
 

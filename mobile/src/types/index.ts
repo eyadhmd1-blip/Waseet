@@ -66,6 +66,7 @@ export interface Provider {
   bonus_credits: number;         // accumulates from achievements, frozen when subscription lapses
   trial_used: boolean;
   bid_rejection_rate: number;
+  win_discount_pct?: number;
   // active bids
   active_bid_count?: number;
   // availability

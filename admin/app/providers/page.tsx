@@ -66,8 +66,10 @@ const FILTERS: FilterConfig[] = [
   },
 ];
 
+const PAGE_SIZE = 50;
+
 async function getProviders(params: {
-  q?: string; status?: string; tier?: string; sub?: string; badge?: string;
+  q?: string; status?: string; tier?: string; sub?: string; badge?: string; page: number;
 }) {
   // Step 1: if text search, resolve matching user IDs first
   let userIds: string[] | null = null;
@@ -78,7 +80,7 @@ async function getProviders(params: {
       .eq('role', 'provider')
       .or(`full_name.ilike.%${params.q}%,phone.ilike.%${params.q}%`);
     userIds = (matchedUsers ?? []).map((u: any) => u.id);
-    if (userIds.length === 0) return [];
+    if (userIds.length === 0) return { providers: [], total: 0 };
   }
 
   // Step 2: build provider query
@@ -91,8 +93,9 @@ async function getProviders(params: {
       is_active, suspended_at, suspension_reason,
       bid_credits,
       user:users(id, full_name, phone, city, is_disabled)
-    `)
-    .order('lifetime_jobs', { ascending: false });
+    `, { count: 'exact' })
+    .order('lifetime_jobs', { ascending: false })
+    .range(params.page * PAGE_SIZE, (params.page + 1) * PAGE_SIZE - 1);
 
   if (userIds !== null) {
     query = query.in('user_id', userIds);
@@ -108,17 +111,18 @@ async function getProviders(params: {
     query = query.eq('is_subscribed', true).eq('subscription_tier', params.sub);
   }
 
-  const { data } = await query;
-  return data ?? [];
+  const { data, count } = await query;
+  return { providers: data ?? [], total: count ?? 0 };
 }
 
 export default async function ProvidersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; tier?: string; sub?: string; badge?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; tier?: string; sub?: string; badge?: string; page?: string }>;
 }) {
-  const sp        = await searchParams;
-  const providers = await getProviders(sp);
+  const sp   = await searchParams;
+  const page = Math.max(0, parseInt(sp.page ?? '0', 10));
+  const { providers, total } = await getProviders({ ...sp, page });
 
   const subscribed = providers.filter((p: any) => p.is_subscribed).length;
   const verified   = providers.filter((p: any) => p.badge_verified).length;
@@ -126,6 +130,7 @@ export default async function ProvidersPage({
   const avgScore   = providers.length > 0
     ? (providers.reduce((s: number, p: any) => s + Number(p.score ?? 0), 0) / providers.length).toFixed(1)
     : '—';
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const current: Record<string, string> = {
     q:      sp.q      ?? '',
@@ -135,6 +140,11 @@ export default async function ProvidersPage({
     badge:  sp.badge  ?? '',
   };
 
+  const pageUrl = (p: number) => {
+    const params = new URLSearchParams({ ...current, page: String(p) });
+    return `/providers?${params}`;
+  };
+
   return (
     <div className="p-6 space-y-6">
 
@@ -142,7 +152,7 @@ export default async function ProvidersPage({
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">إدارة المزودين</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{providers.length} مزود مسجّل</p>
+          <p className="text-slate-500 text-sm mt-0.5">{total} مزود مسجّل</p>
         </div>
         <div className="flex gap-3 flex-wrap">
           {[
@@ -258,6 +268,20 @@ export default async function ProvidersPage({
               })}
             </tbody>
           </table>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t border-slate-800 px-5 py-3 flex items-center justify-between">
+            <span className="text-slate-500 text-xs">صفحة {page + 1} من {totalPages}</span>
+            <div className="flex gap-2">
+              {page > 0 && (
+                <a href={pageUrl(page - 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
+              )}
+              {page < totalPages - 1 && (
+                <a href={pageUrl(page + 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
+              )}
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </div>

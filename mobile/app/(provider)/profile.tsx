@@ -363,6 +363,13 @@ export default function ProviderProfile() {
               </View>
             )}
 
+            {/* Win-based renewal discount earned */}
+            {(provider.win_discount_pct ?? 0) > 0 && (
+              <Text style={styles.winDiscountText}>
+                {t('profile.winDiscount', { pct: provider.win_discount_pct })}
+              </Text>
+            )}
+
             {/* Next tier credit reward hint */}
             {provider.reputation_tier !== 'elite' && (
               <Text style={styles.repDiscountText}>
