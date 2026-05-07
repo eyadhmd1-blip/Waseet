@@ -2,6 +2,8 @@ import { supabaseAdmin } from './lib/supabase';
 import { StatCard } from './ui/stat-card';
 import { Badge } from './ui/badge';
 
+export const dynamic = 'force-dynamic';
+
 // ── helpers ──────────────────────────────────────────────────
 
 function daysAgo(n: number) {

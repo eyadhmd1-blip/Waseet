@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { SettingsForm } from './settings-form';
 
+export const dynamic = 'force-dynamic';
+
 // Default values if not in DB yet
 const DEFAULTS: Record<string, { label: string; description: string; type: 'number' | 'boolean' | 'percent'; default: string }> = {
   urgent_premium_pct: {

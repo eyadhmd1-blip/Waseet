@@ -8,14 +8,14 @@ interface Props {
 }
 
 async function getProvider(slug: string) {
-  // Try by username first
+  // Try by username first — exclude suspended users
   const { data: byUsername } = await supabaseAdmin
     .from('public_provider_profiles')
-    .select('id, username, full_name, city, score, reputation_tier, lifetime_jobs, badge_verified, bio, categories')
+    .select('id, username, full_name, city, score, reputation_tier, lifetime_jobs, badge_verified, bio, categories, is_suspended')
     .eq('username', slug)
     .maybeSingle();
 
-  if (byUsername) return byUsername;
+  if (byUsername) return (byUsername as any).is_suspended ? null : byUsername;
 
   // Fall back to UUID (provider_id passed as slug)
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
@@ -23,11 +23,11 @@ async function getProvider(slug: string) {
 
   const { data: byId } = await supabaseAdmin
     .from('public_provider_profiles')
-    .select('id, username, full_name, city, score, reputation_tier, lifetime_jobs, badge_verified, bio, categories')
+    .select('id, username, full_name, city, score, reputation_tier, lifetime_jobs, badge_verified, bio, categories, is_suspended')
     .eq('id', slug)
     .maybeSingle();
 
-  return byId ?? null;
+  return byId && !(byId as any).is_suspended ? byId : null;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

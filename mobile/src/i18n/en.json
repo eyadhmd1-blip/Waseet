@@ -63,7 +63,13 @@
     "fillAllFields": "Please fill in all fields",
     "phoneAlreadyRegistered": "Phone number already registered",
     "phoneAlreadyRegisteredMsg": "This number is linked to an existing account. Would you like to log in instead?",
-    "goToLogin": "Log In"
+    "goToLogin": "Log In",
+    "otpExpired": "Code expired. Tap \"Resend\" to get a new one.",
+    "maxAttempts": "Too many attempts. Request a new code.",
+    "sessionFailed": "Session creation failed. Please try again.",
+    "accountSuspended": "Your account has been suspended. Contact support for assistance.",
+    "resendWait": "Please wait before requesting another code.",
+    "resendFailed": "Failed to resend. Check your connection."
   },
   "home": {
     "mostRequested": "Most Requested",

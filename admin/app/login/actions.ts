@@ -9,6 +9,12 @@ const COOKIE_NAME     = 'waseet_admin_session';
 
 // ── HMAC-based token (no extra packages — uses Web Crypto API) ──
 
+function getSecret(): string {
+  const s = process.env.ADMIN_SESSION_SECRET ?? process.env.ADMIN_PASSWORD;
+  if (!s) throw new Error('ADMIN_SESSION_SECRET env var is not set');
+  return s;
+}
+
 async function sign(payload: string, secret: string): Promise<string> {
   const enc     = new TextEncoder();
   const keyData = enc.encode(secret);
@@ -20,7 +26,7 @@ async function sign(payload: string, secret: string): Promise<string> {
 }
 
 async function buildToken(username: string): Promise<string> {
-  const secret    = process.env.ADMIN_SESSION_SECRET ?? process.env.ADMIN_PASSWORD ?? 'change-me';
+  const secret    = getSecret();
   const issuedAt  = Math.floor(Date.now() / 1000);
   const expiresAt = issuedAt + SESSION_MAX_AGE;
   const payload   = `${username}|${issuedAt}|${expiresAt}`;
@@ -30,7 +36,8 @@ async function buildToken(username: string): Promise<string> {
 
 export async function verifyToken(token: string): Promise<{ valid: boolean; username?: string }> {
   try {
-    const secret = process.env.ADMIN_SESSION_SECRET ?? process.env.ADMIN_PASSWORD ?? 'change-me';
+    const secret = process.env.ADMIN_SESSION_SECRET ?? process.env.ADMIN_PASSWORD;
+    if (!secret) return { valid: false };
     const parts  = token.split('|');
     if (parts.length !== 4) return { valid: false };
 

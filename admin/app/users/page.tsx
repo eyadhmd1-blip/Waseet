@@ -4,6 +4,8 @@ import { UserActions } from './user-actions';
 import { FilterBar } from '../ui/filter-bar';
 import type { FilterConfig } from '../ui/filter-bar';
 
+export const dynamic = 'force-dynamic';
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-JO', {
     day: 'numeric', month: 'short', year: 'numeric',

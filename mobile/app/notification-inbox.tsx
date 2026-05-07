@@ -27,14 +27,20 @@ interface NotifRow {
 // ─── Helpers ──────────────────────────────────────────────────
 
 const TYPE_ICON: Record<string, string> = {
-  job_commit_request:  '✅',
-  perseverance_reward: '🏆',
-  no_bids_reminder:    '⏰',
-  admin_broadcast:     '📢',
-  seasonal:            '📅',
-  lifecycle:           '🔄',
-  behavioral:          '🧠',
-  ai:                  '✨',
+  job_commit_request:    '✅',
+  confirm_job:           '🔑',
+  bid_accepted:          '✅',
+  job_rated:             '⭐',
+  contract_bid_accepted: '🤝',
+  perseverance_reward:   '🏆',
+  no_bids_reminder:      '⏰',
+  subscription_expired:  '🔴',
+  subscription_warning:  '⚠️',
+  admin_broadcast:       '📢',
+  seasonal:              '📅',
+  lifecycle:             '🔄',
+  behavioral:            '🧠',
+  ai:                    '✨',
 };
 
 function notifIcon(type: string | null): string {

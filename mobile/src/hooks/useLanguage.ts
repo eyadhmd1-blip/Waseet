@@ -13,6 +13,7 @@ import { Alert } from 'react-native';
 import type { TextStyle } from 'react-native';
 import { changeLanguage as changeLangFn } from '../i18n';
 import type { Lang } from '../i18n';
+import { supabase } from '../lib/supabase';
 
 export function useLanguage() {
   const { t, i18n } = useTranslation();
@@ -29,9 +30,14 @@ export function useLanguage() {
     async (newLang: Lang) => {
       if (newLang === lang) return;
       await changeLangFn(newLang);
-      // The Alert here is handled by the UI component calling this function.
-      // After calling changeLanguage(), the navigator will be remounted via
-      // the appKey state in _layout.tsx.
+      // Sync preference to DB so edge functions can send notifications
+      // in the correct language. Non-fatal if unauthenticated.
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          supabase.from('users').update({ lang: newLang }).eq('id', user.id).then(() => {});
+        }
+      } catch { /* ignore — preference is still saved locally */ }
     },
     [lang],
   );

@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { NotificationForm } from './notification-form';
 
+export const dynamic = 'force-dynamic';
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-JO', {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',

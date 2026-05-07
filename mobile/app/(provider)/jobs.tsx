@@ -282,6 +282,7 @@ export default function ProviderJobs() {
                   maxLength={1}
                   textAlign="center"
                   selectTextOnFocus
+                  editable={!confirmLoading}
                 />
               ))}
             </View>
