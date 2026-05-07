@@ -12,7 +12,6 @@ import { setRoleUpdateHandler } from '../src/lib/authEvents';
 import { ROUTES } from '../src/constants/theme';
 import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
-import { useLanguage } from '../src/hooks/useLanguage';
 import { initI18n } from '../src/i18n';
 import i18nInstance from '../src/i18n';
 
@@ -140,7 +139,6 @@ function RootLayoutInner() {
 
   const router   = useRouter();
   const segments = useSegments();
-  const { t }    = useLanguage();
   const notifListenerRef = useRef<Notifications.Subscription | null>(null);
 
   // ── Register direct role-update bridge for onboarding screen ──
@@ -328,7 +326,7 @@ function RootLayoutInner() {
       {!isOnline && (
         <View style={[offlineBanner, { backgroundColor: colors.errorBg }]}>
           <Text style={{ color: colors.errorSoft, fontSize: 13, fontWeight: '600' }}>
-            ⚠ {t('common.noInternet')}
+            ⚠ {i18nInstance.t('common.noInternet')}
           </Text>
         </View>
       )}
