@@ -18,6 +18,10 @@ import { useLanguage } from '../hooks/useLanguage';
 import { CONCURRENT_BID_CAP } from '../constants/categories';
 import type { AppColors } from '../constants/colors';
 
+const PREMIUM_BASE_SLOTS   = 8;
+const BONUS_CREDITS_PER_SLOT = 5;
+const PREMIUM_MAX_SLOTS    = 12;
+
 interface Props {
   subscriptionCredits:  number;
   bonusCredits:         number;
@@ -42,7 +46,7 @@ export function ProviderSubHeader({
 
   // Compute max concurrent bids for this tier
   const maxBids = subscriptionTier === 'premium'
-    ? Math.min(8 + Math.floor(bonusCredits / 5), 12)
+    ? Math.min(PREMIUM_BASE_SLOTS + Math.floor(bonusCredits / BONUS_CREDITS_PER_SLOT), PREMIUM_MAX_SLOTS)
     : (CONCURRENT_BID_CAP[subscriptionTier] ?? 2);
 
   // Indicator colour: green ok, amber 1-away, red at-cap
@@ -58,8 +62,8 @@ export function ProviderSubHeader({
 
   // ── Premium ─────────────────────────────────────────────────
   if (subscriptionTier === 'premium' && isSubscribed && !isExpired) {
-    const extraSlots = Math.floor(bonusCredits / 5);
-    const totalSlots = Math.min(8 + extraSlots, 12);
+    const extraSlots = Math.floor(bonusCredits / BONUS_CREDITS_PER_SLOT);
+    const totalSlots = Math.min(PREMIUM_BASE_SLOTS + extraSlots, PREMIUM_MAX_SLOTS);
     return (
       <View style={[s.bar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
         <Text style={[s.text, { color: colors.textMuted }]}>

@@ -12,6 +12,7 @@ import { setRoleUpdateHandler } from '../src/lib/authEvents';
 import { ROUTES } from '../src/constants/theme';
 import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
+import { useLanguage } from '../src/hooks/useLanguage';
 import { initI18n } from '../src/i18n';
 import i18nInstance from '../src/i18n';
 
@@ -35,10 +36,11 @@ class ErrorBoundary extends Component<
 
   render() {
     if (!this.state.hasError) return this.props.children;
+    const t = i18nInstance.t.bind(i18nInstance);
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 }}>
         <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, textAlign: 'center' }}>
-          حدث خطأ غير متوقع
+          {t('common.unexpectedError')}
         </Text>
         <Text style={{ fontSize: 13, color: '#888', marginBottom: 24, textAlign: 'center' }}>
           {this.state.error?.message ?? 'Unknown error'}
@@ -47,7 +49,7 @@ class ErrorBoundary extends Component<
           style={{ backgroundColor: '#3B82F6', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }}
           onPress={() => this.setState({ hasError: false, error: null })}
         >
-          <Text style={{ color: '#fff', fontWeight: '600' }}>إعادة المحاولة</Text>
+          <Text style={{ color: '#fff', fontWeight: '600' }}>{t('common.retry')}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -138,6 +140,7 @@ function RootLayoutInner() {
 
   const router   = useRouter();
   const segments = useSegments();
+  const { t }    = useLanguage();
   const notifListenerRef = useRef<Notifications.Subscription | null>(null);
 
   // ── Register direct role-update bridge for onboarding screen ──
@@ -325,7 +328,7 @@ function RootLayoutInner() {
       {!isOnline && (
         <View style={[offlineBanner, { backgroundColor: colors.errorBg }]}>
           <Text style={{ color: colors.errorSoft, fontSize: 13, fontWeight: '600' }}>
-            ⚠ لا يوجد اتصال بالإنترنت
+            ⚠ {t('common.noInternet')}
           </Text>
         </View>
       )}

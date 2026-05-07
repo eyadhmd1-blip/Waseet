@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
+import { logCategoryToggle, logCategoryAdd } from './actions';
 
 const sb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,8 +17,10 @@ export function ToggleCategory({ id, isActive }: { id: string; isActive: boolean
 
   const toggle = async () => {
     setLoading(true);
-    await sb.from('service_categories').update({ is_active: !active }).eq('id', id);
-    setActive(v => !v);
+    const newActive = !active;
+    await sb.from('service_categories').update({ is_active: newActive }).eq('id', id);
+    setActive(newActive);
+    await logCategoryToggle(id, newActive);
     setLoading(false);
   };
 
@@ -67,19 +70,26 @@ export function AddCategoryForm({ maxSort }: { maxSort: number }) {
 
   const handleAdd = async () => {
     if (!slug || !nameAr) { setError('الاسم العربي والـ slug مطلوبان'); return; }
+    const trimmedIcon = icon.trim() || 'wrench';
+    if (!/^[a-z0-9-]+$/.test(trimmedIcon)) {
+      setError('الأيقونة يجب أن تكون slug صحيح (أحرف إنجليزية صغيرة وأرقام وشرطات فقط)');
+      return;
+    }
     setLoading(true); setError(''); setSuccess('');
+    const trimmedSlug = slug.trim().toLowerCase().replace(/\s+/g, '_');
     const { error: dbErr } = await sb.from('service_categories').insert({
-      slug: slug.trim().toLowerCase().replace(/\s+/g, '_'),
+      slug:      trimmedSlug,
       name_ar:   nameAr.trim(),
       name_en:   nameEn.trim() || null,
-      icon:      icon.trim() || 'wrench',
+      icon:      trimmedIcon,
       group_slug: group,
       group_ar:  GROUPS.find(g => g.slug === group)?.name ?? group,
       group_en:  null,
       sort_order: maxSort + 1,
     });
+    if (dbErr) { setLoading(false); setError(dbErr.message); return; }
+    await logCategoryAdd(trimmedSlug, nameAr.trim());
     setLoading(false);
-    if (dbErr) { setError(dbErr.message); return; }
     setSuccess('تمت الإضافة بنجاح!');
     setSlug(''); setNameAr(''); setNameEn(''); setIcon('wrench');
     setTimeout(() => { setSuccess(''); setOpen(false); window.location.reload(); }, 1200);

@@ -279,12 +279,16 @@ export default function SubscribeScreen() {
         return;
       }
       setProcessing(true);
-      await supabase.rpc('activate_provider_subscription', {
+      const { error: trialErr } = await supabase.rpc('activate_provider_subscription', {
         p_provider_id:   provider.id,
         p_tier:          'trial',
         p_period_months: 1,
       });
       setProcessing(false);
+      if (trialErr) {
+        Alert.alert(t('common.error'), t('subscribe.errUnexpected'));
+        return;
+      }
       Alert.alert(t('common.success'), t('subscribe.trialActivated'));
       router.back();
       return;
@@ -297,7 +301,8 @@ export default function SubscribeScreen() {
       const user = _ses?.user;
       if (!user) { setProcessing(false); return; }
 
-      const plan        = SUBSCRIPTION_PLANS.find(p => p.tier === selectedTier)!;
+      const plan        = SUBSCRIPTION_PLANS.find(p => p.tier === selectedTier);
+      if (!plan) return;
       const planName    = lang === 'ar' ? plan.name_ar : (plan.name_en ?? plan.name_ar);
       const amountFixed = plan.price_jod;
       const subject     = `شحن رصيد — باقة ${planName} (${amountFixed} د.أ)`;
@@ -340,9 +345,11 @@ export default function SubscribeScreen() {
     return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
 
-  const selectedPlan   = SUBSCRIPTION_PLANS.find(p => p.tier === selectedTier)!;
+  const selectedPlan   = SUBSCRIPTION_PLANS.find(p => p.tier === selectedTier);
   const accentColor    = PLAN_COLORS[selectedTier];
-  const selectedPlanName = lang === 'ar' ? selectedPlan.name_ar : (selectedPlan.name_en ?? selectedPlan.name_ar);
+  const selectedPlanName = selectedPlan
+    ? (lang === 'ar' ? selectedPlan.name_ar : (selectedPlan.name_en ?? selectedPlan.name_ar))
+    : selectedTier;
   const visiblePlans   = SUBSCRIPTION_PLANS.filter(p => !(p.is_trial && provider?.trial_used));
 
   const guarantees = [
@@ -422,7 +429,7 @@ export default function SubscribeScreen() {
           <Text style={styles.orderLabel}>{t('subscribe.orderLabel')}</Text>
           <View style={styles.orderPriceRow}>
             <Text style={[styles.orderPrice, { color: accentColor }]}>
-              {selectedPlan?.is_trial ? t('subscribe.trialBadge') : `${selectedPlan.price_jod} ${t('common.jod')}`}
+              {selectedPlan?.is_trial ? t('subscribe.trialBadge') : `${selectedPlan?.price_jod ?? 0} ${t('common.jod')}`}
             </Text>
           </View>
         </View>

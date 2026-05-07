@@ -20,10 +20,19 @@ function fmtDate(iso: string) {
 
 // ── data ─────────────────────────────────────────────────────
 
+const DASHBOARD_EMPTY = {
+  totalUsers: 0, totalProviders: 0, totalRequests: 0, totalJobs: 0,
+  openRequests: 0, activeJobs: 0, newUsers30: 0, completedJobs30: 0,
+  disabledUsers: 0, urgentOpen: 0, contractsBidding: 0, subscribedProviders: 0,
+  recentRequests: [] as any[], recentUsers: [] as any[], alertStalled: [] as any[], topCities: [] as [string, number][],
+  _error: true,
+};
+
 async function getDashboardData() {
   const cutoff30 = daysAgo(30);
   const cutoff7  = daysAgo(7);
 
+  try {
   const [
     { count: totalUsers },
     { count: totalProviders },
@@ -105,7 +114,12 @@ async function getDashboardData() {
     recentUsers:         recentUsers        ?? [],
     alertStalled:        alertStalled       ?? [],
     topCities,
+    _error: false,
   };
+  } catch (err) {
+    console.error('[dashboard] getDashboardData failed:', err);
+    return DASHBOARD_EMPTY;
+  }
 }
 
 // ── status config ─────────────────────────────────────────────
@@ -134,6 +148,14 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-6 space-y-8">
+
+      {/* ── DB error banner ── */}
+      {d._error && (
+        <div className="bg-red-950/40 border border-red-800/50 rounded-2xl px-5 py-4 flex items-center gap-3">
+          <span className="text-xl">⚠️</span>
+          <p className="text-red-400 text-sm font-medium">تعذّر تحميل بيانات اللوحة — تحقق من اتصال Supabase.</p>
+        </div>
+      )}
 
       {/* ── Alert bar (stalled requests) ── */}
       {d.alertStalled.length > 0 && (

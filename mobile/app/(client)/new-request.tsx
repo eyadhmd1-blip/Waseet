@@ -27,7 +27,8 @@ export default function NewRequestScreen() {
     category: preselectedCategory,
     notif_id: notifId,
     repost_from: repostFromId,
-  } = useLocalSearchParams<{ category?: string; notif_id?: string; repost_from?: string }>();
+    provider_hint: providerHint,
+  } = useLocalSearchParams<{ category?: string; notif_id?: string; repost_from?: string; provider_hint?: string }>();
 
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const { groups } = useCategories();
@@ -200,7 +201,7 @@ export default function NewRequestScreen() {
 
     const { error } = await supabase.from('requests').insert({
       client_id:               user.id,
-      category_slug:           selectedCat!.slug,
+      category_slug:           selectedCat?.slug ?? '',
       title:                   title.trim(),
       description:             description.trim(),
       city,
@@ -209,6 +210,7 @@ export default function NewRequestScreen() {
       ai_suggested_price_max:  aiPrice?.max ?? null,
       ai_suggested_currency:   'JOD',
       status:                  'open',
+      ...(providerHint && { provider_hint: providerHint }),
       ...(isCourier && {
         pickup_address:  pickupAddress.trim(),
         dropoff_address: dropoffAddress.trim(),

@@ -20,13 +20,16 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "paddle-signature, content-type",
 };
 
-// Map Paddle price IDs to subscription tiers
-// Fill these in once you create products in Paddle Dashboard
+// Map Paddle price IDs to subscription tiers.
+// Fill in real IDs from Paddle Dashboard → Catalog → Prices after creating products.
+// Until filled, checkout must pass custom_data.tier (which takes precedence).
 const PRICE_TO_TIER: Record<string, "basic" | "pro" | "premium"> = {
-  // "pri_xxxxxxxx": "basic",
-  // "pri_yyyyyyyy": "pro",
-  // "pri_zzzzzzzz": "premium",
+  // "pri_01abc…": "basic",
+  // "pri_01def…": "pro",
+  // "pri_01ghi…": "premium",
 };
+
+const VALID_TIERS = new Set(["trial", "basic", "pro", "premium"]);
 
 const TIER_PRICE_JOD: Record<string, number> = {
   trial:    0,
@@ -121,9 +124,9 @@ Deno.serve(async (req) => {
         const tierFromPrice = priceId ? PRICE_TO_TIER[priceId] : undefined;
         const tier = (data.custom_data?.tier ?? tierFromPrice) as string | undefined;
 
-        if (!tier) {
-          // Unknown price ID — log and skip rather than silently activating wrong tier
-          console.warn(`[paddle-webhook] Unknown priceId "${priceId}" for provider ${providerId}. Add to PRICE_TO_TIER map.`);
+        if (!tier || !VALID_TIERS.has(tier)) {
+          // Unknown / invalid tier — log and skip rather than silently activating wrong tier
+          console.warn(`[paddle-webhook] Unknown/invalid tier "${tier}" (priceId="${priceId}") for provider ${providerId}. Add to PRICE_TO_TIER map.`);
           break;
         }
 
@@ -156,6 +159,29 @@ Deno.serve(async (req) => {
           period_start:  new Date().toISOString(),
           period_end:    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
           paddle_txn_id: data.id,
+        });
+        break;
+      }
+
+      // subscription.updated fires when billing period changes (e.g. plan upgrade mid-cycle).
+      // We re-activate with the new tier so credits are updated immediately.
+      case "subscription.updated": {
+        const data = event.data as {
+          custom_data?: { provider_id?: string; tier?: string };
+          items: { price: { id: string } }[];
+          status: string;
+        };
+        if (data.status !== "active") break;
+        const providerId = data.custom_data?.provider_id;
+        if (!providerId) break;
+        const priceId = data.items?.[0]?.price?.id;
+        const tierFromPrice = priceId ? PRICE_TO_TIER[priceId] : undefined;
+        const tier = (data.custom_data?.tier ?? tierFromPrice) as string | undefined;
+        if (!tier || !VALID_TIERS.has(tier)) break;
+        await supabaseAdmin.rpc("activate_provider_subscription", {
+          p_provider_id:   providerId,
+          p_tier:          tier,
+          p_period_months: 1,
         });
         break;
       }

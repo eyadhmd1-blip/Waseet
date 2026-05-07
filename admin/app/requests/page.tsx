@@ -17,22 +17,31 @@ const REQ_STATUS: Record<string, { label: string; variant: 'info' | 'warning' | 
   cancelled:   { label: 'ملغي',  variant: 'muted' },
 };
 
-async function getRequests() {
-  const { data } = await supabaseAdmin
+const PAGE_SIZE = 50;
+
+async function getRequests(page: number) {
+  const { data, count } = await supabaseAdmin
     .from('requests')
     .select(`
       id, title, city, status, created_at, category_slug,
       ai_suggested_price_min, ai_suggested_price_max, is_urgent,
       client:users(full_name),
       bids(id)
-    `)
+    `, { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(200);
-  return data ?? [];
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+  return { requests: data ?? [], total: count ?? 0 };
 }
 
-export default async function RequestsPage() {
-  const requests = await getRequests();
+export default async function RequestsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const sp   = await searchParams;
+  const page = Math.max(0, parseInt(sp.page ?? '0', 10));
+  const { requests, total } = await getRequests(page);
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const open        = requests.filter((r: any) => r.status === 'open').length;
   const inProgress  = requests.filter((r: any) => r.status === 'in_progress').length;
@@ -47,7 +56,7 @@ export default async function RequestsPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">إدارة الطلبات</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{requests.length} طلب</p>
+          <p className="text-slate-500 text-sm mt-0.5">{total} طلب</p>
         </div>
         <div className="flex gap-3 flex-wrap">
           {[
@@ -132,6 +141,20 @@ export default async function RequestsPage() {
               })}
             </tbody>
           </table>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t border-slate-800 px-5 py-3 flex items-center justify-between">
+            <span className="text-slate-500 text-xs">صفحة {page + 1} من {totalPages}</span>
+            <div className="flex gap-2">
+              {page > 0 && (
+                <a href={`/requests?page=${page - 1}`} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
+              )}
+              {page < totalPages - 1 && (
+                <a href={`/requests?page=${page + 1}`} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
+              )}
+            </div>
+          </div>
+        )}
         </div>
       </div>
     </div>

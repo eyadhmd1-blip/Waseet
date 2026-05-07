@@ -7,21 +7,29 @@ import { revalidatePath } from 'next/cache';
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
 async function sendPushToUser(userId: string, title: string, body: string, data?: object) {
-  const { data: tokenRow } = await supabaseAdmin
-    .from('push_tokens')
-    .select('token')
-    .eq('user_id', userId)
-    .single();
-  if (!tokenRow?.token) return;
+  try {
+    const { data: tokenRow } = await supabaseAdmin
+      .from('push_tokens')
+      .select('token')
+      .eq('user_id', userId)
+      .single();
+    if (!tokenRow?.token) return;
 
-  await fetch(EXPO_PUSH_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-    body:    JSON.stringify([{ to: tokenRow.token, title, body, sound: 'default', priority: 'high', channelId: 'default', data }]),
-  });
+    const res = await fetch(EXPO_PUSH_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body:    JSON.stringify([{ to: tokenRow.token, title, body, sound: 'default', priority: 'high', channelId: 'default', data }]),
+    });
+    if (!res.ok) {
+      console.error('[support-push] Expo push failed:', res.status, await res.text());
+    }
+  } catch (err: any) {
+    console.error('[support-push] sendPushToUser error:', err?.message);
+  }
 }
 
 export async function replyToTicket(ticketId: string, body: string) {
+  if (!body?.trim()) throw new Error('Reply body cannot be empty');
   await supabaseAdmin.from('support_messages').insert({
     ticket_id: ticketId,
     sender_id: null,
