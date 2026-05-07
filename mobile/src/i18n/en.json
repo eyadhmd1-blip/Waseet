@@ -178,7 +178,21 @@
     "sortByPrice": "Lowest price",
     "sortByScore": "Top rated",
     "readMore": "Read more",
-    "readLess": "Read less"
+    "readLess": "Read less",
+    "tabRequests": "Requests",
+    "tabContracts": "Recurring",
+    "newContract": "New Recurring Contract",
+    "noContracts": "No recurring contracts yet",
+    "noContractsSub": "Create a recurring request to schedule a regular service",
+    "contractStatusBidding": "Open for bids",
+    "contractStatusActive": "Active",
+    "contractStatusPaused": "Paused",
+    "contractStatusCompleted": "Completed",
+    "contractStatusCancelled": "Cancelled",
+    "freqWeekly": "Weekly",
+    "freqBiweekly": "Every 2 weeks",
+    "freqMonthly": "Monthly",
+    "months": "months"
   },
   "newRequest": {
     "title": "New Request",

@@ -537,7 +537,7 @@ export default function RecurringRequestScreen() {
         hint="سنقوم بإشعارك عند وصول أي عرض"
         primaryLabel="عرض طلباتي"
         secondaryLabel="حسناً"
-        onPrimary={() => { setShowSuccess(false); router.replace('/(client)/requests'); }}
+        onPrimary={() => { setShowSuccess(false); router.replace({ pathname: '/(client)/requests', params: { tab: 'contracts' } } as any); }}
         onSecondary={() => { setShowSuccess(false); router.replace('/(client)'); }}
       />
     </KeyboardAvoidingView>

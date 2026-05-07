@@ -7,7 +7,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Animated, ScrollView,
 } from 'react-native';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { supabase }             from '../../src/lib/supabase';
 import { useLanguage }          from '../../src/hooks/useLanguage';
 import type { ServiceRequest }  from '../../src/types';
@@ -17,6 +17,33 @@ import { useTheme }             from '../../src/context/ThemeContext';
 import type { AppColors }       from '../../src/constants/colors';
 
 type Filter = 'all' | 'open' | 'in_progress' | 'completed' | 'expired';
+type Tab    = 'requests' | 'contracts';
+
+type RecurringContract = {
+  id: string;
+  title: string;
+  category_slug: string;
+  city: string;
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  duration_months: number;
+  status: 'bidding' | 'active' | 'paused' | 'completed' | 'cancelled';
+  created_at: string;
+};
+
+const CONTRACT_STATUS_ACCENT: Record<string, string> = {
+  bidding:   '#F97316',
+  active:    '#10B981',
+  paused:    '#3B82F6',
+  completed: '#9CA3AF',
+  cancelled: '#EF4444',
+};
+const CONTRACT_STATUS_BG: Record<string, string> = {
+  bidding:   'rgba(249,115,22,0.13)',
+  active:    'rgba(16,185,129,0.13)',
+  paused:    'rgba(59,130,246,0.13)',
+  completed: 'rgba(156,163,175,0.15)',
+  cancelled: 'rgba(239,68,68,0.13)',
+};
 
 const H_PAD = 20;
 
@@ -46,19 +73,28 @@ const FILTER_ACCENT: Record<Filter, string> = {
 
 export default function ClientRequests() {
   const { headerPad } = useInsets();
-  const router          = useRouter();
-  const { t, ta, lang, isRTL } = useLanguage();
-  const { colors, isDark }     = useTheme();
+  const router                    = useRouter();
+  const { t, lang, isRTL }        = useLanguage();
+  const { colors, isDark }        = useTheme();
+  const { tab: tabParam }         = useLocalSearchParams<{ tab?: string }>();
 
-  const [requests,   setRequests]   = useState<ServiceRequest[]>([]);
-  const [filter,     setFilter]     = useState<Filter>('all');
-  const [loading,    setLoading]    = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [requests,         setRequests]         = useState<ServiceRequest[]>([]);
+  const [filter,           setFilter]           = useState<Filter>('all');
+  const [loading,          setLoading]          = useState(true);
+  const [refreshing,       setRefreshing]       = useState(false);
+  const [tab,              setTab]              = useState<Tab>(tabParam === 'contracts' ? 'contracts' : 'requests');
+  const [contracts,        setContracts]        = useState<RecurringContract[]>([]);
+  const [contractsLoading, setContractsLoading] = useState(true);
 
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
 
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
+
+  // sync tab from deep-link params (e.g. navigate from recurring-request success)
+  useEffect(() => {
+    if (tabParam === 'contracts' || tabParam === 'requests') setTab(tabParam);
+  }, [tabParam]);
 
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'all',         label: t('requests.filterAll') },
@@ -77,7 +113,21 @@ export default function ClientRequests() {
     expired:     t('requests.statusExpired'),
   };
 
-  // ── Data loading (unchanged) ─────────────────────────────────
+  const CONTRACT_STATUS_LABEL: Record<string, string> = {
+    bidding:   t('requests.contractStatusBidding'),
+    active:    t('requests.contractStatusActive'),
+    paused:    t('requests.contractStatusPaused'),
+    completed: t('requests.contractStatusCompleted'),
+    cancelled: t('requests.contractStatusCancelled'),
+  };
+
+  const FREQUENCY_LABEL: Record<string, string> = {
+    weekly:   t('requests.freqWeekly'),
+    biweekly: t('requests.freqBiweekly'),
+    monthly:  t('requests.freqMonthly'),
+  };
+
+  // ── Data loading ─────────────────────────────────────────────
   const load = useCallback(async () => {
     try {
       const { data: { session: _ses } } = await supabase.auth.getSession();
@@ -101,9 +151,29 @@ export default function ClientRequests() {
     }
   }, [filter]);
 
+  const loadContracts = useCallback(async () => {
+    try {
+      setContractsLoading(true);
+      const { data: { session: _ses } } = await supabase.auth.getSession();
+      const user = _ses?.user;
+      if (!user) return;
+      const { data } = await supabase
+        .from('recurring_contracts')
+        .select('id, title, category_slug, city, frequency, duration_months, status, created_at')
+        .eq('client_id', user.id)
+        .order('created_at', { ascending: false });
+      if (data) setContracts(data);
+    } finally {
+      setContractsLoading(false);
+    }
+  }, []);
+
   useEffect(() => { load(); }, [load]);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(useCallback(() => {
+    load();
+    loadContracts();
+  }, [load, loadContracts]));
 
   useEffect(() => {
     Animated.parallel([
@@ -114,9 +184,10 @@ export default function ClientRequests() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await load();
+    if (tab === 'contracts') await loadContracts();
+    else await load();
     setRefreshing(false);
-  }, [load]);
+  }, [load, loadContracts, tab]);
 
   const getCategoryName = (item: ServiceRequest) => {
     const cat = (item as any).category;
@@ -129,7 +200,7 @@ export default function ClientRequests() {
     [requests],
   );
 
-  // ── Card ─────────────────────────────────────────────────────
+  // ── Request Card ─────────────────────────────────────────────
   const renderItem = ({ item }: { item: ServiceRequest }) => {
     const accent    = STATUS_ACCENT[item.status] ?? STATUS_ACCENT.open;
     const badgeBg   = STATUS_BG[item.status]     ?? STATUS_BG.open;
@@ -137,14 +208,10 @@ export default function ClientRequests() {
 
     return (
       <TouchableOpacity
-        style={[
-          styles.card,
-          { borderStartColor: accent, borderStartWidth: 4 },
-        ]}
+        style={[styles.card, { borderStartColor: accent, borderStartWidth: 4 }]}
         activeOpacity={0.78}
         onPress={() => router.push({ pathname: '/request-detail', params: { id: item.id } })}
       >
-        {/* Title + badge */}
         <View style={[styles.cardHeader, { flexDirection: 'row' }]}>
           <Text
             style={[styles.cardTitle, { flex: 1, ...(!isRTL ? { marginRight: 8 } : { marginLeft: 8 }) }]}
@@ -159,12 +226,10 @@ export default function ClientRequests() {
           </View>
         </View>
 
-        {/* Category · City */}
         <Text style={styles.cardMeta}>
           {getCategoryName(item)} · {t(`cities.${item.city}`, item.city)}
         </Text>
 
-        {/* Footer */}
         <View style={[styles.cardFooter, { flexDirection: 'row' }]}>
           <Text style={styles.cardDate}>
             {new Date(item.created_at).toLocaleDateString(
@@ -172,7 +237,6 @@ export default function ClientRequests() {
               { day: 'numeric', month: 'short' },
             )}
           </Text>
-
           <View style={[styles.footerEnd, { flexDirection: 'row' }]}>
             {item.status === 'open' && bidsCount > 0 && (
               <View style={[styles.bidsChip, { backgroundColor: colors.accentDim }]}>
@@ -181,7 +245,6 @@ export default function ClientRequests() {
                 </Text>
               </View>
             )}
-
             {item.ai_suggested_price_min && item.ai_suggested_price_max && (
               <Text style={styles.aiPrice}>
                 {item.ai_suggested_price_min}–{item.ai_suggested_price_max} {t('common.jod')}
@@ -190,7 +253,6 @@ export default function ClientRequests() {
           </View>
         </View>
 
-        {/* Repost banner — expired or cancelled */}
         {(item.status === 'expired' || item.status === 'cancelled') && (
           <TouchableOpacity
             style={styles.repostBtn}
@@ -203,12 +265,56 @@ export default function ClientRequests() {
               } as any);
             }}
           >
-            <Text style={styles.repostBtnText}>
-              {t('requests.repostBtn')}
-            </Text>
+            <Text style={styles.repostBtnText}>{t('requests.repostBtn')}</Text>
           </TouchableOpacity>
         )}
       </TouchableOpacity>
+    );
+  };
+
+  // ── Contract Card ─────────────────────────────────────────────
+  const renderContractItem = ({ item }: { item: RecurringContract }) => {
+    const accent = CONTRACT_STATUS_ACCENT[item.status] ?? CONTRACT_STATUS_ACCENT.bidding;
+    const bg     = CONTRACT_STATUS_BG[item.status]     ?? CONTRACT_STATUS_BG.bidding;
+
+    return (
+      <View style={[styles.card, { borderStartColor: accent, borderStartWidth: 4 }]}>
+        <View style={[styles.cardHeader, { flexDirection: 'row' }]}>
+          <Text
+            style={[styles.cardTitle, { flex: 1, ...(!isRTL ? { marginRight: 8 } : { marginLeft: 8 }) }]}
+            numberOfLines={2}
+          >
+            {item.title}
+          </Text>
+          <View style={[styles.badge, { backgroundColor: bg }]}>
+            <Text style={[styles.badgeText, { color: accent }]}>
+              {CONTRACT_STATUS_LABEL[item.status]}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={styles.cardMeta}>
+          {t(`categories.${item.category_slug}`, item.category_slug)} · {t(`cities.${item.city}`, item.city)}
+        </Text>
+
+        <View style={[styles.contractChipRow, { flexDirection: 'row' }]}>
+          <View style={styles.contractChip}>
+            <Text style={styles.contractChipText}>🔄 {FREQUENCY_LABEL[item.frequency]}</Text>
+          </View>
+          <View style={styles.contractChip}>
+            <Text style={styles.contractChipText}>
+              {item.duration_months} {t('requests.months')}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={[styles.cardDate, { marginTop: 6, textAlign: isRTL ? 'right' : 'left' }]}>
+          {new Date(item.created_at).toLocaleDateString(
+            lang === 'ar' ? 'ar-JO' : 'en-GB',
+            { day: 'numeric', month: 'short', year: 'numeric' },
+          )}
+        </Text>
+      </View>
     );
   };
 
@@ -221,10 +327,8 @@ export default function ClientRequests() {
       >
         <View style={[styles.headerRow, { flexDirection: 'row' }]}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>
-              {t('requests.title')}
-            </Text>
-            {openCount > 0 && (
+            <Text style={styles.headerTitle}>{t('requests.title')}</Text>
+            {openCount > 0 && tab === 'requests' && (
               <Text style={styles.headerSub}>
                 {openCount} {t('requests.statusOpen')}
               </Text>
@@ -232,96 +336,142 @@ export default function ClientRequests() {
           </View>
           <TouchableOpacity
             style={styles.newBtn}
-            onPress={() => router.push('/(client)/new-request')}
+            onPress={() => router.push(
+              tab === 'contracts' ? '/recurring-request' : '/(client)/new-request'
+            )}
           >
-            <Text style={styles.newBtnText}>＋ {t('requests.newRequest')}</Text>
+            <Text style={styles.newBtnText}>
+              ＋ {tab === 'contracts' ? t('requests.newContract') : t('requests.newRequest')}
+            </Text>
           </TouchableOpacity>
         </View>
       </Animated.View>
 
-      {/* ── Filter chips ────────────────────────────────────────── */}
-      <Animated.View style={{ opacity: fadeAnim }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.filterScroll,
-            { flexDirection: 'row' },
-          ]}
+      {/* ── Tab switcher ─────────────────────────────────────────── */}
+      <Animated.View style={[styles.tabRow, { opacity: fadeAnim, flexDirection: 'row' }]}>
+        <TouchableOpacity
+          style={[styles.tabBtn, tab === 'requests' && styles.tabBtnActive]}
+          onPress={() => setTab('requests')}
         >
-          {FILTERS.map(f => {
-            const active      = filter === f.key;
-            const chipAccent  = FILTER_ACCENT[f.key];
-            return (
-              <TouchableOpacity
-                key={f.key}
-                style={[
-                  styles.filterChip,
-                  active && {
-                    backgroundColor: chipAccent + '20',
-                    borderColor:     chipAccent,
-                  },
-                ]}
-                onPress={() => setFilter(f.key)}
-              >
-                <Text style={[
-                  styles.filterText,
-                  active && { color: chipAccent, fontWeight: '700' },
-                ]}>
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+          <Text style={[styles.tabBtnText, tab === 'requests' && styles.tabBtnTextActive]}>
+            {t('requests.tabRequests')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tabBtn, tab === 'contracts' && styles.tabBtnActive]}
+          onPress={() => setTab('contracts')}
+        >
+          <Text style={[styles.tabBtnText, tab === 'contracts' && styles.tabBtnTextActive]}>
+            {t('requests.tabContracts')} 🔄
+          </Text>
+        </TouchableOpacity>
       </Animated.View>
 
+      {/* ── Filter chips (requests tab only) ─────────────────────── */}
+      {tab === 'requests' && (
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[styles.filterScroll, { flexDirection: 'row' }]}
+          >
+            {FILTERS.map(f => {
+              const active     = filter === f.key;
+              const chipAccent = FILTER_ACCENT[f.key];
+              return (
+                <TouchableOpacity
+                  key={f.key}
+                  style={[
+                    styles.filterChip,
+                    active && { backgroundColor: chipAccent + '20', borderColor: chipAccent },
+                  ]}
+                  onPress={() => setFilter(f.key)}
+                >
+                  <Text style={[
+                    styles.filterText,
+                    active && { color: chipAccent, fontWeight: '700' },
+                  ]}>
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </Animated.View>
+      )}
+
       {/* ── Content ─────────────────────────────────────────────── */}
-      {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.accent} size="large" />
-        </View>
-      ) : (
-        <FlatList
-          data={requests}
-          keyExtractor={item => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={colors.accent}
-            />
-          }
-          ListEmptyComponent={
-            <View style={styles.empty}>
-              <View style={styles.emptyIconWrap}>
-                <Text style={styles.emptyIcon}>📋</Text>
+      {tab === 'requests' ? (
+        loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.accent} size="large" />
+          </View>
+        ) : (
+          <FlatList
+            data={requests}
+            keyExtractor={item => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+            }
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <View style={styles.emptyIconWrap}>
+                  <Text style={styles.emptyIcon}>📋</Text>
+                </View>
+                <Text style={styles.emptyTitle}>{t('requests.noRequests')}</Text>
+                <Text style={styles.emptyDesc}>{t('requests.noRequestsDesc')}</Text>
+                <TouchableOpacity
+                  style={styles.emptyBtn}
+                  onPress={() => router.push('/(client)/new-request')}
+                >
+                  <Text style={styles.emptyBtnText}>{t('requests.emptyBtn')}</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={styles.emptyTitle}>
-                {t('requests.noRequests')}
-              </Text>
-              <Text style={styles.emptyDesc}>
-                {t('requests.noRequestsDesc')}
-              </Text>
-              <TouchableOpacity
-                style={styles.emptyBtn}
-                onPress={() => router.push('/(client)/new-request')}
-              >
-                <Text style={styles.emptyBtnText}>{t('requests.emptyBtn')}</Text>
-              </TouchableOpacity>
-            </View>
-          }
-        />
+            }
+          />
+        )
+      ) : (
+        contractsLoading ? (
+          <View style={styles.center}>
+            <ActivityIndicator color={colors.accent} size="large" />
+          </View>
+        ) : (
+          <FlatList
+            data={contracts}
+            keyExtractor={item => item.id}
+            renderItem={renderContractItem}
+            contentContainerStyle={styles.listContent}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+            }
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <View style={styles.emptyIconWrap}>
+                  <Text style={styles.emptyIcon}>🔄</Text>
+                </View>
+                <Text style={styles.emptyTitle}>{t('requests.noContracts')}</Text>
+                <Text style={styles.emptyDesc}>{t('requests.noContractsSub')}</Text>
+                <TouchableOpacity
+                  style={styles.emptyBtn}
+                  onPress={() => router.push('/recurring-request')}
+                >
+                  <Text style={styles.emptyBtnText}>{t('requests.newContract')}</Text>
+                </TouchableOpacity>
+              </View>
+            }
+          />
+        )
       )}
     </View>
   );
 }
 
 function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
-  const ta = isRTL ? 'right' : 'left' as const;
+  const ta      = isRTL ? 'right' : 'left' as const;
   const btnText = isDark ? '#000' : '#fff';
 
   return StyleSheet.create({
@@ -334,12 +484,33 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     headerTitle: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },
     headerSub:   { fontSize: 13, color: colors.textMuted, marginTop: 2, alignSelf: 'stretch', textAlign: ta },
     newBtn: {
-      backgroundColor: colors.accent,
-      borderRadius:    12,
+      backgroundColor:   colors.accent,
+      borderRadius:      12,
       paddingHorizontal: 14,
       paddingVertical:   8,
     },
     newBtnText: { fontSize: 13, fontWeight: '700', color: btnText },
+
+    // ── Tab switcher
+    tabRow: {
+      marginHorizontal: H_PAD,
+      marginBottom:     14,
+      backgroundColor:  colors.surface,
+      borderRadius:     14,
+      borderWidth:      1,
+      borderColor:      colors.border,
+      padding:          4,
+      gap:              4,
+    },
+    tabBtn: {
+      flex:            1,
+      paddingVertical: 9,
+      borderRadius:    11,
+      alignItems:      'center',
+    },
+    tabBtnActive:     { backgroundColor: colors.accent },
+    tabBtnText:       { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+    tabBtnTextActive: { color: isDark ? '#000' : '#fff' },
 
     // ── Filter chips
     filterScroll: {
@@ -362,10 +533,10 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
 
     // ── Card
     card: {
-      backgroundColor: colors.surface,
-      borderRadius:    16,
-      borderWidth:     1,
-      borderColor:     colors.border,
+      backgroundColor:   colors.surface,
+      borderRadius:      16,
+      borderWidth:       1,
+      borderColor:       colors.border,
       paddingVertical:   14,
       paddingHorizontal: 16,
     },
@@ -385,22 +556,38 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     aiPrice: { fontSize: 12, color: colors.accent, fontWeight: '600' },
 
     repostBtn: {
-      marginTop:         12,
-      backgroundColor:   colors.accent,
-      borderRadius:      10,
-      paddingVertical:   10,
-      alignItems:        'center',
+      marginTop:       12,
+      backgroundColor: colors.accent,
+      borderRadius:    10,
+      paddingVertical: 10,
+      alignItems:      'center',
     },
     repostBtnText: { fontSize: 13, fontWeight: '700', color: isDark ? '#000' : '#fff' },
+
+    // ── Contract chips
+    contractChipRow: { gap: 8, flexWrap: 'wrap', marginBottom: 4 },
+    contractChip: {
+      backgroundColor:   colors.bg,
+      borderWidth:       1,
+      borderColor:       colors.border,
+      borderRadius:      8,
+      paddingHorizontal: 10,
+      paddingVertical:   5,
+    },
+    contractChipText: { fontSize: 12, color: colors.textSecondary },
 
     // ── Empty state
     empty:         { alignItems: 'center', paddingTop: 60, paddingHorizontal: H_PAD },
     emptyIconWrap: {
-      width: 80, height: 80, borderRadius: 40,
+      width:           80,
+      height:          80,
+      borderRadius:    40,
       backgroundColor: colors.surface,
-      borderWidth: 1, borderColor: colors.border,
-      alignItems: 'center', justifyContent: 'center',
-      marginBottom: 20,
+      borderWidth:     1,
+      borderColor:     colors.border,
+      alignItems:      'center',
+      justifyContent:  'center',
+      marginBottom:    20,
     },
     emptyIcon:    { fontSize: 36 },
     emptyTitle:   { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, alignSelf: 'stretch', textAlign: ta },

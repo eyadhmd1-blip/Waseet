@@ -182,7 +182,21 @@
     "sortByPrice": "الأرخص أولاً",
     "sortByScore": "الأعلى تقييماً",
     "readMore": "اقرأ المزيد",
-    "readLess": "اقرأ أقل"
+    "readLess": "اقرأ أقل",
+    "tabRequests": "الطلبات",
+    "tabContracts": "الدورية",
+    "newContract": "عقد دوري جديد",
+    "noContracts": "لا توجد عقود دورية",
+    "noContractsSub": "أنشئ طلباً دورياً لجدولة خدمة منتظمة",
+    "contractStatusBidding": "قبول عروض",
+    "contractStatusActive": "نشط",
+    "contractStatusPaused": "موقوف",
+    "contractStatusCompleted": "منجز",
+    "contractStatusCancelled": "ملغي",
+    "freqWeekly": "أسبوعي",
+    "freqBiweekly": "كل أسبوعين",
+    "freqMonthly": "شهري",
+    "months": "أشهر"
   },
   "newRequest": {
     "title": "طلب جديد",
