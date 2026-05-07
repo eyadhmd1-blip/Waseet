@@ -151,6 +151,8 @@
     "viewProfile": "👤 View Profile",
     "shareProvider": "⬆️ Share Provider",
     "inProgressNote": "🛠️ Work is in progress. When done, the provider will ask you for a confirmation code.",
+    "confirmCodeLabel": "Job Completion Code",
+    "confirmCodeSub": "Give this code to the provider when they finish the job",
     "completedMsg": "This request was completed successfully",
     "cancelledMsg": "This request was cancelled",
     "confirmTitle": "Confirm Bid Acceptance",

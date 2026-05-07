@@ -66,6 +66,8 @@ export default function RequestDetail() {
   const [submittingReport, setSubmittingReport] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [sortBy, setSortBy]         = useState<'price' | 'score'>('price');
+  const [confirmCode, setConfirmCode] = useState<string | null>(null);
+  const [activeJobId, setActiveJobId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -96,13 +98,39 @@ export default function RequestDetail() {
 
       if (reqData)  setRequest(reqData);
       if (bidsData) setBids((bidsData as BidWithProvider[]).filter(b => b.provider?.is_available !== false));
-  
+
+      if (reqData?.status === 'in_progress') {
+        const { data: jobData } = await supabase
+          .from('jobs')
+          .select('id, confirm_code')
+          .eq('request_id', id)
+          .eq('status', 'active')
+          .maybeSingle();
+        setConfirmCode(jobData?.confirm_code ?? null);
+        if (jobData?.id) setActiveJobId(jobData.id);
+      }
+
     } finally {
       setLoading(false);
     }
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Live-update the confirm code when provider sets it
+  useEffect(() => {
+    if (!activeJobId) return;
+    const channel = supabase
+      .channel(`job-confirm-${activeJobId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'jobs',
+        filter: `id=eq.${activeJobId}`,
+      }, (payload) => {
+        setConfirmCode((payload.new as any).confirm_code ?? null);
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [activeJobId]);
 
   // ── Accept bid ──────────────────────────────────────────────
 
@@ -460,11 +488,19 @@ export default function RequestDetail() {
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.inProgressNote}>
-                <Text style={styles.inProgressNoteText}>
-                  {t('requests.inProgressNote')}
-                </Text>
-              </View>
+              {confirmCode ? (
+                <View style={styles.confirmCodeCard}>
+                  <Text style={styles.confirmCodeLabel}>🔑 {t('requests.confirmCodeLabel')}</Text>
+                  <Text style={styles.confirmCodeValue}>{confirmCode}</Text>
+                  <Text style={styles.confirmCodeSub}>{t('requests.confirmCodeSub')}</Text>
+                </View>
+              ) : (
+                <View style={styles.inProgressNote}>
+                  <Text style={styles.inProgressNoteText}>
+                    {t('requests.inProgressNote')}
+                  </Text>
+                </View>
+              )}
             </View>
           );
         })()}
@@ -692,6 +728,11 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
   inProgressNote:     { backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
   inProgressNoteText: { fontSize: 13, color: colors.accent, lineHeight: 20, alignSelf: 'stretch', textAlign: ta },
+
+  confirmCodeCard:  { backgroundColor: colors.accentDim, borderRadius: 16, padding: 20, marginTop: 4, borderWidth: 2, borderColor: colors.accent, alignItems: 'center' },
+  confirmCodeLabel: { fontSize: 13, color: colors.textMuted, marginBottom: 10 },
+  confirmCodeValue: { fontSize: 48, fontWeight: '800', color: colors.accent, letterSpacing: 10, marginBottom: 8 },
+  confirmCodeSub:   { fontSize: 12, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
 
   cancelBtn:         { marginHorizontal: 0, marginBottom: 20, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.errorBg },
   cancelBtnDisabled: { opacity: 0.5 },
