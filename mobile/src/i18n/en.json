@@ -962,7 +962,7 @@
     "titlePlaceholder": "e.g. Weekly apartment cleaning",
     "descLabel": "Description",
     "descPlaceholder": "Describe the service in detail…",
-    "notesLabel": "Notes for provider (optional)",
+    "notesLabel": "Notes for provider",
     "notesPlaceholder": "Any special instructions…",
     "nextBtn": "Next",
     "reviewContractBtn": "Review Contract",
