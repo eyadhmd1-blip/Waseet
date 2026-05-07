@@ -162,6 +162,12 @@ export default function ProviderDashboard() {
         variant="root"
         userName={provider?.user?.full_name}
         userRole="provider"
+        providerScore={provider?.score}
+        providerRepTier={provider?.reputation_tier}
+        providerLifetimeJobs={provider?.lifetime_jobs}
+        providerBidCredits={(provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0)}
+        providerSubscriptionTier={provider?.subscription_tier}
+        providerIsAvailable={provider?.is_available}
         notifCount={notifCount}
         onNotifPress={() => router.push('/notification-inbox' as any)}
         onAvatarPress={() => router.push('/(provider)/profile' as any)}

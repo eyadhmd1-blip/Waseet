@@ -31,6 +31,11 @@ export default function ProviderJobs() {
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [userName, setUserName]   = useState('');
+  const [providerInfo, setProviderInfo] = useState<{
+    subscription_credits: number; bonus_credits: number;
+    subscription_tier?: string; reputation_tier?: string;
+    score?: number; lifetime_jobs?: number; is_available?: boolean;
+  } | null>(null);
 
   const [confirmJob, setConfirmJob]       = useState<JobWithMeta | null>(null);
   const [codeInput, setCodeInput]         = useState(['', '', '', '', '', '']);
@@ -63,10 +68,16 @@ export default function ProviderJobs() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user.id) {
-        supabase.from('users').select('full_name').eq('id', session.user.id).single()
-          .then(({ data }) => { if (data?.full_name) setUserName(data.full_name); });
-      }
+      const uid = session?.user.id;
+      if (!uid) return;
+      supabase.from('users').select('full_name').eq('id', uid).single()
+        .then(({ data }) => { if (data?.full_name) setUserName(data.full_name); });
+      supabase
+        .from('providers')
+        .select('subscription_credits, bonus_credits, subscription_tier, reputation_tier, score, lifetime_jobs, is_available')
+        .eq('id', uid)
+        .single()
+        .then(({ data }) => { if (data) setProviderInfo(data); });
     });
   }, []);
 
@@ -218,6 +229,12 @@ export default function ProviderJobs() {
         variant="root"
         userName={userName}
         userRole="provider"
+        providerScore={providerInfo?.score}
+        providerRepTier={providerInfo?.reputation_tier}
+        providerLifetimeJobs={providerInfo?.lifetime_jobs}
+        providerBidCredits={(providerInfo?.subscription_credits ?? 0) + (providerInfo?.bonus_credits ?? 0)}
+        providerSubscriptionTier={providerInfo?.subscription_tier}
+        providerIsAvailable={providerInfo?.is_available}
         notifCount={notifCount}
         onNotifPress={() => router.push('/notification-inbox' as any)}
         onAvatarPress={() => router.push('/(provider)/profile' as any)}
