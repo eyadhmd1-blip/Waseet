@@ -304,13 +304,6 @@ export default function ClientProfile() {
         </View>
       </View>
 
-      {/* ── Recurring contracts ── */}
-      <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/recurring-request')}>
-        <Text style={styles.notifBtnIcon}>🔄</Text>
-        <Text style={styles.notifBtnText}>{t('recurringRequest.title')}</Text>
-        <Text style={styles.notifBtnArrow}>›</Text>
-      </TouchableOpacity>
-
       {/* ── Saved providers ── */}
       <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/(client)/saved-providers')}>
         <Text style={styles.notifBtnIcon}>🔖</Text>
