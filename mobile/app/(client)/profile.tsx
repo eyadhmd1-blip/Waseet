@@ -1,8 +1,8 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, TextInput, Alert,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -42,6 +42,15 @@ export default function ClientProfile() {
   const [editName, setEditName]   = useState('');
   const [editCity, setEditCity]   = useState('');
   const [saving, setSaving]       = useState(false);
+  const saveBarAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(saveBarAnim, {
+      toValue: editing ? 1 : 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  }, [editing]);
 
   const load = useCallback(async () => {
     try {
@@ -177,6 +186,32 @@ export default function ClientProfile() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
+      {/* ── Sticky save bar (slides in when editing) ── */}
+      <Animated.View
+        pointerEvents={editing ? 'auto' : 'none'}
+        style={[
+          styles.saveBar,
+          {
+            opacity: saveBarAnim,
+            transform: [{ translateY: saveBarAnim.interpolate({ inputRange: [0, 1], outputRange: [-48, 0] }) }],
+          },
+        ]}
+      >
+        <TouchableOpacity style={styles.saveBarCancel} onPress={handleCancelEdit} disabled={saving}>
+          <Text style={styles.saveBarCancelText}>{t('common.cancel')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.saveBarSave, saving && styles.btnDisabled]}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          {saving
+            ? <ActivityIndicator color={colors.bg} size="small" />
+            : <Text style={styles.saveBarSaveText}>{t('profile.saveChanges')}</Text>
+          }
+        </TouchableOpacity>
+      </Animated.View>
+
     <ScrollView
       style={{ flex: 1 }}
       contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
@@ -242,21 +277,6 @@ export default function ClientProfile() {
               ))}
             </ScrollView>
 
-            <View style={styles.editActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={handleCancelEdit} disabled={saving}>
-                <Text style={styles.cancelBtnText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.saveBtn, saving && styles.btnDisabled]}
-                onPress={handleSave}
-                disabled={saving}
-              >
-                {saving
-                  ? <ActivityIndicator color={colors.bg} size="small" />
-                  : <Text style={styles.saveBtnText}>{t('profile.saveChanges')}</Text>
-                }
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
       )}
@@ -397,11 +417,17 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   cityChipText:      { color: colors.textSecondary, fontSize: 13 },
   cityChipTextActive:{ color: colors.accent },
 
-  editActions: { flexDirection: 'row', gap: 10, marginTop: 20 },
-  cancelBtn:   { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 13, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-  cancelBtnText:{ fontSize: 14, color: colors.textSecondary },
-  saveBtn:     { flex: 2, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  saveBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
+  saveBar: {
+    flexDirection: 'row', gap: 10, paddingHorizontal: 16, paddingVertical: 12,
+    backgroundColor: colors.bg,
+    borderBottomWidth: 1, borderBottomColor: colors.border,
+    elevation: 4,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6,
+  },
+  saveBarCancel:     { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  saveBarCancelText: { fontSize: 14, color: colors.textSecondary, fontWeight: '600' },
+  saveBarSave:       { flex: 2, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+  saveBarSaveText:   { fontSize: 14, fontWeight: '700', color: colors.bg },
   btnDisabled: { backgroundColor: colors.border },
 
   infoCard:   { backgroundColor: colors.surface, borderRadius: 16, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border },
