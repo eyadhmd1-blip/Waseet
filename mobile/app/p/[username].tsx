@@ -47,7 +47,7 @@ export default function ProviderDeepLink() {
 
   return (
     <View style={[styles.center, { backgroundColor: colors.bg }]}>
-      <ActivityIndicator size="large" color={colors.primary} />
+      <ActivityIndicator size="large" color={colors.accent} />
     </View>
   );
 }

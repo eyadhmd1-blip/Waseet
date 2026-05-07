@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { AlertReadAction } from './alert-read-action';
 
+export const dynamic = 'force-dynamic';
+
 async function getAlerts() {
   // Get cancellation abuse alerts
   const { data: alerts } = await supabaseAdmin

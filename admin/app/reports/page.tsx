@@ -1,5 +1,7 @@
 import { supabaseAdmin } from '../lib/supabase';
 
+export const dynamic = 'force-dynamic';
+
 function fmtMoney(n: number) {
   return n.toLocaleString('ar-JO') + ' د.أ';
 }

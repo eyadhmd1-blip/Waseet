@@ -2,6 +2,8 @@ import { supabaseAdmin } from '../lib/supabase';
 import { Badge } from '../ui/badge';
 import { RequestActions } from './request-actions';
 
+export const dynamic = 'force-dynamic';
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-JO', {
     day: 'numeric', month: 'short', year: 'numeric',

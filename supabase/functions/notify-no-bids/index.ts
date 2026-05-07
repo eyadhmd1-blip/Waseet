@@ -3,16 +3,7 @@
 // Scheduled edge function — runs every 30 minutes.
 // Sends a push notification to clients whose requests have
 // been open for 6+ hours with zero bids.
-//
-// Schedule (Supabase Dashboard → Edge Functions → Schedule):
-//   Cron: */30 * * * *
-//
-// Flow:
-//   1. Call flag_clients_no_bids() RPC — atomically marks
-//      requests and returns the list to notify.
-//   2. For each request, look up client push token.
-//   3. Fetch AI price suggestion for the category.
-//   4. Send push via Expo Push API.
+// Notification language matches the client's preferred language.
 // ============================================================
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -22,8 +13,7 @@ const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
 const json = (body: object, status = 200) =>
@@ -31,6 +21,19 @@ const json = (body: object, status = 200) =>
     status,
     headers: { ...cors, "Content-Type": "application/json" },
   });
+
+function buildCopy(lang: string, reqTitle: string) {
+  if (lang === "en") {
+    return {
+      title: "Your request has no bids yet",
+      body:  `${reqTitle} — consider adjusting the budget to attract providers`,
+    };
+  }
+  return {
+    title: "طلبك لم يصله أي عرض بعد",
+    body:  `${reqTitle} — قد يساعد تعديل الميزانية على جذب المزودين`,
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -42,24 +45,24 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // ── Step 1: atomically flag + fetch requests to notify ────
-    const { data: toNotify, error: rpcErr } = await admin.rpc(
-      "flag_clients_no_bids"
-    );
+    const { data: toNotify, error: rpcErr } = await admin.rpc("flag_clients_no_bids");
 
     if (rpcErr) return json({ error: rpcErr.message }, 500);
-    if (!toNotify || toNotify.length === 0)
+    if (!toNotify || toNotify.length === 0) {
       return json({ sent: 0, reason: "no_requests_to_notify" });
+    }
 
-    const results: { request_id: string; sent: boolean; reason?: string }[] =
-      [];
+    // Batch fetch client languages
+    const clientIds = [...new Set((toNotify as any[]).map((r) => r.client_id))];
+    const { data: langRows } = await admin
+      .from("users")
+      .select("id, lang")
+      .in("id", clientIds);
+    const langMap = new Map((langRows ?? []).map((u: { id: string; lang: string }) => [u.id, u.lang]));
 
-    for (const row of toNotify as {
-      request_id: string;
-      client_id: string;
-      request_title: string;
-    }[]) {
-      // ── Step 2: get client push token ──────────────────────
+    const results: { request_id: string; sent: boolean; reason?: string }[] = [];
+
+    for (const row of toNotify as { request_id: string; client_id: string; request_title: string }[]) {
       const { data: tokenRow } = await admin
         .from("push_tokens")
         .select("token")
@@ -71,20 +74,21 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // ── Step 3: insert in-app notification ─────────────────
+      const lang = langMap.get(row.client_id) ?? "ar";
+      const { title, body } = buildCopy(lang, row.request_title);
+
       await admin.from("notifications").insert({
-        user_id:    row.client_id,
-        title:      "طلبك لم يصله أي عرض بعد",
-        body:       `${row.request_title} — قد يساعد تعديل الميزانية على جذب المزودين`,
-        screen:     "my_requests",
-        metadata:   { request_id: row.request_id, type: "no_bids_reminder" },
+        user_id:  row.client_id,
+        title,
+        body,
+        screen:   "my_requests",
+        metadata: { request_id: row.request_id, type: "no_bids_reminder" },
       });
 
-      // ── Step 4: send push via Expo ─────────────────────────
       const message = {
         to:       tokenRow.token,
-        title:    "طلبك لم يصله أي عرض بعد",
-        body:     `${row.request_title} — اضغط لإعادة النشر أو تعديل الميزانية`,
+        title,
+        body,
         sound:    "default",
         priority: "high",
         data: {
@@ -102,13 +106,10 @@ Deno.serve(async (req) => {
       });
 
       const expoData = await expoRes.json();
-      const sent = expoData?.data?.status === "ok";
-
-      results.push({ request_id: row.request_id, sent });
+      results.push({ request_id: row.request_id, sent: expoData?.data?.status === "ok" });
     }
 
-    const sentCount = results.filter((r) => r.sent).length;
-    return json({ sent: sentCount, total: results.length, results });
+    return json({ sent: results.filter((r) => r.sent).length, total: results.length, results });
 
   } catch (err) {
     return json({ error: String(err) }, 500);

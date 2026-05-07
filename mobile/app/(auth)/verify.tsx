@@ -88,9 +88,9 @@ export default function VerifyScreen() {
         }
 
         if (errCode === 'OTP_EXPIRED') {
-          Alert.alert(t('common.error'), 'انتهت صلاحية الرمز. اضغط "إعادة الإرسال" للحصول على رمز جديد.');
+          Alert.alert(t('common.error'), t('auth.otpExpired'));
         } else if (errCode === 'MAX_ATTEMPTS') {
-          Alert.alert(t('common.error'), 'تجاوزت الحد الأقصى من المحاولات. أرسل رمزاً جديداً.');
+          Alert.alert(t('common.error'), t('auth.maxAttempts'));
         } else {
           Alert.alert(t('auth.wrongCode'), t('auth.wrongCodeMsg'));
         }
@@ -105,7 +105,7 @@ export default function VerifyScreen() {
       });
 
       if (sessionError || !sessionData?.user) {
-        Alert.alert(t('common.error'), 'فشل إنشاء الجلسة. أعد المحاولة.');
+        Alert.alert(t('common.error'), t('auth.sessionFailed'));
         return;
       }
 
@@ -119,7 +119,7 @@ export default function VerifyScreen() {
         await supabase.auth.signOut();
         Alert.alert(
           t('common.error'),
-          'تم إيقاف حسابك مؤقتاً. للاستفسار تواصل مع فريق الدعم.',
+          t('auth.accountSuspended'),
         );
         return;
       }
@@ -152,9 +152,9 @@ export default function VerifyScreen() {
       if (error || !data?.success) {
         const errCode: string | undefined = data?.error;
         if (errCode === 'RATE_LIMITED' || errCode === 'TOO_MANY_REQUESTS') {
-          Alert.alert(t('common.error'), 'انتظر قليلاً قبل إعادة الإرسال.');
+          Alert.alert(t('common.error'), t('auth.resendWait'));
         } else {
-          Alert.alert(t('common.error'), 'فشل إعادة الإرسال. تحقق من اتصالك.');
+          Alert.alert(t('common.error'), t('auth.resendFailed'));
         }
         return;
       }
@@ -164,7 +164,7 @@ export default function VerifyScreen() {
       inputs.current[0]?.focus();
       startCountdown();
     } catch {
-      Alert.alert(t('common.error'), 'فشل إعادة الإرسال. تحقق من اتصالك.');
+      Alert.alert(t('common.error'), t('auth.resendFailed'));
     } finally {
       setResending(false);
     }

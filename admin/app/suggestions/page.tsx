@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { SuggestionActions } from './suggestion-actions';
 
+export const dynamic = 'force-dynamic';
+
 type StatusFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
 async function getSuggestions(status: StatusFilter) {

@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { CategoryLimitsForm } from './category-limits-form';
 
+export const dynamic = 'force-dynamic';
+
 async function getCategories() {
   const { data } = await supabaseAdmin
     .from('service_categories')

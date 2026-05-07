@@ -1,17 +1,12 @@
 // Supabase Edge Function — send-confirm-notification
 // Deno runtime
 //
-// Called after provider presses "أنجزت العمل" to notify the client.
-// Delivery strategy (in order):
-//   1. Always insert into notifications table (in-app inbox) — guaranteed delivery
-//   2. Attempt Expo push notification if client has a push token
+// Called after provider presses "أنجزت العمل" to notify the client
+// with the 6-digit confirmation code. Notification language matches
+// the client's preferred language (users.lang).
 //
-// ENV vars required:
-//   SUPABASE_URL               — auto-injected
-//   SUPABASE_SERVICE_ROLE_KEY  — auto-injected
-//
-// Request body: { job_id: string, client_id: string, code: string }
-// Response:     { sent: boolean, inbox: boolean }
+// Body: { job_id: string, client_id: string, code: string }
+// Response: { sent: boolean, inbox: boolean }
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -20,6 +15,19 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+function buildCopy(lang: string, code: string) {
+  if (lang === "en") {
+    return {
+      title: "Job completion code 🔑",
+      body:  `Your code: ${code} — give it to the provider. Valid 30 min.`,
+    };
+  }
+  return {
+    title: "رمز تأكيد إنجاز العمل 🔑",
+    body:  `رمز تأكيدك: ${code} — أعطه للمزود لإتمام العمل. صالح 30 دقيقة.`,
+  };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -33,7 +41,6 @@ Deno.serve(async (req) => {
     });
 
   try {
-    // ── Auth ──────────────────────────────────────────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "unauthorized" }, 401);
 
@@ -45,7 +52,6 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authErr } = await supabaseAnon.auth.getUser();
     if (authErr || !user) return json({ error: "unauthorized" }, 401);
 
-    // ── Parse ─────────────────────────────────────────────────
     const { job_id, client_id, code } = await req.json() as {
       job_id: string;
       client_id: string;
@@ -61,14 +67,23 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // ── 1. Always: insert into notifications inbox ────────────
-    // Client sees this immediately when they open the app — no push token needed.
+    // Fetch client's language preference
+    const { data: clientUser } = await supabaseAdmin
+      .from("users")
+      .select("lang")
+      .eq("id", client_id)
+      .maybeSingle();
+
+    const lang = clientUser?.lang ?? "ar";
+    const { title, body } = buildCopy(lang, code);
+
+    // 1. Always insert into notifications inbox
     const { error: inboxErr } = await supabaseAdmin
       .from("notifications")
       .insert({
         user_id:  client_id,
-        title:    "رمز تأكيد إنجاز العمل 🔑",
-        body:     `رمز تأكيدك: ${code} — أعطه للمزود لإتمام العمل. صالح 30 دقيقة.`,
+        title,
+        body,
         type:     "confirm_job",
         screen:   "/(client)/jobs",
         metadata: { job_id, code },
@@ -76,7 +91,7 @@ Deno.serve(async (req) => {
 
     const inbox = !inboxErr;
 
-    // ── 2. Attempt push notification if token available ───────
+    // 2. Attempt push notification if token available
     const { data: tokenRow } = await supabaseAdmin
       .from("push_tokens")
       .select("token")
@@ -90,8 +105,8 @@ Deno.serve(async (req) => {
     const message = {
       to:    tokenRow.token,
       sound: "default",
-      title: "رمز تأكيد إنجاز العمل 🔑",
-      body:  `رمز تأكيدك: ${code} — أعطه للمزود لإتمام العمل`,
+      title,
+      body,
       data:  { job_id, code, type: "confirm_job" },
       ttl:   1800,
     };

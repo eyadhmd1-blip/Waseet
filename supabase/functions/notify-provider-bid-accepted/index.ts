@@ -3,18 +3,10 @@
 // Deno Edge Function
 //
 // Called by the mobile client immediately after accept_bid() succeeds.
-// Sends a high-priority push notification to the winning provider.
+// Sends a high-priority push notification to the winning provider
+// in the provider's preferred language (users.lang).
 //
-// ENV vars (auto-injected by Supabase):
-//   SUPABASE_URL
-//   SUPABASE_SERVICE_ROLE_KEY
-//   SUPABASE_ANON_KEY
-//
-// Request body:
-//   { job_id: string, is_urgent?: boolean }
-//
-// Response:
-//   { sent: boolean } | { error: string }
+// Request body: { job_id: string, is_urgent?: boolean }
 // ============================================================
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -34,11 +26,25 @@ const json = (body: object, status = 200) =>
     headers: { ...cors, "Content-Type": "application/json" },
   });
 
+function buildCopy(lang: string, isUrgent: boolean, reqTitle: string, amount: unknown, currency: string, minutes: number) {
+  if (lang === "en") {
+    const title = isUrgent ? "🚨 Client accepted your bid — urgent!" : "✅ Client accepted your bid!";
+    const body  = isUrgent
+      ? `${reqTitle} · ${amount} ${currency} +20% urgent — confirm within ${minutes} min`
+      : `${reqTitle} · ${amount} ${currency} — confirm within ${minutes} min`;
+    return { title, body };
+  }
+  const title = isUrgent ? "🚨 قبِل عميل عرضك — طلب طارئ!" : "✅ قبِل عميل عرضك!";
+  const body  = isUrgent
+    ? `${reqTitle} · ${amount} ${currency} +20% طارئ — أكّد خلال ${minutes} دقائق`
+    : `${reqTitle} · ${amount} ${currency} — أكّد خلال ${minutes} دقيقة`;
+  return { title, body };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
-    // ── Auth: verify caller is a logged-in user ───────────────
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "unauthorized" }, 401);
 
@@ -50,21 +56,18 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authErr } = await anonClient.auth.getUser();
     if (authErr || !user) return json({ error: "unauthorized" }, 401);
 
-    // ── Parse body ────────────────────────────────────────────
     const { job_id, is_urgent = false } = await req.json() as {
       job_id: string;
       is_urgent?: boolean;
     };
     if (!job_id) return json({ error: "job_id required" }, 400);
 
-    // ── Admin client (service role) ───────────────────────────
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       { auth: { persistSession: false } }
     );
 
-    // ── Fetch job with request + client details ───────────────
     const { data: job, error: jobErr } = await admin
       .from("jobs")
       .select(`
@@ -77,49 +80,40 @@ Deno.serve(async (req) => {
       .single();
 
     if (jobErr || !job) return json({ error: "job_not_found" }, 404);
-
-    // Verify the caller is the client on this job
     if (job.client_id !== user.id) return json({ error: "not_authorized" }, 403);
 
-    // ── Fetch provider push token ─────────────────────────────
-    const { data: tokenRow } = await admin
-      .from("push_tokens")
-      .select("token")
-      .eq("user_id", job.provider_id)
-      .maybeSingle();
+    // Fetch provider push token + language preference
+    const [{ data: tokenRow }, { data: providerUser }] = await Promise.all([
+      admin.from("push_tokens").select("token").eq("user_id", job.provider_id).maybeSingle(),
+      admin.from("users").select("lang").eq("id", job.provider_id).maybeSingle(),
+    ]);
 
-    if (!tokenRow?.token) {
-      // No token — not a failure; provider may not have push enabled
-      return json({ sent: false, reason: "no_push_token" });
-    }
+    if (!tokenRow?.token) return json({ sent: false, reason: "no_push_token" });
 
-    // ── Compute minutes remaining ─────────────────────────────
-    const deadline = job.provider_commit_deadline
-      ? new Date(job.provider_commit_deadline)
-      : null;
+    const lang = providerUser?.lang ?? "ar";
+
+    const deadline = job.provider_commit_deadline ? new Date(job.provider_commit_deadline) : null;
     const minutesLeft = deadline
       ? Math.max(1, Math.round((deadline.getTime() - Date.now()) / 60000))
       : (is_urgent ? 5 : 15);
 
-    // ── Build push message ────────────────────────────────────
     const req_data = (job as any).request ?? {};
     const bid_data = (job as any).bid ?? {};
-    const clientName = (job as any).client?.full_name ?? "عميل";
 
-    const title = is_urgent
-      ? "🚨 قبِل عميل عرضك — طلب طارئ!"
-      : "✅ قبِل عميل عرضك!";
-
-    const body = is_urgent
-      ? `${req_data.title ?? "طلب"} · ${bid_data.amount ?? ""} ${bid_data.currency ?? "JOD"} +20% طارئ — أكّد خلال ${minutesLeft} دقائق`
-      : `${req_data.title ?? "طلب"} · ${bid_data.amount ?? ""} ${bid_data.currency ?? "JOD"} — أكّد خلال ${minutesLeft} دقيقة`;
+    const { title, body } = buildCopy(
+      lang, is_urgent,
+      req_data.title ?? "",
+      bid_data.amount ?? "",
+      bid_data.currency ?? "JOD",
+      minutesLeft
+    );
 
     const message = {
       to:       tokenRow.token,
       title,
       body,
       sound:    "default",
-      priority: is_urgent ? "high" : "high",
+      priority: "high",
       ttl:      minutesLeft * 60,
       data: {
         screen:    "provider_confirm",
@@ -130,7 +124,6 @@ Deno.serve(async (req) => {
       channelId: is_urgent ? "urgent" : "default",
     };
 
-    // ── Send via Expo ─────────────────────────────────────────
     const expoRes = await fetch(EXPO_PUSH_URL, {
       method:  "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -140,7 +133,6 @@ Deno.serve(async (req) => {
     const expoData = await expoRes.json();
     const sent = expoData?.data?.status === "ok";
 
-    // ── Also insert in-app notification ──────────────────────
     await admin.from("notifications").insert({
       user_id:  job.provider_id,
       title,
@@ -148,7 +140,7 @@ Deno.serve(async (req) => {
       type:     "job_commit_request",
       screen:   "provider_confirm",
       metadata: { job_id, is_urgent },
-    }).then(() => {}).catch(() => {}); // non-blocking
+    }).then(() => {}).catch(() => {});
 
     return json({ sent });
 

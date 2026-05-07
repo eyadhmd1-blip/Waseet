@@ -1,6 +1,8 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { ToggleCategory, AddCategoryForm } from './category-actions';
 
+export const dynamic = 'force-dynamic';
+
 async function getCategories() {
   const { data } = await supabaseAdmin
     .from('service_categories')
