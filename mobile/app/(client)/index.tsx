@@ -366,13 +366,10 @@ export default function ClientHome() {
             />
             <View style={styles.shortcutDivider} />
             <ShortcutItem
-              icon="🕐"
-              label={t('home.lastRequest')}
-              sub={t('home.lastRequestSub')}
-              onPress={() => requests[0]
-                ? router.push({ pathname: '/request-detail', params: { id: requests[0].id } })
-                : goNew()
-              }
+              icon="🔄"
+              label={t('recurringRequest.title')}
+              sub={t('home.recurringSub')}
+              onPress={() => router.push('/recurring-request')}
             />
             <View style={styles.shortcutDivider} />
             <ShortcutItem
