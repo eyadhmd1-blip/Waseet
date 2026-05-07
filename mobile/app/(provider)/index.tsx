@@ -2116,11 +2116,11 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   blurText:      { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', lineHeight: 20 },
   blurOverlay:   { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.surface, opacity: 0.88, borderRadius: 6 },
 
-  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cardLeft:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  cardCity:   { fontSize: 12, color: colors.textMuted },
-  bidsCount:    { fontSize: 12, color: colors.textSecondary },
-  biddingEnds:  { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  cardLeft:   { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6, overflow: 'hidden' },
+  cardCity:   { fontSize: 12, color: colors.textMuted, flexShrink: 0 },
+  bidsCount:    { fontSize: 12, color: colors.textSecondary, flexShrink: 1 },
+  biddingEnds:  { fontSize: 11, color: colors.textMuted, flexShrink: 1 },
   aiPrice:    { fontSize: 13, color: colors.accent, fontWeight: '600' },
 
   bidBtn:           { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8 },
