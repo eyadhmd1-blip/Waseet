@@ -13,7 +13,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { TIER_META, CATEGORY_GROUPS, ICON_MAP } from '../src/constants/categories';
-import type { Provider, User, PortfolioItem, ShareChannel } from '../src/types';
+import type { Provider, User, PortfolioItem } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
 import { AppHeader } from '../src/components/AppHeader';
@@ -67,101 +67,6 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
   );
 }
 
-// ─── Share bottom sheet ───────────────────────────────────────
-
-function ShareSheet({
-  visible,
-  providerName,
-  username,
-  providerId,
-  myId,
-  onClose,
-}: {
-  visible: boolean;
-  providerName: string;
-  username?: string;
-  providerId: string;
-  myId: string | null;
-  onClose: () => void;
-}) {
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
-  const { t, ta } = useLanguage();
-  const slideY  = useRef(new Animated.Value(400)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.spring(slideY, { toValue: 0, tension: 70, friction: 12, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 1, duration: 220, useNativeDriver: true }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(slideY,  { toValue: 400, duration: 220, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0,   duration: 200, useNativeDriver: true }),
-      ]).start();
-    }
-  }, [visible]);
-
-  const deepLink = `https://waseet.app/p/${username ?? providerId}`;
-
-  const doShare = async (channel: ShareChannel) => {
-    try {
-      if (myId) {
-        supabase.rpc('record_profile_share', {
-          p_provider_id: providerId,
-          p_shared_by:   myId,
-          p_channel:     channel,
-        }).then(() => {});
-      }
-
-      const msg = t('chat.recommendMsg', { name: providerName, link: deepLink });
-      await Share.share({ message: msg, url: deepLink });
-      onClose();
-    } catch { /* user dismissed */ }
-  };
-
-  if (!visible) return null;
-
-  const channels: { key: ShareChannel; icon: string; label: string }[] = [
-    { key: 'whatsapp',  icon: '💬', label: t('providerProfile.shareWhatsapp') },
-    { key: 'instagram', icon: '📸', label: t('providerProfile.shareInstagram') },
-    { key: 'twitter',   icon: '🐦', label: t('providerProfile.shareTwitter') },
-    { key: 'link',      icon: '🔗', label: t('providerProfile.shareCopy') },
-    { key: 'other',     icon: '⬆️', label: t('providerProfile.shareOther') },
-  ];
-
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, styles.sheetBackdrop, { opacity }]}>
-      <TouchableOpacity style={StyleSheet.absoluteFill} onPress={onClose} activeOpacity={1} />
-      <Animated.View style={[styles.shareSheet, { transform: [{ translateY: slideY }] }]}>
-        <View style={styles.sheetHandle} />
-        <Text style={styles.sheetTitle}>
-          {t('providerProfile.shareSheetTitle', { name: providerName })}
-        </Text>
-        <Text style={styles.sheetLink}>{deepLink}</Text>
-
-        <View style={styles.channelRow}>
-          {channels.map(ch => (
-            <TouchableOpacity
-              key={ch.key}
-              style={styles.channelBtn}
-              onPress={() => doShare(ch.key)}
-              activeOpacity={0.75}
-            >
-              <View style={styles.channelIcon}>
-                <Text style={{ fontSize: 24 }}>{ch.icon}</Text>
-              </View>
-              <Text style={styles.channelLabel}>{ch.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </Animated.View>
-    </Animated.View>
-  );
-}
-
 // ─── Main Screen ─────────────────────────────────────────────
 
 export default function ProviderPublicProfile() {
@@ -178,7 +83,6 @@ export default function ProviderPublicProfile() {
   const [myRole, setMyRole]       = useState<string | null>(null);
   const [isSaved, setIsSaved]     = useState(false);
   const [savingToggle, setSavingToggle] = useState(false);
-  const [showShare, setShowShare]   = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [reportText, setReportText] = useState('');
   const [submittingReport, setSubmittingReport] = useState(false);
@@ -299,6 +203,21 @@ export default function ProviderPublicProfile() {
   const myCats  = allCats.filter(c => provider.categories?.includes(c.slug));
   const tierLabel = t(`dashboard.tier${capitalize(provider.reputation_tier)}` as any);
 
+  const handleShare = async () => {
+    const deepLink    = `https://waseet.app/p/${provider.username ?? provider_id}`;
+    const providerName = provider.user?.full_name ?? '';
+    try {
+      if (myId) {
+        supabase.rpc('record_profile_share', {
+          p_provider_id: provider_id,
+          p_shared_by:   myId,
+          p_channel:     'other',
+        }).then(() => {});
+      }
+      await Share.share({ message: t('chat.recommendMsg', { name: providerName, link: deepLink }), url: deepLink });
+    } catch { /* user dismissed */ }
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader
@@ -306,7 +225,7 @@ export default function ProviderPublicProfile() {
         title={t('providerProfile.topTitle')}
         onBack={() => router.back()}
         actionIcon="share-outline"
-        onAction={() => setShowShare(true)}
+        onAction={handleShare}
       />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -383,7 +302,7 @@ export default function ProviderPublicProfile() {
             </TouchableOpacity>
           )}
 
-          <TouchableOpacity style={styles.shareBtn} onPress={() => setShowShare(true)}>
+          <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
             <Text style={styles.shareBtnText}>{t('providerProfile.share')}</Text>
           </TouchableOpacity>
 
@@ -419,7 +338,7 @@ export default function ProviderPublicProfile() {
             <View style={styles.referralCard}>
               <Text style={styles.referralTitle}>{t('providerProfile.referralTitle')}</Text>
               <Text style={styles.referralSub}>{t('providerProfile.referralSub')}</Text>
-              <TouchableOpacity style={styles.referralBtn} onPress={() => setShowShare(true)}>
+              <TouchableOpacity style={styles.referralBtn} onPress={handleShare}>
                 <Text style={styles.referralBtnText}>{t('providerProfile.referralBtn')}</Text>
               </TouchableOpacity>
               <View style={styles.referralProgress}>
@@ -492,15 +411,6 @@ export default function ProviderPublicProfile() {
         </View>
       </Modal>
 
-      {/* ── Share sheet ── */}
-      <ShareSheet
-        visible={showShare}
-        providerName={provider.user?.full_name ?? ''}
-        username={provider.username}
-        providerId={provider_id!}
-        myId={myId}
-        onClose={() => setShowShare(false)}
-      />
     </View>
   );
 }
@@ -574,17 +484,6 @@ function createStyles(colors: AppColors, isRTL = false) {
   referralBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
   referralProgress:{ backgroundColor: colors.bg, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
   referralProgressText: { fontSize: 12, color: colors.textMuted },
-
-  sheetBackdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: '#000000AA', justifyContent: 'flex-end' },
-  shareSheet:    { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 24, paddingBottom: 48, paddingTop: 12 },
-  sheetHandle:   { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
-  sheetTitle:    { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, textAlign: ta },
-  sheetLink:     { fontSize: 12, color: colors.textMuted, marginBottom: 20, fontFamily: 'monospace', textAlign: ta },
-
-  channelRow:   { flexDirection: 'row', justifyContent: 'space-around', flexWrap: 'wrap', gap: 12 },
-  channelBtn:   { alignItems: 'center', gap: 6, minWidth: 56 },
-  channelIcon:  { width: 52, height: 52, backgroundColor: colors.bg, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.border },
-  channelLabel: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
 
   reportLink:     { alignItems: 'center', paddingVertical: 20, marginTop: 8 },
   reportLinkText: { fontSize: 13, color: colors.textMuted },
