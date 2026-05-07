@@ -120,6 +120,19 @@ export default function ProviderProfile() {
     setCatModalVisible(true);
   };
 
+  const removeCat = async (slug: string) => {
+    const updated = (provider?.categories ?? []).filter(s => s !== slug);
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
+    if (!authUser) return;
+    const { error } = await supabase
+      .from('providers')
+      .update({ categories: updated })
+      .eq('id', authUser.id);
+    if (error) Alert.alert(t('common.error'), error.message);
+    else load();
+  };
+
   const toggleCat = (slug: string) => {
     setSelectedCats(prev => {
       if (prev.includes(slug)) return prev.filter(s => s !== slug);
@@ -410,27 +423,30 @@ export default function ProviderProfile() {
 
       {/* ── My categories ── */}
       <View style={styles.section}>
-        <View style={[styles.sectionHeader, styles.sectionHeaderRow]}>
-          <TouchableOpacity onPress={openCatModal}>
-            <Text style={styles.sectionLink}>{t('profile.editSpecialties')} ✏️</Text>
-          </TouchableOpacity>
-          <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionTitle}>{t('profile.mySpecialties')}</Text>
-            <Text style={styles.sectionEmoji}>🛠</Text>
-          </View>
+        <View style={styles.sectionTitleRow}>
+          <Text style={styles.sectionTitle}>{t('profile.mySpecialties')}</Text>
+          <Text style={styles.sectionEmoji}>🛠</Text>
         </View>
-        {myCats.length > 0 ? (
-          <View style={styles.catsWrap}>
-            {myCats.map(cat => (
-              <View key={cat.slug} style={styles.catChip}>
-                <Text style={styles.catChipText}>{ICON_MAP[cat.icon] ?? '🔧'} {t(`categories.${cat.slug}`, cat.name_ar)}</Text>
-              </View>
-            ))}
-          </View>
-        ) : (
-          <TouchableOpacity style={styles.addCatsHint} onPress={openCatModal}>
+        {myCats.length === 0 ? (
+          <TouchableOpacity style={[styles.addCatsHint, { marginTop: 12 }]} onPress={openCatModal}>
             <Text style={styles.addCatsHintText}>{t('profile.noSpecialties')}</Text>
           </TouchableOpacity>
+        ) : (
+          <View style={[styles.catsWrap, { marginTop: 12 }]}>
+            {myCats.map(cat => (
+              <View key={cat.slug} style={styles.catChipEditable}>
+                <Text style={styles.catChipText}>{ICON_MAP[cat.icon] ?? '🔧'} {t(`categories.${cat.slug}`, cat.name_ar)}</Text>
+                <TouchableOpacity onPress={() => removeCat(cat.slug)} style={styles.catChipRemove} hitSlop={8}>
+                  <Text style={styles.catChipRemoveText}>×</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+            {myCats.length < 3 && (
+              <TouchableOpacity style={styles.catAddChip} onPress={openCatModal}>
+                <Text style={styles.catAddChipText}>+ {t('profile.addSpecialty')}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         )}
         <Text style={styles.maxCatsNote}>{t('profile.maxSpecialtiesNote')}</Text>
       </View>
@@ -689,6 +705,11 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   // ── Categories ──
   catsWrap:            { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   catChip:             { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.border },
+  catChipEditable:     { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1.5, borderColor: colors.accent },
+  catChipRemove:       { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.errorBg, alignItems: 'center', justifyContent: 'center' },
+  catChipRemoveText:   { fontSize: 14, color: colors.errorSoft, fontWeight: '700', lineHeight: 18, includeFontPadding: false },
+  catAddChip:          { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1.5, borderColor: colors.accent, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  catAddChipText:      { fontSize: 13, color: colors.accent, fontWeight: '600' },
   catChipSelected:     { backgroundColor: colors.accentDim, borderColor: colors.accent },
   catChipText:         { fontSize: 13, color: colors.textPrimary },
   catChipTextSelected: { color: colors.accent, fontWeight: '600' },
