@@ -67,10 +67,10 @@ export const darkColors: AppColors = {
 };
 
 export const lightColors: AppColors = {
-  bg:            '#F8F9FC',
-  surface:       '#FFFFFF',
-  surfaceAlt:    '#F1F5FB',
-  border:        '#E2E8F0',
+  bg:            '#FDFAF5',   // warm off-white — removes cool blue cast
+  surface:       '#FFFDF8',   // cards slightly lighter/warmer to stay elevated
+  surfaceAlt:    '#F5F0E5',   // inner elevated surfaces
+  border:        '#E5DDD0',   // warm beige border — harmonises with gold accent
   textPrimary:   '#0F172A',
   textSecondary: '#475569',
   textMuted:     '#94A3B8',
