@@ -2,14 +2,16 @@
 // Deno runtime
 //
 // Called after provider presses "أنجزت العمل" to notify the client.
-// Sends an Expo Push Notification with the confirmation code.
+// Delivery strategy (in order):
+//   1. Always insert into notifications table (in-app inbox) — guaranteed delivery
+//   2. Attempt Expo push notification if client has a push token
 //
 // ENV vars required:
 //   SUPABASE_URL               — auto-injected
 //   SUPABASE_SERVICE_ROLE_KEY  — auto-injected
 //
 // Request body: { job_id: string, client_id: string, code: string }
-// Response:     { sent: boolean }
+// Response:     { sent: boolean, inbox: boolean }
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -53,32 +55,45 @@ Deno.serve(async (req) => {
       return json({ error: "job_id, client_id and code are required" }, 400);
     }
 
-    // ── Fetch client push token ───────────────────────────────
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       { auth: { persistSession: false } }
     );
 
+    // ── 1. Always: insert into notifications inbox ────────────
+    // Client sees this immediately when they open the app — no push token needed.
+    const { error: inboxErr } = await supabaseAdmin
+      .from("notifications")
+      .insert({
+        user_id:  client_id,
+        title:    "رمز تأكيد إنجاز العمل 🔑",
+        body:     `رمز تأكيدك: ${code} — أعطه للمزود لإتمام العمل. صالح 30 دقيقة.`,
+        type:     "confirm_job",
+        screen:   "/(client)/jobs",
+        metadata: { job_id, code },
+      });
+
+    const inbox = !inboxErr;
+
+    // ── 2. Attempt push notification if token available ───────
     const { data: tokenRow } = await supabaseAdmin
       .from("push_tokens")
       .select("token")
       .eq("user_id", client_id)
       .single();
 
-    // If no push token, skip silently (client will see it on next app open)
     if (!tokenRow?.token) {
-      return json({ sent: false, reason: "no_token" });
+      return json({ sent: false, inbox, reason: "no_token" });
     }
 
-    // ── Send Expo push notification ───────────────────────────
     const message = {
       to:    tokenRow.token,
       sound: "default",
-      title: "تأكيد إنجاز العمل 🔔",
+      title: "رمز تأكيد إنجاز العمل 🔑",
       body:  `رمز تأكيدك: ${code} — أعطه للمزود لإتمام العمل`,
       data:  { job_id, code, type: "confirm_job" },
-      ttl:   1800, // 30 minutes — matches confirm_code_exp
+      ttl:   1800,
     };
 
     const expoRes = await fetch("https://exp.host/--/api/v2/push/send", {
@@ -88,10 +103,9 @@ Deno.serve(async (req) => {
     });
 
     const expoData = await expoRes.json();
-
-    // Expo returns { data: { status: "ok" | "error" } }
     const sent = expoData?.data?.status === "ok";
-    return json({ sent });
+
+    return json({ sent, inbox });
 
   } catch (err) {
     return json({ error: String(err) }, 500);
