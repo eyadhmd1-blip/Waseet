@@ -1,8 +1,10 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { ReportActions, SuspendActions } from './report-actions';
 
+export const dynamic = 'force-dynamic';
+
 async function getReports() {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('reports')
     .select(`
       id, report_type, description, status, created_at, admin_notes, context,
@@ -13,7 +15,11 @@ async function getReports() {
     .order('created_at', { ascending: false })
     .limit(100);
 
-  return data ?? [];
+  if (error) {
+    console.error('[abuse-reports] getReports failed:', error.message, error.details);
+    return { reports: [], fetchError: error.message };
+  }
+  return { reports: data ?? [], fetchError: null };
 }
 
 async function getTopReported() {
@@ -61,11 +67,11 @@ const CONTEXT_COLOR: Record<string, string> = {
 };
 
 export default async function AbuseReportsPage() {
-  const [reports, topReported] = await Promise.all([getReports(), getTopReported()]);
+  const [{ reports, fetchError }, topReported] = await Promise.all([getReports(), getTopReported()]);
 
-  const pending  = reports.filter(r => r.status === 'pending').length;
-  const reviewed = reports.filter(r => r.status === 'reviewed').length;
-  const resolved = reports.filter(r => r.status === 'resolved').length;
+  const pending  = reports.filter((r: any) => r.status === 'pending').length;
+  const reviewed = reports.filter((r: any) => r.status === 'reviewed').length;
+  const resolved = reports.filter((r: any) => r.status === 'resolved').length;
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
@@ -75,6 +81,14 @@ export default async function AbuseReportsPage() {
           <p className="text-slate-500 text-sm mt-0.5">بلاغات المستخدمين على السلوك المسيء</p>
         </div>
       </div>
+
+      {/* Fetch error banner — visible only when DB query fails */}
+      {fetchError && (
+        <div className="bg-red-950/40 border border-red-500/30 rounded-2xl p-4 text-right">
+          <div className="text-red-400 font-semibold text-sm mb-1">⚠️ خطأ في جلب البلاغات</div>
+          <div className="text-red-300/70 text-xs font-mono">{fetchError}</div>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
@@ -136,7 +150,9 @@ export default async function AbuseReportsPage() {
           <h2 className="text-base font-semibold text-slate-200">سجل البلاغات</h2>
         </div>
         {reports.length === 0 ? (
-          <div className="p-12 text-center text-slate-600">لا توجد بلاغات بعد</div>
+          <div className="p-12 text-center text-slate-600">
+            {fetchError ? 'فشل جلب البيانات — راجع الخطأ أعلاه' : 'لا توجد بلاغات بعد'}
+          </div>
         ) : (
           <div className="divide-y divide-slate-800">
             {reports.map(report => (
