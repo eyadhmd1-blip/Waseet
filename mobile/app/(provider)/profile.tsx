@@ -223,7 +223,7 @@ export default function ProviderProfile() {
         <StatBox label={t('dashboard.rating')}    value={provider.score > 0 ? `${provider.score.toFixed(1)} ⭐` : '—'} />
         <StatBox label={t('dashboard.totalJobs')} value={String(provider.lifetime_jobs)} />
         <StatBox label={t('dashboard.views')}     value={String(provider.profile_views ?? 0)} />
-        <StatBox label={t('profile.statShares')}  value={String(provider.share_count ?? 0)} />
+        <StatBox label={t('providerProfile.statShares')}  value={String(provider.share_count ?? 0)} />
       </View>
 
       {/* ── Portfolio Mini Gallery ── */}
