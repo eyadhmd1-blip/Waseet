@@ -50,47 +50,108 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
 
 // ── Step 1: Role Selection ────────────────────────────────────
 
+const CLIENT_COLOR   = '#3B82F6';
+
 function Step1Role({
   role, onSelect,
 }: { role: Role; onSelect: (r: Role) => void }) {
-  const { colors } = useTheme();
-  const { t, isRTL } = useLanguage();
+  const { colors, isDark } = useTheme();
+  const { t, isRTL, lang } = useLanguage();
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+
+  const clientScaleAnim   = useRef(new Animated.Value(role === 'client'   ? 1.03 : 1)).current;
+  const providerScaleAnim = useRef(new Animated.Value(role === 'provider' ? 1.03 : 1)).current;
+
+  const handleSelect = (r: Role) => {
+    const hit   = r === 'client' ? clientScaleAnim : providerScaleAnim;
+    const other = r === 'client' ? providerScaleAnim : clientScaleAnim;
+    Animated.sequence([
+      Animated.spring(hit,   { toValue: 0.92, useNativeDriver: true, tension: 300, friction: 8 }),
+      Animated.spring(hit,   { toValue: 1.03, useNativeDriver: true, tension: 180, friction: 6, bounciness: 14 }),
+    ]).start();
+    Animated.spring(other, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }).start();
+    onSelect(r);
+  };
+
+  const CLIENT_CHIPS   = lang === 'ar'
+    ? ['🔍 ابحث', '💬 قارن', '✅ وظّف']
+    : ['🔍 Search', '💬 Compare', '✅ Hire'];
+  const PROVIDER_CHIPS = lang === 'ar'
+    ? ['💰 اكسب', '📊 تتبع', '⭐ سمعة']
+    : ['💰 Earn', '📊 Track', '⭐ Grow'];
+
+  const renderCard = (r: Role) => {
+    const isActive  = role === r;
+    const scaleAnim = r === 'client' ? clientScaleAnim : providerScaleAnim;
+    const accent    = r === 'client' ? CLIENT_COLOR : colors.accent;
+    const emoji     = r === 'client' ? '👤' : '🔧';
+    const title     = t(r === 'client' ? 'onboarding.clientCardTitle' : 'onboarding.providerCardTitle');
+    const sub       = t(r === 'client' ? 'onboarding.clientCardSub'   : 'onboarding.providerCardSub');
+    const chips     = r === 'client' ? CLIENT_CHIPS : PROVIDER_CHIPS;
+
+    return (
+      <Animated.View
+        key={r}
+        style={[
+          styles.roleCard,
+          isActive && { borderColor: accent, borderWidth: 2, backgroundColor: isDark ? accent + '18' : accent + '0D' },
+          { transform: [{ scale: scaleAnim }] },
+          isActive && {
+            shadowColor:   accent,
+            shadowOffset:  { width: 0, height: 6 },
+            shadowOpacity: isDark ? 0.45 : 0.22,
+            shadowRadius:  14,
+            elevation:     10,
+          },
+        ]}
+      >
+        <TouchableOpacity onPress={() => handleSelect(r)} activeOpacity={1} style={styles.roleCardInner}>
+
+          {/* Checkmark */}
+          <View style={[styles.roleCheck, isActive && { backgroundColor: accent, borderColor: accent }]}>
+            {isActive && <Text style={styles.roleCheckMark}>✓</Text>}
+          </View>
+
+          {/* Emoji circle */}
+          <View style={[
+            styles.roleEmojiWrap,
+            { backgroundColor: isActive ? accent + '22' : colors.bg },
+          ]}>
+            <Text style={styles.roleEmoji}>{emoji}</Text>
+          </View>
+
+          {/* Title + sub */}
+          <Text style={[styles.roleCardTitle, isActive && { color: accent }]}>{title}</Text>
+          <Text style={styles.roleCardSub}>{sub}</Text>
+
+          {/* Benefit chips */}
+          <View style={styles.roleChipRow}>
+            {chips.map(chip => (
+              <View
+                key={chip}
+                style={[
+                  styles.roleChip,
+                  isActive
+                    ? { backgroundColor: accent + '1A', borderColor: accent + '55' }
+                    : { backgroundColor: colors.bg, borderColor: colors.border },
+                ]}
+              >
+                <Text style={[styles.roleChipText, isActive && { color: accent }]}>{chip}</Text>
+              </View>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
   return (
     <View style={styles.stepContent}>
       <Text style={styles.stepTitle}>{t('onboarding.step1Title')}</Text>
       <Text style={styles.stepSub}>{t('onboarding.step1Sub')}</Text>
-
-      <View style={styles.roleCards}>
-        <TouchableOpacity
-          style={[styles.roleCard, role === 'client' && styles.roleCardActive]}
-          onPress={() => onSelect('client')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.roleEmoji}>👤</Text>
-          <Text style={[styles.roleCardTitle, role === 'client' && styles.roleCardTitleActive]}>
-            {t('onboarding.clientCardTitle')}
-          </Text>
-          <Text style={styles.roleCardSub}>{t('onboarding.clientCardSub')}</Text>
-          <View style={[styles.roleCheck, role === 'client' && styles.roleCheckActive]}>
-            {role === 'client' && <Text style={styles.roleCheckMark}>✓</Text>}
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.roleCard, role === 'provider' && styles.roleCardActive]}
-          onPress={() => onSelect('provider')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.roleEmoji}>🔧</Text>
-          <Text style={[styles.roleCardTitle, role === 'provider' && styles.roleCardTitleActive]}>
-            {t('onboarding.providerCardTitle')}
-          </Text>
-          <Text style={styles.roleCardSub}>{t('onboarding.providerCardSub')}</Text>
-          <View style={[styles.roleCheck, role === 'provider' && styles.roleCheckActive]}>
-            {role === 'provider' && <Text style={styles.roleCheckMark}>✓</Text>}
-          </View>
-        </TouchableOpacity>
+      <View style={[styles.roleCards, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        {renderCard('client')}
+        {renderCard('provider')}
       </View>
     </View>
   );
@@ -677,16 +738,18 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   stepSub:     { fontSize: rs(14, 12, 16), color: colors.textMuted, marginBottom: 28, alignSelf: 'stretch', textAlign: ta },
 
   // Role cards
-  roleCards:       { gap: 14 },
-  roleCard:        { backgroundColor: colors.surface, borderRadius: 16, padding: 20, borderWidth: 1.5, borderColor: colors.border },
-  roleCardActive:  { borderColor: colors.accent, backgroundColor: colors.accentDim },
-  roleEmoji:       { fontSize: rs(32, 26, 38), marginBottom: 10 },
-  roleCardTitle:   { fontSize: rs(18, 15, 20), fontWeight: '700', color: colors.textSecondary, marginBottom: 4 },
-  roleCardTitleActive: { color: colors.accent },
-  roleCardSub:     { fontSize: rs(13, 11, 15), color: colors.textMuted },
-  roleCheck:       { position: 'absolute', top: 16, left: 16, width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
-  roleCheckActive: { backgroundColor: colors.accent, borderColor: colors.accent },
-  roleCheckMark:   { fontSize: 12, color: colors.bg, fontWeight: '700' },
+  roleCards:     { flexDirection: 'row', gap: 12 },
+  roleCard:      { flex: 1, backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1.5, borderColor: colors.border, overflow: 'hidden' },
+  roleCardInner: { padding: 16, alignItems: 'center' },
+  roleEmojiWrap: { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center', marginBottom: 12, marginTop: 8 },
+  roleEmoji:     { fontSize: 36 },
+  roleCardTitle: { fontSize: rs(15, 13, 17), fontWeight: '700', color: colors.textSecondary, marginBottom: 4, textAlign: 'center' },
+  roleCardSub:   { fontSize: rs(11, 10, 13), color: colors.textMuted, textAlign: 'center', marginBottom: 12, lineHeight: 16 },
+  roleChipRow:   { flexDirection: 'row', flexWrap: 'wrap', gap: 5, justifyContent: 'center' },
+  roleChip:      { borderRadius: 10, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 3 },
+  roleChipText:  { fontSize: 10, fontWeight: '600', color: colors.textMuted },
+  roleCheck:     { position: 'absolute', top: 12, right: 12, width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
+  roleCheckMark: { fontSize: 11, color: '#fff', fontWeight: '800' },
 
   // Fields
   fieldLabel:      { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16, alignSelf: 'stretch' },
