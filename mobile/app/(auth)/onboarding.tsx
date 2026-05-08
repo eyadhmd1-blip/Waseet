@@ -720,7 +720,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   groupLabel:  { fontSize: 13, color: colors.textMuted, marginBottom: 10, marginTop: 4, alignSelf: 'stretch' },
   catGrid:     { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 16 },
   catCard: {
-    width: Math.max(80, Math.floor((width - 48 - 10) / 3)),
+    width: Math.max(80, Math.floor((width - 48 - 20) / 3)),
     backgroundColor: colors.surface, borderRadius: 12,
     padding: 12, alignItems: 'center',
     borderWidth: 1, borderColor: colors.border,
