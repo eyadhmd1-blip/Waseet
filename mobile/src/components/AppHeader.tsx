@@ -152,10 +152,17 @@ function RootHeader({
       toValue: 1, duration: 300, delay: 260, easing: ease, useNativeDriver: true,
     }).start();
 
-    // 2. 👋 wave — rotates through a natural swing once
-    Animated.timing(waveAnim, {
-      toValue: 1, duration: 580, delay: 180, easing: Easing.inOut(Easing.quad), useNativeDriver: true,
-    }).start();
+    // 2. 👋 wave — sequence gives precise keyframe control per segment
+    // waveAnim goes -1 → +1, interpolated to degrees in render
+    setTimeout(() => {
+      Animated.sequence([
+        Animated.timing(waveAnim, { toValue: -1,   duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(waveAnim, { toValue:  1,   duration: 110, easing: Easing.linear,            useNativeDriver: true }),
+        Animated.timing(waveAnim, { toValue: -0.6, duration: 100, easing: Easing.linear,            useNativeDriver: true }),
+        Animated.timing(waveAnim, { toValue:  0.5, duration: 100, easing: Easing.linear,            useNativeDriver: true }),
+        Animated.timing(waveAnim, { toValue:  0,   duration: 130, easing: Easing.in(Easing.quad),   useNativeDriver: true }),
+      ]).start();
+    }, 280);
 
     // 3. Avatar ripple — expands outward and fades
     pulseOp.setValue(0.45);
@@ -216,10 +223,10 @@ function RootHeader({
     transform: [{ translateY: row2Anim.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
   };
 
-  // 👋 wave rotation: natural hand-wave sequence
+  // 👋 wave: simple linear map — sequence controls the timing
   const waveRotate = waveAnim.interpolate({
-    inputRange:  [0,      0.2,      0.42,    0.62,    0.80,   1],
-    outputRange: ['0deg', '-22deg', '18deg', '-12deg', '7deg', '0deg'],
+    inputRange:  [-1,      0,      1],
+    outputRange: ['-28deg', '0deg', '28deg'],
   });
 
   // Avatar ripple color
@@ -258,10 +265,10 @@ function RootHeader({
         <Animated.View style={[s.greetBlock, greetStyle]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
             <Text style={s.greetSmall} numberOfLines={1}>{greeting}</Text>
-            {/* Animated wave emoji — rotates independently */}
-            <Animated.Text style={[s.waveEmoji, { transform: [{ rotate: waveRotate }] }]}>
-              👋
-            </Animated.Text>
+            {/* Animated.View wrapping Text — rotate on View is reliable on Android */}
+            <Animated.View style={{ transform: [{ rotate: waveRotate }] }}>
+              <Text style={s.waveEmoji}>👋</Text>
+            </Animated.View>
           </View>
           <Text style={s.greetName} numberOfLines={1}>
             {firstName || 'وسيط'}
