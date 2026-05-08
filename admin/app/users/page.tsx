@@ -144,7 +144,7 @@ export default async function UsersPage({
                   ${u.is_disabled ? 'opacity-60' : ''}`}
               >
                 <td className="px-5 py-3">
-                  <div className="flex items-center gap-3 flex-row-reverse">
+                  <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0
                       ${u.is_disabled ? 'bg-slate-700 text-slate-500' : 'bg-amber-400 text-slate-900'}`}>
                       {u.full_name.charAt(0)}

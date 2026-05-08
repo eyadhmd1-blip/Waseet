@@ -208,12 +208,12 @@ export default async function ProvidersPage({
                       ${!p.is_active ? 'opacity-60' : ''}`}
                   >
                     <td className="px-5 py-3">
-                      <div className="flex items-center gap-3 flex-row-reverse">
+                      <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-violet-500/80 flex items-center justify-center text-white font-bold text-sm shrink-0">
                           {user.full_name?.charAt(0) ?? '?'}
                         </div>
                         <div>
-                          <div className="flex items-center gap-1.5 flex-row-reverse">
+                          <div className="flex items-center gap-1.5">
                             <span className="text-slate-200 font-medium">{user.full_name}</span>
                             {p.badge_verified && <span className="text-sky-400 text-xs">✓</span>}
                           </div>
