@@ -25,6 +25,8 @@ import { calcUrgentPremium, calcContractTotal, sanitizeAmount } from '../../src/
 import { alignEnd, selfStart, me } from '../../src/utils/rtl';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
+import { useTutorial }   from '../../src/hooks/useTutorial';
+import { TutorialTooltip } from '../tutorial/tooltip';
 
 const CONTRACT_COLOR = '#10B981';
 const CONTRACT_DIM   = '#10B98122';
@@ -1092,6 +1094,17 @@ export default function ProviderFeed() {
     return () => clearTimeout(t);
   }, []);
 
+  // ── Tutorial tooltip: credits badge shown once after first load ──
+  const { ready: tutReady, isTooltipSeen, markTooltip } = useTutorial('provider');
+  const [showCreditsTooltip, setShowCreditsTooltip] = useState(false);
+
+  useEffect(() => {
+    if (!tutReady || loading) return;
+    if (isTooltipSeen('credits')) return;
+    const tid = setTimeout(() => setShowCreditsTooltip(true), 1500);
+    return () => clearTimeout(tid);
+  }, [tutReady, loading, isTooltipSeen]);
+
   // ── Realtime: detect incoming job commitment request ─────────
   useEffect(() => {
     let channel: ReturnType<typeof supabase.channel> | null = null;
@@ -1922,6 +1935,14 @@ export default function ProviderFeed() {
         onClose={() => setDemoSuccess(false)}
       />
 
+      {/* ── Tutorial tooltip: credits badge ── */}
+      <TutorialTooltip
+        visible={showCreditsTooltip}
+        icon="💳"
+        titleKey="tutorial.tooltipCreditsTitle"
+        subKey="tutorial.tooltipCreditsSub"
+        onDismiss={() => { setShowCreditsTooltip(false); markTooltip('credits'); }}
+      />
 
     </View>
   );

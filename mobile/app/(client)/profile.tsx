@@ -345,6 +345,13 @@ export default function ClientProfile() {
         <Text style={styles.notifBtnArrow}>›</Text>
       </TouchableOpacity>
 
+      {/* ── Help Center ── */}
+      <TouchableOpacity style={styles.notifBtn} onPress={() => router.push('/help-center?role=client' as any)}>
+        <Text style={styles.notifBtnIcon}>❓</Text>
+        <Text style={styles.notifBtnText}>{t('helpCenter.title')}</Text>
+        <Text style={styles.notifBtnArrow}>›</Text>
+      </TouchableOpacity>
+
       {/* ── Sign out ── */}
       <TouchableOpacity style={styles.signOutBtn} onPress={handleSignOut}>
         <Text style={styles.signOutText}>{t('profile.logout')}</Text>

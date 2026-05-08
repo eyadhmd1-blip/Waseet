@@ -8,6 +8,8 @@ import { makeTabBarStyle, makeTabOptions } from '../../src/constants/theme';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useTheme } from '../../src/context/ThemeContext';
 import { supabase } from '../../src/lib/supabase';
+import { useTutorial } from '../../src/hooks/useTutorial';
+import { OnboardingCarousel } from '../tutorial/carousel';
 
 // Shown at most once per app session
 let _alertShownThisSession = false;
@@ -28,6 +30,7 @@ export default function ProviderLayout() {
 
   const [alert, setAlert] = useState<AlertState | null>(null);
   const checked = useRef(false);
+  const { showCarousel, dismissCarousel } = useTutorial('provider');
 
   const tabBarStyle = {
     ...makeTabBarStyle(colors, insets.bottom),
@@ -145,6 +148,9 @@ export default function ProviderLayout() {
           }}
         />
       </Tabs>
+
+      {/* ── Onboarding carousel — shown once on first login ── */}
+      <OnboardingCarousel role="provider" visible={showCarousel} onDone={dismissCarousel} />
 
       {/* ── Subscription Alert Modal ── */}
       <Modal

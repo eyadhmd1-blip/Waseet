@@ -18,6 +18,8 @@ import { useTheme }                     from '../../src/context/ThemeContext';
 import { AppHeader }                    from '../../src/components/AppHeader';
 import { useUnreadNotifCount }          from '../../src/hooks/useUnreadNotifCount';
 import type { AppColors }               from '../../src/constants/colors';
+import { useTutorial }                  from '../../src/hooks/useTutorial';
+import { TutorialTooltip }              from '../tutorial/tooltip';
 
 // ─── Layout constants ─────────────────────────────────────────
 const { width: W } = Dimensions.get('window');
@@ -260,6 +262,17 @@ export default function ClientHome() {
     return () => clearTimeout(timer);
   }, []);
 
+  // ── Tutorial tooltip — "newRequest" shown once after first load ──
+  const { ready: tutReady, isTooltipSeen, markTooltip } = useTutorial('client');
+  const [showNewRequestTooltip, setShowNewRequestTooltip] = useState(false);
+
+  useEffect(() => {
+    if (!tutReady || loading) return;
+    if (isTooltipSeen('newRequest')) return;
+    const t = setTimeout(() => setShowNewRequestTooltip(true), 1500);
+    return () => clearTimeout(t);
+  }, [tutReady, loading, isTooltipSeen]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();
@@ -475,6 +488,16 @@ export default function ClientHome() {
 
         </Animated.View>
       </ScrollView>
+
+      {/* ── Tutorial tooltip: new request ── */}
+      <TutorialTooltip
+        visible={showNewRequestTooltip}
+        icon="➕"
+        titleKey="tutorial.tooltipNewRequestTitle"
+        subKey="tutorial.tooltipNewRequestSub"
+        onDismiss={() => { setShowNewRequestTooltip(false); markTooltip('newRequest'); }}
+      />
+
     </View>
   );
 }
