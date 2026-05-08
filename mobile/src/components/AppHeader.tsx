@@ -7,9 +7,10 @@
 //   'modal' → Close + title + optional step counter
 // ============================================================
 
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, I18nManager,
+  Animated, Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme }    from '../context/ThemeContext';
@@ -64,11 +65,11 @@ export interface AppHeaderProps {
 
   // root — provider extras
   providerScore?:            number;
-  providerRepTier?:          string;   // 'new' | 'rising' | 'trusted' | 'expert' | 'elite'
+  providerRepTier?:          string;
   providerLifetimeJobs?:     number;
-  providerBidCredits?:       number;   // subscription credits only
-  providerBonusCredits?:     number;   // bonus credits (shown separately when > 0)
-  providerSubscriptionTier?: string;   // 'trial' | 'basic' | 'pro' | 'premium'
+  providerBidCredits?:       number;
+  providerBonusCredits?:     number;
+  providerSubscriptionTier?: string;
   providerIsAvailable?:      boolean;
 
   // ── stack ──────────────────────────────────────────────────
@@ -85,55 +86,164 @@ export interface AppHeaderProps {
   totalSteps?: number;
 }
 
-// ─── Component ────────────────────────────────────────────────
+// ─── rowDir helper ────────────────────────────────────────────
 
-// Safe row direction: works whether I18nManager.forceRTL has taken
-// effect (production / Android) or not (Expo Go on iOS first load).
 function rowDir(wantRTL: boolean): 'row' | 'row-reverse' {
   if (!wantRTL) return 'row';
   return I18nManager.isRTL ? 'row' : 'row-reverse';
 }
 
-export function AppHeader(props: AppHeaderProps) {
-  const { colors, isDark } = useTheme();
-  const { lang }           = useLanguage();
-  const { headerPad }      = useInsets();
-  const isRTL              = lang === 'ar';
-  const s                  = makeStyles(colors, headerPad, isDark);
+// ═══════════════════════════════════════════════════════════════
+// RootHeader — extracted to isolate hooks from stack/modal paths
+// ═══════════════════════════════════════════════════════════════
 
-  const backIcon: React.ComponentProps<typeof Ionicons>['name'] =
-    isRTL ? 'chevron-forward' : 'chevron-back';
+function RootHeader({
+  props, colors, isDark, lang, headerPad, isRTL,
+}: {
+  props: AppHeaderProps;
+  colors: AppColors;
+  isDark: boolean;
+  lang: string;
+  headerPad: number;
+  isRTL: boolean;
+}) {
+  const s = makeStyles(colors, headerPad, isDark);
 
-  // ── Root ───────────────────────────────────────────────────
-  if (props.variant === 'root') {
-    const isProvider = props.userRole === 'provider';
-    const firstName  = props.userName?.trim().split(' ')[0] ?? '';
-    const initial    = firstName.charAt(0).toUpperCase() || '?';
-    const greeting   = timeGreeting(lang);
-    const count      = props.notifCount ?? 0;
+  const isProvider = props.userRole === 'provider';
+  const firstName  = props.userName?.trim().split(' ')[0] ?? '';
+  const initial    = firstName.charAt(0).toUpperCase() || '?';
+  const greeting   = timeGreeting(lang);
+  const count      = props.notifCount ?? 0;
 
-    // Provider stats
-    const tier      = props.providerRepTier ?? 'new';
-    const tierLabel = REP_LABEL[tier] ?? tier;
-    const tierColor = REP_COLOR[tier] ?? '#9CA3AF';
-    const score     = props.providerScore ?? 0;
-    const jobs      = props.providerLifetimeJobs ?? 0;
-    const credits      = props.providerBidCredits ?? 0;
-    const bonusCredits = props.providerBonusCredits ?? 0;
-    const isPremium    = props.providerSubscriptionTier === 'premium';
-    const isOnline  = props.providerIsAvailable !== false; // default true
+  // Provider stats
+  const tier         = props.providerRepTier ?? 'new';
+  const tierLabel    = REP_LABEL[tier] ?? tier;
+  const tierColor    = REP_COLOR[tier] ?? '#9CA3AF';
+  const score        = props.providerScore ?? 0;
+  const jobs         = props.providerLifetimeJobs ?? 0;
+  const credits      = props.providerBidCredits ?? 0;
+  const bonusCredits = props.providerBonusCredits ?? 0;
+  const isPremium    = props.providerSubscriptionTier === 'premium';
+  const isOnline     = props.providerIsAvailable !== false;
 
-    return (
-      <View style={s.rootWrap}>
-        {/* ── Row 1: Avatar | Greeting + Name | Bell ─────────── */}
-        <View style={[s.row1, { flexDirection: rowDir(isRTL) }]}>
+  // ── Animation values ────────────────────────────────────────
+  const avatarAnim  = useRef(new Animated.Value(0)).current;
+  const greetAnim   = useRef(new Animated.Value(0)).current;
+  const bellAnim    = useRef(new Animated.Value(0)).current;
+  const row2Anim    = useRef(new Animated.Value(0)).current;
+  const waveAnim    = useRef(new Animated.Value(0)).current;  // 👋 rotation
+  const pulseScale  = useRef(new Animated.Value(1)).current;  // ripple ring
+  const pulseOp     = useRef(new Animated.Value(0)).current;  // ripple opacity
+  const bellBounce  = useRef(new Animated.Value(0)).current;  // bell shake
 
-          {/* Avatar */}
-          <TouchableOpacity
-            onPress={props.onAvatarPress}
-            activeOpacity={0.75}
-            style={s.avatarBtn}
-          >
+  // ── Entrance animation — fires once on mount ─────────────────
+  useEffect(() => {
+    const ease = Easing.out(Easing.quad);
+
+    // 1. Staggered fade + slide-up for each header element
+    Animated.stagger(80, [
+      Animated.timing(avatarAnim, { toValue: 1, duration: 320, easing: ease, useNativeDriver: true }),
+      Animated.timing(greetAnim,  { toValue: 1, duration: 320, easing: ease, useNativeDriver: true }),
+      Animated.timing(bellAnim,   { toValue: 1, duration: 320, easing: ease, useNativeDriver: true }),
+    ]).start();
+
+    // Row 2 pills fade in slightly after
+    Animated.timing(row2Anim, {
+      toValue: 1, duration: 300, delay: 260, easing: ease, useNativeDriver: true,
+    }).start();
+
+    // 2. 👋 wave — rotates through a natural swing once
+    Animated.timing(waveAnim, {
+      toValue: 1, duration: 580, delay: 180, easing: Easing.inOut(Easing.quad), useNativeDriver: true,
+    }).start();
+
+    // 3. Avatar ripple — expands outward and fades
+    pulseOp.setValue(0.45);
+    pulseScale.setValue(1);
+    Animated.parallel([
+      Animated.timing(pulseScale, { toValue: 2.6, duration: 800, delay: 100, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      Animated.timing(pulseOp,    { toValue: 0,   duration: 800, delay: 100, useNativeDriver: true }),
+    ]).start();
+
+    // 4. Bell shake on mount if there are unread notifications
+    if (count > 0) {
+      Animated.timing(bellBounce, {
+        toValue: 1, duration: 540, delay: 480, useNativeDriver: true,
+      }).start();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Bell shake when count goes from 0 → positive ─────────────
+  const prevCount = useRef(count);
+  useEffect(() => {
+    if (count > 0 && prevCount.current === 0) {
+      bellBounce.setValue(0);
+      Animated.timing(bellBounce, { toValue: 1, duration: 540, delay: 0, useNativeDriver: true }).start();
+    }
+    prevCount.current = count;
+  }, [count]);
+
+  // ── Derived animation styles ─────────────────────────────────
+
+  const slideOffset = 10; // px — how far each element starts from
+
+  const avatarStyle = {
+    opacity: avatarAnim,
+    transform: [{ translateY: avatarAnim.interpolate({ inputRange: [0, 1], outputRange: [slideOffset, 0] }) }],
+  };
+
+  const greetStyle = {
+    opacity: greetAnim,
+    transform: [{ translateY: greetAnim.interpolate({ inputRange: [0, 1], outputRange: [slideOffset, 0] }) }],
+  };
+
+  const bellStyle = {
+    opacity: bellAnim,
+    transform: [
+      { translateY: bellAnim.interpolate({ inputRange: [0, 1], outputRange: [slideOffset, 0] }) },
+      // shake rotation layered on top
+      { rotate: bellBounce.interpolate({
+          inputRange:  [0,    0.15,    0.35,    0.55,    0.70,   0.85,   1],
+          outputRange: ['0deg', '-18deg', '16deg', '-10deg', '8deg', '-4deg', '0deg'],
+        }),
+      },
+    ],
+  };
+
+  const row2Style = {
+    opacity: row2Anim,
+    transform: [{ translateY: row2Anim.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
+  };
+
+  // 👋 wave rotation: natural hand-wave sequence
+  const waveRotate = waveAnim.interpolate({
+    inputRange:  [0,      0.2,      0.42,    0.62,    0.80,   1],
+    outputRange: ['0deg', '-22deg', '18deg', '-12deg', '7deg', '0deg'],
+  });
+
+  // Avatar ripple color
+  const rippleColor = isProvider ? colors.accent : '#2563EB';
+
+  // ── Render ───────────────────────────────────────────────────
+
+  return (
+    <View style={s.rootWrap}>
+
+      {/* ── Row 1: Avatar | Greeting + Name | Bell ──────────── */}
+      <View style={[s.row1, { flexDirection: rowDir(isRTL) }]}>
+
+        {/* Avatar with ripple ring */}
+        <Animated.View style={[s.avatarBtn, avatarStyle]}>
+          {/* Ripple pulse ring — emits outward once on mount */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              s.ripple,
+              { transform: [{ scale: pulseScale }], opacity: pulseOp, backgroundColor: rippleColor },
+            ]}
+          />
+          <TouchableOpacity onPress={props.onAvatarPress} activeOpacity={0.75}>
             <View style={[s.avatar, isProvider ? s.avatarPro : s.avatarCli]}>
               <Text style={s.avatarLetter}>{initial}</Text>
             </View>
@@ -142,18 +252,24 @@ export function AppHeader(props: AppHeaderProps) {
               <View style={[s.onlineDot, { backgroundColor: isOnline ? '#22C55E' : '#9CA3AF' }]} />
             )}
           </TouchableOpacity>
+        </Animated.View>
 
-          {/* Greeting + Name */}
-          <View style={s.greetBlock}>
-            <Text style={s.greetSmall} numberOfLines={1}>
-              {greeting} 👋
-            </Text>
-            <Text style={s.greetName} numberOfLines={1}>
-              {firstName || 'وسيط'}
-            </Text>
+        {/* Greeting + Name */}
+        <Animated.View style={[s.greetBlock, greetStyle]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Text style={s.greetSmall} numberOfLines={1}>{greeting}</Text>
+            {/* Animated wave emoji — rotates independently */}
+            <Animated.Text style={[s.waveEmoji, { transform: [{ rotate: waveRotate }] }]}>
+              👋
+            </Animated.Text>
           </View>
+          <Text style={s.greetName} numberOfLines={1}>
+            {firstName || 'وسيط'}
+          </Text>
+        </Animated.View>
 
-          {/* Bell */}
+        {/* Bell */}
+        <Animated.View style={bellStyle}>
           <TouchableOpacity
             style={s.bellBtn}
             onPress={props.onNotifPress}
@@ -171,91 +287,101 @@ export function AppHeader(props: AppHeaderProps) {
               </View>
             )}
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
-        {/* ── Row 2: Role pill + contextual info chips ────────── */}
-        <View style={[s.row2, { flexDirection: rowDir(isRTL) }]}>
-
-          {/* Role pill */}
-          <View style={[s.rolePill, isProvider ? s.rolePillPro : s.rolePillCli]}>
-            <Text style={[s.roleText, isProvider ? s.roleTextPro : s.roleTextCli]}>
-              {isProvider
-                ? (isRTL ? 'مزود الخدمة' : 'Service Provider')
-                : (isRTL ? 'طالب الخدمة' : 'Client')}
-            </Text>
-          </View>
-
-          {/* Separator */}
-          <View style={s.sep} />
-
-          {isProvider ? (
-            /* ── Provider chips ── */
-            <>
-              {/* Online status */}
-              <View style={[s.chip, { backgroundColor: isOnline ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.12)', borderColor: isOnline ? 'rgba(34,197,94,0.30)' : 'rgba(156,163,175,0.25)' }]}>
-                <Text style={[s.chipText, { color: isOnline ? '#22C55E' : '#9CA3AF' }]}>
-                  {isOnline ? '● ' : '⬤ '}{isRTL ? (isOnline ? 'مباشر' : 'غير متاح') : (isOnline ? 'Online' : 'Away')}
-                </Text>
-              </View>
-
-              {/* Reputation tier */}
-              <View style={[s.chip, { backgroundColor: tierColor + '20' }]}>
-                <Text style={[s.chipText, { color: tierColor }]}>
-                  {tierLabel}
-                </Text>
-              </View>
-
-              {/* Score */}
-              <View style={s.chip}>
-                <Text style={s.chipText}>⭐ {score.toFixed(1)}</Text>
-              </View>
-
-              {/* Jobs count */}
-              <View style={s.chip}>
-                <Text style={s.chipText}>
-                  {isRTL ? `${jobs} عمل` : `${jobs} jobs`}
-                </Text>
-              </View>
-
-              {/* Bid credits */}
-              {isPremium ? (
-                <View style={[s.chip, s.chipGold]}>
-                  <Text style={[s.chipText, s.chipGoldText]}>
-                    {isRTL ? '∞ غير محدود' : '∞ Unlimited'}
-                  </Text>
-                </View>
-              ) : (
-                <View style={[s.chip, credits === 0 ? s.chipRed : credits <= 3 ? s.chipAmber : s.chipGold]}>
-                  <Text style={[s.chipText, credits === 0 ? s.chipRedText : credits <= 3 ? s.chipAmberText : s.chipGoldText]}>
-                    {isRTL ? `${credits} رصيد` : `${credits} cr`}
-                  </Text>
-                </View>
-              )}
-
-              {/* Bonus credits — only shown when > 0 */}
-              {!isPremium && bonusCredits > 0 && (
-                <View style={[s.chip, s.chipGold]}>
-                  <Text style={[s.chipText, s.chipGoldText]}>
-                    🏆 {bonusCredits}
-                  </Text>
-                </View>
-              )}
-            </>
-          ) : (
-            /* ── Client chips ── */
-            <>
-              {props.userCity ? (
-                <View style={s.chip}>
-                  <Text style={s.chipText}>📍 {props.userCity}</Text>
-                </View>
-              ) : null}
-            </>
-          )}
-        </View>
-
-        {/* Bottom border */}
-        <View style={s.border} />
       </View>
+
+      {/* ── Row 2: Role pill + contextual info chips ─────────── */}
+      <Animated.View style={[s.row2, { flexDirection: rowDir(isRTL) }, row2Style]}>
+
+        {/* Role pill */}
+        <View style={[s.rolePill, isProvider ? s.rolePillPro : s.rolePillCli]}>
+          <Text style={[s.roleText, isProvider ? s.roleTextPro : s.roleTextCli]}>
+            {isProvider
+              ? (isRTL ? 'مزود الخدمة' : 'Service Provider')
+              : (isRTL ? 'طالب الخدمة' : 'Client')}
+          </Text>
+        </View>
+
+        {/* Separator */}
+        <View style={s.sep} />
+
+        {isProvider ? (
+          <>
+            <View style={[s.chip, { backgroundColor: isOnline ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.12)', borderColor: isOnline ? 'rgba(34,197,94,0.30)' : 'rgba(156,163,175,0.25)' }]}>
+              <Text style={[s.chipText, { color: isOnline ? '#22C55E' : '#9CA3AF' }]}>
+                {isOnline ? '● ' : '⬤ '}{isRTL ? (isOnline ? 'مباشر' : 'غير متاح') : (isOnline ? 'Online' : 'Away')}
+              </Text>
+            </View>
+            <View style={[s.chip, { backgroundColor: tierColor + '20' }]}>
+              <Text style={[s.chipText, { color: tierColor }]}>{tierLabel}</Text>
+            </View>
+            <View style={s.chip}>
+              <Text style={s.chipText}>⭐ {score.toFixed(1)}</Text>
+            </View>
+            <View style={s.chip}>
+              <Text style={s.chipText}>{isRTL ? `${jobs} عمل` : `${jobs} jobs`}</Text>
+            </View>
+            {isPremium ? (
+              <View style={[s.chip, s.chipGold]}>
+                <Text style={[s.chipText, s.chipGoldText]}>{isRTL ? '∞ غير محدود' : '∞ Unlimited'}</Text>
+              </View>
+            ) : (
+              <View style={[s.chip, credits === 0 ? s.chipRed : credits <= 3 ? s.chipAmber : s.chipGold]}>
+                <Text style={[s.chipText, credits === 0 ? s.chipRedText : credits <= 3 ? s.chipAmberText : s.chipGoldText]}>
+                  {isRTL ? `${credits} رصيد` : `${credits} cr`}
+                </Text>
+              </View>
+            )}
+            {!isPremium && bonusCredits > 0 && (
+              <View style={[s.chip, s.chipGold]}>
+                <Text style={[s.chipText, s.chipGoldText]}>🏆 {bonusCredits}</Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <>
+            {props.userCity ? (
+              <View style={s.chip}>
+                <Text style={s.chipText}>📍 {props.userCity}</Text>
+              </View>
+            ) : null}
+          </>
+        )}
+
+      </Animated.View>
+
+      {/* Bottom border */}
+      <View style={s.border} />
+    </View>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AppHeader — public component
+// ═══════════════════════════════════════════════════════════════
+
+export function AppHeader(props: AppHeaderProps) {
+  const { colors, isDark } = useTheme();
+  const { lang }           = useLanguage();
+  const { headerPad }      = useInsets();
+  const isRTL              = lang === 'ar';
+  const s                  = makeStyles(colors, headerPad, isDark);
+
+  const backIcon: React.ComponentProps<typeof Ionicons>['name'] =
+    isRTL ? 'chevron-forward' : 'chevron-back';
+
+  // ── Root ───────────────────────────────────────────────────
+  if (props.variant === 'root') {
+    return (
+      <RootHeader
+        props={props}
+        colors={colors}
+        isDark={isDark}
+        lang={lang}
+        headerPad={headerPad}
+        isRTL={isRTL}
+      />
     );
   }
 
@@ -370,7 +496,7 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
       color:      colors.textSecondary,
       textAlign:  'center',
     },
-    stepChip:  {},
+    stepChip: {},
     stepText: {
       fontSize:   13,
       fontWeight: '600',
@@ -398,9 +524,18 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
       marginBottom:   6,
     },
 
-    // Avatar
+    // Avatar + ripple
     avatarBtn: {
       position: 'relative',
+      width: 44,
+      height: 44,
+    },
+    ripple: {
+      position:     'absolute',
+      width:        44,
+      height:       44,
+      borderRadius: 22,
+      // scale expands from center; opacity fades out
     },
     avatar: {
       width:          44,
@@ -440,6 +575,11 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
       color:      colors.textMuted,
       marginBottom: 1,
     },
+    waveEmoji: {
+      fontSize:      12,
+      // origin point for rotation is center; small offset compensates
+      includeFontPadding: false,
+    },
     greetName: {
       fontSize:   19,
       fontWeight: '700',
@@ -448,11 +588,11 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
 
     // Bell
     bellBtn: {
-      width:          40,
-      height:         40,
-      alignItems:     'center',
-      justifyContent: 'center',
-      borderRadius:   20,
+      width:           40,
+      height:          40,
+      alignItems:      'center',
+      justifyContent:  'center',
+      borderRadius:    20,
       backgroundColor: surfaceTint,
     },
     badge: {
