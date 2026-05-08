@@ -591,6 +591,16 @@ export default function ProviderProfile() {
         <Text style={styles.notifBtnArrow}>›</Text>
       </TouchableOpacity>
 
+      {/* ── Support ── */}
+      <TouchableOpacity
+        style={styles.notifBtn}
+        onPress={() => router.push('/support' as any)}
+      >
+        <Text style={styles.notifBtnIcon}>🎧</Text>
+        <Text style={styles.notifBtnText}>{t('profile.support')}</Text>
+        <Text style={styles.notifBtnArrow}>›</Text>
+      </TouchableOpacity>
+
       {/* ── Help Center ── */}
       <TouchableOpacity
         style={styles.notifBtn}

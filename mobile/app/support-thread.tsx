@@ -398,7 +398,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     bubbleText: { fontSize: 14, color: colors.textPrimary, lineHeight: 20, textAlign: ta },
     bubbleTime: { fontSize: 10, marginTop: 6 },
     timeLeft:   { color: colors.textMuted },
-    timeRight:  { color: 'rgba(201,168,76,0.6)', textAlign: 'auto' },
+    timeRight:  { color: 'rgba(201,168,76,0.6)', textAlign: ta },
 
     ratingBox:     { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginTop: 8, borderWidth: 1, borderColor: '#15803D', alignItems: 'center' },
     ratingTitle:   { fontSize: 14, fontWeight: '700', color: '#86EFAC', textAlign: 'center', marginBottom: 12 },
@@ -413,7 +413,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     ratedText: { fontSize: 14, color: colors.textPrimary },
     ratedNote: { fontSize: 13, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
 
-    inputBar:        { alignItems: 'flex-end', padding: 12, borderTopWidth: 1, borderTopColor: colors.border, gap: 8 },
+    inputBar:        { flexDirection: isRTL ? 'row' : 'row-reverse', alignItems: 'flex-end', padding: 12, borderTopWidth: 1, borderTopColor: colors.border, gap: 8 },
     inputField:      { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: colors.textPrimary, fontSize: 14, maxHeight: 100, borderWidth: 1, borderColor: colors.border },
     sendBtn:         { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 },
     sendBtnDisabled: { backgroundColor: colors.border },
