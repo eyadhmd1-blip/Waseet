@@ -62,12 +62,24 @@ export async function replyToTicket(ticketId: string, body: string) {
   });
 
   if (ticket?.user_id) {
-    await sendPushToUser(
-      ticket.user_id,
-      'رد جديد على تذكرتك 💬',
-      body.length > 80 ? body.slice(0, 80) + '…' : body,
-      { screen: 'support_thread', job_id: ticketId },
-    );
+    const notifBody = body.length > 80 ? body.slice(0, 80) + '…' : body;
+
+    await Promise.all([
+      sendPushToUser(
+        ticket.user_id,
+        'رد جديد على تذكرتك 💬',
+        notifBody,
+        { screen: 'support_thread', job_id: ticketId },
+      ),
+      supabaseAdmin.from('notifications').insert({
+        user_id:  ticket.user_id,
+        title:    'رد جديد على تذكرتك 💬',
+        body:     notifBody,
+        type:     'support_reply',
+        screen:   'support_thread',
+        metadata: { job_id: ticketId },
+      }),
+    ]);
   }
 
   revalidatePath('/support');
