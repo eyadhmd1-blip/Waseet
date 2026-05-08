@@ -66,7 +66,7 @@ export async function replyToTicket(ticketId: string, body: string) {
       ticket.user_id,
       'رد جديد على تذكرتك 💬',
       body.length > 80 ? body.slice(0, 80) + '…' : body,
-      { screen: 'support', ticketId },
+      { screen: 'support_thread', job_id: ticketId },
     );
   }
 
