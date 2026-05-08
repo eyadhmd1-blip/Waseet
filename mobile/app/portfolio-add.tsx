@@ -8,7 +8,6 @@ import {
 import { useRouter } from 'expo-router';
 import * as ImagePicker    from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import * as FileSystem      from 'expo-file-system';
 import { supabase }         from '../src/lib/supabase';
 import { CATEGORY_GROUPS }  from '../src/constants/categories';
 import type { PortfolioItemType } from '../src/types';
@@ -49,13 +48,12 @@ async function uploadToStorage(
     ? (ext === 'mov' ? 'video/quicktime' : 'video/mp4')
     : (ext === 'png' ? 'image/png' : 'image/jpeg');
 
-  const fileName  = `${userId}/${Date.now()}_${suffix}.${ext}`;
-  const base64    = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' as any });
-  const byteArray = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+  const fileName = `${userId}/${Date.now()}_${suffix}.${ext}`;
+  const blob     = await fetch(uri).then(r => r.blob());
 
   const { error } = await supabase.storage
     .from('portfolio-media')
-    .upload(fileName, byteArray, { contentType: mime });
+    .upload(fileName, blob, { contentType: mime });
 
   if (error) throw error;
 
