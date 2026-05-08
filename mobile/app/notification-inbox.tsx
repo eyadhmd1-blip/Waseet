@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
@@ -22,7 +22,16 @@ interface NotifRow {
   metadata:   Record<string, unknown> | null;
   is_read:    boolean;
   created_at: string;
+  _type?:     undefined;
 }
+
+interface DateHeaderItem {
+  _type:  'header';
+  id:     string;
+  label:  string;
+}
+
+type DataItem = NotifRow | DateHeaderItem;
 
 // ─── Helpers ──────────────────────────────────────────────────
 
@@ -41,6 +50,16 @@ const TYPE_ICON: Record<string, string> = {
   lifecycle:             '🔄',
   behavioral:            '🧠',
   ai:                    '✨',
+  support_reply:         '💬',
+  new_bid:               '💰',
+  bid_rejected:          '❌',
+  credits_added:         '💳',
+  credits_deducted:      '💳',
+  account_suspended:     '⚠️',
+  account_unsuspended:   '✅',
+  suggestion_approved:   '✅',
+  new_contract:          '📅',
+  urgent_request:        '⚡',
 };
 
 function notifIcon(type: string | null): string {
@@ -48,7 +67,7 @@ function notifIcon(type: string | null): string {
 }
 
 function relativeTime(iso: string, locale: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
+  const diff  = Date.now() - new Date(iso).getTime();
   const mins  = Math.floor(diff / 60_000);
   const hours = Math.floor(diff / 3_600_000);
   const days  = Math.floor(diff / 86_400_000);
@@ -67,22 +86,51 @@ function relativeTime(iso: string, locale: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 }
 
+function dateGroupLabel(iso: string, locale: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const days = Math.floor(diff / 86_400_000);
+  if (locale === 'ar') {
+    if (days < 1) return 'اليوم';
+    if (days < 2) return 'أمس';
+    if (days < 7) return 'هذا الأسبوع';
+    return 'أقدم';
+  }
+  if (days < 1) return 'Today';
+  if (days < 2) return 'Yesterday';
+  if (days < 7) return 'This week';
+  return 'Older';
+}
+
+function groupByDate(items: NotifRow[], locale: string): DataItem[] {
+  const result: DataItem[] = [];
+  let lastGroup = '';
+  for (const item of items) {
+    const group = dateGroupLabel(item.created_at, locale);
+    if (group !== lastGroup) {
+      result.push({ _type: 'header', id: `hdr_${group}`, label: group });
+      lastGroup = group;
+    }
+    result.push(item);
+  }
+  return result;
+}
+
 const PAGE = 20;
 
 // ─── Screen ───────────────────────────────────────────────────
 
 export default function NotificationInboxScreen() {
-  const { colors }    = useTheme();
-  const { t, ta, lang, isRTL } = useLanguage();
-  const router        = useRouter();
-  const st            = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
-  const locale        = lang === 'ar' ? 'ar' : 'en';
+  const { colors }           = useTheme();
+  const { t, lang, isRTL }  = useLanguage();
+  const router               = useRouter();
+  const st                   = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
+  const locale               = lang === 'ar' ? 'ar' : 'en';
 
-  const [items,      setItems]      = useState<NotifRow[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [items,       setItems]       = useState<NotifRow[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [refreshing,  setRefreshing]  = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore,    setHasMore]    = useState(true);
+  const [hasMore,     setHasMore]     = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const cursorRef = useRef<string | null>(null);
 
@@ -141,9 +189,29 @@ export default function NotificationInboxScreen() {
     setLoadingMore(false);
   }, [hasMore, loadingMore, fetchPage]);
 
+  // ── Delete single notification ──────────────────────────────
+  const deleteItem = useCallback(async (id: string) => {
+    setItems(prev => prev.filter(n => n.id !== id));
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      await supabase.from('notifications').delete().eq('id', id).eq('user_id', session.user.id);
+    }
+  }, []);
+
+  // ── Long-press → delete prompt ──────────────────────────────
+  const onLongPress = useCallback((item: NotifRow) => {
+    Alert.alert(
+      locale === 'ar' ? 'حذف الإشعار' : 'Delete notification',
+      locale === 'ar' ? 'هل تريد حذف هذا الإشعار؟' : 'Delete this notification?',
+      [
+        { text: locale === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
+        { text: locale === 'ar' ? 'حذف' : 'Delete', style: 'destructive', onPress: () => deleteItem(item.id) },
+      ],
+    );
+  }, [locale, deleteItem]);
+
   // ── Tap notification ────────────────────────────────────────
   const onTap = useCallback(async (item: NotifRow) => {
-    // Mark as read
     if (!item.is_read) {
       setItems(prev => prev.map(n => n.id === item.id ? { ...n, is_read: true } : n));
       const { data: { session } } = await supabase.auth.getSession();
@@ -163,14 +231,12 @@ export default function NotificationInboxScreen() {
       request_id:  (item.metadata?.request_id  as string) ?? undefined,
     };
 
-    const isLong = (item.body?.length ?? 0) > 60 || item.title.length > 60;
+    const isLong     = (item.body?.length ?? 0) > 60 || item.title.length > 60;
     const isExpanded = expandedIds.has(item.id);
 
     if (isLong && !isExpanded) {
-      // First tap on a long notification: expand to show full text
       setExpandedIds(prev => new Set(prev).add(item.id));
     } else {
-      // Already expanded or short: navigate (if actionable), else collapse
       if (item.screen) {
         handleNotifTap(routeData, router);
       } else {
@@ -191,21 +257,56 @@ export default function NotificationInboxScreen() {
     setItems(prev => prev.map(n => ({ ...n, is_read: true })));
   }, []);
 
+  // ── Clear all ───────────────────────────────────────────────
+  const clearAll = useCallback(() => {
+    Alert.alert(
+      locale === 'ar' ? 'حذف جميع الإشعارات' : 'Clear all notifications',
+      locale === 'ar' ? 'هل تريد حذف جميع الإشعارات نهائياً؟' : 'Delete all notifications permanently?',
+      [
+        { text: locale === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
+        {
+          text:  locale === 'ar' ? 'حذف الكل' : 'Clear all',
+          style: 'destructive',
+          onPress: async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) return;
+            setItems([]);
+            await supabase.from('notifications').delete().eq('user_id', session.user.id);
+          },
+        },
+      ],
+    );
+  }, [locale]);
+
+  // ── Grouped data ────────────────────────────────────────────
+  const groupedData = useMemo(() => groupByDate(items, locale), [items, locale]);
+
   // ── Render item ─────────────────────────────────────────────
-  const renderItem = useCallback(({ item }: { item: NotifRow }) => {
-    const expanded = expandedIds.has(item.id);
-    const isLong   = (item.body?.length ?? 0) > 60 || item.title.length > 60;
-    const showHint = isLong && !expanded;
+  const renderItem = useCallback(({ item }: { item: DataItem }) => {
+    // Date section header
+    if (item._type === 'header') {
+      return <Text style={st.dateHeader}>{item.label}</Text>;
+    }
+
+    const expanded  = expandedIds.has(item.id);
+    const isLong    = (item.body?.length ?? 0) > 60 || item.title.length > 60;
+    const showHint  = isLong && !expanded;
 
     return (
       <TouchableOpacity
         style={[st.card, !item.is_read && st.cardUnread, expanded && st.cardExpanded]}
         onPress={() => onTap(item)}
+        onLongPress={() => onLongPress(item)}
+        delayLongPress={400}
         activeOpacity={0.75}
       >
+        {/* Unread accent bar */}
+        {!item.is_read && <View style={st.unreadBar} />}
+
         <View style={st.cardLeft}>
           <Text style={st.icon}>{notifIcon(item.type)}</Text>
         </View>
+
         <View style={st.cardBody}>
           <View style={st.cardTop}>
             <Text style={st.title} numberOfLines={expanded ? undefined : 2}>
@@ -225,10 +326,11 @@ export default function NotificationInboxScreen() {
             <Text style={st.expandHint}>{t('notifInbox.collapseHint')}</Text>
           )}
         </View>
+
         {!item.is_read && <View style={st.unreadDot} />}
       </TouchableOpacity>
     );
-  }, [st, locale, onTap, expandedIds]);
+  }, [st, locale, onTap, onLongPress, expandedIds, t]);
 
   const unreadCount = useMemo(() => items.filter(n => !n.is_read).length, [items]);
 
@@ -255,6 +357,9 @@ export default function NotificationInboxScreen() {
         {...(unreadCount > 0
           ? { actionIcon: 'checkmark-done-outline', onAction: markAllRead }
           : {})}
+        {...(items.length > 0
+          ? { actionIcon2: 'trash-outline', onAction2: clearAll }
+          : {})}
       />
 
       {loading ? (
@@ -263,7 +368,7 @@ export default function NotificationInboxScreen() {
         </View>
       ) : (
         <FlatList
-          data={items}
+          data={groupedData}
           keyExtractor={i => i.id}
           renderItem={renderItem}
           ListEmptyComponent={ListEmpty}
@@ -294,6 +399,19 @@ function createSt(colors: AppColors, isRTL: boolean) {
     listContent:    { padding: 12, paddingBottom: 32 },
     emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
 
+    // Date section label
+    dateHeader: {
+      fontSize:    12,
+      fontWeight:  '700',
+      color:       colors.textMuted,
+      textAlign:   ta,
+      marginTop:   12,
+      marginBottom: 6,
+      paddingHorizontal: 4,
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
+    },
+
     card: {
       flexDirection:   'row',
       alignItems:      'flex-start',
@@ -305,38 +423,55 @@ function createSt(colors: AppColors, isRTL: boolean) {
       borderColor:     colors.border,
       gap:             10,
       position:        'relative',
+      overflow:        'hidden',
     },
     cardUnread: {
       borderColor:     colors.accent + '55',
       backgroundColor: colors.accentDim,
     },
-    cardLeft: {
-      width:          38,
-      height:         38,
-      borderRadius:   12,
-      backgroundColor: colors.bg,
-      alignItems:     'center',
-      justifyContent: 'center',
-      borderWidth:    1,
-      borderColor:    colors.border,
+    cardExpanded: { borderColor: colors.accent + '88' },
+
+    // Colored bar at top of unread cards
+    unreadBar: {
+      position:              'absolute',
+      top:                   0,
+      left:                  0,
+      right:                 0,
+      height:                3,
+      backgroundColor:       colors.accent,
+      borderTopLeftRadius:   16,
+      borderTopRightRadius:  16,
     },
-    icon:     { fontSize: 18 },
+
+    cardLeft: {
+      width:           40,
+      height:          40,
+      borderRadius:    13,
+      backgroundColor: colors.bg,
+      alignItems:      'center',
+      justifyContent:  'center',
+      borderWidth:     1,
+      borderColor:     colors.border,
+      marginTop:       2,
+    },
+    icon:     { fontSize: 19 },
     cardBody: { flex: 1, gap: 4 },
     cardTop:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 },
     title:    { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textPrimary, lineHeight: 20, textAlign: ta },
-    time:     { fontSize: 11, color: colors.textMuted, flexShrink: 0 },
-    body:        { fontSize: 13, color: colors.textSecondary, lineHeight: 18, textAlign: ta },
-    cardExpanded: { borderColor: colors.accent + '88' },
-    expandHint:  { fontSize: 11, color: colors.accent, marginTop: 6, textAlign: ta },
+    time:     { fontSize: 11, color: colors.textMuted, flexShrink: 0, marginTop: 2 },
+    body:     { fontSize: 13, color: colors.textSecondary, lineHeight: 18, textAlign: ta },
+    expandHint: { fontSize: 11, color: colors.accent, marginTop: 6, textAlign: ta },
 
     unreadDot: {
       position:        'absolute',
-      top:             14,
-      right:           14,
-      width:           8,
-      height:          8,
-      borderRadius:    4,
+      top:             12,
+      right:           12,
+      width:           9,
+      height:          9,
+      borderRadius:    5,
       backgroundColor: colors.accent,
+      borderWidth:     1.5,
+      borderColor:     colors.accentDim,
     },
 
     empty:      { alignItems: 'center' },

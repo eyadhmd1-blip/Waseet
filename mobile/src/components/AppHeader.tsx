@@ -72,10 +72,12 @@ export interface AppHeaderProps {
   providerIsAvailable?:      boolean;
 
   // ── stack ──────────────────────────────────────────────────
-  title?:      string;
-  onBack?:     () => void;
-  actionIcon?: React.ComponentProps<typeof Ionicons>['name'];
-  onAction?:   () => void;
+  title?:       string;
+  onBack?:      () => void;
+  actionIcon?:  React.ComponentProps<typeof Ionicons>['name'];
+  onAction?:    () => void;
+  actionIcon2?: React.ComponentProps<typeof Ionicons>['name'];
+  onAction2?:   () => void;
 
   // ── modal ──────────────────────────────────────────────────
   onClose?:    () => void;
@@ -272,13 +274,20 @@ export function AppHeader(props: AppHeaderProps) {
 
         <Text style={s.stackTitle} numberOfLines={1}>{props.title ?? ''}</Text>
 
-        {props.actionIcon && props.onAction ? (
-          <TouchableOpacity style={s.iconBtn} onPress={props.onAction} activeOpacity={0.7}>
-            <Ionicons name={props.actionIcon} size={22} color={colors.textSecondary} />
-          </TouchableOpacity>
-        ) : (
-          <View style={s.iconBtn} pointerEvents="none" />
-        )}
+        <View style={s.rightActions}>
+          {props.actionIcon2 && props.onAction2 && (
+            <TouchableOpacity style={s.iconBtn} onPress={props.onAction2} activeOpacity={0.7}>
+              <Ionicons name={props.actionIcon2} size={21} color={colors.textSecondary} />
+            </TouchableOpacity>
+          )}
+          {props.actionIcon && props.onAction ? (
+            <TouchableOpacity style={s.iconBtn} onPress={props.onAction} activeOpacity={0.7}>
+              <Ionicons name={props.actionIcon} size={22} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ) : !props.actionIcon2 ? (
+            <View style={s.iconBtn} pointerEvents="none" />
+          ) : null}
+        </View>
       </View>
     );
   }
@@ -342,6 +351,10 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
       height:         ICON_BTN,
       alignItems:     'center',
       justifyContent: 'center',
+    },
+    rightActions: {
+      flexDirection: 'row',
+      alignItems:    'center',
     },
     stackTitle: {
       flex:       1,
