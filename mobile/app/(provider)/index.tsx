@@ -1373,7 +1373,8 @@ export default function ProviderFeed() {
         providerScore={provider?.score}
         providerRepTier={provider?.reputation_tier}
         providerLifetimeJobs={provider?.lifetime_jobs}
-        providerBidCredits={(provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0)}
+        providerBidCredits={provider?.subscription_credits ?? 0}
+        providerBonusCredits={provider?.bonus_credits ?? 0}
         providerSubscriptionTier={provider?.subscription_tier}
         providerIsAvailable={provider?.is_available}
         notifCount={notifCount}

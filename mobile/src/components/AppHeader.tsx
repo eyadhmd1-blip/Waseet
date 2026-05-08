@@ -66,7 +66,8 @@ export interface AppHeaderProps {
   providerScore?:            number;
   providerRepTier?:          string;   // 'new' | 'rising' | 'trusted' | 'expert' | 'elite'
   providerLifetimeJobs?:     number;
-  providerBidCredits?:       number;
+  providerBidCredits?:       number;   // subscription credits only
+  providerBonusCredits?:     number;   // bonus credits (shown separately when > 0)
   providerSubscriptionTier?: string;   // 'trial' | 'basic' | 'pro' | 'premium'
   providerIsAvailable?:      boolean;
 
@@ -115,8 +116,9 @@ export function AppHeader(props: AppHeaderProps) {
     const tierColor = REP_COLOR[tier] ?? '#9CA3AF';
     const score     = props.providerScore ?? 0;
     const jobs      = props.providerLifetimeJobs ?? 0;
-    const credits   = props.providerBidCredits ?? 0;
-    const isPremium = props.providerSubscriptionTier === 'premium';
+    const credits      = props.providerBidCredits ?? 0;
+    const bonusCredits = props.providerBonusCredits ?? 0;
+    const isPremium    = props.providerSubscriptionTier === 'premium';
     const isOnline  = props.providerIsAvailable !== false; // default true
 
     return (
@@ -223,7 +225,16 @@ export function AppHeader(props: AppHeaderProps) {
               ) : (
                 <View style={[s.chip, credits === 0 ? s.chipRed : credits <= 3 ? s.chipAmber : s.chipGold]}>
                   <Text style={[s.chipText, credits === 0 ? s.chipRedText : credits <= 3 ? s.chipAmberText : s.chipGoldText]}>
-                    💳 {isRTL ? `${credits} رصيد` : `${credits} cr`}
+                    {isRTL ? `${credits} رصيد` : `${credits} cr`}
+                  </Text>
+                </View>
+              )}
+
+              {/* Bonus credits — only shown when > 0 */}
+              {!isPremium && bonusCredits > 0 && (
+                <View style={[s.chip, s.chipGold]}>
+                  <Text style={[s.chipText, s.chipGoldText]}>
+                    🏆 {bonusCredits}
                   </Text>
                 </View>
               )}

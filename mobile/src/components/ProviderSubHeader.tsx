@@ -120,35 +120,8 @@ export function ProviderSubHeader({
     );
   }
 
-  // ── Premium ──────────────────────────────────────────────────
-  if (subscriptionTier === 'premium') {
-    return (
-      <View style={[s.bar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-        <Text style={[s.text, { color: colors.textMuted }]}>
-          {isRTL ? '♾️ عروض غير محدودة' : '♾️ Unlimited bids'}
-        </Text>
-        {bonusCredits > 0 && (
-          <Text style={[s.mid, { color: colors.textMuted }]}>
-            {isRTL ? `🏆 ${bonusCredits} مكافأة` : `🏆 ${bonusCredits} bonus`}
-          </Text>
-        )}
-      </View>
-    );
-  }
-
-  // ── Normal ───────────────────────────────────────────────────
-  return (
-    <View style={[s.bar, { backgroundColor: colors.surface, borderBottomColor: colors.border }]}>
-      <Text style={[s.text, { color: colors.textMuted }]}>
-        {isRTL ? `📦 ${subscriptionCredits} رصيد اشتراك` : `📦 ${subscriptionCredits} sub credits`}
-      </Text>
-      {bonusCredits > 0 && (
-        <Text style={[s.mid, { color: colors.textMuted }]}>
-          {isRTL ? `🏆 ${bonusCredits} مكافأة` : `🏆 ${bonusCredits} bonus`}
-        </Text>
-      )}
-    </View>
-  );
+  // ── Normal / Premium — info already visible in header chip ──
+  return null;
 }
 
 // ─── Internal Bar helper ──────────────────────────────────────
