@@ -127,33 +127,56 @@ function RootHeader({
   const isOnline     = props.providerIsAvailable !== false;
 
   // ── Animation values ────────────────────────────────────────
-  const avatarAnim  = useRef(new Animated.Value(0)).current;
-  const greetAnim   = useRef(new Animated.Value(0)).current;
-  const bellAnim    = useRef(new Animated.Value(0)).current;
-  const row2Anim    = useRef(new Animated.Value(0)).current;
-  const waveAnim    = useRef(new Animated.Value(0)).current;  // 👋 rotation
-  const pulseScale  = useRef(new Animated.Value(1)).current;  // ripple ring
-  const pulseOp     = useRef(new Animated.Value(0)).current;  // ripple opacity
-  const bellBounce  = useRef(new Animated.Value(0)).current;  // bell shake
+  // Row 1 — spring entrance
+  const avatarScale = useRef(new Animated.Value(0.3)).current;
+  const avatarOp    = useRef(new Animated.Value(0)).current;
+  const greetOp     = useRef(new Animated.Value(0)).current;
+  const greetY      = useRef(new Animated.Value(10)).current;
+  const bellOp      = useRef(new Animated.Value(0)).current;
+  const bellY       = useRef(new Animated.Value(10)).current;
+  // Row 2 — chip cascade (4 groups)
+  const chipAnims   = useRef([0,1,2,3].map(() => new Animated.Value(0))).current;
+  // Name glint (JS driver — uses skewX which native driver doesn't support)
+  const glintX      = useRef(new Animated.Value(-80)).current;
+  // Persistent effects
+  const waveAnim    = useRef(new Animated.Value(0)).current;
+  const pulseScale  = useRef(new Animated.Value(1)).current;
+  const pulseOp     = useRef(new Animated.Value(0)).current;
+  const bellBounce  = useRef(new Animated.Value(0)).current;
 
   // ── Entrance animation — fires once on mount ─────────────────
   useEffect(() => {
-    const ease = Easing.out(Easing.quad);
+    // 1. Avatar — spring scale pop + fade in
+    Animated.spring(avatarScale, { toValue: 1, tension: 200, friction: 7, useNativeDriver: true }).start();
+    Animated.timing(avatarOp, { toValue: 1, duration: 180, useNativeDriver: true }).start();
 
-    // 1. Staggered fade + slide-up for each header element
-    Animated.stagger(80, [
-      Animated.timing(avatarAnim, { toValue: 1, duration: 320, easing: ease, useNativeDriver: true }),
-      Animated.timing(greetAnim,  { toValue: 1, duration: 320, easing: ease, useNativeDriver: true }),
-      Animated.timing(bellAnim,   { toValue: 1, duration: 320, easing: ease, useNativeDriver: true }),
-    ]).start();
+    // 2. Greeting — spring slide-up + fade (80ms after avatar)
+    setTimeout(() => {
+      Animated.spring(greetY, { toValue: 0, tension: 180, friction: 9, useNativeDriver: true }).start();
+      Animated.timing(greetOp, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    }, 80);
 
-    // Row 2 pills fade in slightly after
-    Animated.timing(row2Anim, {
-      toValue: 1, duration: 300, delay: 260, easing: ease, useNativeDriver: true,
-    }).start();
+    // 3. Bell — spring slide-up + fade (160ms after avatar)
+    setTimeout(() => {
+      Animated.spring(bellY, { toValue: 0, tension: 180, friction: 9, useNativeDriver: true }).start();
+      Animated.timing(bellOp, { toValue: 1, duration: 200, useNativeDriver: true }).start();
+    }, 160);
 
-    // 2. 👋 wave — sequence gives precise keyframe control per segment
-    // waveAnim goes -1 → +1, interpolated to degrees in render
+    // 4. Row 2 chip cascade — each group springs in 60ms apart
+    setTimeout(() => {
+      Animated.stagger(60, chipAnims.map(a =>
+        Animated.spring(a, { toValue: 1, tension: 220, friction: 8, useNativeDriver: true })
+      )).start();
+    }, 240);
+
+    // 5. Name glint — diagonal bar sweeps across once (JS driver: uses skewX)
+    setTimeout(() => {
+      Animated.timing(glintX, {
+        toValue: 240, duration: 520, easing: Easing.out(Easing.quad), useNativeDriver: false,
+      }).start();
+    }, 450);
+
+    // 6. 👋 wave sequence
     setTimeout(() => {
       Animated.sequence([
         Animated.timing(waveAnim, { toValue: -1,   duration: 130, easing: Easing.out(Easing.quad), useNativeDriver: true }),
@@ -164,7 +187,7 @@ function RootHeader({
       ]).start();
     }, 280);
 
-    // 3. Avatar ripple — expands outward and fades
+    // 7. Avatar ripple — expands and fades
     pulseOp.setValue(0.45);
     pulseScale.setValue(1);
     Animated.parallel([
@@ -172,60 +195,61 @@ function RootHeader({
       Animated.timing(pulseOp,    { toValue: 0,   duration: 800, delay: 100, useNativeDriver: true }),
     ]).start();
 
-    // 4. Bell shake on mount if there are unread notifications
+    // 8. Bell shake if notifications exist on mount
     if (count > 0) {
-      Animated.timing(bellBounce, {
-        toValue: 1, duration: 540, delay: 480, useNativeDriver: true,
-      }).start();
+      setTimeout(() => {
+        Animated.timing(bellBounce, { toValue: 1, duration: 540, useNativeDriver: true }).start();
+      }, 480);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── Bell shake when count goes from 0 → positive ─────────────
+  // ── Bell shake when count goes 0 → positive ──────────────────
   const prevCount = useRef(count);
   useEffect(() => {
     if (count > 0 && prevCount.current === 0) {
       bellBounce.setValue(0);
-      Animated.timing(bellBounce, { toValue: 1, duration: 540, delay: 0, useNativeDriver: true }).start();
+      Animated.timing(bellBounce, { toValue: 1, duration: 540, useNativeDriver: true }).start();
     }
     prevCount.current = count;
   }, [count]);
 
   // ── Derived animation styles ─────────────────────────────────
 
-  const slideOffset = 10; // px — how far each element starts from
-
   const avatarStyle = {
-    opacity: avatarAnim,
-    transform: [{ translateY: avatarAnim.interpolate({ inputRange: [0, 1], outputRange: [slideOffset, 0] }) }],
+    opacity:   avatarOp,
+    transform: [{ scale: avatarScale }],
   };
 
   const greetStyle = {
-    opacity: greetAnim,
-    transform: [{ translateY: greetAnim.interpolate({ inputRange: [0, 1], outputRange: [slideOffset, 0] }) }],
+    opacity:   greetOp,
+    transform: [{ translateY: greetY }],
   };
 
   const bellStyle = {
-    opacity: bellAnim,
+    opacity:   bellOp,
     transform: [
-      { translateY: bellAnim.interpolate({ inputRange: [0, 1], outputRange: [slideOffset, 0] }) },
-      // shake rotation layered on top
+      { translateY: bellY },
       { rotate: bellBounce.interpolate({
-          inputRange:  [0,    0.15,    0.35,    0.55,    0.70,   0.85,   1],
+          inputRange:  [0,      0.15,     0.35,    0.55,     0.70,   0.85,    1],
           outputRange: ['0deg', '-18deg', '16deg', '-10deg', '8deg', '-4deg', '0deg'],
         }),
       },
     ],
   };
 
-  const row2Style = {
-    opacity: row2Anim,
-    transform: [{ translateY: row2Anim.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
+  // Per-chip style (cascade in row 2)
+  const chipStyle = (i: number) => {
+    const a = chipAnims[Math.min(i, chipAnims.length - 1)];
+    return {
+      opacity:   a,
+      transform: [{ translateY: a.interpolate({ inputRange: [0, 1], outputRange: [6, 0] }) }],
+    };
   };
 
-  // 👋 wave: simple linear map — sequence controls the timing
+  // 👋 wave rotation
   const waveRotate = waveAnim.interpolate({
-    inputRange:  [-1,      0,      1],
+    inputRange:  [-1,       0,      1],
     outputRange: ['-28deg', '0deg', '28deg'],
   });
 
@@ -270,9 +294,19 @@ function RootHeader({
               <Text style={s.waveEmoji}>👋</Text>
             </Animated.View>
           </View>
-          <Text style={s.greetName} numberOfLines={1}>
-            {firstName || 'وسيط'}
-          </Text>
+          <View style={{ overflow: 'hidden' }}>
+            <Text style={s.greetName} numberOfLines={1}>
+              {firstName || 'وسيط'}
+            </Text>
+            <Animated.View
+              pointerEvents="none"
+              style={{
+                position: 'absolute', top: -4, bottom: -4, width: 22,
+                backgroundColor: 'rgba(255,255,255,0.28)',
+                transform: [{ skewX: '-20deg' }, { translateX: glintX }],
+              }}
+            />
+          </View>
         </Animated.View>
 
         {/* Bell */}
@@ -298,65 +332,78 @@ function RootHeader({
 
       </View>
 
-      {/* ── Row 2: Role pill + contextual info chips ─────────── */}
-      <Animated.View style={[s.row2, { flexDirection: rowDir(isRTL) }, row2Style]}>
+      {/* ── Row 2: chip cascade — each group has its own spring ── */}
+      <View style={[s.row2, { flexDirection: rowDir(isRTL) }]}>
 
-        {/* Role pill */}
-        <View style={[s.rolePill, isProvider ? s.rolePillPro : s.rolePillCli]}>
-          <Text style={[s.roleText, isProvider ? s.roleTextPro : s.roleTextCli]}>
-            {isProvider
-              ? (isRTL ? 'مزود الخدمة' : 'Service Provider')
-              : (isRTL ? 'طالب الخدمة' : 'Client')}
-          </Text>
-        </View>
+        {/* Group 0: Role pill */}
+        <Animated.View style={chipStyle(0)}>
+          <View style={[s.rolePill, isProvider ? s.rolePillPro : s.rolePillCli]}>
+            <Text style={[s.roleText, isProvider ? s.roleTextPro : s.roleTextCli]}>
+              {isProvider
+                ? (isRTL ? 'مزود الخدمة' : 'Service Provider')
+                : (isRTL ? 'طالب الخدمة' : 'Client')}
+            </Text>
+          </View>
+        </Animated.View>
 
-        {/* Separator */}
-        <View style={s.sep} />
+        {/* Group 1: Separator */}
+        <Animated.View style={chipStyle(1)}>
+          <View style={s.sep} />
+        </Animated.View>
 
         {isProvider ? (
           <>
-            <View style={[s.chip, { backgroundColor: isOnline ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.12)', borderColor: isOnline ? 'rgba(34,197,94,0.30)' : 'rgba(156,163,175,0.25)' }]}>
-              <Text style={[s.chipText, { color: isOnline ? '#22C55E' : '#9CA3AF' }]}>
-                {isOnline ? '● ' : '⬤ '}{isRTL ? (isOnline ? 'مباشر' : 'غير متاح') : (isOnline ? 'Online' : 'Away')}
-              </Text>
-            </View>
-            <View style={[s.chip, { backgroundColor: tierColor + '20' }]}>
-              <Text style={[s.chipText, { color: tierColor }]}>{tierLabel}</Text>
-            </View>
-            <View style={s.chip}>
-              <Text style={s.chipText}>⭐ {score.toFixed(1)}</Text>
-            </View>
-            <View style={s.chip}>
-              <Text style={s.chipText}>{isRTL ? `${jobs} عمل` : `${jobs} jobs`}</Text>
-            </View>
-            {isPremium ? (
-              <View style={[s.chip, s.chipGold]}>
-                <Text style={[s.chipText, s.chipGoldText]}>{isRTL ? '∞ غير محدود' : '∞ Unlimited'}</Text>
-              </View>
-            ) : (
-              <View style={[s.chip, credits === 0 ? s.chipRed : credits <= 3 ? s.chipAmber : s.chipGold]}>
-                <Text style={[s.chipText, credits === 0 ? s.chipRedText : credits <= 3 ? s.chipAmberText : s.chipGoldText]}>
-                  {isRTL ? `${credits} رصيد` : `${credits} cr`}
+            {/* Group 2: Online status */}
+            <Animated.View style={chipStyle(2)}>
+              <View style={[s.chip, { backgroundColor: isOnline ? 'rgba(34,197,94,0.12)' : 'rgba(156,163,175,0.12)', borderColor: isOnline ? 'rgba(34,197,94,0.30)' : 'rgba(156,163,175,0.25)' }]}>
+                <Text style={[s.chipText, { color: isOnline ? '#22C55E' : '#9CA3AF' }]}>
+                  {isOnline ? '● ' : '⬤ '}{isRTL ? (isOnline ? 'مباشر' : 'غير متاح') : (isOnline ? 'Online' : 'Away')}
                 </Text>
               </View>
-            )}
-            {!isPremium && bonusCredits > 0 && (
-              <View style={[s.chip, s.chipGold]}>
-                <Text style={[s.chipText, s.chipGoldText]}>🏆 {bonusCredits}</Text>
+            </Animated.View>
+            {/* Group 3: Tier + score + jobs + credits (all together) */}
+            <Animated.View style={[chipStyle(3), { flexDirection: 'row', gap: 6, alignItems: 'center' }]}>
+              <View style={[s.chip, { backgroundColor: tierColor + '20' }]}>
+                <Text style={[s.chipText, { color: tierColor }]}>{tierLabel}</Text>
               </View>
-            )}
+              <View style={s.chip}>
+                <Text style={s.chipText}>⭐ {score.toFixed(1)}</Text>
+              </View>
+              <View style={s.chip}>
+                <Text style={s.chipText}>{isRTL ? `${jobs} عمل` : `${jobs} jobs`}</Text>
+              </View>
+              {isPremium ? (
+                <View style={[s.chip, s.chipGold]}>
+                  <Text style={[s.chipText, s.chipGoldText]}>{isRTL ? '∞ غير محدود' : '∞ Unlimited'}</Text>
+                </View>
+              ) : (
+                <View style={[s.chip, credits === 0 ? s.chipRed : credits <= 3 ? s.chipAmber : s.chipGold]}>
+                  <Text style={[s.chipText, credits === 0 ? s.chipRedText : credits <= 3 ? s.chipAmberText : s.chipGoldText]}>
+                    {isRTL ? `${credits} رصيد` : `${credits} cr`}
+                  </Text>
+                </View>
+              )}
+              {!isPremium && bonusCredits > 0 && (
+                <View style={[s.chip, s.chipGold]}>
+                  <Text style={[s.chipText, s.chipGoldText]}>🏆 {bonusCredits}</Text>
+                </View>
+              )}
+            </Animated.View>
           </>
         ) : (
           <>
+            {/* Group 2: City chip */}
             {props.userCity ? (
-              <View style={s.chip}>
-                <Text style={s.chipText}>📍 {props.userCity}</Text>
-              </View>
+              <Animated.View style={chipStyle(2)}>
+                <View style={s.chip}>
+                  <Text style={s.chipText}>📍 {props.userCity}</Text>
+                </View>
+              </Animated.View>
             ) : null}
           </>
         )}
 
-      </Animated.View>
+      </View>
 
       {/* Bottom border */}
       <View style={s.border} />
