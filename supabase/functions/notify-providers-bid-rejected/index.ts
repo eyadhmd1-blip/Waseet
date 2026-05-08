@@ -167,27 +167,45 @@ Deno.serve(async (req) => {
       if (res.ok) sent += batch.length;
     }
 
-    // In-app notifications for milestone providers
-    const milestoneInserts = (rejectedBids as any[])
-      .filter((b) => { const l = b.provider?.consecutive_losses ?? 0; return l > 0 && l % 7 === 0; })
-      .map((b) => {
-        const lang  = langMap.get(b.provider_id) ?? "ar";
-        const title = lang === "en" ? "🏆 Perseverance reward — free credits!" : "🏆 مكافأة المثابرة — رصيد مجاني!";
-        const body  = lang === "en"
-          ? `You applied ${b.provider.consecutive_losses} times seriously — free credits added.`
-          : `تقدّمت ${b.provider.consecutive_losses} مرة بجدية — أُضيف رصيد مجاني إلى حسابك.`;
-        return {
-          user_id:  b.provider_id,
-          title,
-          body,
-          type:     "perseverance_reward",
-          screen:   "provider_feed",
-          metadata: { consecutive_losses: b.provider.consecutive_losses },
-        };
-      });
+    // In-app notifications for ALL rejected providers
+    const allInbox = tokens.map((t: any) => {
+      const bid         = bidMap.get(t.user_id);
+      const lang        = langMap.get(t.user_id) ?? "ar";
+      const losses      = bid?.provider?.consecutive_losses ?? 0;
+      const isMilestone = losses > 0 && losses % 7 === 0;
 
-    if (milestoneInserts.length > 0) {
-      await admin.from("notifications").insert(milestoneInserts).then(() => {}).catch(() => {});
+      let title: string;
+      let body:  string;
+
+      if (isMilestone) {
+        title = lang === "en" ? "🏆 Perseverance reward — free credits!" : "🏆 مكافأة المثابرة — رصيد مجاني!";
+        body  = lang === "en"
+          ? `You applied ${losses} times seriously — free credits added.`
+          : `تقدّمت ${losses} مرة بجدية — أُضيف رصيد مجاني إلى حسابك.`;
+      } else if (losses >= 4) {
+        title = lang === "en" ? "💪 We see your persistence" : "💪 نحن نرى مثابرتك";
+        body  = lang === "en"
+          ? `"${request.title}" — your bid was not selected. A strong profile multiplies your chances.`
+          : `"${request.title}" — لم يُختر عرضك هذه المرة. ملف شخصي قوي يُضاعف فرصك.`;
+      } else {
+        title = lang === "en" ? "🌟 The next opportunity is on its way" : "🌟 الفرصة القادمة في طريقها إليك";
+        body  = lang === "en"
+          ? `"${request.title}" — every attempt builds your reputation.`
+          : `"${request.title}" — كل محاولة تبني سمعتك.`;
+      }
+
+      return {
+        user_id:  t.user_id,
+        title,
+        body,
+        type:     isMilestone ? "perseverance_reward" : "bid_rejected",
+        screen:   "provider_feed",
+        metadata: { request_id, consecutive_losses: losses },
+      };
+    });
+
+    if (allInbox.length > 0) {
+      await admin.from("notifications").insert(allInbox).then(() => {}).catch(() => {});
     }
 
     return json({ sent });

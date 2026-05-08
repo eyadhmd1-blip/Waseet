@@ -33,27 +33,44 @@ export function SuggestionActions({
       reviewed_by: 'admin',
     }).eq('id', id);
 
-    // On approval: send push notification if user has push tokens
+    // On approval: send push notification and insert inbox row
     if (status === 'approved') {
+      const notifTitle = '✅ تمت إضافة خدمتك!';
+      const notifBody  = `تمت إضافة "${serviceName}" إلى قائمة الخدمات. يمكنك الآن طلبها أو تقديم عروض عليها.`;
+
       const { data: tokens } = await sb
         .from('push_tokens')
         .select('token')
         .eq('user_id', userId);
 
-      if (tokens && tokens.length > 0) {
-        await fetch(EXPO_PUSH_URL, {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(tokens.map((t: any) => ({
-            to:       t.token,
-            title:    '✅ تمت إضافة خدمتك!',
-            body:     `تمت إضافة "${serviceName}" إلى قائمة الخدمات. يمكنك الآن طلبها أو تقديم عروض عليها.`,
-            sound:    'default',
-            priority: 'normal',
-            data:     { screen: 'new_request' },
-          }))),
-        }).catch(() => {});
-      }
+      await Promise.all([
+        tokens && tokens.length > 0
+          ? fetch(EXPO_PUSH_URL, {
+              method:  'POST',
+              headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+              body: JSON.stringify(tokens.map((t: any) => ({
+                to:       t.token,
+                title:    notifTitle,
+                body:     notifBody,
+                sound:    'default',
+                priority: 'normal',
+                data:     { screen: 'new_request' },
+              }))),
+            }).catch(() => {})
+          : Promise.resolve(),
+        (async () => {
+          try {
+            await sb.from('notifications').insert({
+              user_id:  userId,
+              title:    notifTitle,
+              body:     notifBody,
+              type:     'suggestion_approved',
+              screen:   'new_request',
+              metadata: { service_name: serviceName },
+            });
+          } catch { /* non-blocking */ }
+        })(),
+      ]);
     }
 
     setLoading(null);

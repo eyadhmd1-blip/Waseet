@@ -106,6 +106,18 @@ Deno.serve(async (req) => {
       if (res.ok) sent += batch.length;
     }
 
+    // Insert in-app notification for every notified provider
+    const notifInserts = targets.map((t: { provider_id: string; token: string }) => {
+      const lang = langMap.get(t.provider_id) ?? "ar";
+      const { title, body } = buildCopy(lang, contractTitle, city);
+      return { user_id: t.provider_id, title, body, type: "new_contract", screen: "contract_feed", metadata: { contract_id } };
+    });
+    if (notifInserts.length > 0) {
+      for (let i = 0; i < notifInserts.length; i += 500) {
+        await supabase.from("notifications").insert(notifInserts.slice(i, i + 500)).catch(() => {});
+      }
+    }
+
     return json({ sent });
 
   } catch (err) {

@@ -97,6 +97,19 @@ Deno.serve(async (req) => {
     });
   }
 
+  // 5. Insert in-app notification for every provider
+  const notifInserts = pending.map((row: { provider_id: string }) => ({
+    user_id:  row.provider_id,
+    title:    "طلبك التجريبي جاهز! 🎯",
+    body:     "قدّم عرضك الأول وتعرّف على طريقة عمل المنصة 👋",
+    type:     "demo_request",
+    screen:   "demo",
+    metadata: {},
+  }));
+  if (notifInserts.length > 0) {
+    await supabase.from("notifications").insert(notifInserts).catch(() => {});
+  }
+
   console.log(`[Demo] done. sent=${sent} total=${pending.length}`);
   return json({ ok: true, sent, total: pending.length });
 });

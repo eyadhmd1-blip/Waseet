@@ -130,6 +130,16 @@ Deno.serve(async (req) => {
     const expoData = await expoRes.json();
     const sent = expoData?.data?.status === "ok";
 
+    // Insert in-app notification for the client
+    await admin.from("notifications").insert({
+      user_id:  request.client_id,
+      title,
+      body,
+      type:     "new_bid",
+      screen:   "new-request",
+      metadata: { request_id },
+    }).catch(() => {});
+
     return json({ sent });
 
   } catch (err) {

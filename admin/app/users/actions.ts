@@ -20,6 +20,12 @@ async function sendPushToUser(userId: string, title: string, body: string) {
   } catch { /* non-blocking */ }
 }
 
+async function insertNotification(userId: string, title: string, body: string, type: string, screen = 'home') {
+  try {
+    await supabaseAdmin.from('notifications').insert({ user_id: userId, title, body, type, screen, metadata: {} });
+  } catch { /* non-blocking */ }
+}
+
 export async function disableUser(userId: string, userName: string, reason: string) {
   const admin = await getAdminUsername();
 
@@ -37,11 +43,11 @@ export async function disableUser(userId: string, userName: string, reason: stri
     performed_by: admin,
   });
 
-  await sendPushToUser(
-    userId,
-    '⚠️ تم تعطيل حسابك',
-    reason.trim() || 'تم تعطيل حسابك — تواصل مع الدعم للمزيد من التفاصيل',
-  );
+  const disableBody = reason.trim() || 'تم تعطيل حسابك — تواصل مع الدعم للمزيد من التفاصيل';
+  await Promise.all([
+    sendPushToUser(userId, '⚠️ تم تعطيل حسابك', disableBody),
+    insertNotification(userId, '⚠️ تم تعطيل حسابك', disableBody, 'account_disabled'),
+  ]);
 
   revalidatePath('/users');
 }
@@ -62,11 +68,11 @@ export async function enableUser(userId: string, userName: string) {
     performed_by: admin,
   });
 
-  await sendPushToUser(
-    userId,
-    '✅ تم تفعيل حسابك',
-    'مرحباً بعودتك — يمكنك الآن استخدام التطبيق بشكل طبيعي',
-  );
+  const enableBody = 'مرحباً بعودتك — يمكنك الآن استخدام التطبيق بشكل طبيعي';
+  await Promise.all([
+    sendPushToUser(userId, '✅ تم تفعيل حسابك', enableBody),
+    insertNotification(userId, '✅ تم تفعيل حسابك', enableBody, 'account_enabled'),
+  ]);
 
   revalidatePath('/users');
 }

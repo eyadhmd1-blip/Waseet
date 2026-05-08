@@ -155,24 +155,34 @@ Deno.serve(async (req) => {
         };
       });
 
-    // Also insert in-app notifications for subscription_expired
-    const expiredInbox = (queue)
-      .filter((q) => q.type === "subscriptionExpired" && langMap.has(q.provider_id))
+    // Insert in-app notifications for ALL notification types
+    const TYPE_MAP: Record<NotifType, string> = {
+      expiring3:           "subscription_expiring",
+      expiring1:           "subscription_expiring",
+      lowCredits:          "low_credits",
+      noCredits:           "no_credits",
+      trialEnded:          "trial_ended",
+      subscriptionExpired: "subscription_expired",
+    };
+    const allInbox = queue
+      .filter((q) => langMap.has(q.provider_id))
       .map((q) => {
         const lang = langMap.get(q.provider_id) ?? "ar";
-        const { title, body } = buildCopy(lang, "subscriptionExpired");
+        const { title, body } = buildCopy(lang, q.type, q.bonus_credits);
         return {
           user_id:  q.provider_id,
           title,
           body,
-          type:     "subscription_expired",
+          type:     TYPE_MAP[q.type],
           screen:   "subscribe",
-          metadata: {},
+          metadata: {} as Record<string, unknown>,
         };
       });
 
-    if (expiredInbox.length > 0) {
-      await admin.from("notifications").insert(expiredInbox).then(() => {}).catch(() => {});
+    if (allInbox.length > 0) {
+      for (let i = 0; i < allInbox.length; i += 500) {
+        await admin.from("notifications").insert(allInbox.slice(i, i + 500)).then(() => {}).catch(() => {});
+      }
     }
 
     let sent = 0;

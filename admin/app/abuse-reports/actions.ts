@@ -20,6 +20,12 @@ async function sendPushToUser(userId: string, title: string, body: string) {
   } catch { /* non-blocking */ }
 }
 
+async function insertNotification(userId: string, title: string, body: string, type: string, screen = 'home') {
+  try {
+    await supabaseAdmin.from('notifications').insert({ user_id: userId, title, body, type, screen, metadata: {} });
+  } catch { /* non-blocking */ }
+}
+
 export async function updateReportStatus(
   reportId: string,
   newStatus: string,
@@ -65,12 +71,11 @@ export async function suspendUser(userId: string, reason: string, userName?: str
     performed_by: admin,
   });
 
-  // Notify the user so they understand why access was revoked
-  await sendPushToUser(
-    userId,
-    '⚠️ تم تعليق حسابك',
-    reason.trim() || 'تم تعليق حسابك — تواصل مع الدعم للمزيد من التفاصيل',
-  );
+  const suspendBody = reason.trim() || 'تم تعليق حسابك — تواصل مع الدعم للمزيد من التفاصيل';
+  await Promise.all([
+    sendPushToUser(userId, '⚠️ تم تعليق حسابك', suspendBody),
+    insertNotification(userId, '⚠️ تم تعليق حسابك', suspendBody, 'account_suspended'),
+  ]);
 
   revalidatePath('/abuse-reports');
 }
@@ -88,11 +93,11 @@ export async function unsuspendUser(userId: string, userName?: string) {
     performed_by: admin,
   });
 
-  await sendPushToUser(
-    userId,
-    '✅ تم رفع التعليق عن حسابك',
-    'مرحباً بعودتك — يمكنك الآن استخدام التطبيق بشكل طبيعي',
-  );
+  const unsuspendBody = 'مرحباً بعودتك — يمكنك الآن استخدام التطبيق بشكل طبيعي';
+  await Promise.all([
+    sendPushToUser(userId, '✅ تم رفع التعليق عن حسابك', unsuspendBody),
+    insertNotification(userId, '✅ تم رفع التعليق عن حسابك', unsuspendBody, 'account_unsuspended'),
+  ]);
 
   revalidatePath('/abuse-reports');
 }

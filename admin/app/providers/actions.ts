@@ -20,6 +20,12 @@ async function sendPushToUser(userId: string, title: string, body: string, data?
   }).catch(() => {});
 }
 
+async function insertNotification(userId: string, title: string, body: string, type: string, screen = 'home') {
+  try {
+    await supabaseAdmin.from('notifications').insert({ user_id: userId, title, body, type, screen, metadata: {} });
+  } catch { /* non-blocking */ }
+}
+
 export async function suspendProvider(providerId: string, userId: string, name: string, reason: string) {
   await supabaseAdmin
     .from('providers')
@@ -35,12 +41,11 @@ export async function suspendProvider(providerId: string, userId: string, name: 
     metadata: { user_id: userId },
   });
 
-  await sendPushToUser(
-    userId,
-    '⚠️ تم تعليق حسابك',
-    'تم تعليق حسابك مؤقتاً — تواصل مع الدعم للمزيد من التفاصيل',
-    { screen: 'home' },
-  );
+  const suspendBody = 'تم تعليق حسابك مؤقتاً — تواصل مع الدعم للمزيد من التفاصيل';
+  await Promise.all([
+    sendPushToUser(userId, '⚠️ تم تعليق حسابك', suspendBody, { screen: 'home' }),
+    insertNotification(userId, '⚠️ تم تعليق حسابك', suspendBody, 'account_suspended'),
+  ]);
 
   revalidatePath('/providers');
 }
@@ -66,12 +71,11 @@ export async function unsuspendProvider(providerId: string, name: string) {
     .maybeSingle();
 
   if ((prov as any)?.id) {
-    await sendPushToUser(
-      (prov as any).id,
-      '✅ تم رفع التعليق عن حسابك',
-      'مرحباً بعودتك — يمكنك الآن الاستمرار في استقبال الطلبات',
-      { screen: 'home' },
-    );
+    const unsuspendBody = 'مرحباً بعودتك — يمكنك الآن الاستمرار في استقبال الطلبات';
+    await Promise.all([
+      sendPushToUser((prov as any).id, '✅ تم رفع التعليق عن حسابك', unsuspendBody, { screen: 'home' }),
+      insertNotification((prov as any).id, '✅ تم رفع التعليق عن حسابك', unsuspendBody, 'account_unsuspended'),
+    ]);
   }
 
   revalidatePath('/providers');
@@ -139,15 +143,15 @@ export async function adjustCredits(
   });
 
   if ((provider as any)?.id) {
-    const isAdd = amount >= 0;
-    await sendPushToUser(
-      (provider as any).id,
-      isAdd ? '💳 تمت إضافة رصيد إلى حسابك' : '💳 تم خصم رصيد من حسابك',
-      isAdd
-        ? `تمت إضافة ${amount} رصيد — رصيدك الحالي: ${updated}`
-        : `تم خصم ${Math.abs(amount)} رصيد — رصيدك الحالي: ${updated}`,
-      { screen: 'home' },
-    );
+    const isAdd      = amount >= 0;
+    const creditTitle = isAdd ? '💳 تمت إضافة رصيد إلى حسابك' : '💳 تم خصم رصيد من حسابك';
+    const creditBody  = isAdd
+      ? `تمت إضافة ${amount} رصيد — رصيدك الحالي: ${updated}`
+      : `تم خصم ${Math.abs(amount)} رصيد — رصيدك الحالي: ${updated}`;
+    await Promise.all([
+      sendPushToUser((provider as any).id, creditTitle, creditBody, { screen: 'home' }),
+      insertNotification((provider as any).id, creditTitle, creditBody, isAdd ? 'credits_added' : 'credits_deducted', 'subscribe'),
+    ]);
   }
 
   revalidatePath('/providers');
