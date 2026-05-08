@@ -97,6 +97,7 @@ export interface ServiceRequest {
   ai_suggested_price_max?: number;
   ai_suggested_currency: string;
   status: RequestStatus;
+  cancelled_reason?: 'by_client' | 'urgent_expired' | 'by_admin';
   views_count: number;
   created_at: string;
   // urgent

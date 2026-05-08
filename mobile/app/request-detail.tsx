@@ -196,14 +196,14 @@ export default function RequestDetail() {
             setCancelling(true);
             const { error } = await supabase
               .from('requests')
-              .update({ status: 'cancelled' })
+              .update({ status: 'cancelled', cancelled_reason: 'by_client' })
               .eq('id', id)
               .eq('client_id', myId!);
             setCancelling(false);
             if (error) {
               Alert.alert(t('common.error'), error.message);
             } else {
-              setRequest(prev => prev ? { ...prev, status: 'cancelled' } : prev);
+              setRequest(prev => prev ? { ...prev, status: 'cancelled', cancelled_reason: 'by_client' } : prev);
             }
           },
         },
@@ -505,17 +505,68 @@ export default function RequestDetail() {
           );
         })()}
 
-        {/* ── Completed / Cancelled ── */}
-        {(request.status === 'completed' || request.status === 'cancelled') && (
+        {/* ── Completed ── */}
+        {request.status === 'completed' && (
           <View style={styles.closedBox}>
-            <Text style={styles.closedIcon}>
-              {request.status === 'completed' ? '✅' : '❌'}
-            </Text>
-            <Text style={styles.closedText}>
-              {request.status === 'completed' ? t('requests.completedMsg') : t('requests.cancelledMsg')}
-            </Text>
+            <Text style={styles.closedIcon}>✅</Text>
+            <Text style={styles.closedText}>{t('requests.completedMsg')}</Text>
           </View>
         )}
+
+        {/* ── Cancelled — contextual reason card ── */}
+        {request.status === 'cancelled' && (() => {
+          const reason = request.cancelled_reason;
+          if (reason === 'urgent_expired') {
+            return (
+              <View style={[styles.closedBox, styles.closedBoxWarn]}>
+                <Text style={styles.closedIcon}>⏱️</Text>
+                <Text style={styles.closedTitle}>{t('requests.cancelledUrgentTitle')}</Text>
+                <Text style={styles.closedText}>{t('requests.cancelledUrgentMsg')}</Text>
+                {myId === request.client_id && (
+                  <TouchableOpacity
+                    style={styles.closedCta}
+                    onPress={() => router.push({ pathname: '/(client)/new-request' as any, params: { repost_from: request.id } })}
+                  >
+                    <Text style={styles.closedCtaText}>{t('requests.cancelledRepostBtn')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          }
+          if (reason === 'by_admin') {
+            return (
+              <View style={[styles.closedBox, styles.closedBoxErr]}>
+                <Text style={styles.closedIcon}>🛡️</Text>
+                <Text style={styles.closedTitle}>{t('requests.cancelledAdminTitle')}</Text>
+                <Text style={styles.closedText}>{t('requests.cancelledAdminMsg')}</Text>
+              </View>
+            );
+          }
+          if (reason === 'by_client') {
+            return (
+              <View style={styles.closedBox}>
+                <Text style={styles.closedIcon}>🚫</Text>
+                <Text style={styles.closedTitle}>{t('requests.cancelledByClientTitle')}</Text>
+                <Text style={styles.closedText}>{t('requests.cancelledByClientMsg')}</Text>
+                {myId === request.client_id && (
+                  <TouchableOpacity
+                    style={styles.closedCta}
+                    onPress={() => router.push({ pathname: '/(client)/new-request' as any, params: { repost_from: request.id } })}
+                  >
+                    <Text style={styles.closedCtaText}>{t('requests.cancelledRepostBtn')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          }
+          // fallback for old data with no reason
+          return (
+            <View style={styles.closedBox}>
+              <Text style={styles.closedIcon}>❌</Text>
+              <Text style={styles.closedText}>{t('requests.cancelledMsg')}</Text>
+            </View>
+          );
+        })()}
 
       </ScrollView>
 
@@ -738,9 +789,14 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   cancelBtnDisabled: { opacity: 0.5 },
   cancelBtnText:     { fontSize: 15, fontWeight: '600', color: colors.errorSoft },
 
-  closedBox:  { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 },
-  closedIcon: { fontSize: 40, marginBottom: 10 },
-  closedText: { fontSize: 15, color: colors.textSecondary, textAlign: 'center' },
+  closedBox:     { alignItems: 'center', paddingVertical: 28, paddingHorizontal: 20, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 },
+  closedBoxWarn: { borderColor: 'rgba(245,158,11,0.3)', backgroundColor: 'rgba(245,158,11,0.08)' },
+  closedBoxErr:  { borderColor: 'rgba(248,113,113,0.3)', backgroundColor: 'rgba(248,113,113,0.08)' },
+  closedIcon:    { fontSize: 36, marginBottom: 8 },
+  closedTitle:   { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: 'center', marginBottom: 4 },
+  closedText:    { fontSize: 13, color: colors.textSecondary, textAlign: 'center', lineHeight: 20 },
+  closedCta:     { marginTop: 16, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28, alignItems: 'center' },
+  closedCtaText: { fontSize: 14, fontWeight: '700', color: colors.bg },
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, borderTopWidth: 1, borderTopColor: colors.border, padding: 24, paddingBottom: 48 },
