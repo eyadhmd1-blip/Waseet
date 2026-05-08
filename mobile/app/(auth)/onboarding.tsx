@@ -32,7 +32,6 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   const { colors } = useTheme();
   const { isRTL } = useLanguage();
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
-  const pct = (current / total) * 100;
   return (
     <View style={styles.progressWrap}>
       {Array.from({ length: total }).map((_, i) => (
@@ -67,7 +66,7 @@ function Step1Role({
     const other = r === 'client' ? providerScaleAnim : clientScaleAnim;
     Animated.sequence([
       Animated.spring(hit,   { toValue: 0.92, useNativeDriver: true, tension: 300, friction: 8 }),
-      Animated.spring(hit,   { toValue: 1.03, useNativeDriver: true, tension: 180, friction: 6, bounciness: 14 }),
+      Animated.spring(hit,   { toValue: 1.03, useNativeDriver: true, tension: 180, friction: 6 }),
     ]).start();
     Animated.spring(other, { toValue: 1, useNativeDriver: true, tension: 200, friction: 10 }).start();
     onSelect(r);
@@ -534,7 +533,6 @@ export default function OnboardingScreen() {
 
   // planOverride lets the trial button bypass stale planChoice state
   const handleSubmit = async (planOverride?: PlanChoice) => {
-    const finalPlan = planOverride !== undefined ? planOverride : planChoice;
     setSaving(true);
     try {
       const { data: { session: _ses } } = await supabase.auth.getSession();
