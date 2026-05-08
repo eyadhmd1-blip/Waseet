@@ -8,7 +8,8 @@ import {
 import { useRouter } from 'expo-router';
 import * as ImagePicker    from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { supabase }         from '../src/lib/supabase';
+import { uploadAsync, FileSystemUploadType } from 'expo-file-system/legacy';
+import { supabase, supabaseUrl, supabaseAnonKey } from '../src/lib/supabase';
 import { CATEGORY_GROUPS }  from '../src/constants/categories';
 import type { PortfolioItemType } from '../src/types';
 import { useLanguage }      from '../src/hooks/useLanguage';
@@ -49,13 +50,27 @@ async function uploadToStorage(
     : (ext === 'png' ? 'image/png' : 'image/jpeg');
 
   const fileName = `${userId}/${Date.now()}_${suffix}.${ext}`;
-  const blob     = await fetch(uri).then(r => r.blob());
 
-  const { error } = await supabase.storage
-    .from('portfolio-media')
-    .upload(fileName, blob, { contentType: mime });
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token ?? supabaseAnonKey;
 
-  if (error) throw error;
+  const uploadResult = await uploadAsync(
+    `${supabaseUrl}/storage/v1/object/portfolio-media/${fileName}`,
+    uri,
+    {
+      httpMethod: 'POST',
+      uploadType: FileSystemUploadType.BINARY_CONTENT,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': mime,
+        apikey: supabaseAnonKey,
+      },
+    },
+  );
+
+  if (uploadResult.status < 200 || uploadResult.status >= 300) {
+    throw new Error(`Upload failed (${uploadResult.status}): ${uploadResult.body}`);
+  }
 
   const { data: { publicUrl } } = supabase.storage
     .from('portfolio-media')
