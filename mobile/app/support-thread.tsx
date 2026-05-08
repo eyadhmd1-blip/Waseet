@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
@@ -50,6 +51,7 @@ export default function SupportThreadScreen() {
   const { t, ta, lang, isRTL } = useLanguage();
   const { colors } = useTheme();
 
+  const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const [ticket,            setTicket]            = useState<Ticket | null>(null);
@@ -336,7 +338,7 @@ export default function SupportThreadScreen() {
 
       {/* Input */}
       {!isResolved && (
-        <View style={[styles.inputBar, {}]}>
+        <View style={[styles.inputBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
           <TouchableOpacity
             style={[styles.sendBtn, (!body.trim() || sending) && styles.sendBtnDisabled]}
             onPress={handleSend}
@@ -361,7 +363,7 @@ export default function SupportThreadScreen() {
       )}
 
       {isResolved && (
-        <View style={styles.resolvedBar}>
+        <View style={[styles.resolvedBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
           <Text style={styles.resolvedBarText}>{t('supportThread.resolvedBar')}</Text>
         </View>
       )}
