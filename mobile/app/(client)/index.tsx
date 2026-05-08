@@ -88,13 +88,10 @@ const STATUS_TEXT: Record<string, string> = {
   completed:   '#34D399',
   cancelled:   '#F87171',
 };
-const STATUS_LABEL: Record<string, string> = {
-  open: 'مفتوح', in_progress: 'جاري', completed: 'مكتمل', cancelled: 'ملغي',
-};
-
-// ─── UrgentCountdownInline (unchanged) ───────────────────────
+// ─── UrgentCountdownInline ────────────────────────────────────
 
 function UrgentCountdownInline({ expiresAt }: { expiresAt: string }) {
+  const { t } = useLanguage();
   const [rem, setRem] = useState(() =>
     Math.max(0, new Date(expiresAt).getTime() - Date.now())
   );
@@ -103,12 +100,12 @@ function UrgentCountdownInline({ expiresAt }: { expiresAt: string }) {
       setRem(Math.max(0, new Date(expiresAt).getTime() - Date.now())), 1000);
     return () => clearInterval(iv);
   }, [expiresAt]);
-  if (rem === 0) return <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>انتهى الوقت</Text>;
+  if (rem === 0) return <Text style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>{t('clientFeed.expired')}</Text>;
   const m = Math.floor(rem / 60000);
   const s = Math.floor((rem % 60000) / 1000);
   return (
     <Text style={{ fontSize: 11, color: '#FCA5A5', marginTop: 3, fontWeight: '600' }}>
-      ⏱ {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')} متبقي
+      ⏱ {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')} {t('clientFeed.remaining')}
     </Text>
   );
 }
@@ -417,7 +414,8 @@ export default function ClientHome() {
                 const catIcon = ICON_MAP[(req as any).category?.icon ?? ''] ?? '🔧';
                 const sBg     = STATUS_BG[req.status]    ?? STATUS_BG.open;
                 const sTxt    = STATUS_TEXT[req.status]  ?? STATUS_TEXT.open;
-                const sLbl    = STATUS_LABEL[req.status] ?? req.status;
+                const statusKeyMap: Record<string, string> = { open: 'clientFeed.statusOpen', in_progress: 'clientFeed.statusInProgress', completed: 'clientFeed.statusCompleted', cancelled: 'clientFeed.statusCancelled' };
+                const sLbl    = t(statusKeyMap[req.status] ?? req.status);
                 return (
                   <TouchableOpacity
                     key={req.id}

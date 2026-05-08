@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '../lib/supabase';
 import { Badge } from '../ui/badge';
+import { ContractActions } from './contract-actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -93,12 +94,13 @@ export default async function ContractsPage() {
                 <th className="px-5 py-3 text-slate-500 font-medium">الزيارات</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">الحالة</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">التاريخ</th>
+                <th className="px-5 py-3 text-slate-500 font-medium">إجراء</th>
               </tr>
             </thead>
             <tbody>
               {contracts.length === 0 && (
                 <tr>
-                  <td colSpan={11} className="text-center py-12 text-slate-600">لا توجد عقود بعد</td>
+                  <td colSpan={12} className="text-center py-12 text-slate-600">لا توجد عقود بعد</td>
                 </tr>
               )}
               {contracts.map((c: any) => {
@@ -127,6 +129,9 @@ export default async function ContractsPage() {
                     </td>
                     <td className="px-5 py-3"><Badge variant={st.variant}>{st.label}</Badge></td>
                     <td className="px-5 py-3 text-slate-500 text-xs">{fmtDate(c.created_at)}</td>
+                    <td className="px-5 py-3">
+                      <ContractActions contractId={c.id} title={c.title} status={c.status} />
+                    </td>
                   </tr>
                 );
               })}

@@ -34,12 +34,12 @@ const JOB_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   disputed:  { bg: '#7F1D1D', text: '#FCA5A5' },
 };
 
-const MSG_TYPE_ICON: Record<string, string> = {
-  audio:        '🎤 رسالة صوتية',
-  image:        '📷 صورة',
-  video:        '🎥 فيديو',
-  location:     '📍 موقع',
-  profile_card: '👤 بروفايل مزود',
+const MSG_TYPE_KEY: Record<string, string> = {
+  audio:        'msgTypes.audio',
+  image:        'msgTypes.image',
+  video:        'msgTypes.video',
+  location:     'msgTypes.location',
+  profile_card: 'msgTypes.profileCard',
 };
 
 function fmtTime(iso: string, lang: string): string {
@@ -160,7 +160,7 @@ export default function ProviderMessages() {
     const lastMsg     = lastMsgMap[item.id];
     const unread      = unreadMap[item.id] ?? 0;
     const lastContent = lastMsg
-      ? (MSG_TYPE_ICON[lastMsg.msg_type] ?? lastMsg.content)
+      ? (MSG_TYPE_KEY[lastMsg.msg_type] ? t(MSG_TYPE_KEY[lastMsg.msg_type]) : lastMsg.content)
       : item.request?.title;
 
     return (

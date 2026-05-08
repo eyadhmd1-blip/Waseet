@@ -198,7 +198,7 @@ function RootLayoutInner() {
     } else {
       setRole(data.role);
     }
-    registerPushToken(userId);
+    registerPushToken(userId).catch((e: any) => console.warn('[push]', e?.message));
   }, []);
 
   // ── Auth state management ─────────────────────────────────────

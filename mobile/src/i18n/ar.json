@@ -1100,7 +1100,9 @@
   "notifInbox": {
     "headerTitle": "الإشعارات",
     "emptyTitle": "لا توجد إشعارات بعد",
-    "emptySub": "ستظهر هنا جميع إشعاراتك"
+    "emptySub": "ستظهر هنا جميع إشعاراتك",
+    "expandHint": "اضغط للقراءة كاملاً ▾",
+    "collapseHint": "اضغط للإغلاق ▴"
   },
   "supportNew": {
     "headerTitle": "تذكرة جديدة",
@@ -1375,5 +1377,20 @@
     "successTitle": "شكراً على اقتراحك!",
     "successMsg": "سنراجع اقتراحك وإذا تمت إضافته ستصلك إشعار فوراً",
     "errorMsg": "حدث خطأ أثناء إرسال الاقتراح، حاول مجدداً"
+  },
+  "clientFeed": {
+    "statusOpen": "مفتوح",
+    "statusInProgress": "جاري",
+    "statusCompleted": "مكتمل",
+    "statusCancelled": "ملغي",
+    "expired": "انتهى الوقت",
+    "remaining": "متبقي"
+  },
+  "msgTypes": {
+    "audio": "🎤 رسالة صوتية",
+    "image": "📷 صورة",
+    "video": "🎥 فيديو",
+    "location": "📍 موقع",
+    "profileCard": "👤 بروفايل مزود"
   }
 }

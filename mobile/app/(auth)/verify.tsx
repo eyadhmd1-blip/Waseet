@@ -53,7 +53,7 @@ export default function VerifyScreen() {
 
   // ── DEV MODE: auto-fill OTP ───────────────────────────────────
   useEffect(() => {
-    if (!dev_code) return;
+    if (!dev_code || !__DEV__) return;
     const digits = String(dev_code).padStart(6, '0').split('').slice(0, 6);
     setOtp(digits);
     setTimeout(() => inputs.current[5]?.focus(), 150);

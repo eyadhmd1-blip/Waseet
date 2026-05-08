@@ -51,10 +51,10 @@ function formatTime(iso: string, locale: string) {
 
 export default function ChatScreen() {
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
+  const styles = useMemo(() => createStyles(colors, ta), [colors, ta]);
   const locale = lang === 'ar' ? 'ar-JO' : 'en-GB';
   const { job_id } = useLocalSearchParams<{ job_id: string }>();
 
@@ -1040,8 +1040,8 @@ function ProfileCardBubble({
   onView: () => void;
 }) {
   const { colors } = useTheme();
-  const pcStyles = useMemo(() => createPcStyles(colors), [colors]);
   const { t, lang } = useLanguage();
+  const pcStyles = useMemo(() => createPcStyles(colors, lang === 'ar' ? 'right' : 'left'), [colors, lang]);
   const locale = lang === 'ar' ? 'ar-JO' : 'en-GB';
   const [prov, setProv] = useState<ProviderSnap | null>(null);
 
@@ -1116,7 +1116,7 @@ import { TIER_META } from '../src/constants/categories';
 import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
-function createPcStyles(colors: AppColors) {
+function createPcStyles(colors: AppColors, ta: 'left' | 'right') {
   return StyleSheet.create({
     card:       { borderRadius: 16, padding: 14, maxWidth: SCREEN_W * 0.78, minWidth: 220, borderWidth: 1 },
     cardMine:   { backgroundColor: colors.accentDim, borderColor: 'rgba(201,168,76,0.30)', alignSelf: 'flex-end' },
@@ -1126,8 +1126,8 @@ function createPcStyles(colors: AppColors) {
   avatar:     { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarText: { fontSize: 18, fontWeight: '800' },
   info:       { flex: 1 },
-  name:       { fontSize: 14, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 2 },
-  city:       { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginBottom: 4 },
+  name:       { fontSize: 14, fontWeight: '700', color: colors.textPrimary, textAlign: ta, marginBottom: 2 },
+  city:       { fontSize: 11, color: colors.textMuted, textAlign: ta, marginBottom: 4 },
   badgeRow:   { flexDirection: 'row', gap: 6, justifyContent: 'flex-end' },
   tier:       { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   tierText:   { fontSize: 10, fontWeight: '700' },
@@ -1139,13 +1139,13 @@ function createPcStyles(colors: AppColors) {
   viewBtn:     { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 9, alignItems: 'center' },
   viewBtnText: { fontSize: 12, fontWeight: '700', color: colors.bg },
 
-  time: { fontSize: 10, color: colors.textMuted, textAlign: 'auto', marginTop: 6 },
+  time: { fontSize: 10, color: colors.textMuted, textAlign: ta, marginTop: 6 },
   });
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors) {
+function createStyles(colors: AppColors, ta: 'left' | 'right') {
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -1173,8 +1173,8 @@ function createStyles(colors: AppColors) {
   bubbleTextTheirs: { color: colors.textPrimary },
 
   bubbleTime:       { fontSize: 10, marginTop: 4 },
-  bubbleTimeMine:   { color: 'rgba(201,168,76,0.60)', textAlign: 'auto' },
-  bubbleTimeTheirs: { color: colors.textMuted, textAlign: 'auto' },
+  bubbleTimeMine:   { color: 'rgba(201,168,76,0.60)', textAlign: ta },
+  bubbleTimeTheirs: { color: colors.textMuted, textAlign: ta },
 
   // ── Audio bubble ──
   audioBubble: { paddingVertical: 12, paddingHorizontal: 12, minWidth: 180 },
@@ -1281,13 +1281,13 @@ function createStyles(colors: AppColors) {
   // ── Report modal ──
   reportOverlay:       { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   reportSheet:         { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
-  reportTitle:         { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', marginBottom: 4 },
-  reportSubtitle:      { fontSize: 13, color: colors.textMuted, textAlign: 'auto', marginBottom: 16 },
+  reportTitle:         { fontSize: 18, fontWeight: '700', color: colors.textPrimary, textAlign: ta, marginBottom: 4 },
+  reportSubtitle:      { fontSize: 13, color: colors.textMuted, textAlign: ta, marginBottom: 16 },
   reportOption:        { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 4, borderBottomWidth: 1, borderBottomColor: colors.border },
   reportOptionSelected:{ backgroundColor: 'rgba(201,168,76,0.05)', borderRadius: 8 },
   reportRadio:         { width: 18, height: 18, borderRadius: 9, borderWidth: 2, borderColor: colors.border },
   reportRadioSelected: { borderColor: colors.accent, backgroundColor: colors.accent },
-  reportOptionText:    { flex: 1, fontSize: 14, color: colors.textSecondary, textAlign: 'auto' },
+  reportOptionText:    { flex: 1, fontSize: 14, color: colors.textSecondary, textAlign: ta },
   reportOptionTextSelected: { color: colors.textPrimary, fontWeight: '600' },
   reportBtns:          { flexDirection: 'row', gap: 12, marginTop: 24 },
   reportCancelBtn:     { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },

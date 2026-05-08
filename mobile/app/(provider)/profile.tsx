@@ -28,7 +28,7 @@ const TYPE_ICON: Record<string, string> = {
 
 export default function ProviderProfile() {
   const { colors, theme, setTheme } = useTheme();
-  const { t, ta, isRTL } = useLanguage();
+  const { t, ta, isRTL, toggleLanguage } = useLanguage();
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
@@ -543,7 +543,7 @@ export default function ProviderProfile() {
       </View>
 
       {/* ── Language switcher ── */}
-      <TouchableOpacity style={styles.notifBtn} onPress={() => {}}>
+      <TouchableOpacity style={styles.notifBtn} onPress={toggleLanguage}>
         <Text style={styles.notifBtnIcon}>🌐</Text>
         <Text style={styles.notifBtnText}>{t('profile.language')}</Text>
       </TouchableOpacity>

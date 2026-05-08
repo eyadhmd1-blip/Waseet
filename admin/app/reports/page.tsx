@@ -101,7 +101,7 @@ export default async function ReportsPage() {
   const activeContracts = contracts.filter((c: any) => c.status === 'active');
   const contractRevEst  = activeContracts.reduce((sum: number, c: any) => {
     const vpm = c.frequency === 'weekly' ? 4 : c.frequency === 'biweekly' ? 2 : 1;
-    return sum + (c.price_per_visit ?? 0) * vpm;
+    return sum + (c.price_per_visit ?? 0) * vpm * (c.duration_months ?? 1);
   }, 0);
 
   // ── Avg request suggested price ───────────────────────────────────────────

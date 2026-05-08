@@ -219,10 +219,10 @@ export default function NotificationInboxScreen() {
             </Text>
           )}
           {showHint && (
-            <Text style={st.expandHint}>اضغط للقراءة كاملاً ▾</Text>
+            <Text style={st.expandHint}>{t('notifInbox.expandHint')}</Text>
           )}
           {expanded && !item.screen && (
-            <Text style={st.expandHint}>اضغط للإغلاق ▴</Text>
+            <Text style={st.expandHint}>{t('notifInbox.collapseHint')}</Text>
           )}
         </View>
         {!item.is_read && <View style={st.unreadDot} />}

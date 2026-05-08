@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
+import { getAdminUsername } from '../lib/session';
 import { revalidatePath } from 'next/cache';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -30,6 +31,8 @@ async function sendPushToUser(userId: string, title: string, body: string, data?
 
 export async function replyToTicket(ticketId: string, body: string) {
   if (!body?.trim()) throw new Error('Reply body cannot be empty');
+  const admin = await getAdminUsername();
+
   await supabaseAdmin.from('support_messages').insert({
     ticket_id: ticketId,
     sender_id: null,
@@ -43,12 +46,20 @@ export async function replyToTicket(ticketId: string, body: string) {
     .eq('id', ticketId)
     .eq('status', 'open');
 
-  // Notify the ticket owner so they see the reply even if the app is in background
   const { data: ticket } = await supabaseAdmin
     .from('support_tickets')
     .select('user_id, subject')
     .eq('id', ticketId)
     .single();
+
+  await logAudit({
+    action:       'reply_ticket',
+    target_type:  'ticket',
+    target_id:    ticketId,
+    target_label: ticket?.subject ?? ticketId,
+    performed_by: admin,
+    metadata:     { preview: body.slice(0, 100) },
+  });
 
   if (ticket?.user_id) {
     await sendPushToUser(
@@ -64,17 +75,19 @@ export async function replyToTicket(ticketId: string, body: string) {
 }
 
 export async function resolveTicket(ticketId: string, subject: string) {
+  const admin = await getAdminUsername();
+
   await supabaseAdmin
     .from('support_tickets')
     .update({ status: 'resolved', resolved_at: new Date().toISOString() })
     .eq('id', ticketId);
 
   await logAudit({
-    action:       'close_request',   // reuse closest existing action type
-    target_type:  'system',
+    action:       'resolve_ticket',
+    target_type:  'ticket',
     target_id:    ticketId,
     target_label: subject,
-    metadata: { type: 'support_ticket_resolved' },
+    performed_by: admin,
   });
 
   revalidatePath('/support');
@@ -82,17 +95,20 @@ export async function resolveTicket(ticketId: string, subject: string) {
 }
 
 export async function assignTicket(ticketId: string, adminUserId: string) {
+  const admin = await getAdminUsername();
+
   await supabaseAdmin
     .from('support_tickets')
     .update({ assigned_to: adminUserId, status: 'in_review' })
     .eq('id', ticketId);
 
   await logAudit({
-    action:      'update_setting',
-    target_type: 'system',
-    target_id:   ticketId,
-    target_label: 'assign_ticket',
-    metadata: { assigned_to: adminUserId },
+    action:       'assign_ticket',
+    target_type:  'ticket',
+    target_id:    ticketId,
+    target_label: adminUserId,
+    performed_by: admin,
+    metadata:     { assigned_to: adminUserId },
   });
 
   revalidatePath('/support');

@@ -19,8 +19,8 @@ const REQ_STATUS: Record<string, { label: string; variant: 'info' | 'warning' | 
 
 const PAGE_SIZE = 50;
 
-async function getRequests(page: number) {
-  const { data, count } = await supabaseAdmin
+async function getRequests(page: number, q: string, status: string, city: string) {
+  let query = supabaseAdmin
     .from('requests')
     .select(`
       id, title, city, status, created_at, category_slug,
@@ -28,19 +28,28 @@ async function getRequests(page: number) {
       client:users(full_name),
       bids(id)
     `, { count: 'exact' })
-    .order('created_at', { ascending: false })
-    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    .order('created_at', { ascending: false });
+
+  if (q)      query = query.ilike('title', `%${q}%`);
+  if (status) query = query.eq('status', status);
+  if (city)   query = query.ilike('city', `%${city}%`);
+
+  const { data, count } = await query.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
   return { requests: data ?? [], total: count ?? 0 };
 }
 
 export default async function RequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; status?: string; city?: string }>;
 }) {
-  const sp   = await searchParams;
-  const page = Math.max(0, parseInt(sp.page ?? '0', 10));
-  const { requests, total } = await getRequests(page);
+  const sp     = await searchParams;
+  const page   = Math.max(0, parseInt(sp.page ?? '0', 10));
+  const q      = sp.q?.trim() ?? '';
+  const status = sp.status ?? '';
+  const city   = sp.city?.trim() ?? '';
+
+  const { requests, total } = await getRequests(page, q, status, city);
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const open        = requests.filter((r: any) => r.status === 'open').length;
@@ -48,6 +57,11 @@ export default async function RequestsPage({
   const completed   = requests.filter((r: any) => r.status === 'completed').length;
   const cancelled   = requests.filter((r: any) => r.status === 'cancelled').length;
   const urgent      = requests.filter((r: any) => r.is_urgent).length;
+
+  const buildUrl = (overrides: Record<string, string>) => {
+    const params = new URLSearchParams({ ...(q && { q }), ...(status && { status }), ...(city && { city }), page: '0', ...overrides });
+    return `/requests?${params}`;
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -73,6 +87,47 @@ export default async function RequestsPage({
           ))}
         </div>
       </div>
+
+      {/* Search + Filter */}
+      <form method="GET" action="/requests" className="flex gap-3 flex-wrap items-end">
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="بحث بعنوان الطلب..."
+          className="flex-1 min-w-[200px] bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+        />
+        <select
+          name="status"
+          defaultValue={status}
+          className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-indigo-500"
+        >
+          <option value="">كل الحالات</option>
+          <option value="open">مفتوح</option>
+          <option value="in_progress">جارٍ</option>
+          <option value="completed">منجز</option>
+          <option value="cancelled">ملغي</option>
+        </select>
+        <input
+          name="city"
+          defaultValue={city}
+          placeholder="المدينة..."
+          className="w-40 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+        />
+        <button
+          type="submit"
+          className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium transition-colors"
+        >
+          بحث
+        </button>
+        {(q || status || city) && (
+          <a
+            href="/requests"
+            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 text-sm transition-colors"
+          >
+            مسح
+          </a>
+        )}
+      </form>
 
       {/* Table */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
@@ -147,10 +202,10 @@ export default async function RequestsPage({
             <span className="text-slate-500 text-xs">صفحة {page + 1} من {totalPages}</span>
             <div className="flex gap-2">
               {page > 0 && (
-                <a href={`/requests?page=${page - 1}`} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
+                <a href={buildUrl({ page: String(page - 1) })} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
               )}
               {page < totalPages - 1 && (
-                <a href={`/requests?page=${page + 1}`} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
+                <a href={buildUrl({ page: String(page + 1) })} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
               )}
             </div>
           </div>

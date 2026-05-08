@@ -5,8 +5,8 @@ import { revalidatePath } from 'next/cache';
 
 export async function logCategoryToggle(id: string, newActive: boolean) {
   await logAudit({
-    action:       'update_setting',
-    target_type:  'system',
+    action:       'toggle_category',
+    target_type:  'category',
     target_id:    id,
     target_label: id,
     metadata: { is_active: newActive },
@@ -16,8 +16,8 @@ export async function logCategoryToggle(id: string, newActive: boolean) {
 
 export async function logCategoryAdd(slug: string, nameAr: string) {
   await logAudit({
-    action:       'update_setting',
-    target_type:  'system',
+    action:       'add_category',
+    target_type:  'category',
     target_label: nameAr,
     metadata: { slug },
   });

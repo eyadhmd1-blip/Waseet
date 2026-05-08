@@ -1096,7 +1096,9 @@
   "notifInbox": {
     "headerTitle": "Notifications",
     "emptyTitle": "No notifications yet",
-    "emptySub": "All your notifications will appear here"
+    "emptySub": "All your notifications will appear here",
+    "expandHint": "Tap to read more ▾",
+    "collapseHint": "Tap to close ▴"
   },
   "supportNew": {
     "headerTitle": "New Ticket",
@@ -1371,5 +1373,20 @@
     "successTitle": "Thanks for your suggestion!",
     "successMsg": "We'll review it and notify you once it's added",
     "errorMsg": "Something went wrong. Please try again"
+  },
+  "clientFeed": {
+    "statusOpen": "Open",
+    "statusInProgress": "In Progress",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "expired": "Expired",
+    "remaining": "remaining"
+  },
+  "msgTypes": {
+    "audio": "🎤 Voice message",
+    "image": "📷 Photo",
+    "video": "🎥 Video",
+    "location": "📍 Location",
+    "profileCard": "👤 Provider profile"
   }
 }

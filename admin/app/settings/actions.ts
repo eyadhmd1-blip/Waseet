@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
+import { getAdminUsername } from '../lib/session';
 import { revalidatePath } from 'next/cache';
 
 const SETTING_TYPES: Record<string, 'number' | 'boolean' | 'percent'> = {
@@ -31,15 +32,21 @@ function validateSettingValue(key: string, value: string): string | null {
 }
 
 export async function updateSetting(key: string, value: string, label: string) {
+  const validationError = validateSettingValue(key, value);
+  if (validationError) throw new Error(validationError);
+
+  const admin = await getAdminUsername();
+
   await supabaseAdmin
     .from('platform_settings')
     .upsert({ key, value, label, updated_at: new Date().toISOString() }, { onConflict: 'key' });
 
   await logAudit({
-    action:      'update_setting',
-    target_type: 'system',
+    action:       'update_setting',
+    target_type:  'system',
     target_label: label,
-    metadata: { key, value },
+    performed_by: admin,
+    metadata:     { key, value },
   });
 
   revalidatePath('/settings');
@@ -50,6 +57,8 @@ export async function updateSettings(updates: Array<{ key: string; value: string
     const err = validateSettingValue(u.key, u.value);
     if (err) throw new Error(err);
   }
+
+  const admin = await getAdminUsername();
   const rows = updates.map(u => ({ key: u.key, value: u.value, label: u.label, updated_at: new Date().toISOString() }));
 
   await supabaseAdmin
@@ -57,10 +66,11 @@ export async function updateSettings(updates: Array<{ key: string; value: string
     .upsert(rows, { onConflict: 'key' });
 
   await logAudit({
-    action:      'update_setting',
-    target_type: 'system',
+    action:       'update_setting',
+    target_type:  'system',
     target_label: 'batch update',
-    metadata: { keys: updates.map(u => u.key) },
+    performed_by: admin,
+    metadata:     { keys: updates.map(u => u.key) },
   });
 
   revalidatePath('/settings');
