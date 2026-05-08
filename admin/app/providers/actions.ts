@@ -58,16 +58,16 @@ export async function unsuspendProvider(providerId: string, name: string) {
     target_label: name,
   });
 
-  // Fetch user_id to send push notification
+  // providers.id = users.id — use it directly as the push target
   const { data: prov } = await supabaseAdmin
     .from('providers')
-    .select('user_id')
+    .select('id')
     .eq('id', providerId)
     .maybeSingle();
 
-  if ((prov as any)?.user_id) {
+  if ((prov as any)?.id) {
     await sendPushToUser(
-      (prov as any).user_id,
+      (prov as any).id,
       '✅ تم رفع التعليق عن حسابك',
       'مرحباً بعودتك — يمكنك الآن الاستمرار في استقبال الطلبات',
       { screen: 'home' },
@@ -117,7 +117,7 @@ export async function adjustCredits(
 ) {
   const { data: provider } = await supabaseAdmin
     .from('providers')
-    .select('subscription_credits, user_id')
+    .select('subscription_credits, id')
     .eq('id', providerId)
     .single();
 
@@ -138,10 +138,10 @@ export async function adjustCredits(
     metadata: { before: current, after: updated, delta: amount },
   });
 
-  if ((provider as any)?.user_id) {
+  if ((provider as any)?.id) {
     const isAdd = amount >= 0;
     await sendPushToUser(
-      (provider as any).user_id,
+      (provider as any).id,
       isAdd ? '💳 تمت إضافة رصيد إلى حسابك' : '💳 تم خصم رصيد من حسابك',
       isAdd
         ? `تمت إضافة ${amount} رصيد — رصيدك الحالي: ${updated}`

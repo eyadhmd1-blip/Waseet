@@ -98,7 +98,7 @@ async function getProviders(params: {
     .range(params.page * PAGE_SIZE, (params.page + 1) * PAGE_SIZE - 1);
 
   if (userIds !== null) {
-    query = query.in('user_id', userIds);
+    query = query.in('id', userIds);
   }
   if (params.status === 'active')    query = query.eq('is_active', true);
   if (params.status === 'suspended') query = query.eq('is_active', false);
