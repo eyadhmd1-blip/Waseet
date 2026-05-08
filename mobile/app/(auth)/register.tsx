@@ -64,7 +64,14 @@ export default function RegisterScreen() {
     }
 
     if (role === 'provider') {
-      await supabase.from('providers').insert({ id: user.id });
+      await supabase.from('providers').insert({
+        id: user.id,
+        is_subscribed:        true,
+        subscription_tier:    'trial',
+        subscription_credits: 10,
+        trial_used:           true,
+        subscription_ends:    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      });
     }
 
     setLoading(false);
