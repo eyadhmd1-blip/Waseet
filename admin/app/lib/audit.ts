@@ -21,7 +21,9 @@ export type AuditAction =
   | 'reply_ticket'
   | 'toggle_category'
   | 'add_category'
-  | 'update_report_status';
+  | 'update_report_status'
+  | 'unlock_tier'
+  | 'manual_activate_subscription';
 
 export async function logAudit(params: {
   action:        AuditAction;

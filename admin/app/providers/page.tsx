@@ -20,7 +20,8 @@ const TIER_META: Record<string, { label: string; variant: 'muted' | 'info' | 'wa
   elite:   { label: 'نخبة',   variant: 'danger' },
 };
 
-const SUB_META: Record<string, { label: string; variant: 'muted' | 'warning' | 'violet' }> = {
+const SUB_META: Record<string, { label: string; variant: 'muted' | 'info' | 'warning' | 'violet' }> = {
+  trial:   { label: 'تجريبية', variant: 'info' },
   basic:   { label: 'أساسية',  variant: 'muted' },
   pro:     { label: 'محترف',   variant: 'warning' },
   premium: { label: 'متميز',   variant: 'violet' },
@@ -88,7 +89,7 @@ async function getProviders(params: {
     .from('providers')
     .select(`
       id, score, reputation_tier, lifetime_jobs,
-      is_subscribed, subscription_tier, subscription_ends,
+      is_subscribed, subscription_tier, subscription_ends, trial_used,
       badge_verified, loyalty_discount, created_at,
       is_active, suspended_at, suspension_reason,
       subscription_credits, bonus_credits,
@@ -266,6 +267,9 @@ export default async function ProvidersPage({
                         badgeVerified={p.badge_verified}
                         currentTier={p.reputation_tier}
                         bidCredits={(p.subscription_credits ?? 0) + (p.bonus_credits ?? 0)}
+                        isSubscribed={p.is_subscribed}
+                        currentSubTier={p.subscription_tier ?? null}
+                        trialUsed={p.trial_used ?? false}
                       />
                     </td>
                   </tr>

@@ -204,3 +204,78 @@ export async function unlockTier(providerId: string, name: string) {
 
   revalidatePath('/providers');
 }
+
+const TIER_AR: Record<string, string> = {
+  trial: 'تجريبية', basic: 'أساسية', pro: 'محترف', premium: 'نخبة',
+};
+
+export async function manualActivateSubscription(
+  providerId: string,
+  name: string,
+  tier: string,
+  periodMonths: number,
+  amountJod: number,
+  paymentMethod: string,
+  paymentRef: string,
+  notes: string,
+) {
+  // Block trial re-activation
+  if (tier === 'trial') {
+    const { data: prov } = await supabaseAdmin
+      .from('providers')
+      .select('trial_used')
+      .eq('id', providerId)
+      .single();
+    if ((prov as any)?.trial_used) {
+      throw new Error('TRIAL_ALREADY_USED');
+    }
+  }
+
+  // Activate subscription (resets credits, trial_used, discounts)
+  await supabaseAdmin.rpc('activate_provider_subscription', {
+    p_provider_id:   providerId,
+    p_tier:          tier,
+    p_period_months: periodMonths,
+  });
+
+  // Audit trail — manual_payments table
+  await supabaseAdmin.from('manual_payments').insert({
+    provider_id:    providerId,
+    tier,
+    period_months:  periodMonths,
+    amount_jod:     amountJod,
+    payment_method: paymentMethod,
+    payment_ref:    paymentRef,
+    notes:          notes || null,
+  });
+
+  // Subscription history (same shape as Paddle webhook)
+  const now = new Date();
+  await supabaseAdmin.from('subscriptions').insert({
+    provider_id:   providerId,
+    tier,
+    amount_paid:   amountJod,
+    currency:      'JOD',
+    discount_pct:  0,
+    period_start:  now.toISOString(),
+    period_end:    new Date(now.getTime() + periodMonths * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    paddle_txn_id: `manual_${paymentRef}`,
+  });
+
+  await logAudit({
+    action: 'manual_activate_subscription',
+    target_type: 'provider',
+    target_id: providerId,
+    target_label: name,
+    metadata: { tier, period_months: periodMonths, amount_jod: amountJod, payment_method: paymentMethod, payment_ref: paymentRef },
+  });
+
+  const tierLabel = TIER_AR[tier] ?? tier;
+  const notifBody = `تم تفعيل اشتراكك في الباقة ${tierLabel} لمدة ${periodMonths === 1 ? 'شهر' : `${periodMonths} أشهر`}`;
+  await Promise.all([
+    sendPushToUser(providerId, '🎉 تم تفعيل اشتراكك', notifBody, { screen: 'subscribe' }),
+    insertNotification(providerId, '🎉 تم تفعيل اشتراكك', notifBody, 'subscription_activated', 'subscribe'),
+  ]);
+
+  revalidatePath('/providers');
+}
