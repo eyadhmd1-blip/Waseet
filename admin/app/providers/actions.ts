@@ -117,16 +117,16 @@ export async function adjustCredits(
 ) {
   const { data: provider } = await supabaseAdmin
     .from('providers')
-    .select('bid_credits, user_id')
+    .select('subscription_credits, user_id')
     .eq('id', providerId)
     .single();
 
-  const current = (provider as any)?.bid_credits ?? 0;
+  const current = (provider as any)?.subscription_credits ?? 0;
   const updated = Math.max(0, current + amount);
 
   await supabaseAdmin
     .from('providers')
-    .update({ bid_credits: updated })
+    .update({ subscription_credits: updated })
     .eq('id', providerId);
 
   await logAudit({
