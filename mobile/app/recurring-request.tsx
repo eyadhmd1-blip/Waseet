@@ -276,8 +276,15 @@ export default function RecurringRequestScreen() {
                 ))}
               </View>
 
-              <TouchableOpacity style={styles.suggestBtn} onPress={() => setShowSuggest(true)}>
-                <Text style={styles.suggestBtnText}>{t('suggestions.notFound')}</Text>
+              <TouchableOpacity style={styles.suggestCard} onPress={() => setShowSuggest(true)} activeOpacity={0.8}>
+                <View style={styles.suggestIconWrap}>
+                  <Text style={styles.suggestIconEmoji}>💡</Text>
+                </View>
+                <View style={styles.suggestCardBody}>
+                  <Text style={styles.suggestCardTitle}>{t('suggestions.notFound')}</Text>
+                  <Text style={styles.suggestCardSub}>{t('suggestions.notFoundSub')}</Text>
+                </View>
+                <Text style={styles.suggestCardArrow}>›</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -673,7 +680,12 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   submitBtnText:     { fontSize: 17, fontWeight: '800', color: '#fff' },
   submitHint:        { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 8 },
 
-  suggestBtn:     { marginTop: 20, marginHorizontal: 16, paddingVertical: 14, alignItems: 'center' as const, borderTopWidth: 1, borderTopColor: colors.border },
-  suggestBtnText: { fontSize: 13, color: colors.textMuted },
+  suggestCard:      { flexDirection: 'row', alignItems: 'center', marginTop: 20, marginHorizontal: 2, marginBottom: 8, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 18, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.accent + '88', backgroundColor: colors.accentDim, gap: 12 },
+  suggestIconWrap:  { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent + '22', alignItems: 'center' as const, justifyContent: 'center' as const },
+  suggestIconEmoji: { fontSize: 22 },
+  suggestCardBody:  { flex: 1, gap: 2 },
+  suggestCardTitle: { fontSize: 14, fontWeight: '700' as const, color: colors.accent },
+  suggestCardSub:   { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  suggestCardArrow: { fontSize: 22, color: colors.accent, fontWeight: '700' as const },
   });
 }
