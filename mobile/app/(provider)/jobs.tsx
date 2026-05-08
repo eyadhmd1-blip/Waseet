@@ -44,46 +44,58 @@ export default function ProviderJobs() {
   const [sendingCode, setSendingCode]     = useState(false);
   const inputRefs = useRef<TextInput[]>([]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (isTabSwitch = false) => {
     try {
-      const { data: { session: _ses } } = await supabase.auth.getSession();
-      const user = _ses?.user;
-      if (!user) { setLoading(false); return; }
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user.id;
+      if (!uid) { setLoading(false); return; }
 
-      const { data } = await supabase
+      const jobsQuery = supabase
         .from('jobs')
         .select('*, request:requests(title, category_slug, city), client:users!jobs_client_id_fkey(full_name, phone)')
-        .eq('provider_id', user.id)
+        .eq('provider_id', uid)
         .eq('status', tab === 'active' ? 'active' : 'completed')
         .order('created_at', { ascending: false });
 
-      if (data) setJobs(data);
-  
+      if (isTabSwitch) {
+        // Only reload jobs when switching tabs — header info already loaded
+        const { data } = await jobsQuery;
+        if (data) setJobs(data);
+        return;
+      }
+
+      // First load: fetch everything in parallel
+      const [jobsRes, userRes, providerRes] = await Promise.all([
+        jobsQuery,
+        supabase.from('users').select('full_name').eq('id', uid).single(),
+        supabase.from('providers')
+          .select('subscription_credits, bonus_credits, subscription_tier, reputation_tier, score, lifetime_jobs, is_available')
+          .eq('id', uid).single(),
+      ]);
+
+      if (jobsRes.data)    setJobs(jobsRes.data);
+      if (userRes.data?.full_name) setUserName(userRes.data.full_name);
+      if (providerRes.data)        setProviderInfo(providerRes.data);
+
     } finally {
       setLoading(false);
     }
   }, [tab]);
 
-  useEffect(() => { load(); }, [load]);
+  // Initial load
+  useEffect(() => { load(false); }, []);
 
+  // Tab switch — reload jobs only
+  const prevTab = useRef<JobTab>('active');
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      const uid = session?.user.id;
-      if (!uid) return;
-      supabase.from('users').select('full_name').eq('id', uid).single()
-        .then(({ data }) => { if (data?.full_name) setUserName(data.full_name); });
-      supabase
-        .from('providers')
-        .select('subscription_credits, bonus_credits, subscription_tier, reputation_tier, score, lifetime_jobs, is_available')
-        .eq('id', uid)
-        .single()
-        .then(({ data }) => { if (data) setProviderInfo(data); });
-    });
-  }, []);
+    if (prevTab.current === tab) return;
+    prevTab.current = tab;
+    load(true);
+  }, [tab]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await load();
+    await load(false);
     setRefreshing(false);
   }, [load]);
 
@@ -232,7 +244,8 @@ export default function ProviderJobs() {
         providerScore={providerInfo?.score}
         providerRepTier={providerInfo?.reputation_tier}
         providerLifetimeJobs={providerInfo?.lifetime_jobs}
-        providerBidCredits={(providerInfo?.subscription_credits ?? 0) + (providerInfo?.bonus_credits ?? 0)}
+        providerBidCredits={providerInfo?.subscription_credits ?? 0}
+        providerBonusCredits={providerInfo?.bonus_credits ?? 0}
         providerSubscriptionTier={providerInfo?.subscription_tier}
         providerIsAvailable={providerInfo?.is_available}
         notifCount={notifCount}
