@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback, useMemo} from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { TIER_META } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
@@ -118,6 +118,21 @@ export default function ProviderDashboard() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Silently refresh provider header info on tab focus
+  const refreshProviderInfo = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user.id;
+    if (!uid) return;
+    const { data } = await supabase
+      .from('providers')
+      .select('*, user:users(*)')
+      .eq('id', uid)
+      .single();
+    if (data) setProvider(data as Provider & { user: User });
+  }, []);
+
+  useFocusEffect(useCallback(() => { refreshProviderInfo(); }, [refreshProviderInfo]));
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

@@ -170,9 +170,11 @@ export async function overrideTier(
   newTier: string,
   oldTier: string,
 ) {
+  // tier_locked = true prevents update_provider_score() trigger from
+  // auto-resetting this tier when the provider completes future jobs.
   await supabaseAdmin
     .from('providers')
-    .update({ reputation_tier: newTier })
+    .update({ reputation_tier: newTier, tier_locked: true })
     .eq('id', providerId);
 
   await logAudit({
@@ -180,7 +182,24 @@ export async function overrideTier(
     target_type: 'provider',
     target_id: providerId,
     target_label: name,
-    metadata: { from: oldTier, to: newTier },
+    metadata: { from: oldTier, to: newTier, locked: true },
+  });
+
+  revalidatePath('/providers');
+}
+
+export async function unlockTier(providerId: string, name: string) {
+  await supabaseAdmin
+    .from('providers')
+    .update({ tier_locked: false })
+    .eq('id', providerId);
+
+  await logAudit({
+    action: 'unlock_tier',
+    target_type: 'provider',
+    target_id: providerId,
+    target_label: name,
+    metadata: { locked: false },
   });
 
   revalidatePath('/providers');

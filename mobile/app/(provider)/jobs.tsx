@@ -4,7 +4,7 @@ import {
   RefreshControl, ActivityIndicator, Modal, TextInput,
   Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Job } from '../../src/types';
@@ -84,6 +84,22 @@ export default function ProviderJobs() {
 
   // Initial load
   useEffect(() => { load(false); }, []);
+
+  // Silently refresh provider header info whenever this tab gains focus
+  // (catches admin tier overrides, credit changes, etc. without full reload)
+  const refreshProviderInfo = useCallback(async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const uid = session?.user.id;
+    if (!uid) return;
+    const { data } = await supabase
+      .from('providers')
+      .select('subscription_credits, bonus_credits, subscription_tier, reputation_tier, score, lifetime_jobs, is_available')
+      .eq('id', uid)
+      .single();
+    if (data) setProviderInfo(data);
+  }, []);
+
+  useFocusEffect(useCallback(() => { refreshProviderInfo(); }, [refreshProviderInfo]));
 
   // Tab switch — reload jobs only
   const prevTab = useRef<JobTab>('active');
