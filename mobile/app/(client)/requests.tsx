@@ -85,6 +85,7 @@ export default function ClientRequests() {
   const [tab,              setTab]              = useState<Tab>(tabParam === 'contracts' ? 'contracts' : 'requests');
   const [contracts,        setContracts]        = useState<RecurringContract[]>([]);
   const [contractsLoading, setContractsLoading] = useState(true);
+  const [userName,         setUserName]         = useState('');
 
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
@@ -96,6 +97,15 @@ export default function ClientRequests() {
     if (tabParam === 'contracts' || tabParam === 'requests') setTab(tabParam);
   }, [tabParam]);
 
+  // fetch first name once
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session?.user) return;
+      supabase.from('users').select('full_name').eq('id', session.user.id).single()
+        .then(({ data }) => { if (data?.full_name) setUserName(data.full_name.split(' ')[0]); });
+    });
+  }, []);
+
   const FILTERS: { key: Filter; label: string }[] = [
     { key: 'all',         label: t('requests.filterAll') },
     { key: 'open',        label: t('requests.filterOpen') },
@@ -103,6 +113,40 @@ export default function ClientRequests() {
     { key: 'completed',   label: t('requests.filterCompleted') },
     { key: 'expired',     label: t('requests.filterExpired') },
   ];
+
+  const SUMMARY_CARDS: { key: Filter; emoji: string }[] = [
+    { key: 'all',         emoji: '📋' },
+    { key: 'open',        emoji: '🟠' },
+    { key: 'in_progress', emoji: '🔧' },
+    { key: 'completed',   emoji: '✅' },
+    { key: 'expired',     emoji: '🕐' },
+  ];
+
+  const greeting = useMemo(() => {
+    const h = new Date().getHours();
+    if (lang === 'ar') {
+      if (h >= 5  && h < 12) return 'صباح الخير';
+      if (h >= 12 && h < 17) return 'مساء الخير';
+      if (h >= 17 && h < 21) return 'مساء النور';
+      return 'أهلاً';
+    }
+    if (h >= 5  && h < 12) return 'Good morning';
+    if (h >= 12 && h < 17) return 'Good afternoon';
+    if (h >= 17 && h < 21) return 'Good evening';
+    return 'Hello';
+  }, [lang]);
+
+  const greetingEmoji = useMemo(() => {
+    const h = new Date().getHours();
+    if (h >= 5  && h < 12) return '☀️';
+    if (h >= 12 && h < 17) return '🌤️';
+    if (h >= 17 && h < 21) return '🌆';
+    return '🌙';
+  }, []);
+
+  const greetingLine = userName
+    ? (lang === 'ar' ? `${greeting}، ${userName} ${greetingEmoji}` : `${greeting}, ${userName} ${greetingEmoji}`)
+    : `${greeting} ${greetingEmoji}`;
 
   const STATUS_LABEL: Record<string, string> = {
     open:        t('requests.statusOpen'),
@@ -206,7 +250,22 @@ export default function ClientRequests() {
     expired:     allRequests.filter(r => r.status === 'expired').length,
   }), [allRequests]);
 
-  const openCount = counts.open;
+  const greetSub = useMemo(() => {
+    if (tab !== 'requests' || loading) return null;
+    if (counts.open > 0)
+      return lang === 'ar'
+        ? `${counts.open} طلب مفتوح بانتظار العروض`
+        : `${counts.open} open request${counts.open !== 1 ? 's' : ''} awaiting bids`;
+    if (counts.in_progress > 0)
+      return lang === 'ar'
+        ? `${counts.in_progress} طلب جارٍ`
+        : `${counts.in_progress} request${counts.in_progress !== 1 ? 's' : ''} in progress`;
+    if (allRequests.length === 0)
+      return lang === 'ar' ? 'لا توجد طلبات حتى الآن' : 'No requests yet';
+    return lang === 'ar'
+      ? `إجمالي ${allRequests.length} طلب`
+      : `${allRequests.length} request${allRequests.length !== 1 ? 's' : ''} total`;
+  }, [counts, allRequests.length, tab, loading, lang]);
 
   // ── Request Card ─────────────────────────────────────────────
   const renderItem = ({ item }: { item: ServiceRequest }) => {
@@ -334,12 +393,12 @@ export default function ClientRequests() {
         style={[styles.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}
       >
         <View style={[styles.headerRow, { flexDirection: 'row' }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>{t('requests.title')}</Text>
-            {openCount > 0 && tab === 'requests' && (
-              <Text style={styles.headerSub}>
-                {openCount} {t('requests.statusOpen')}
-              </Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={styles.headerGreet} numberOfLines={1}>{greetingLine}</Text>
+            {greetSub ? (
+              <Text style={styles.headerSub} numberOfLines={1}>{greetSub}</Text>
+            ) : (
+              <Text style={styles.headerSub} numberOfLines={1}> </Text>
             )}
           </View>
           <TouchableOpacity
@@ -375,46 +434,32 @@ export default function ClientRequests() {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* ── Filter chips (requests tab only) ─────────────────────── */}
+      {/* ── Summary cards (requests tab only) ───────────────────── */}
       {tab === 'requests' && (
         <Animated.View style={{ opacity: fadeAnim }}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[styles.filterScroll, { flexDirection: 'row' }]}
+            contentContainerStyle={[styles.summaryScroll, { flexDirection: 'row' }]}
           >
-            {FILTERS.map(f => {
-              const active     = filter === f.key;
-              const chipAccent = FILTER_ACCENT[f.key];
-              const count      = counts[f.key];
+            {SUMMARY_CARDS.map(({ key, emoji }) => {
+              const active = filter === key;
+              const accent = FILTER_ACCENT[key];
+              const count  = counts[key];
+              const label  = FILTERS.find(f => f.key === key)?.label ?? '';
               return (
                 <TouchableOpacity
-                  key={f.key}
+                  key={key}
                   style={[
-                    styles.filterChip,
-                    active && { backgroundColor: chipAccent + '20', borderColor: chipAccent },
+                    styles.summaryCard,
+                    active && { borderColor: accent, backgroundColor: accent + '18' },
                   ]}
-                  onPress={() => setFilter(f.key)}
+                  onPress={() => setFilter(key)}
+                  activeOpacity={0.75}
                 >
-                  <Text style={[
-                    styles.filterText,
-                    active && { color: chipAccent, fontWeight: '700' },
-                  ]}>
-                    {f.label}
-                  </Text>
-                  {count > 0 && (
-                    <View style={[
-                      styles.chipCount,
-                      { backgroundColor: active ? chipAccent : colors.border },
-                    ]}>
-                      <Text style={[
-                        styles.chipCountText,
-                        { color: active ? (isDark ? '#000' : '#fff') : colors.textMuted },
-                      ]}>
-                        {count}
-                      </Text>
-                    </View>
-                  )}
+                  <Text style={styles.summaryEmoji}>{emoji}</Text>
+                  <Text style={[styles.summaryCount, active && { color: accent }]}>{count}</Text>
+                  <Text style={[styles.summaryLabel, active && { color: accent, fontWeight: '700' }]}>{label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -522,15 +567,16 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
     // ── Header
-    header:      { paddingHorizontal: H_PAD, paddingTop: HEADER_PAD, paddingBottom: 12 },
+    header:      { paddingHorizontal: H_PAD, paddingTop: HEADER_PAD, paddingBottom: 14 },
     headerRow:   { alignItems: 'center', gap: 12 },
-    headerTitle: { fontSize: 26, fontWeight: '800', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },
-    headerSub:   { fontSize: 13, color: colors.textMuted, marginTop: 2, alignSelf: 'stretch', textAlign: ta },
+    headerGreet: { fontSize: 20, fontWeight: '800', color: colors.textPrimary, textAlign: ta },
+    headerSub:   { fontSize: 13, color: colors.textMuted, marginTop: 3, textAlign: ta },
     newBtn: {
       backgroundColor:   colors.accent,
       borderRadius:      12,
       paddingHorizontal: 14,
-      paddingVertical:   8,
+      paddingVertical:   9,
+      flexShrink:        0,
     },
     newBtnText: { fontSize: 13, fontWeight: '700', color: btnText },
 
@@ -555,33 +601,21 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     tabBtnText:       { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
     tabBtnTextActive: { color: isDark ? '#000' : '#fff' },
 
-    // ── Filter chips
-    filterScroll: {
-      paddingHorizontal: H_PAD,
-      paddingBottom:     14,
-      gap:               8,
+    // ── Summary cards
+    summaryScroll: { paddingHorizontal: H_PAD, paddingBottom: 16, gap: 10 },
+    summaryCard: {
+      width:           76,
+      paddingVertical: 12,
+      alignItems:      'center',
+      borderRadius:    16,
+      borderWidth:     1.5,
+      borderColor:     colors.border,
+      backgroundColor: colors.surface,
+      gap:             3,
     },
-    filterChip: {
-      paddingHorizontal: 14,
-      paddingVertical:   8,
-      borderRadius:      20,
-      backgroundColor:   colors.surface,
-      borderWidth:       1.5,
-      borderColor:       colors.border,
-      flexDirection:     'row',
-      alignItems:        'center',
-      gap:               6,
-    },
-    filterText: { fontSize: 13, color: colors.textSecondary },
-    chipCount: {
-      minWidth:          18,
-      height:            18,
-      borderRadius:      9,
-      alignItems:        'center',
-      justifyContent:    'center',
-      paddingHorizontal: 4,
-    },
-    chipCountText: { fontSize: 10, fontWeight: '700' },
+    summaryEmoji: { fontSize: 20 },
+    summaryCount: { fontSize: 22, fontWeight: '800', color: colors.textPrimary, lineHeight: 28 },
+    summaryLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '500', textAlign: 'center' },
 
     // ── List
     listContent: { paddingHorizontal: H_PAD, paddingBottom: 32, gap: 10 },
