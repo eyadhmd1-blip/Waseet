@@ -95,8 +95,8 @@ const SECTIONS: Section[] = [
 // ─── Accordion item ───────────────────────────────────────────
 
 function AccordionItem({
-  qKey, aKey, colors, t,
-}: FaqItem & { colors: AppColors; t: (k: string) => string }) {
+  qKey, aKey, colors, t, isLast,
+}: FaqItem & { colors: AppColors; t: (k: string) => string; isLast: boolean }) {
   const [open, setOpen] = useState(false);
   const st = accStyles(colors);
 
@@ -106,7 +106,7 @@ function AccordionItem({
   };
 
   return (
-    <View style={st.item}>
+    <View style={[st.item, isLast && st.itemLast]}>
       <TouchableOpacity style={st.qRow} onPress={toggle} activeOpacity={0.75}>
         <Text style={st.qText}>{t(qKey)}</Text>
         <Text style={st.arrow}>{open ? '▲' : '▼'}</Text>
@@ -122,6 +122,7 @@ function accStyles(colors: AppColors) {
       borderBottomWidth: 1, borderBottomColor: colors.border,
       paddingVertical: 14,
     },
+    itemLast: { borderBottomWidth: 0 },
     qRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
     qText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20, textAlign: 'right' },
     arrow: { fontSize: 10, color: colors.textMuted, marginTop: 4 },
@@ -134,7 +135,7 @@ function accStyles(colors: AppColors) {
 export default function HelpCenterScreen() {
   const { colors }        = useTheme();
   const { t }             = useLanguage();
-  const { contentPad }    = useInsets();
+  const { headerPad, contentPad } = useInsets();
   const router            = useRouter();
   const { role: roleParam } = useLocalSearchParams<{ role?: string }>();
   const role = (roleParam === 'provider' ? 'provider' : 'client') as 'client' | 'provider';
@@ -170,7 +171,7 @@ export default function HelpCenterScreen() {
     <View style={st.root}>
 
       {/* Header */}
-      <View style={st.header}>
+      <View style={[st.header, { paddingTop: headerPad }]}>
         <TouchableOpacity onPress={() => router.back()} style={st.backBtn} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
           <Text style={st.backText}>‹ {t('common.back')}</Text>
         </TouchableOpacity>
@@ -218,13 +219,14 @@ export default function HelpCenterScreen() {
               <Text style={st.sectionTitle}>{t(section.titleKey)}</Text>
             </View>
             <View style={st.sectionCard}>
-              {section.items.map(item => (
+              {section.items.map((item, idx) => (
                 <AccordionItem
                   key={item.qKey}
                   qKey={item.qKey}
                   aKey={item.aKey}
                   colors={colors}
                   t={t}
+                  isLast={idx === section.items.length - 1}
                 />
               ))}
             </View>
@@ -279,7 +281,7 @@ function styles(colors: AppColors) {
 
     header: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingHorizontal: 20, paddingTop: 56, paddingBottom: 16,
+      paddingHorizontal: 20, paddingBottom: 16,
       borderBottomWidth: 1, borderBottomColor: colors.border,
     },
     backBtn:     {},
@@ -297,7 +299,7 @@ function styles(colors: AppColors) {
     searchInput: { flex: 1, fontSize: 14, color: colors.textPrimary, textAlign: 'right' },
     clearBtn:    { fontSize: 14, color: colors.textMuted, fontWeight: '700' },
 
-    content: { paddingHorizontal: 16, paddingTop: 4 },
+    content: { paddingHorizontal: 16, paddingTop: 12 },
 
     emptyWrap:  { alignItems: 'center', paddingVertical: 60 },
     emptyIcon:  { fontSize: 40, marginBottom: 12 },
@@ -311,7 +313,7 @@ function styles(colors: AppColors) {
     sectionCard: {
       backgroundColor: colors.surface, borderRadius: 16,
       borderWidth: 1, borderColor: colors.border,
-      paddingHorizontal: 16,
+      paddingHorizontal: 16, paddingBottom: 4,
     },
 
     actionsWrap: { gap: 10, marginTop: 8, marginBottom: 20 },
