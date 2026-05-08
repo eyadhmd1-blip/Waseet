@@ -31,7 +31,7 @@ export function useUnreadNotifCount() {
       userId = session.user.id;
 
       const channel = supabase
-        .channel(`notif_count_${userId}`)
+        .channel(`notif_count_${userId}_${Date.now()}`)
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
