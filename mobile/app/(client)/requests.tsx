@@ -78,7 +78,7 @@ export default function ClientRequests() {
   const { colors, isDark }        = useTheme();
   const { tab: tabParam }         = useLocalSearchParams<{ tab?: string }>();
 
-  const [requests,         setRequests]         = useState<ServiceRequest[]>([]);
+  const [allRequests,      setAllRequests]      = useState<ServiceRequest[]>([]);
   const [filter,           setFilter]           = useState<Filter>('all');
   const [loading,          setLoading]          = useState(true);
   const [refreshing,       setRefreshing]       = useState(false);
@@ -127,29 +127,25 @@ export default function ClientRequests() {
     monthly:  t('requests.freqMonthly'),
   };
 
-  // ── Data loading ─────────────────────────────────────────────
+  // ── Data loading — always fetch all, filter client-side ──────
   const load = useCallback(async () => {
     try {
       const { data: { session: _ses } } = await supabase.auth.getSession();
       const user = _ses?.user;
       if (!user) { setLoading(false); return; }
 
-      let query = supabase
+      const { data } = await supabase
         .from('requests')
         .select('*, category:service_categories(name_ar, name_en, icon), bids_count:bids(count)')
         .eq('client_id', user.id)
+        .not('status', 'eq', 'cancelled')
         .order('created_at', { ascending: false });
 
-      if (filter === 'open')    query = query.in('status', ['open', 'reviewing']);
-      else if (filter === 'all') query = query.not('status', 'eq', 'cancelled');
-      else                       query = query.eq('status', filter);
-
-      const { data } = await query;
-      if (data) setRequests(data);
+      if (data) setAllRequests(data);
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);  // no [filter] dependency — filter is applied client-side
 
   const loadContracts = useCallback(async () => {
     try {
@@ -195,10 +191,22 @@ export default function ClientRequests() {
     return t(`categories.${item.category_slug}`, item.category_slug);
   };
 
-  const openCount = useMemo(
-    () => requests.filter(r => r.status === 'open' || r.status === 'reviewing').length,
-    [requests],
-  );
+  // ── Client-side filter + per-chip counts ─────────────────────
+  const filteredRequests = useMemo(() => {
+    if (filter === 'all')         return allRequests;
+    if (filter === 'open')        return allRequests.filter(r => r.status === 'open' || r.status === 'reviewing');
+    return allRequests.filter(r => r.status === filter);
+  }, [allRequests, filter]);
+
+  const counts = useMemo<Record<Filter, number>>(() => ({
+    all:         allRequests.length,
+    open:        allRequests.filter(r => r.status === 'open' || r.status === 'reviewing').length,
+    in_progress: allRequests.filter(r => r.status === 'in_progress').length,
+    completed:   allRequests.filter(r => r.status === 'completed').length,
+    expired:     allRequests.filter(r => r.status === 'expired').length,
+  }), [allRequests]);
+
+  const openCount = counts.open;
 
   // ── Request Card ─────────────────────────────────────────────
   const renderItem = ({ item }: { item: ServiceRequest }) => {
@@ -378,6 +386,7 @@ export default function ClientRequests() {
             {FILTERS.map(f => {
               const active     = filter === f.key;
               const chipAccent = FILTER_ACCENT[f.key];
+              const count      = counts[f.key];
               return (
                 <TouchableOpacity
                   key={f.key}
@@ -393,6 +402,19 @@ export default function ClientRequests() {
                   ]}>
                     {f.label}
                   </Text>
+                  {count > 0 && (
+                    <View style={[
+                      styles.chipCount,
+                      { backgroundColor: active ? chipAccent : colors.border },
+                    ]}>
+                      <Text style={[
+                        styles.chipCountText,
+                        { color: active ? (isDark ? '#000' : '#fff') : colors.textMuted },
+                      ]}>
+                        {count}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -408,7 +430,7 @@ export default function ClientRequests() {
           </View>
         ) : (
           <FlatList
-            data={requests}
+            data={filteredRequests}
             keyExtractor={item => item.id}
             renderItem={renderItem}
             contentContainerStyle={styles.listContent}
@@ -417,19 +439,40 @@ export default function ClientRequests() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
             }
             ListEmptyComponent={
-              <View style={styles.empty}>
-                <View style={styles.emptyIconWrap}>
-                  <Text style={styles.emptyIcon}>📋</Text>
+              filter === 'all' ? (
+                <View style={styles.empty}>
+                  <View style={styles.emptyIconWrap}>
+                    <Text style={styles.emptyIcon}>📋</Text>
+                  </View>
+                  <Text style={styles.emptyTitle}>{t('requests.noRequests')}</Text>
+                  <Text style={styles.emptyDesc}>{t('requests.noRequestsDesc')}</Text>
+                  <TouchableOpacity
+                    style={styles.emptyBtn}
+                    onPress={() => router.push('/(client)/new-request')}
+                  >
+                    <Text style={styles.emptyBtnText}>{t('requests.emptyBtn')}</Text>
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.emptyTitle}>{t('requests.noRequests')}</Text>
-                <Text style={styles.emptyDesc}>{t('requests.noRequestsDesc')}</Text>
-                <TouchableOpacity
-                  style={styles.emptyBtn}
-                  onPress={() => router.push('/(client)/new-request')}
-                >
-                  <Text style={styles.emptyBtnText}>{t('requests.emptyBtn')}</Text>
-                </TouchableOpacity>
-              </View>
+              ) : (
+                <View style={styles.empty}>
+                  <View style={styles.emptyIconWrap}>
+                    <Text style={styles.emptyIcon}>🔍</Text>
+                  </View>
+                  <Text style={styles.emptyTitle}>
+                    {t('requests.noRequestsFiltered', {
+                      label: FILTERS.find(f => f.key === filter)?.label ?? '',
+                    })}
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.emptyBtn, { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.accent }]}
+                    onPress={() => setFilter('all')}
+                  >
+                    <Text style={[styles.emptyBtnText, { color: colors.accent }]}>
+                      {t('requests.showAll')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )
             }
           />
         )
@@ -519,14 +562,26 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
       gap:               8,
     },
     filterChip: {
-      paddingHorizontal: 16,
+      paddingHorizontal: 14,
       paddingVertical:   8,
       borderRadius:      20,
       backgroundColor:   colors.surface,
       borderWidth:       1.5,
       borderColor:       colors.border,
+      flexDirection:     'row',
+      alignItems:        'center',
+      gap:               6,
     },
     filterText: { fontSize: 13, color: colors.textSecondary },
+    chipCount: {
+      minWidth:          18,
+      height:            18,
+      borderRadius:      9,
+      alignItems:        'center',
+      justifyContent:    'center',
+      paddingHorizontal: 4,
+    },
+    chipCountText: { fontSize: 10, fontWeight: '700' },
 
     // ── List
     listContent: { paddingHorizontal: H_PAD, paddingBottom: 32, gap: 10 },

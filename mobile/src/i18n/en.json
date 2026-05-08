@@ -137,6 +137,8 @@
     "biddingClosed": "Bidding closed",
     "bidsOf": "{{count}} of {{max}} bids",
     "emptyBtn": "Post your first request",
+    "noRequestsFiltered": "No {{label}} requests",
+    "showAll": "Show all",
     "bidCount_one": "{{count}} bid",
     "bidCount_other": "{{count}} bids",
     "detailTitle": "Request Details",

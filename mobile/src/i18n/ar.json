@@ -137,6 +137,8 @@
     "biddingClosed": "أُغلق قبول العروض",
     "bidsOf": "{{count}} من {{max}} عروض",
     "emptyBtn": "انشر طلبك الأول",
+    "noRequestsFiltered": "لا توجد طلبات {{label}}",
+    "showAll": "عرض الكل",
     "bidCount_zero": "لا توجد عروض",
     "bidCount_one": "{{count}} عرض",
     "bidCount_two": "عرضان",
