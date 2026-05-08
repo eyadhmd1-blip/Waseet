@@ -36,6 +36,13 @@ type RequestWithMeta = ServiceRequest & {
   bids_count?: { count: number }[];
 };
 
+type BidMeta = {
+  amount: number;
+  bidId: string;
+  is_boosted: boolean;
+  boost_expires_at: string | null;
+};
+
 // ─── Urgent Countdown ────────────────────────────────────────
 
 function UrgentCountdown({ expiresAt }: { expiresAt: string }) {
@@ -63,6 +70,27 @@ function UrgentCountdown({ expiresAt }: { expiresAt: string }) {
       </Text>
     </View>
   );
+}
+
+// ─── Boost Countdown ─────────────────────────────────────────
+
+function BoostCountdown({ expiresAt }: { expiresAt: string }) {
+  const { t } = useLanguage();
+  const [rem, setRem] = useState(() => Math.max(0, new Date(expiresAt).getTime() - Date.now()));
+
+  useEffect(() => {
+    const iv = setInterval(() => setRem(Math.max(0, new Date(expiresAt).getTime() - Date.now())), 60000);
+    return () => clearInterval(iv);
+  }, [expiresAt]);
+
+  if (rem <= 0) return <Text style={{ fontSize: 11, color: '#9CA3AF' }}>{t('providerFeed.boostExpired')}</Text>;
+
+  const totalMins = Math.floor(rem / 60000);
+  const h = Math.floor(totalMins / 60);
+  const m = totalMins % 60;
+  const timeStr = h > 0 ? `${h}h ${m}m` : `${m}m`;
+
+  return <Text style={{ fontSize: 11, fontWeight: '700', color: '#EAB308' }}>{t('providerFeed.boostCountdown', { time: timeStr })}</Text>;
 }
 
 function createUrgentStyles(colors: AppColors, isRTL = false) {
@@ -394,18 +422,20 @@ function RequestCard({
   item,
   index,
   isLocked,
-  myBidAmount,
+  myBidMeta,
   entranceAnim,
   onBidPress,
   onUrgentAccept,
+  onBoostPress,
 }: {
   item: RequestWithMeta;
   index: number;
   isLocked: boolean;
-  myBidAmount?: number;
+  myBidMeta?: BidMeta;
   entranceAnim: Animated.Value;
   onBidPress: () => void;
   onUrgentAccept: () => void;
+  onBoostPress?: () => void;
 }) {
   const { colors } = useTheme();
   const { t, lang, isRTL } = useLanguage();
@@ -451,12 +481,20 @@ function RequestCard({
           </View>
         )}
 
-        {/* Submitted bid banner */}
-        {myBidAmount !== undefined && (
+        {/* Submitted bid banner + boost CTA */}
+        {myBidMeta !== undefined && (
           <View style={styles.submittedBanner}>
             <Text style={styles.submittedBannerText}>
-              {t('providerFeed.submittedBanner', { amount: myBidAmount })}
+              {t('providerFeed.submittedBanner', { amount: myBidMeta.amount })}
             </Text>
+            {myBidMeta.is_boosted && myBidMeta.boost_expires_at &&
+             new Date(myBidMeta.boost_expires_at) > new Date() ? (
+              <BoostCountdown expiresAt={myBidMeta.boost_expires_at} />
+            ) : !myBidMeta.is_boosted ? (
+              <TouchableOpacity style={styles.boostBannerBtn} onPress={onBoostPress} activeOpacity={0.8}>
+                <Text style={styles.boostBannerBtnText}>{t('providerFeed.boostBtn')}</Text>
+              </TouchableOpacity>
+            ) : null}
           </View>
         )}
 
@@ -517,7 +555,7 @@ function RequestCard({
             </Text>
           )}
 
-          {myBidAmount !== undefined ? (
+          {myBidMeta !== undefined ? (
             <View style={styles.submittedChip}>
               <Text style={styles.submittedChipText}>{t('providerFeed.submittedChip')}</Text>
             </View>
@@ -911,8 +949,10 @@ export default function ProviderFeed() {
   const { count: notifCount } = useUnreadNotifCount();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
   const [requests, setRequests]   = useState<RequestWithMeta[]>([]);
-  // Map<request_id, bid_amount> — tracks every request this provider has already bid on
-  const [myBidAmounts, setMyBidAmounts] = useState<Map<string, number>>(new Map());
+  // Map<request_id, BidMeta> — tracks every request this provider has already bid on
+  const [myBidAmounts, setMyBidAmounts] = useState<Map<string, BidMeta>>(new Map());
+  const [boostModal, setBoostModal] = useState<{ bidMeta: BidMeta; requestId: string } | null>(null);
+  const [boosting, setBoosting] = useState(false);
   const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [catFilter, setCatFilter] = useState<string>('all');
@@ -1028,14 +1068,14 @@ export default function ProviderFeed() {
           .order('created_at', { ascending: false })
           .limit(20),
         supabase.rpc('get_provider_demo', { p_provider_id: authUser.id }),
-        supabase.from('bids').select('request_id, amount').eq('provider_id', authUser.id),
+        supabase.from('bids').select('id, request_id, amount, is_boosted, boost_expires_at').eq('provider_id', authUser.id).eq('status', 'pending'),
       ]);
 
       if (providerData)  setProvider(providerData);
       if (requestsData)  setRequests(requestsData);
       if (contractsData) setContracts(contractsData as RecurringContract[]);
       if (demoData)      setDemoStatus(demoData as DemoStatus);
-      if (myBidsData)    setMyBidAmounts(new Map(myBidsData.map((b: any) => [b.request_id, b.amount])));
+      if (myBidsData)    setMyBidAmounts(new Map(myBidsData.map((b: any) => [b.request_id, { amount: b.amount, bidId: b.id, is_boosted: b.is_boosted, boost_expires_at: b.boost_expires_at }])));
 
       runEntranceAnims(requestsData?.length ?? 0);
   
@@ -1246,7 +1286,7 @@ export default function ProviderFeed() {
     }
     const submittedId = target.id;
     setUrgentModal({ target: null, loading: false });
-    setMyBidAmounts(prev => new Map([...prev, [submittedId, premiumMin ?? 0]]));
+    setMyBidAmounts(prev => new Map([...prev, [submittedId, { amount: premiumMin ?? 0, bidId: result.bid_id ?? '', is_boosted: false, boost_expires_at: null }]]));
     supabase.functions.invoke('notify-client-new-bid', {
       body: { request_id: submittedId },
     }).catch(() => {});
@@ -1304,12 +1344,52 @@ export default function ProviderFeed() {
     const submittedId     = target.id;
     const submittedAmount = amount;
     setBidModal({ target: null, amount: '', note: '', loading: false });
-    setMyBidAmounts(prev => new Map([...prev, [submittedId, submittedAmount]]));
+    setMyBidAmounts(prev => new Map([...prev, [submittedId, { amount: submittedAmount, bidId: result.bid_id ?? '', is_boosted: false, boost_expires_at: null }]]));
     supabase.functions.invoke('notify-client-new-bid', {
       body: { request_id: submittedId },
     }).catch(() => {});
     Alert.alert(t('providerFeed.successBidTitle'), t('providerFeed.successBidMsg'));
     load();
+  };
+
+  const handleBoost = async () => {
+    if (!boostModal || !provider) return;
+    const { bidMeta, requestId } = boostModal;
+    setBoosting(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    const { data, error } = await supabase.rpc('boost_bid', {
+      p_bid_id:      bidMeta.bidId,
+      p_provider_id: session!.user.id,
+    });
+    setBoosting(false);
+
+    if (error) { Alert.alert(t('common.error'), error.message); setBoostModal(null); return; }
+    const result = data as { error?: string; success?: boolean; boost_expires_at?: string };
+
+    if (result?.error) {
+      const errKey: Record<string, string> = {
+        ALREADY_BOOSTED:   'boostErrAlreadyBoosted',
+        BOOST_LIMIT_REACHED: 'boostErrLimitReached',
+        NO_CREDITS:        'boostErrNoCredits',
+        BID_NOT_PENDING:   'boostErrNotPending',
+      };
+      Alert.alert(t('common.error'), t(`providerFeed.${errKey[result.error] ?? 'boostErrNoCredits'}`));
+      setBoostModal(null);
+      return;
+    }
+
+    // Optimistically update local state
+    setMyBidAmounts(prev => {
+      const updated = new Map(prev);
+      updated.set(requestId, {
+        ...bidMeta,
+        is_boosted: true,
+        boost_expires_at: result.boost_expires_at ?? null,
+      });
+      return updated;
+    });
+    setBoostModal(null);
+    Alert.alert(t('providerFeed.boostSuccessTitle'), t('providerFeed.boostSuccessMsg'));
   };
 
   const submitContractBid = async () => {
@@ -1490,18 +1570,22 @@ export default function ProviderFeed() {
             onProfile={() => router.push('/(provider)/profile' as any)}
           />
         }
-        renderItem={({ item, index }) => (
-          <RequestCard
-            key={item.id}
-            item={item}
-            index={index}
-            isLocked={!item.is_urgent && !provider?.is_subscribed && index > 0}
-            myBidAmount={myBidAmounts.get(item.id)}
-            entranceAnim={getCardAnim(Math.min(index, MAX_CARDS - 1))}
-            onBidPress={() => handleBidPress(item, index)}
-            onUrgentAccept={() => setUrgentModal(prev => ({ ...prev, target: item }))}
-          />
-        )}
+        renderItem={({ item, index }) => {
+          const bidMeta = myBidAmounts.get(item.id);
+          return (
+            <RequestCard
+              key={item.id}
+              item={item}
+              index={index}
+              isLocked={!item.is_urgent && !provider?.is_subscribed && index > 0}
+              myBidMeta={bidMeta}
+              entranceAnim={getCardAnim(Math.min(index, MAX_CARDS - 1))}
+              onBidPress={() => handleBidPress(item, index)}
+              onUrgentAccept={() => setUrgentModal(prev => ({ ...prev, target: item }))}
+              onBoostPress={bidMeta ? () => setBoostModal({ bidMeta, requestId: item.id }) : undefined}
+            />
+          );
+        }}
       />
 
       {/* ── Bid Modal ─────────────────────────────────────────── */}
@@ -1633,6 +1717,51 @@ export default function ProviderFeed() {
             </View>
           </View>
         </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Boost Modal ──────────────────────────────────────── */}
+      <Modal visible={!!boostModal} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.boostSheet}>
+            <Text style={styles.boostSheetTitle}>{t('providerFeed.boostSheetTitle')}</Text>
+            <Text style={styles.boostSheetDesc}>{t('providerFeed.boostSheetDesc')}</Text>
+
+            <View style={styles.boostCostRow}>
+              <Text style={styles.boostCostLabel}>
+                {provider?.subscription_tier === 'premium'
+                  ? t('providerFeed.boostSheetCostFree')
+                  : t('providerFeed.boostSheetCost')}
+              </Text>
+              {provider?.subscription_tier !== 'premium' && (
+                <Text style={styles.boostCostValue}>
+                  {t('providerFeed.boostSheetCreditsAfter', {
+                    count: Math.max(0, (provider?.subscription_credits ?? 0) - 1),
+                  })}
+                </Text>
+              )}
+            </View>
+
+            <View style={styles.boostBtns}>
+              <TouchableOpacity
+                style={styles.boostCancelBtn}
+                onPress={() => setBoostModal(null)}
+                disabled={boosting}
+              >
+                <Text style={styles.boostCancelText}>{t('providerFeed.boostSheetCancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.boostConfirmBtn, boosting && styles.btnDisabled]}
+                onPress={handleBoost}
+                disabled={boosting}
+              >
+                {boosting
+                  ? <ActivityIndicator color="#000" size="small" />
+                  : <Text style={styles.boostConfirmText}>{t('providerFeed.boostSheetConfirm')}</Text>
+                }
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* ── Upsell Modal (animated) ───────────────────────────── */}
@@ -1893,19 +2022,39 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   bidBtnTextLocked: { color: colors.textMuted },
 
   submittedBanner: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: 'rgba(16,185,129,0.1)',
     borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
     marginBottom: 10,
     borderWidth: 1, borderColor: 'rgba(16,185,129,0.25)',
   },
-  submittedBannerText: { fontSize: 12, color: '#10B981', fontWeight: '700', textAlign: 'auto' as const },
+  submittedBannerText: { fontSize: 12, color: '#10B981', fontWeight: '700', flex: 1 },
   submittedChip: {
     backgroundColor: 'rgba(16,185,129,0.12)',
     borderRadius: 10, paddingHorizontal: 14, paddingVertical: 7,
     borderWidth: 1, borderColor: 'rgba(16,185,129,0.30)',
   },
   submittedChipText: { fontSize: 12, fontWeight: '700', color: '#10B981' },
+
+  // ── Boost
+  boostBannerBtn: {
+    backgroundColor: 'rgba(234,179,8,0.15)',
+    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4,
+    borderWidth: 1, borderColor: 'rgba(234,179,8,0.40)',
+  },
+  boostBannerBtnText: { fontSize: 11, fontWeight: '700', color: '#EAB308' },
+  boostCountdownText: { fontSize: 11, fontWeight: '700', color: '#EAB308' },
+  boostSheet: { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 36 },
+  boostSheetTitle: { fontSize: 20, fontWeight: '700', color: colors.textPrimary, textAlign: ta, marginBottom: 8 },
+  boostSheetDesc: { fontSize: 14, color: colors.textMuted, textAlign: ta, lineHeight: 22, marginBottom: 20 },
+  boostCostRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
+  boostCostLabel: { fontSize: 13, color: colors.textSecondary },
+  boostCostValue: { fontSize: 15, fontWeight: '700', color: '#EAB308' },
+  boostBtns: { flexDirection: 'row', gap: 12, marginTop: 20 },
+  boostCancelBtn: { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+  boostCancelText: { fontSize: 15, color: colors.textSecondary },
+  boostConfirmBtn: { flex: 2, backgroundColor: '#EAB308', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
+  boostConfirmText: { fontSize: 15, fontWeight: '700', color: '#000' },
 
   // ── Modals
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },

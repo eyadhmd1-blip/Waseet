@@ -25,6 +25,8 @@ type BidWithProvider = Bid & {
     is_available: boolean;
     user: { full_name: string; city: string } | null;
   };
+  is_boosted:       boolean;
+  boost_expires_at: string | null;
 };
 
 type RequestWithMeta = ServiceRequest & {
@@ -85,7 +87,7 @@ export default function RequestDetail() {
         supabase
           .from('bids')
           .select(`
-            *,
+            *, is_boosted, boost_expires_at,
             provider:providers(
               id, score, reputation_tier, badge_verified, lifetime_jobs, is_available,
               user:users(full_name, city)
@@ -256,11 +258,19 @@ export default function RequestDetail() {
   }
 
   const statusColor  = getStatusColors(colors)[request.status];
-  const visibleBids  = [...bids.filter(b => b.status === 'pending' || b.status === 'accepted')]
-    .sort((a, b) => sortBy === 'score'
-      ? b.provider.score - a.provider.score
-      : a.amount - b.amount,
-    );
+  const now = Date.now();
+  const isBoostedActive = (b: BidWithProvider) =>
+    b.is_boosted && !!b.boost_expires_at && new Date(b.boost_expires_at).getTime() > now;
+
+  const visibleBids = [...bids.filter(b => b.status === 'pending' || b.status === 'accepted')]
+    .sort((a, b) => {
+      const aBoosted = isBoostedActive(a) ? 1 : 0;
+      const bBoosted = isBoostedActive(b) ? 1 : 0;
+      if (bBoosted !== aBoosted) return bBoosted - aBoosted; // boosted first
+      return sortBy === 'score'
+        ? b.provider.score - a.provider.score
+        : a.amount - b.amount;
+    });
   const catName      = lang === 'ar'
     ? (request.category?.name_ar ?? request.category_slug)
     : (request.category?.name_en ?? request.category?.name_ar ?? request.category_slug);
@@ -404,6 +414,7 @@ export default function RequestDetail() {
                 <BidCard
                   key={bid.id}
                   bid={bid}
+                  isBoosted={isBoostedActive(bid)}
                   onAccept={() => setConfirmBid(bid)}
                   onReport={() => { setReportTarget(bid); setReportType(''); }}
                   onViewProfile={() => router.push({
@@ -629,11 +640,13 @@ export default function RequestDetail() {
 
 function BidCard({
   bid,
+  isBoosted,
   onAccept,
   onReport,
   onViewProfile,
 }: {
   bid: BidWithProvider;
+  isBoosted: boolean;
   onAccept: () => void;
   onReport: () => void;
   onViewProfile: () => void;
@@ -646,7 +659,14 @@ function BidCard({
   const noteLines = noteExpanded ? undefined : 3;
 
   return (
-    <View style={bidStyles.card}>
+    <View style={[bidStyles.card, isBoosted && bidStyles.cardBoosted]}>
+      {/* Boost badge */}
+      {isBoosted && (
+        <View style={bidStyles.boostBadge}>
+          <Text style={bidStyles.boostBadgeText}>{t('providerFeed.boostActive')}</Text>
+        </View>
+      )}
+
       {/* Provider row — tappable to open profile */}
       <View style={bidStyles.providerRow}>
         <TouchableOpacity
@@ -850,6 +870,9 @@ function createBidStyles(colors: AppColors, isRTL: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   card:         { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+  cardBoosted:  { borderColor: '#EAB308', borderWidth: 1.5, backgroundColor: 'rgba(234,179,8,0.04)' },
+  boostBadge:   { flexDirection: 'row', alignSelf: 'flex-end', backgroundColor: 'rgba(234,179,8,0.15)', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3, marginBottom: 8, borderWidth: 1, borderColor: 'rgba(234,179,8,0.40)' },
+  boostBadgeText: { fontSize: 11, fontWeight: '700', color: '#EAB308' },
   providerRow:  { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   providerLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar:       { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },

@@ -26,6 +26,7 @@ async function getReportData() {
     { data: requests30 },
     { data: usersAll },
     { data: contracts },
+    { data: boosts30 },
   ] = await Promise.all([
     supabaseAdmin
       .from('providers')
@@ -42,6 +43,11 @@ async function getReportData() {
       .from('recurring_contracts')
       .select('status, price_per_visit, frequency, duration_months, created_at')
       .gte('created_at', thirtyDaysAgo),
+    supabaseAdmin
+      .from('bids')
+      .select('is_boosted, boosted_at, provider:providers(subscription_tier)')
+      .eq('is_boosted', true)
+      .gte('boosted_at', thirtyDaysAgo),
   ]);
 
   return {
@@ -49,11 +55,12 @@ async function getReportData() {
     requests30: requests30 ?? [],
     usersAll:   usersAll   ?? [],
     contracts:  contracts  ?? [],
+    boosts30:   boosts30   ?? [],
   };
 }
 
 export default async function ReportsPage() {
-  const { providers, requests30, usersAll, contracts } = await getReportData();
+  const { providers, requests30, usersAll, contracts, boosts30 } = await getReportData();
 
   // ── Subscription revenue ──────────────────────────────────────────────────
   const subCounts: Record<string, number> = { basic: 0, pro: 0, premium: 0 };
@@ -111,6 +118,13 @@ export default async function ReportsPage() {
         s + ((r.ai_suggested_price_min + r.ai_suggested_price_max) / 2), 0) / priced.length)
     : 0;
 
+  // ── Bid Boost metrics (last 30 days) ─────────────────────────────────────
+  const totalBoosts   = boosts30.length;
+  const freeBoosts    = boosts30.filter((b: any) => b.provider?.subscription_tier === 'premium').length;
+  const paidBoosts    = totalBoosts - freeBoosts;
+  // avg credit value ≈ 0.25 JOD (basic 5/20=0.25, pro 12/50=0.24)
+  const boostRevEst   = parseFloat((paidBoosts * 0.25).toFixed(2));
+
   return (
     <div className="p-6 space-y-6">
 
@@ -121,10 +135,11 @@ export default async function ReportsPage() {
       </div>
 
       {/* KPI Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {[
           { label: 'إيراد الاشتراكات / شهر', value: fmtMoney(monthlyRevenue), sub: `${totalSubscribed} مشترك`, cls: 'text-amber-400' },
           { label: 'إيراد العقود / شهر (تقديري)', value: fmtMoney(contractRevEst), sub: `${activeContracts.length} عقد نشط`, cls: 'text-emerald-400' },
+          { label: 'تعزيزات العروض / شهر', value: String(totalBoosts), sub: `${paidBoosts} مدفوع · ${freeBoosts} مجاني (نخبة)`, cls: 'text-yellow-400' },
           { label: 'طلبات مكتملة', value: `${completionPct}%`, sub: `${completedReqs} من ${requests30.length}`, cls: 'text-sky-400' },
           { label: 'متوسط سعر الطلب', value: avgPrice ? fmtMoney(avgPrice) : '—', sub: `${priced.length} طلب بسعر مقترح`, cls: 'text-violet-400' },
         ].map(({ label, value, sub, cls }) => (
@@ -258,6 +273,30 @@ export default async function ReportsPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* Bid Boost analytics */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <h2 className="text-slate-200 font-semibold mb-4">تعزيزات العروض — آخر 30 يوم</h2>
+        {totalBoosts === 0 ? (
+          <p className="text-slate-600 text-sm text-center py-4">لا توجد تعزيزات بعد</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex flex-col items-end p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+              <span className="text-yellow-400 font-bold text-2xl">⚡ {totalBoosts}</span>
+              <span className="text-slate-400 text-sm mt-1">إجمالي التعزيزات</span>
+            </div>
+            <div className="flex flex-col items-end p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+              <span className="text-emerald-400 font-bold text-2xl">{paidBoosts}</span>
+              <span className="text-slate-400 text-sm mt-1">تعزيزات مدفوعة (1 رصيد/تعزيز)</span>
+              <span className="text-slate-500 text-xs mt-0.5">~{fmtMoney(boostRevEst)} (تقديري)</span>
+            </div>
+            <div className="flex flex-col items-end p-4 bg-violet-500/10 border border-violet-500/20 rounded-xl">
+              <span className="text-violet-400 font-bold text-2xl">{freeBoosts}</span>
+              <span className="text-slate-400 text-sm mt-1">تعزيزات مجانية (نخبة)</span>
+            </div>
           </div>
         )}
       </div>
