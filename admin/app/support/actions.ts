@@ -87,5 +87,13 @@ export async function assignTicket(ticketId: string, adminUserId: string) {
     .update({ assigned_to: adminUserId, status: 'in_review' })
     .eq('id', ticketId);
 
+  await logAudit({
+    action:      'update_setting',
+    target_type: 'system',
+    target_id:   ticketId,
+    target_label: 'assign_ticket',
+    metadata: { assigned_to: adminUserId },
+  });
+
   revalidatePath('/support');
 }
