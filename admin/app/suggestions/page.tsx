@@ -3,18 +3,21 @@ import { SuggestionActions } from './suggestion-actions';
 
 export const dynamic = 'force-dynamic';
 
+const PAGE_SIZE = 50;
+
 type StatusFilter = 'pending' | 'approved' | 'rejected' | 'all';
 
-async function getSuggestions(status: StatusFilter) {
+async function getSuggestions(status: StatusFilter, page: number) {
   let q = supabaseAdmin
     .from('service_suggestions')
-    .select('id, user_id, service_name, category_hint, status, admin_note, created_at, reviewed_at')
+    .select('id, user_id, service_name, category_hint, status, admin_note, created_at, reviewed_at', { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(100);
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
   if (status !== 'all') q = q.eq('status', status);
-  const { data } = await q;
-  return data ?? [];
+
+  const { data, count } = await q;
+  return { rows: data ?? [], total: count ?? 0 };
 }
 
 async function getUserNames(userIds: string[]) {
@@ -24,6 +27,15 @@ async function getUserNames(userIds: string[]) {
     .select('id, full_name, role')
     .in('id', userIds);
   return Object.fromEntries((data ?? []).map((u: any) => [u.id, u]));
+}
+
+async function getCounts() {
+  const [pend, appr, rej] = await Promise.all([
+    supabaseAdmin.from('service_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabaseAdmin.from('service_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
+    supabaseAdmin.from('service_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
+  ]);
+  return { pending: pend.count ?? 0, approved: appr.count ?? 0, rejected: rej.count ?? 0 };
 }
 
 function fmtDate(iso: string) {
@@ -47,26 +59,29 @@ const STATUS_CLS: Record<string, string> = {
 export default async function SuggestionsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   const sp     = await searchParams;
   const filter = (sp.status ?? 'pending') as StatusFilter;
-  const rows   = await getSuggestions(filter);
-  const users  = await getUserNames([...new Set(rows.map((r: any) => r.user_id))]);
+  const page   = Math.max(0, parseInt(sp.page ?? '0', 10));
 
-  const counts = {
-    pending:  0,
-    approved: 0,
-    rejected: 0,
-    all:      rows.length,
-  };
-
-  const counts2 = await Promise.all([
-    supabaseAdmin.from('service_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
-    supabaseAdmin.from('service_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'approved'),
-    supabaseAdmin.from('service_suggestions').select('id', { count: 'exact', head: true }).eq('status', 'rejected'),
+  const [{ rows, total }, users, counts] = await Promise.all([
+    getSuggestions(filter, page),
+    getSuggestions(filter, page).then(async ({ rows }) => getUserNames([...new Set(rows.map((r: any) => r.user_id))])),
+    getCounts(),
   ]);
-  const [pend, appr, rej] = counts2;
+
+  // Re-fetch users after we have rows (avoid double-fetch by doing inline)
+  const userMap = await getUserNames([...new Set(rows.map((r: any) => r.user_id))]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const pageUrl = (p: number) => {
+    const params = new URLSearchParams({ status: filter, page: String(p) });
+    if (params.get('page') === '0') params.delete('page');
+    if (params.get('status') === 'pending') params.delete('status');
+    return `/suggestions?${params}`;
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -79,9 +94,9 @@ export default async function SuggestionsPage({
         </div>
         <div className="flex gap-3">
           {[
-            { label: 'قيد المراجعة', count: pend.count ?? 0,  cls: 'text-amber-400'   },
-            { label: 'تمت الموافقة', count: appr.count ?? 0,  cls: 'text-emerald-400' },
-            { label: 'مرفوض',        count: rej.count  ?? 0,  cls: 'text-red-400'     },
+            { label: 'قيد المراجعة', count: counts.pending,  cls: 'text-amber-400'   },
+            { label: 'تمت الموافقة', count: counts.approved, cls: 'text-emerald-400' },
+            { label: 'مرفوض',        count: counts.rejected, cls: 'text-red-400'     },
           ].map(({ label, count, cls }) => (
             <div key={label} className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-right">
               <div className={`text-lg font-bold ${cls}`}>{count}</div>
@@ -91,12 +106,12 @@ export default async function SuggestionsPage({
         </div>
       </div>
 
-      {/* Filter tabs */}
+      {/* Filter tabs — switching tab resets to page 0 */}
       <div className="flex gap-2" dir="rtl">
         {(['pending', 'approved', 'rejected', 'all'] as const).map(s => (
           <a
             key={s}
-            href={`?status=${s}`}
+            href={`/suggestions${s !== 'pending' ? `?status=${s}` : ''}`}
             className={`text-sm px-4 py-2 rounded-lg transition-colors ${
               filter === s
                 ? 'bg-amber-400/15 text-amber-400 border border-amber-500/30'
@@ -128,7 +143,7 @@ export default async function SuggestionsPage({
             </thead>
             <tbody className="divide-y divide-slate-800">
               {rows.map((row: any) => {
-                const user = users[row.user_id];
+                const user = userMap[row.user_id];
                 return (
                   <tr key={row.id} className="hover:bg-slate-800/40 transition-colors text-right">
                     <td className="px-5 py-3">
@@ -141,12 +156,8 @@ export default async function SuggestionsPage({
                         <p className="text-slate-600 text-xs mt-0.5">ملاحظة: {row.admin_note}</p>
                       )}
                     </td>
-                    <td className="px-5 py-3 text-slate-500 text-xs">
-                      {row.category_hint ?? '—'}
-                    </td>
-                    <td className="px-5 py-3 text-slate-500 text-xs">
-                      {fmtDate(row.created_at)}
-                    </td>
+                    <td className="px-5 py-3 text-slate-500 text-xs">{row.category_hint ?? '—'}</td>
+                    <td className="px-5 py-3 text-slate-500 text-xs">{fmtDate(row.created_at)}</td>
                     <td className="px-5 py-3">
                       <span className={`text-xs border rounded-lg px-2 py-0.5 ${STATUS_CLS[row.status]}`}>
                         {STATUS_LABEL[row.status]}
@@ -154,11 +165,7 @@ export default async function SuggestionsPage({
                     </td>
                     <td className="px-5 py-3">
                       {row.status === 'pending' ? (
-                        <SuggestionActions
-                          id={row.id}
-                          userId={row.user_id}
-                          serviceName={row.service_name}
-                        />
+                        <SuggestionActions id={row.id} userId={row.user_id} serviceName={row.service_name} />
                       ) : (
                         <span className="text-slate-700 text-xs">
                           {row.reviewed_at ? fmtDate(row.reviewed_at) : '—'}
@@ -170,6 +177,21 @@ export default async function SuggestionsPage({
               })}
             </tbody>
           </table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="border-t border-slate-800 px-5 py-3 flex items-center justify-between">
+              <span className="text-slate-500 text-xs">صفحة {page + 1} من {totalPages} · {total} اقتراح</span>
+              <div className="flex gap-2">
+                {page > 0 && (
+                  <a href={pageUrl(page - 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
+                )}
+                {page < totalPages - 1 && (
+                  <a href={pageUrl(page + 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -4,6 +4,8 @@ import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
+const PAGE_SIZE = 50;
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-JO', {
     day: 'numeric', month: 'short', year: 'numeric',
@@ -27,26 +29,28 @@ const STATUS_META: Record<string, { label: string; variant: 'info' | 'warning' |
   closed:    { label: 'مغلقة',         variant: 'muted' },
 };
 
-async function getTickets(params: { status?: string; category?: string; priority?: string }) {
+async function getTickets(params: {
+  status?: string; category?: string; priority?: string; page: number;
+}) {
   let q = supabaseAdmin
     .from('support_tickets')
-    .select('id, category, priority, status, subject, rating, opened_at, resolved_at, user_id')
+    .select('id, category, priority, status, subject, rating, opened_at, resolved_at, user_id', { count: 'exact' })
     .order('priority', { ascending: false })
-    .order('opened_at', { ascending: true });
+    .order('opened_at', { ascending: true })
+    .range(params.page * PAGE_SIZE, (params.page + 1) * PAGE_SIZE - 1);
 
   if (params.status)   q = q.eq('status',   params.status);
   if (params.category) q = q.eq('category', params.category);
   if (params.priority) q = q.eq('priority', params.priority);
 
-  const { data: tickets, error: ticketsError } = await q.limit(100);
+  const { data: tickets, count, error: ticketsError } = await q;
 
   if (ticketsError) {
     console.error('[support] getTickets error:', ticketsError.message, ticketsError.details);
-    return [];
+    return { tickets: [], total: 0 };
   }
-  if (!tickets || tickets.length === 0) return [];
+  if (!tickets || tickets.length === 0) return { tickets: [], total: count ?? 0 };
 
-  // Separately fetch user info to avoid schema-cache FK join failures
   const userIds = [...new Set(tickets.map((t: any) => t.user_id).filter(Boolean))];
   const { data: users, error: usersError } = await supabaseAdmin
     .from('users')
@@ -58,8 +62,10 @@ async function getTickets(params: { status?: string; category?: string; priority
   }
 
   const userMap = Object.fromEntries((users ?? []).map((u: any) => [u.id, u]));
-
-  return tickets.map((t: any) => ({ ...t, user: userMap[t.user_id] ?? null }));
+  return {
+    tickets: tickets.map((t: any) => ({ ...t, user: userMap[t.user_id] ?? null })),
+    total: count ?? 0,
+  };
 }
 
 async function getStats() {
@@ -70,10 +76,6 @@ async function getStats() {
     supabaseAdmin.from('support_tickets').select('id', { count: 'exact', head: true }).eq('status', 'resolved'),
   ]);
 
-  results.forEach(({ error }, i) => {
-    if (error) console.error(`[support] getStats[${i}] error:`, error.message);
-  });
-
   const [{ count: open }, { count: inReview }, { count: urgent }, { count: resolved }] = results;
   return { open: open ?? 0, inReview: inReview ?? 0, urgent: urgent ?? 0, resolved: resolved ?? 0 };
 }
@@ -81,10 +83,30 @@ async function getStats() {
 export default async function SupportPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; category?: string; priority?: string }>;
+  searchParams: Promise<{ status?: string; category?: string; priority?: string; page?: string }>;
 }) {
-  const sp = await searchParams;
-  const [tickets, stats] = await Promise.all([getTickets(sp), getStats()]);
+  const sp   = await searchParams;
+  const page = Math.max(0, parseInt(sp.page ?? '0', 10));
+
+  const [{ tickets, total }, stats] = await Promise.all([
+    getTickets({ status: sp.status, category: sp.category, priority: sp.priority, page }),
+    getStats(),
+  ]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const current: Record<string, string> = {
+    status:   sp.status   ?? '',
+    category: sp.category ?? '',
+    priority: sp.priority ?? '',
+  };
+
+  const pageUrl = (p: number) => {
+    const params = new URLSearchParams({ ...current, page: String(p) });
+    // Strip empty params
+    [...params.keys()].forEach(k => { if (!params.get(k)) params.delete(k); });
+    return `/support?${params}`;
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -93,7 +115,7 @@ export default async function SupportPage({
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">الدعم الفني</h1>
-          <p className="text-slate-500 text-sm mt-0.5">إدارة تذاكر الدعم</p>
+          <p className="text-slate-500 text-sm mt-0.5">{total} تذكرة</p>
         </div>
         <div className="flex gap-3 flex-wrap">
           {[
@@ -110,7 +132,7 @@ export default async function SupportPage({
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters — submit resets to page 0 naturally */}
       <form method="get" className="flex gap-3 flex-wrap">
         <select name="status" defaultValue={sp.status ?? ''}
           className="bg-slate-900 border border-slate-700 text-slate-300 rounded-xl px-3 py-2 text-sm outline-none focus:border-amber-400/50">
@@ -213,6 +235,21 @@ export default async function SupportPage({
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t border-slate-800 px-5 py-3 flex items-center justify-between">
+            <span className="text-slate-500 text-xs">صفحة {page + 1} من {totalPages} · {total} تذكرة</span>
+            <div className="flex gap-2">
+              {page > 0 && (
+                <a href={pageUrl(page - 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
+              )}
+              {page < totalPages - 1 && (
+                <a href={pageUrl(page + 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

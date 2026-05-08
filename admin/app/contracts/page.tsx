@@ -4,6 +4,8 @@ import { ContractActions } from './contract-actions';
 
 export const dynamic = 'force-dynamic';
 
+const PAGE_SIZE = 50;
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('ar-JO', {
     day: 'numeric', month: 'short', year: 'numeric',
@@ -24,8 +26,17 @@ const STATUS_META: Record<string, { label: string; variant: 'info' | 'success' |
   cancelled: { label: 'ملغي',         variant: 'danger' },
 };
 
-async function getContracts() {
-  const { data } = await supabaseAdmin
+const FILTER_OPTIONS = [
+  { value: '',          label: 'الكل' },
+  { value: 'bidding',   label: 'بانتظار عروض' },
+  { value: 'active',    label: 'نشط' },
+  { value: 'paused',    label: 'موقوف' },
+  { value: 'completed', label: 'منتهي' },
+  { value: 'cancelled', label: 'ملغي' },
+];
+
+async function getContracts(page: number, status?: string) {
+  let q = supabaseAdmin
     .from('recurring_contracts')
     .select(`
       id, title, city, category_slug, frequency, duration_months,
@@ -33,25 +44,58 @@ async function getContracts() {
       client:users(full_name),
       contract_bids(id),
       provider:users!provider_id(full_name)
-    `)
+    `, { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(150);
-  return data ?? [];
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+  if (status) q = q.eq('status', status);
+
+  const { data, count } = await q;
+  return { contracts: data ?? [], total: count ?? 0 };
 }
 
-export default async function ContractsPage() {
-  const contracts = await getContracts();
+async function getStats() {
+  const [bidding, active, completed, activeRows] = await Promise.all([
+    supabaseAdmin.from('recurring_contracts').select('id', { count: 'exact', head: true }).eq('status', 'bidding'),
+    supabaseAdmin.from('recurring_contracts').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    supabaseAdmin.from('recurring_contracts').select('id', { count: 'exact', head: true }).eq('status', 'completed'),
+    // Fetch frequency + duration of ALL active contracts for totalVisitsScheduled
+    supabaseAdmin.from('recurring_contracts').select('frequency, duration_months').eq('status', 'active'),
+  ]);
 
-  const bidding   = contracts.filter((c: any) => c.status === 'bidding').length;
-  const active    = contracts.filter((c: any) => c.status === 'active').length;
-  const completed = contracts.filter((c: any) => c.status === 'completed').length;
+  const totalVisitsScheduled = (activeRows.data ?? []).reduce((sum: number, c: any) => {
+    const visitsPerMonth = c.frequency === 'weekly' ? 4 : c.frequency === 'biweekly' ? 2 : 1;
+    return sum + visitsPerMonth * c.duration_months;
+  }, 0);
 
-  const totalVisitsScheduled = contracts
-    .filter((c: any) => c.status === 'active')
-    .reduce((sum: number, c: any) => {
-      const visitsPerMonth = c.frequency === 'weekly' ? 4 : c.frequency === 'biweekly' ? 2 : 1;
-      return sum + visitsPerMonth * c.duration_months;
-    }, 0);
+  return {
+    bidding:  bidding.count  ?? 0,
+    active:   active.count   ?? 0,
+    completed: completed.count ?? 0,
+    totalVisitsScheduled,
+  };
+}
+
+export default async function ContractsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; page?: string }>;
+}) {
+  const sp   = await searchParams;
+  const page = Math.max(0, parseInt(sp.page ?? '0', 10));
+
+  const [{ contracts, total }, stats] = await Promise.all([
+    getContracts(page, sp.status),
+    getStats(),
+  ]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const pageUrl = (p: number) => {
+    const params = new URLSearchParams({ ...(sp.status ? { status: sp.status } : {}), page: String(p) });
+    if (params.get('page') === '0') params.delete('page');
+    return `/contracts?${params}`;
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -60,14 +104,14 @@ export default async function ContractsPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">العقود الدورية</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{contracts.length} عقد</p>
+          <p className="text-slate-500 text-sm mt-0.5">{total} عقد</p>
         </div>
         <div className="flex gap-3 flex-wrap">
           {[
-            { label: 'بانتظار عروض',    value: bidding,              cls: 'text-sky-400' },
-            { label: 'نشط',              value: active,               cls: 'text-emerald-400' },
-            { label: 'منتهي',            value: completed,            cls: 'text-slate-500' },
-            { label: 'زيارات مجدولة',   value: totalVisitsScheduled, cls: 'text-amber-400' },
+            { label: 'بانتظار عروض',  value: stats.bidding,              cls: 'text-sky-400' },
+            { label: 'نشط',           value: stats.active,               cls: 'text-emerald-400' },
+            { label: 'منتهي',         value: stats.completed,            cls: 'text-slate-500' },
+            { label: 'زيارات مجدولة', value: stats.totalVisitsScheduled, cls: 'text-amber-400' },
           ].map(({ label, value, cls }) => (
             <div key={label} className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-right">
               <div className={`text-lg font-bold ${cls}`}>{value}</div>
@@ -75,6 +119,23 @@ export default async function ContractsPage() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Status filter tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {FILTER_OPTIONS.map(opt => (
+          <a
+            key={opt.value}
+            href={opt.value ? `/contracts?status=${opt.value}` : '/contracts'}
+            className={`text-sm px-4 py-2 rounded-lg transition-colors ${
+              (sp.status ?? '') === opt.value
+                ? 'bg-amber-400/15 text-amber-400 border border-amber-500/30'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            {opt.label}
+          </a>
+        ))}
       </div>
 
       {/* Table */}
@@ -100,7 +161,7 @@ export default async function ContractsPage() {
             <tbody>
               {contracts.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="text-center py-12 text-slate-600">لا توجد عقود بعد</td>
+                  <td colSpan={12} className="text-center py-12 text-slate-600">لا توجد عقود</td>
                 </tr>
               )}
               {contracts.map((c: any) => {
@@ -138,6 +199,21 @@ export default async function ContractsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="border-t border-slate-800 px-5 py-3 flex items-center justify-between">
+            <span className="text-slate-500 text-xs">صفحة {page + 1} من {totalPages} · {total} عقد</span>
+            <div className="flex gap-2">
+              {page > 0 && (
+                <a href={pageUrl(page - 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
+              )}
+              {page < totalPages - 1 && (
+                <a href={pageUrl(page + 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

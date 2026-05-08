@@ -3,23 +3,42 @@ import { ReportActions, SuspendActions } from './report-actions';
 
 export const dynamic = 'force-dynamic';
 
-async function getReports() {
-  const { data, error } = await supabaseAdmin
+const PAGE_SIZE = 25;
+
+async function getReports(page: number, status?: string) {
+  let q = supabaseAdmin
     .from('reports')
     .select(`
       id, report_type, description, status, created_at, admin_notes, context,
       reporter:users!reports_reporter_id_fkey(full_name, phone, role),
       reported:users!reports_reported_user_id_fkey(id, full_name, phone, role, is_suspended),
       request:requests(title, category_slug)
-    `)
+    `, { count: 'exact' })
     .order('created_at', { ascending: false })
-    .limit(100);
+    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+  if (status) q = q.eq('status', status);
+
+  const { data, count, error } = await q;
 
   if (error) {
     console.error('[abuse-reports] getReports failed:', error.message, error.details);
-    return { reports: [], fetchError: error.message };
+    return { reports: [], total: 0, fetchError: error.message };
   }
-  return { reports: data ?? [], fetchError: null };
+  return { reports: data ?? [], total: count ?? 0, fetchError: null };
+}
+
+async function getStats() {
+  const [pending, reviewed, resolved] = await Promise.all([
+    supabaseAdmin.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabaseAdmin.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'reviewed'),
+    supabaseAdmin.from('reports').select('id', { count: 'exact', head: true }).eq('status', 'resolved'),
+  ]);
+  return {
+    pending:  pending.count  ?? 0,
+    reviewed: reviewed.count ?? 0,
+    resolved: resolved.count ?? 0,
+  };
 }
 
 async function getTopReported() {
@@ -28,7 +47,6 @@ async function getTopReported() {
     .select('*')
     .order('total_reports', { ascending: false })
     .limit(10);
-
   return data ?? [];
 }
 
@@ -66,23 +84,45 @@ const CONTEXT_COLOR: Record<string, string> = {
   profile: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
 };
 
-export default async function AbuseReportsPage() {
-  const [{ reports, fetchError }, topReported] = await Promise.all([getReports(), getTopReported()]);
+const FILTER_OPTIONS = [
+  { value: '',          label: 'الكل' },
+  { value: 'pending',   label: 'قيد المراجعة' },
+  { value: 'reviewed',  label: 'قيد المعالجة' },
+  { value: 'resolved',  label: 'تم الحل' },
+  { value: 'dismissed', label: 'مرفوض' },
+];
 
-  const pending  = reports.filter((r: any) => r.status === 'pending').length;
-  const reviewed = reports.filter((r: any) => r.status === 'reviewed').length;
-  const resolved = reports.filter((r: any) => r.status === 'resolved').length;
+export default async function AbuseReportsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; page?: string }>;
+}) {
+  const sp   = await searchParams;
+  const page = Math.max(0, parseInt(sp.page ?? '0', 10));
+
+  const [{ reports, total, fetchError }, stats, topReported] = await Promise.all([
+    getReports(page, sp.status),
+    getStats(),
+    getTopReported(),
+  ]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  const pageUrl = (p: number) => {
+    const params = new URLSearchParams({ ...(sp.status ? { status: sp.status } : {}), page: String(p) });
+    if (!params.get('page') || params.get('page') === '0') params.delete('page');
+    return `/abuse-reports?${params}`;
+  };
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-100">البلاغات والمخالفات</h1>
-          <p className="text-slate-500 text-sm mt-0.5">بلاغات المستخدمين على السلوك المسيء</p>
+          <p className="text-slate-500 text-sm mt-0.5">{total} بلاغ</p>
         </div>
       </div>
 
-      {/* Fetch error banner — visible only when DB query fails */}
       {fetchError && (
         <div className="bg-red-950/40 border border-red-500/30 rounded-2xl p-4 text-right">
           <div className="text-red-400 font-semibold text-sm mb-1">⚠️ خطأ في جلب البلاغات</div>
@@ -93,9 +133,9 @@ export default async function AbuseReportsPage() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'بلاغات معلّقة', value: pending,  color: 'text-amber-400' },
-          { label: 'قيد المعالجة',  value: reviewed, color: 'text-sky-400' },
-          { label: 'محلولة',         value: resolved, color: 'text-emerald-400' },
+          { label: 'بلاغات معلّقة', value: stats.pending,  color: 'text-amber-400' },
+          { label: 'قيد المعالجة',  value: stats.reviewed, color: 'text-sky-400' },
+          { label: 'محلولة',        value: stats.resolved, color: 'text-emerald-400' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-slate-900 border border-slate-800 rounded-2xl p-4 text-right">
             <div className={`text-3xl font-bold ${color}`}>{value}</div>
@@ -104,11 +144,28 @@ export default async function AbuseReportsPage() {
         ))}
       </div>
 
+      {/* Status filter tabs */}
+      <div className="flex gap-2 flex-wrap">
+        {FILTER_OPTIONS.map(opt => (
+          <a
+            key={opt.value}
+            href={opt.value ? `/abuse-reports?status=${opt.value}` : '/abuse-reports'}
+            className={`text-sm px-4 py-2 rounded-lg transition-colors ${
+              (sp.status ?? '') === opt.value
+                ? 'bg-amber-400/15 text-amber-400 border border-amber-500/30'
+                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+            }`}
+          >
+            {opt.label}
+          </a>
+        ))}
+      </div>
+
       {/* Top reported users */}
       {topReported.length > 0 && (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-800">
-            <h2 className="text-base font-semibold text-slate-200">الحسابات المُبلَّغ عنها</h2>
+            <h2 className="text-base font-semibold text-slate-200">الحسابات الأكثر إبلاغاً</h2>
             <p className="text-xs text-slate-500 mt-0.5">مرتبة حسب عدد البلاغات</p>
           </div>
           <div className="divide-y divide-slate-800">
@@ -121,7 +178,6 @@ export default async function AbuseReportsPage() {
                     <div className="text-slate-500 text-xs">{u.phone} · {u.role === 'provider' ? 'مزوّد' : 'طالب'}</div>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-3 shrink-0">
                   <div className="text-right">
                     <div className="text-rose-400 font-bold text-lg">{u.total_reports}</div>
@@ -151,76 +207,84 @@ export default async function AbuseReportsPage() {
         </div>
         {reports.length === 0 ? (
           <div className="p-12 text-center text-slate-600">
-            {fetchError ? 'فشل جلب البيانات — راجع الخطأ أعلاه' : 'لا توجد بلاغات بعد'}
+            {fetchError ? 'فشل جلب البيانات — راجع الخطأ أعلاه' : 'لا توجد بلاغات'}
           </div>
         ) : (
-          <div className="divide-y divide-slate-800">
-            {reports.map(report => (
-              <div key={report.id} className="p-5 space-y-3">
-                {/* Top row */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                    <span className={`text-xs px-2.5 py-1 rounded-full border ${STATUS_COLOR[report.status] ?? STATUS_COLOR.pending}`}>
-                      {STATUS_LABEL[report.status] ?? report.status}
-                    </span>
-                    <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
-                      {TYPE_LABEL[report.report_type] ?? report.report_type}
-                    </span>
-                    {(report as any).context && (
-                      <span className={`text-xs px-2.5 py-1 rounded-full border ${CONTEXT_COLOR[(report as any).context] ?? 'bg-slate-800 text-slate-400 border-slate-700'}`}>
-                        من: {CONTEXT_LABEL[(report as any).context] ?? (report as any).context}
+          <>
+            <div className="divide-y divide-slate-800">
+              {reports.map((report: any) => (
+                <div key={report.id} className="p-5 space-y-3">
+                  {/* Top row */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                      <span className={`text-xs px-2.5 py-1 rounded-full border ${STATUS_COLOR[report.status] ?? STATUS_COLOR.pending}`}>
+                        {STATUS_LABEL[report.status] ?? report.status}
                       </span>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <div className="text-slate-200 font-semibold text-sm flex items-center gap-2 justify-end">
-                      {(report.reported as any)?.is_suspended && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">موقوف</span>
+                      <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                        {TYPE_LABEL[report.report_type] ?? report.report_type}
+                      </span>
+                      {report.context && (
+                        <span className={`text-xs px-2.5 py-1 rounded-full border ${CONTEXT_COLOR[report.context] ?? 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                          من: {CONTEXT_LABEL[report.context] ?? report.context}
+                        </span>
                       )}
-                      بلاغ على: <span className="text-red-400">{(report.reported as any)?.full_name ?? '—'}</span>
                     </div>
-                    <div className="text-slate-500 text-xs mt-0.5">
-                      من: {(report.reporter as any)?.full_name ?? '—'} ·{' '}
-                      {new Date(report.created_at).toLocaleDateString('ar-JO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    <div className="text-right">
+                      <div className="text-slate-200 font-semibold text-sm flex items-center gap-2 justify-end">
+                        {(report.reported as any)?.is_suspended && (
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">موقوف</span>
+                        )}
+                        بلاغ على: <span className="text-red-400">{(report.reported as any)?.full_name ?? '—'}</span>
+                      </div>
+                      <div className="text-slate-500 text-xs mt-0.5">
+                        من: {(report.reporter as any)?.full_name ?? '—'} ·{' '}
+                        {new Date(report.created_at).toLocaleDateString('ar-JO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
                     </div>
                   </div>
+
+                  {(report.request as any)?.title && (
+                    <div className="text-xs text-slate-500 bg-slate-800/50 rounded-lg px-3 py-2 text-right">
+                      الطلب: {(report.request as any).title}
+                    </div>
+                  )}
+                  {report.description && (
+                    <p className="text-slate-400 text-sm text-right leading-relaxed">{report.description}</p>
+                  )}
+                  {report.admin_notes && (
+                    <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 text-right">
+                      <div className="text-xs text-amber-400 mb-1">ملاحظات الإدارة:</div>
+                      <p className="text-slate-300 text-sm">{report.admin_notes}</p>
+                    </div>
+                  )}
+                  {(report.status === 'pending' || report.status === 'reviewed') && (
+                    <ReportActions
+                      reportId={report.id}
+                      currentStatus={report.status}
+                      reportedUserId={(report.reported as any)?.id}
+                      isSuspended={(report.reported as any)?.is_suspended ?? false}
+                      reportedName={(report.reported as any)?.full_name ?? ''}
+                    />
+                  )}
                 </div>
+              ))}
+            </div>
 
-                {/* Request context */}
-                {(report.request as any)?.title && (
-                  <div className="text-xs text-slate-500 bg-slate-800/50 rounded-lg px-3 py-2 text-right">
-                    الطلب: {(report.request as any).title}
-                  </div>
-                )}
-
-                {/* Description */}
-                {report.description && (
-                  <p className="text-slate-400 text-sm text-right leading-relaxed">
-                    {report.description}
-                  </p>
-                )}
-
-                {/* Admin notes */}
-                {report.admin_notes && (
-                  <div className="bg-amber-500/5 border border-amber-500/20 rounded-lg p-3 text-right">
-                    <div className="text-xs text-amber-400 mb-1">ملاحظات الإدارة:</div>
-                    <p className="text-slate-300 text-sm">{report.admin_notes}</p>
-                  </div>
-                )}
-
-                {/* Actions */}
-                {(report.status === 'pending' || report.status === 'reviewed') && (
-                  <ReportActions
-                    reportId={report.id}
-                    currentStatus={report.status}
-                    reportedUserId={(report.reported as any)?.id}
-                    isSuspended={(report.reported as any)?.is_suspended ?? false}
-                    reportedName={(report.reported as any)?.full_name ?? ''}
-                  />
-                )}
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="border-t border-slate-800 px-5 py-3 flex items-center justify-between">
+                <span className="text-slate-500 text-xs">صفحة {page + 1} من {totalPages} · {total} بلاغ</span>
+                <div className="flex gap-2">
+                  {page > 0 && (
+                    <a href={pageUrl(page - 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">السابق</a>
+                  )}
+                  {page < totalPages - 1 && (
+                    <a href={pageUrl(page + 1)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition-colors">التالي</a>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     </div>
