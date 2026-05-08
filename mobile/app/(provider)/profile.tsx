@@ -6,7 +6,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES, CATEGORY_GROUPS, TIER_UPGRADE_CREDITS, ICON_MAP } from '../../src/constants/categories';
+import {
+  TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES,
+  CATEGORY_GROUPS, TIER_UPGRADE_CREDITS, ICON_MAP,
+} from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User, PortfolioItem } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -16,31 +19,133 @@ import { AppHeader } from '../../src/components/AppHeader';
 import type { AppColors } from '../../src/constants/colors';
 
 const { width: W } = Dimensions.get('window');
-const MINI_CELL    = (W - 32 - 8) / 3; // 3 cols, 16px side padding, 4px gaps
-
-// LOYALTY_MILESTONES now lives in src/constants/loyalty.ts — imported via calcLoyaltyProgress
-const LOYALTY_MILESTONES = [10, 25, 50, 100];
-
 
 const TYPE_ICON: Record<string, string> = {
   single: '🖼', before_after: '🔄', video: '🎥',
 };
 
+const LOYALTY_MILESTONES = [10, 25, 50, 100];
+
+const TIER_COLOR: Record<string, string> = {
+  new:     '#9CA3AF',
+  rising:  '#F59E0B',
+  trusted: '#3B82F6',
+  expert:  '#8B5CF6',
+  elite:   '#10B981',
+};
+
+const CAT_COLORS = [
+  '#F59E0B', '#3B82F6', '#8B5CF6', '#10B981',
+  '#EF4444', '#EC4899', '#F97316', '#06B6D4',
+];
+
+// ─── Sub-components ───────────────────────────────────────────
+
+function StatCard({
+  icon, label, value, color, colors,
+}: { icon: string; label: string; value: string; color: string; colors: AppColors }) {
+  return (
+    <View style={{
+      flex: 1,
+      backgroundColor: color + '12',
+      borderRadius: 18,
+      padding: 16,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: color + '30',
+      gap: 5,
+      minHeight: 94,
+      justifyContent: 'center',
+    }}>
+      <Text style={{ fontSize: 22 }}>{icon}</Text>
+      <Text style={{ fontSize: 21, fontWeight: '800', color: colors.textPrimary, lineHeight: 26 }}>{value}</Text>
+      <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center' }}>{label}</Text>
+    </View>
+  );
+}
+
+function SettingsRow({
+  icon, label, onPress, colors, danger = false, divider = true, right,
+}: {
+  icon: string; label: string; onPress?: () => void;
+  colors: AppColors; danger?: boolean; divider?: boolean; right?: React.ReactNode;
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={onPress ? 0.6 : 1}
+      style={{
+        flexDirection:    'row',
+        alignItems:       'center',
+        paddingHorizontal: 16,
+        paddingVertical:   13,
+        gap:               12,
+        borderBottomWidth: divider ? 1 : 0,
+        borderBottomColor: colors.border,
+      }}
+    >
+      <View style={{
+        width: 34, height: 34, borderRadius: 10,
+        backgroundColor: danger ? '#450A0A' : colors.surfaceAlt,
+        alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Text style={{ fontSize: 16 }}>{icon}</Text>
+      </View>
+      <Text style={{ flex: 1, fontSize: 14, fontWeight: '600', color: danger ? '#FCA5A5' : colors.textPrimary }}>
+        {label}
+      </Text>
+      {right ?? (onPress ? <Text style={{ fontSize: 18, color: colors.textMuted }}>›</Text> : null)}
+    </TouchableOpacity>
+  );
+}
+
+function SettingsGroup({
+  title, children, colors,
+}: { title: string; children: React.ReactNode; colors: AppColors }) {
+  return (
+    <View style={{ marginBottom: 6 }}>
+      {title ? (
+        <Text style={{
+          fontSize: 11, fontWeight: '700', color: colors.textMuted,
+          textTransform: 'uppercase', letterSpacing: 1,
+          paddingHorizontal: 20, marginBottom: 6, marginTop: 8,
+        }}>
+          {title}
+        </Text>
+      ) : null}
+      <View style={{
+        backgroundColor: colors.surface,
+        borderRadius: 18,
+        marginHorizontal: 16,
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: 'hidden',
+      }}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+// ─── Main Screen ──────────────────────────────────────────────
+
 export default function ProviderProfile() {
   const { colors, theme, setTheme } = useTheme();
-  const { t, ta, isRTL, toggleLanguage } = useLanguage();
+  const { t, isRTL, toggleLanguage } = useLanguage();
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
-  const { headerPad, contentPad } = useInsets();
+  const { contentPad } = useInsets();
   const router = useRouter();
-  const [provider, setProvider]             = useState<(Provider & { user: User }) | null>(null);
-  const [loading, setLoading]               = useState(true);
-  const [refreshing, setRefreshing]         = useState(false);
-  const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
-  const [isAvailable, setIsAvailable]       = useState(true);
-  const [urgentEnabled, setUrgentEnabled]   = useState(true);
+
+  const [provider, setProvider]               = useState<(Provider & { user: User }) | null>(null);
+  const [loading, setLoading]                 = useState(true);
+  const [refreshing, setRefreshing]           = useState(false);
+  const [portfolioItems, setPortfolioItems]   = useState<PortfolioItem[]>([]);
+  const [isAvailable, setIsAvailable]         = useState(true);
+  const [urgentEnabled, setUrgentEnabled]     = useState(true);
   const [catModalVisible, setCatModalVisible] = useState(false);
-  const [selectedCats, setSelectedCats]     = useState<string[]>([]);
-  const [savingCats, setSavingCats]         = useState(false);
+  const [selectedCats, setSelectedCats]       = useState<string[]>([]);
+  const [savingCats, setSavingCats]           = useState(false);
+  const [activeTab, setActiveTab]             = useState<'specialties' | 'portfolio'>('specialties');
 
   const load = useCallback(async () => {
     try {
@@ -49,17 +154,9 @@ export default function ProviderProfile() {
       if (!authUser) { setLoading(false); return; }
 
       const [{ data: provData }, { data: portData }] = await Promise.all([
-        supabase
-          .from('providers')
-          .select('*, user:users(*)')
-          .eq('id', authUser.id)
-          .single(),
-        supabase
-          .from('portfolio_items')
-          .select('*')
-          .eq('provider_id', authUser.id)
-          .order('created_at', { ascending: false })
-          .limit(9),
+        supabase.from('providers').select('*, user:users(*)').eq('id', authUser.id).single(),
+        supabase.from('portfolio_items').select('*').eq('provider_id', authUser.id)
+          .order('created_at', { ascending: false }).limit(12),
       ]);
 
       if (provData) {
@@ -68,20 +165,17 @@ export default function ProviderProfile() {
         setUrgentEnabled(provData.urgent_enabled ?? true);
       }
       if (portData) setPortfolioItems(portData as PortfolioItem[]);
-  
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => { load(); }, [load]);
-
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 12000);
     return () => clearTimeout(timer);
   }, []);
 
-  // ── These must live before any early return (Rules of Hooks) ──
   const { nextMilestone, progress: loyaltyProgress } = useMemo(
     () => calcLoyaltyProgress(provider?.lifetime_jobs ?? 0),
     [provider?.lifetime_jobs],
@@ -90,10 +184,10 @@ export default function ProviderProfile() {
     () => ALL_CATEGORIES.filter(c => provider?.categories?.includes(c.slug)),
     [provider?.categories],
   );
-  const { portfolioPreview, totalViews } = useMemo(() => ({
-    portfolioPreview: portfolioItems.slice(0, 8),
-    totalViews:       portfolioItems.reduce((s, i) => s + i.views_count, 0),
-  }), [portfolioItems]);
+  const totalViews = useMemo(
+    () => portfolioItems.reduce((s, i) => s + i.views_count, 0),
+    [portfolioItems],
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -125,10 +219,7 @@ export default function ProviderProfile() {
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const authUser = _ses?.user;
     if (!authUser) return;
-    const { error } = await supabase
-      .from('providers')
-      .update({ categories: updated })
-      .eq('id', authUser.id);
+    const { error } = await supabase.from('providers').update({ categories: updated }).eq('id', authUser.id);
     if (error) Alert.alert(t('common.error'), error.message);
     else load();
   };
@@ -149,19 +240,10 @@ export default function ProviderProfile() {
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const authUser = _ses?.user;
     if (!authUser) { setSavingCats(false); return; }
-
-    const { error } = await supabase
-      .from('providers')
-      .update({ categories: selectedCats })
-      .eq('id', authUser.id);
-
+    const { error } = await supabase.from('providers').update({ categories: selectedCats }).eq('id', authUser.id);
     setSavingCats(false);
-    if (error) {
-      Alert.alert(t('common.error'), error.message);
-    } else {
-      setCatModalVisible(false);
-      load(); // refresh provider data
-    }
+    if (error) Alert.alert(t('common.error'), error.message);
+    else { setCatModalVisible(false); load(); }
   };
 
   if (loading) {
@@ -170,17 +252,22 @@ export default function ProviderProfile() {
 
   if (!provider) return (
     <View style={styles.center}>
-      <Text style={{ color: colors.textSecondary, marginBottom: 16, fontSize: 15 }}>
-        {t('common.error')}
-      </Text>
+      <Text style={{ color: colors.textSecondary, marginBottom: 16, fontSize: 15 }}>{t('common.error')}</Text>
       <TouchableOpacity onPress={load} style={{ backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12 }}>
         <Text style={{ color: '#fff', fontWeight: '700' }}>{t('common.retry') ?? 'إعادة المحاولة'}</Text>
       </TouchableOpacity>
     </View>
   );
 
-  const tierMeta = TIER_META[provider.reputation_tier];
-  const plan     = SUBSCRIPTION_PLANS.find(p => p.tier === provider.subscription_tier);
+  const tierMeta         = TIER_META[provider.reputation_tier];
+  const plan             = SUBSCRIPTION_PLANS.find(p => p.tier === provider.subscription_tier);
+  const tierColor        = TIER_COLOR[provider.reputation_tier] ?? '#9CA3AF';
+  const subCredits       = provider.subscription_credits ?? 0;
+  const bonusCredits     = provider.bonus_credits ?? 0;
+  const isPremium        = plan?.is_unlimited ?? false;
+  const noCredits        = !isPremium && subCredits === 0 && provider.is_subscribed;
+  const lowCredits       = !isPremium && subCredits > 0 && subCredits <= 3 && provider.is_subscribed;
+  const creditColor      = noCredits ? '#EF4444' : lowCredits ? '#F59E0B' : tierColor;
 
   return (
     <View style={styles.container}>
@@ -191,267 +278,559 @@ export default function ProviderProfile() {
         actionIcon="settings-outline"
         onAction={() => router.push('/notification-settings')}
       />
-    <ScrollView
-      style={styles.scrollView}
-      contentContainerStyle={[styles.content, { paddingBottom: contentPad }]}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
-    >
-      {/* ── Avatar + Name + Tier ── */}
-      <View style={styles.heroCard}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>
-            {provider.user?.full_name?.charAt(0) ?? '?'}
-          </Text>
-        </View>
-        <Text style={styles.name}>{provider.user?.full_name}</Text>
-        <Text style={styles.city}>{provider.user?.city}</Text>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={{ paddingBottom: contentPad + 32 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
 
-        <View style={[styles.tierPill, { backgroundColor: tierMeta.color + '22' }]}>
-          <Text style={[styles.tierPillText, { color: tierMeta.color }]}>{tierMeta.label_ar}</Text>
-        </View>
+        {/* ══════════════════════════════════════════════════════
+            ZONE 1 — HERO
+        ══════════════════════════════════════════════════════ */}
+        <View style={[styles.heroCover, { backgroundColor: tierColor + '12' }]}>
+          {/* Decorative blobs */}
+          <View style={[styles.blob1, { backgroundColor: tierColor + '25' }]} />
+          <View style={[styles.blob2, { backgroundColor: tierColor + '18' }]} />
 
-        {provider.badge_verified && (
-          <View style={styles.verifiedBadge}>
-            <Text style={styles.verifiedText}>✓ {t('providerProfile.verified')}</Text>
-          </View>
-        )}
-      </View>
-
-      {/* ── Score + Stats ── */}
-      <View style={styles.statsRow}>
-        <StatBox label={t('dashboard.rating')}    value={provider.score > 0 ? `${provider.score.toFixed(1)} ⭐` : '—'} />
-        <StatBox label={t('dashboard.totalJobs')} value={String(provider.lifetime_jobs)} />
-        <StatBox label={t('dashboard.views')}     value={String(provider.profile_views ?? 0)} />
-        <StatBox label={t('providerProfile.statShares')}  value={String(provider.share_count ?? 0)} />
-      </View>
-
-      {/* ── Portfolio Mini Gallery ── */}
-      <View style={styles.section}>
-        <View style={[styles.sectionHeader, styles.sectionHeaderRow]}>
-          <TouchableOpacity onPress={() => router.push('/portfolio')}>
-            <Text style={styles.sectionLink}>{t('profile.portfolioManage')} ›</Text>
-          </TouchableOpacity>
-          <View style={styles.sectionTitleRow}>
-            <Text style={styles.sectionTitle}>{t('profile.portfolioMyGallery')}</Text>
-            <Text style={styles.sectionEmoji}>🖼</Text>
-          </View>
-        </View>
-
-        {portfolioItems.length === 0 ? (
-          <TouchableOpacity
-            style={styles.portfolioEmpty}
-            onPress={() => router.push('/portfolio-add')}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.portfolioEmptyIcon}>📷</Text>
-            <Text style={styles.portfolioEmptyTitle}>{t('profile.portfolioEmpty')}</Text>
-            <Text style={styles.portfolioEmptySub}>{t('profile.portfolioEmptySub')}</Text>
-            <View style={styles.portfolioEmptyBtn}>
-              <Text style={styles.portfolioEmptyBtnText}>{t('profile.portfolioAdd')}</Text>
+          {/* Avatar with tier-colored ring */}
+          <View style={[styles.avatarRing, { borderColor: tierColor + 'BB' }]}>
+            <View style={[styles.avatarInner, { backgroundColor: tierColor + '25' }]}>
+              <Text style={[styles.avatarLetter, { color: tierColor }]}>
+                {provider.user?.full_name?.charAt(0)?.toUpperCase() ?? '?'}
+              </Text>
             </View>
-          </TouchableOpacity>
-        ) : (
-          <>
-            <View style={styles.portfolioMiniStats}>
-              <Text style={styles.portfolioMiniStat}>🖼 {portfolioItems.length} {t('providerProfile.jobsDone')}</Text>
-              <Text style={styles.portfolioMiniStat}>👁 {totalViews} {t('dashboard.views')}</Text>
+          </View>
+
+          {/* Name */}
+          <Text style={styles.heroName}>{provider.user?.full_name}</Text>
+
+          {/* City + Verified */}
+          <View style={styles.heroMetaRow}>
+            {provider.user?.city ? (
+              <Text style={styles.heroCity}>📍 {provider.user.city}</Text>
+            ) : null}
+            {provider.badge_verified ? (
+              <View style={styles.verifiedPill}>
+                <Text style={styles.verifiedText}>✓ {t('providerProfile.verified')}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Tier pill + availability pill */}
+          <View style={styles.heroTagsRow}>
+            <View style={[styles.heroPill, { backgroundColor: tierColor + '20', borderColor: tierColor + '55' }]}>
+              <View style={[styles.heroPillDot, { backgroundColor: tierColor }]} />
+              <Text style={[styles.heroPillText, { color: tierColor }]}>{tierMeta.label_ar}</Text>
             </View>
+            <View style={[styles.heroPill, {
+              backgroundColor: isAvailable ? '#22C55E15' : colors.surfaceAlt,
+              borderColor: isAvailable ? '#22C55E44' : colors.border,
+            }]}>
+              <View style={[styles.heroPillDot, { backgroundColor: isAvailable ? '#22C55E' : '#6B7280' }]} />
+              <Text style={[styles.heroPillText, { color: isAvailable ? '#22C55E' : colors.textMuted }]}>
+                {isAvailable ? (isRTL ? 'مباشر' : 'Online') : (isRTL ? 'غير متاح' : 'Away')}
+              </Text>
+            </View>
+          </View>
+        </View>
 
-            {/* 3-col thumbnail grid */}
-            <View style={styles.miniGrid}>
-              {portfolioPreview.map((item) => {
-                const thumb = item.item_type === 'video'
-                  ? null
-                  : item.media_urls[0];
+        {/* ══════════════════════════════════════════════════════
+            ZONE 2 — PERFORMANCE STATS (2 × 2 grid)
+        ══════════════════════════════════════════════════════ */}
+        <View style={styles.statsGrid}>
+          <View style={styles.statsRow}>
+            <StatCard icon="⭐" label={t('dashboard.rating')}    value={provider.score > 0 ? provider.score.toFixed(1) : '—'} color="#F59E0B" colors={colors} />
+            <StatCard icon="🔨" label={t('dashboard.totalJobs')} value={String(provider.lifetime_jobs)} color={tierColor} colors={colors} />
+          </View>
+          <View style={styles.statsRow}>
+            <StatCard icon="👁" label={t('dashboard.views')}           value={String(provider.profile_views ?? 0)} color="#3B82F6" colors={colors} />
+            <StatCard icon="🔗" label={t('providerProfile.statShares')} value={String(provider.share_count   ?? 0)} color="#8B5CF6" colors={colors} />
+          </View>
+        </View>
 
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    style={[styles.miniCell, { width: MINI_CELL, height: MINI_CELL }]}
-                    onPress={() => router.push('/portfolio')}
-                    activeOpacity={0.85}
-                  >
-                    {thumb ? (
-                      <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} resizeMode="cover" />
-                    ) : (
-                      <View style={[StyleSheet.absoluteFill, styles.miniVideoPlaceholder]}>
-                        <Text style={{ fontSize: 28 }}>🎥</Text>
-                      </View>
-                    )}
-                    {/* Type badge */}
-                    <View style={styles.miniTypeBadge}>
-                      <Text style={{ fontSize: 9 }}>{TYPE_ICON[item.item_type]}</Text>
+        {/* ══════════════════════════════════════════════════════
+            ZONE 3 — SUBSCRIPTION CARD (Credit Card style)
+        ══════════════════════════════════════════════════════ */}
+        <View style={styles.sectionPad}>
+          {provider.is_subscribed && plan ? (
+            <View style={[styles.subCard, { borderColor: tierColor + '45', backgroundColor: tierColor + '0B' }]}>
+              {/* Decorative corner glow */}
+              <View style={[styles.subGlow, { backgroundColor: tierColor + '1A' }]} />
+
+              {/* Header row: plan name + price */}
+              <View style={styles.subHeaderRow}>
+                <View style={[styles.subTierBadge, { backgroundColor: tierColor + '22', borderColor: tierColor + '55' }]}>
+                  <Text style={[styles.subTierText, { color: tierColor }]}>{plan.name_ar}</Text>
+                </View>
+                {plan.is_trial ? (
+                  <View style={styles.trialBadge}>
+                    <Text style={styles.trialText}>{t('subscribe.trialBadge')}</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.subPriceText}>
+                    {plan.price_jod} {t('common.jod')}{t('common.perMonth')}
+                  </Text>
+                )}
+              </View>
+
+              {/* Credits — center hero number */}
+              <View style={styles.subCreditsBlock}>
+                {isPremium ? (
+                  <>
+                    <Text style={[styles.subCreditsNum, { color: tierColor }]}>∞</Text>
+                    <Text style={styles.subCreditsCaption}>{t('profile.creditsUnlimited')}</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.subCreditsNum, { color: creditColor }]}>{subCredits}</Text>
+                    <Text style={styles.subCreditsCaption}>
+                      {isRTL ? 'رصيد متبقٍ هذا الشهر' : 'credits remaining'}
+                    </Text>
+                  </>
+                )}
+                {bonusCredits > 0 && (
+                  <View style={styles.bonusPill}>
+                    <Text style={styles.bonusPillText}>🏆 +{bonusCredits} {isRTL ? 'رصيد مكافأة' : 'bonus'}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Discount chips */}
+              {((provider.win_discount_pct ?? 0) > 0 || provider.reputation_tier !== 'elite') && (
+                <View style={styles.subChipsRow}>
+                  {(provider.win_discount_pct ?? 0) > 0 && (
+                    <View style={styles.discChipGreen}>
+                      <Text style={styles.discChipGreenText}>🏆 {provider.win_discount_pct}% {isRTL ? 'خصم تجديد' : 'renewal off'}</Text>
                     </View>
-                  </TouchableOpacity>
-                );
-              })}
+                  )}
+                  {provider.reputation_tier !== 'elite' && (
+                    <View style={styles.discChipBlue}>
+                      <Text style={styles.discChipBlueText}>
+                        ⬆️ {isRTL
+                          ? `ارتقِ لـ ${['new','rising','trusted','expert'].includes(provider.reputation_tier)
+                              ? ['rising','trusted','expert','elite'][['new','rising','trusted','expert'].indexOf(provider.reputation_tier)]
+                              : 'elite'}`
+                          : 'Upgrade tier for bonus'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
 
-              {/* Add tile */}
+              {/* Expiry */}
+              {provider.subscription_ends && (
+                <Text style={styles.subExpiry}>
+                  {t('profile.subscriptionValid', {
+                    date: new Date(provider.subscription_ends).toLocaleDateString(
+                      isRTL ? 'ar-JO' : 'en-GB', { day: 'numeric', month: 'long' },
+                    ),
+                  })}
+                </Text>
+              )}
+
+              {/* CTA button — urgent styling only when needed */}
               <TouchableOpacity
-                style={[styles.miniCell, styles.miniAddCell, { width: MINI_CELL, height: MINI_CELL }]}
-                onPress={() => router.push('/portfolio-add')}
-                activeOpacity={0.85}
+                style={[
+                  styles.subCTA,
+                  noCredits || lowCredits
+                    ? { backgroundColor: colors.accent }
+                    : { backgroundColor: tierColor + '20', borderWidth: 1, borderColor: tierColor + '55' },
+                ]}
+                onPress={() => router.push('/subscribe' as any)}
               >
-                <Text style={styles.miniAddIcon}>+</Text>
-                <Text style={styles.miniAddText}>{t('portfolio.fabAdd')}</Text>
+                <Text style={[styles.subCTAText, { color: noCredits || lowCredits ? colors.bg : tierColor }]}>
+                  {noCredits
+                    ? (isRTL ? '⚡ جدّد اشتراكك الآن' : '⚡ Renew Now')
+                    : plan.tier === 'premium'
+                      ? t('profile.renewBtn')
+                      : t('profile.upgradeBtn')}
+                </Text>
               </TouchableOpacity>
             </View>
+          ) : (
+            <View style={[styles.noSubCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <Text style={{ fontSize: 36, marginBottom: 8 }}>💎</Text>
+              <Text style={styles.noSubTitle}>{isRTL ? 'لا يوجد اشتراك نشط' : 'No active subscription'}</Text>
+              <Text style={styles.noSubSub}>{t('subscribe.noSubscription')}</Text>
+              <TouchableOpacity
+                style={[styles.subCTA, { backgroundColor: colors.accent, width: '100%', marginTop: 14 }]}
+                onPress={() => router.push('/subscribe')}
+              >
+                <Text style={[styles.subCTAText, { color: colors.bg }]}>{t('profile.subscribeNow')}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
 
-            <TouchableOpacity style={styles.portfolioViewAll} onPress={() => router.push('/portfolio')}>
-              <Text style={styles.portfolioViewAllText}>{t('profile.portfolioViewAll')} ›</Text>
-            </TouchableOpacity>
-          </>
-        )}
-      </View>
+        {/* ══════════════════════════════════════════════════════
+            ZONE 4 — SEGMENTED TABS: Specialties | Portfolio
+        ══════════════════════════════════════════════════════ */}
+        <View style={styles.sectionPad}>
+          {/* Segment control */}
+          <View style={[styles.segmentWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            {(['specialties', 'portfolio'] as const).map(tab => {
+              const active = activeTab === tab;
+              const label  = tab === 'specialties'
+                ? `🛠 ${t('profile.mySpecialties')}`
+                : `🖼 ${t('profile.portfolioMyGallery')}${portfolioItems.length > 0 ? ` (${portfolioItems.length})` : ''}`;
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  style={[
+                    styles.segmentBtn,
+                    active && { backgroundColor: tierColor + '20', borderWidth: 1, borderColor: tierColor + '66' },
+                  ]}
+                  onPress={() => setActiveTab(tab)}
+                  activeOpacity={0.75}
+                >
+                  <Text style={[styles.segmentText, active && { color: tierColor, fontWeight: '700' }]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-      {/* ── Loyalty progress ── */}
-      {nextMilestone && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('profile.loyaltyReward')}</Text>
-          <View style={styles.loyaltyCard}>
-            <View style={styles.loyaltyHeader}>
-              <Text style={styles.loyaltyNext}>
+          {/* Tab: Specialties */}
+          {activeTab === 'specialties' && (
+            <View style={styles.tabPane}>
+              {myCats.length === 0 ? (
+                <TouchableOpacity style={[styles.emptyPane, { borderColor: colors.border }]} onPress={openCatModal}>
+                  <Text style={{ fontSize: 34 }}>🛠</Text>
+                  <Text style={[styles.emptyPaneTitle, { color: colors.textPrimary }]}>{t('profile.noSpecialties')}</Text>
+                  <Text style={[styles.emptyPaneSub, { color: colors.textMuted }]}>
+                    {isRTL ? 'اضغط لإضافة تخصصاتك' : 'Tap to add specialties'}
+                  </Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <View style={styles.catsWrap}>
+                    {myCats.map((cat, i) => {
+                      const cc = CAT_COLORS[i % CAT_COLORS.length];
+                      return (
+                        <View key={cat.slug} style={[styles.catChip, { backgroundColor: cc + '16', borderColor: cc + '55' }]}>
+                          <Text style={styles.catChipIcon}>{ICON_MAP[cat.icon] ?? '🔧'}</Text>
+                          <Text style={[styles.catChipLabel, { color: cc }]}>
+                            {t(`categories.${cat.slug}`, cat.name_ar)}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => removeCat(cat.slug)}
+                            style={[styles.catRemoveBtn, { backgroundColor: cc + '22' }]}
+                            hitSlop={8}
+                          >
+                            <Text style={{ fontSize: 13, color: cc, fontWeight: '700', lineHeight: 18 }}>×</Text>
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
+                    {myCats.length < 3 && (
+                      <TouchableOpacity
+                        style={[styles.catAddChip, { borderColor: colors.accent }]}
+                        onPress={openCatModal}
+                      >
+                        <Text style={[styles.catChipLabel, { color: colors.accent }]}>
+                          + {t('profile.addSpecialty')}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <Text style={[styles.catsNote, { color: colors.textMuted }]}>
+                    {t('profile.maxSpecialtiesNote')}
+                  </Text>
+                </>
+              )}
+            </View>
+          )}
+
+          {/* Tab: Portfolio */}
+          {activeTab === 'portfolio' && (
+            <View style={styles.tabPane}>
+              {portfolioItems.length === 0 ? (
+                <TouchableOpacity
+                  style={[styles.emptyPane, { borderColor: colors.border }]}
+                  onPress={() => router.push('/portfolio-add')}
+                >
+                  <Text style={{ fontSize: 34 }}>📷</Text>
+                  <Text style={[styles.emptyPaneTitle, { color: colors.textPrimary }]}>{t('profile.portfolioEmpty')}</Text>
+                  <Text style={[styles.emptyPaneSub, { color: colors.textMuted }]}>{t('profile.portfolioEmptySub')}</Text>
+                  <View style={[styles.subCTA, { backgroundColor: colors.accent, paddingHorizontal: 28, marginTop: 10 }]}>
+                    <Text style={[styles.subCTAText, { color: colors.bg }]}>{t('profile.portfolioAdd')}</Text>
+                  </View>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  <View style={styles.portfolioMetaRow}>
+                    <Text style={[styles.portfolioMetaText, { color: colors.textMuted }]}>🖼 {portfolioItems.length}</Text>
+                    <Text style={[styles.portfolioMetaText, { color: colors.textMuted }]}>👁 {totalViews}</Text>
+                    <TouchableOpacity onPress={() => router.push('/portfolio-add')}>
+                      <Text style={[styles.portfolioMetaText, { color: colors.accent }]}>
+                        + {t('profile.portfolioAdd')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 10, paddingRight: 4, paddingBottom: 4 }}
+                  >
+                    {portfolioItems.map((item) => {
+                      const thumb = item.item_type !== 'video' ? item.media_urls[0] : null;
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={[styles.portfolioThumb, { backgroundColor: colors.surfaceAlt }]}
+                          onPress={() => router.push('/portfolio')}
+                          activeOpacity={0.85}
+                        >
+                          {thumb
+                            ? <Image source={{ uri: thumb }} style={[StyleSheet.absoluteFill, { borderRadius: 14 }]} resizeMode="cover" />
+                            : (
+                              <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', borderRadius: 14 }]}>
+                                <Text style={{ fontSize: 28 }}>🎥</Text>
+                              </View>
+                            )}
+                          <View style={styles.portfolioTypeBadge}>
+                            <Text style={{ fontSize: 9 }}>{TYPE_ICON[item.item_type]}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                  <TouchableOpacity style={styles.portfolioViewAll} onPress={() => router.push('/portfolio')}>
+                    <Text style={[styles.portfolioViewAllText, { color: colors.accent }]}>
+                      {t('profile.portfolioViewAll')} ›
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* ══════════════════════════════════════════════════════
+            ZONE 5 — LOYALTY PROGRESS (milestone track)
+        ══════════════════════════════════════════════════════ */}
+        {nextMilestone && (
+          <View style={styles.sectionPad}>
+            <View style={[styles.loyaltyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              {/* Header */}
+              <View style={styles.loyaltyHeader}>
+                <Text style={[styles.loyaltyTitle, { color: colors.textPrimary }]}>
+                  🎯 {t('profile.loyaltyReward')}
+                </Text>
+                <Text style={[styles.loyaltyCount, { color: tierColor }]}>
+                  {provider.lifetime_jobs} / {nextMilestone}
+                </Text>
+              </View>
+
+              {/* Segmented milestone bar */}
+              <View style={styles.milestoneBarRow}>
+                {LOYALTY_MILESTONES.map((ms, idx) => {
+                  const prevMs  = idx === 0 ? 0 : LOYALTY_MILESTONES[idx - 1];
+                  const segSize = ms - prevMs;
+                  const filled  = provider.lifetime_jobs >= ms;
+                  const partial = !filled && provider.lifetime_jobs > prevMs;
+                  return (
+                    <View key={ms} style={{ flex: segSize, flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                      {/* Bar segment */}
+                      <View style={{
+                        flex: 1, height: 7, borderRadius: 3,
+                        backgroundColor: filled
+                          ? tierColor
+                          : partial
+                            ? tierColor + '50'
+                            : colors.bg,
+                      }} />
+                      {/* Milestone dot */}
+                      <View style={{
+                        width: 22, height: 22, borderRadius: 11,
+                        backgroundColor: filled ? tierColor : colors.bg,
+                        borderWidth: 2,
+                        borderColor: filled ? tierColor : ms === nextMilestone ? tierColor + '88' : colors.border,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        {filled
+                          ? <Text style={{ fontSize: 9, color: '#fff', fontWeight: '800' }}>✓</Text>
+                          : <Text style={{ fontSize: 8, color: ms === nextMilestone ? tierColor : colors.textMuted, fontWeight: '700' }}>
+                              {ms > 25 ? `${ms}` : ms}
+                            </Text>}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Milestone labels */}
+              <View style={styles.milestoneLabelsRow}>
+                {LOYALTY_MILESTONES.map(ms => (
+                  <Text
+                    key={ms}
+                    style={[
+                      styles.milestoneLabel,
+                      { color: provider.lifetime_jobs >= ms ? tierColor : colors.textMuted,
+                        fontWeight: provider.lifetime_jobs >= ms ? '700' : '400' },
+                    ]}
+                  >
+                    {ms}
+                  </Text>
+                ))}
+              </View>
+
+              <Text style={[styles.loyaltyRewardText, { color: colors.textSecondary }]}>
+                {nextMilestone === 10  ? t('subscribe.discount', { pct: 20 }) + ' 🎁' :
+                 nextMilestone === 25  ? t('subscribe.discount', { pct: 30 }) + ' 🏅' :
+                 nextMilestone === 50  ? '🎉 ' + t('subscribe.loyalty') :
+                                         '👑 Elite'}
+              </Text>
+              <Text style={[styles.loyaltyHint, { color: colors.textMuted }]}>
                 {t('profile.jobsToNextReward', { count: nextMilestone - provider.lifetime_jobs })}
               </Text>
-              <Text style={styles.loyaltyCount}>
-                {provider.lifetime_jobs}/{nextMilestone}
-              </Text>
             </View>
-            <View style={styles.progressBg}>
-              <View style={[styles.progressFill, { width: `${loyaltyProgress * 100}%` as any }]} />
+          </View>
+        )}
+
+        {/* ══════════════════════════════════════════════════════
+            AVAILABILITY TOGGLES
+        ══════════════════════════════════════════════════════ */}
+        <View style={styles.sectionPad}>
+          <Text style={[styles.groupLabel, { color: colors.textMuted }]}>
+            {t('profile.receptionStatus')}
+          </Text>
+          <View style={[styles.availCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={styles.availRow}>
+              <View style={styles.availLeft}>
+                <View style={[styles.availIconBox, { backgroundColor: isAvailable ? '#22C55E18' : colors.surfaceAlt }]}>
+                  <Text style={{ fontSize: 18 }}>{isAvailable ? '🟢' : '⚫'}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.availLabel, { color: colors.textPrimary }]}>{t('profile.availableNow')}</Text>
+                  <Text style={[styles.availSub, { color: colors.textMuted }]}>
+                    {isAvailable ? t('profile.visibleToClients') : t('profile.hiddenFromClients')}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={isAvailable}
+                onValueChange={toggleAvailable}
+                trackColor={{ false: colors.border, true: '#16A34A' }}
+                thumbColor="#fff"
+              />
             </View>
-            <Text style={styles.loyaltyReward}>
-              {nextMilestone === 10  ? t('subscribe.discount', { pct: 20 }) + ' 🎁' :
-               nextMilestone === 25  ? t('subscribe.discount', { pct: 30 }) + ' 🏅' :
-               nextMilestone === 50  ? '🎉 ' + t('subscribe.loyalty') :
-                                       '👑 ' + t('tiers.elite', 'Elite')}
-            </Text>
+            {isAvailable && (
+              <View style={[styles.availRow, styles.availRowTop, { borderTopColor: colors.border }]}>
+                <View style={styles.availLeft}>
+                  <View style={[styles.availIconBox, { backgroundColor: urgentEnabled ? '#DC262618' : colors.surfaceAlt }]}>
+                    <Text style={{ fontSize: 18 }}>🚨</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.availLabel, { color: colors.textPrimary }]}>{t('profile.acceptUrgent')}</Text>
+                    <Text style={[styles.availSub, { color: colors.textMuted }]}>
+                      {urgentEnabled ? t('profile.urgentOn') : t('profile.urgentOff')}
+                    </Text>
+                  </View>
+                </View>
+                <Switch
+                  value={urgentEnabled}
+                  onValueChange={toggleUrgent}
+                  trackColor={{ false: colors.border, true: '#DC2626' }}
+                  thumbColor="#fff"
+                />
+              </View>
+            )}
           </View>
         </View>
-      )}
 
-      {/* ── Subscription ── */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.subscriptionTitle')}</Text>
-        {provider.is_subscribed && plan ? (
-          <View style={styles.subCard}>
-            <View style={styles.subHeader}>
-              <Text style={styles.subEnds}>
-                {t('profile.subscriptionValid', {
-                  date: new Date(provider.subscription_ends!).toLocaleDateString(
-                    'en-GB', { day: 'numeric', month: 'long' }
-                  )
-                })}
+        {/* ══════════════════════════════════════════════════════
+            ZONE 6 — SETTINGS GROUPS (iOS-style)
+        ══════════════════════════════════════════════════════ */}
+
+        <SettingsGroup title={isRTL ? 'الحساب' : 'Account'} colors={colors}>
+          <SettingsRow
+            icon="🌐"
+            label={t('profile.language')}
+            onPress={toggleLanguage}
+            colors={colors}
+            right={
+              <Text style={{ fontSize: 13, color: colors.textMuted }}>
+                {isRTL ? 'العربية' : 'English'} ›
               </Text>
-              <Text style={styles.subTier}>{plan.name_ar}</Text>
-            </View>
-            {plan.is_trial
-              ? <Text style={styles.subPrice}>{t('subscribe.trialBadge')}</Text>
-              : <Text style={styles.subPrice}>{plan.price_jod} {t('common.jod')}{t('common.perMonth')}</Text>
             }
-
-            {/* Two-wallet credit display */}
-            {plan.is_unlimited ? (
-              <View style={styles.creditsBadge}>
-                <Text style={styles.creditsBadgeText}>{t('profile.creditsUnlimited')}</Text>
-                {(provider.bonus_credits ?? 0) > 0 && (
-                  <Text style={[styles.creditsBadgeText, { marginTop: 4, opacity: 0.8 }]}>
-                    {t('profile.bonusCredits', { count: provider.bonus_credits ?? 0 })}
-                    {' → '}
-                    {t('profile.premiumSlots', { count: Math.min(5 + Math.floor((provider.bonus_credits ?? 0) / 5), 8) })}
-                  </Text>
-                )}
+          />
+          <SettingsRow
+            icon="🎨"
+            label={t('profile.theme')}
+            colors={colors}
+            right={
+              <View style={{ flexDirection: 'row', gap: 5 }}>
+                {(['dark', 'light', 'system'] as const).map(opt => (
+                  <TouchableOpacity
+                    key={opt}
+                    onPress={() => setTheme(opt)}
+                    style={{
+                      paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+                      backgroundColor: theme === opt ? colors.accent : colors.bg,
+                      borderWidth: 1, borderColor: theme === opt ? colors.accent : colors.border,
+                    }}
+                  >
+                    <Text style={{ fontSize: 14, color: theme === opt ? colors.bg : colors.textMuted }}>
+                      {opt === 'dark' ? '🌙' : opt === 'light' ? '☀️' : '⚙️'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
-            ) : (
-              <View style={styles.creditsBadge}>
-                <Text style={styles.creditsBadgeText}>
-                  {t('profile.subscriptionCredits', { count: provider.subscription_credits ?? 0 })}
-                </Text>
-                {(provider.bonus_credits ?? 0) > 0 && (
-                  <Text style={[styles.creditsBadgeText, { marginTop: 4, opacity: 0.8 }]}>
-                    {t('profile.bonusCredits', { count: provider.bonus_credits ?? 0 })}
-                  </Text>
-                )}
-              </View>
-            )}
+            }
+          />
+          <SettingsRow
+            icon="🔔"
+            label={t('profile.notifications')}
+            onPress={() => router.push('/notification-settings')}
+            colors={colors}
+            divider={false}
+          />
+        </SettingsGroup>
 
-            {/* Win-based renewal discount earned */}
-            {(provider.win_discount_pct ?? 0) > 0 && (
-              <Text style={styles.winDiscountText}>
-                {t('profile.winDiscount', { pct: provider.win_discount_pct })}
-              </Text>
-            )}
+        <SettingsGroup title={isRTL ? 'ملفي العام' : 'My Profile'} colors={colors}>
+          <SettingsRow
+            icon="⬆️"
+            label={t('profile.sharePublicProfile')}
+            onPress={() => router.push({ pathname: '/provider-profile', params: { provider_id: provider.id } })}
+            colors={colors}
+            divider={false}
+          />
+        </SettingsGroup>
 
-            {/* Next tier credit reward hint */}
-            {provider.reputation_tier !== 'elite' && (
-              <Text style={styles.repDiscountText}>
-                {t('profile.nextTierCredits', {
-                  credits: TIER_UPGRADE_CREDITS[
-                    ['new','rising','trusted','expert','elite'][
-                      ['new','rising','trusted','expert','elite'].indexOf(provider.reputation_tier) + 1
-                    ] ?? 'elite'
-                  ] ?? 25,
-                })}
-              </Text>
-            )}
+        <SettingsGroup title={isRTL ? 'المساعدة' : 'Help'} colors={colors}>
+          <SettingsRow
+            icon="🎧"
+            label={t('profile.support')}
+            onPress={() => router.push('/support' as any)}
+            colors={colors}
+          />
+          <SettingsRow
+            icon="❓"
+            label={t('helpCenter.title')}
+            onPress={() => router.push('/help-center?role=provider' as any)}
+            colors={colors}
+            divider={false}
+          />
+        </SettingsGroup>
 
-            {/* Upgrade / Renew button */}
-            <TouchableOpacity
-              style={styles.upgradeBtn}
-              onPress={() => router.push('/subscribe' as any)}
-            >
-              <Text style={styles.upgradeBtnText}>
-                {plan.tier === 'premium'
-                  ? t('profile.renewBtn')
-                  : t('profile.upgradeBtn')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.noSubCard}>
-            <Text style={styles.noSubText}>{t('subscribe.noSubscription')}</Text>
-            <TouchableOpacity
-              style={styles.subscribeBtn}
-              onPress={() => router.push('/subscribe')}
-            >
-              <Text style={styles.subscribeBtnText}>{t('profile.subscribeNow')}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {/* ── My categories ── */}
-      <View style={styles.section}>
-        <View style={styles.sectionTitleRow}>
-          <Text style={styles.sectionTitle}>{t('profile.mySpecialties')}</Text>
-          <Text style={styles.sectionEmoji}>🛠</Text>
-        </View>
-        {myCats.length === 0 ? (
-          <TouchableOpacity style={[styles.addCatsHint, { marginTop: 12 }]} onPress={openCatModal}>
-            <Text style={styles.addCatsHintText}>{t('profile.noSpecialties')}</Text>
+        {/* Sign out */}
+        <View style={{ marginHorizontal: 16, marginTop: 8, marginBottom: 16 }}>
+          <TouchableOpacity
+            style={[styles.signOutRow, { backgroundColor: '#450A0A', borderColor: '#7F1D1D' }]}
+            onPress={() => supabase.auth.signOut()}
+            activeOpacity={0.75}
+          >
+            <Text style={{ fontSize: 18 }}>🚪</Text>
+            <Text style={[styles.signOutText, { color: '#FCA5A5' }]}>{t('profile.logout')}</Text>
           </TouchableOpacity>
-        ) : (
-          <View style={[styles.catsWrap, { marginTop: 12 }]}>
-            {myCats.map(cat => (
-              <View key={cat.slug} style={styles.catChipEditable}>
-                <Text style={styles.catChipText}>{ICON_MAP[cat.icon] ?? '🔧'} {t(`categories.${cat.slug}`, cat.name_ar)}</Text>
-                <TouchableOpacity onPress={() => removeCat(cat.slug)} style={styles.catChipRemove} hitSlop={8}>
-                  <Text style={styles.catChipRemoveText}>×</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-            {myCats.length < 3 && (
-              <TouchableOpacity style={styles.catAddChip} onPress={openCatModal}>
-                <Text style={styles.catAddChipText}>+ {t('profile.addSpecialty')}</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-        <Text style={styles.maxCatsNote}>{t('profile.maxSpecialtiesNote')}</Text>
-      </View>
+        </View>
 
-      {/* ── Category edit modal ── */}
+      </ScrollView>
+
+      {/* ── Category Edit Modal ── */}
       <Modal
         visible={catModalVisible}
         animationType="slide"
@@ -459,39 +838,43 @@ export default function ProviderProfile() {
         onRequestClose={() => setCatModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { paddingBottom: contentPad }]}>
-            <View style={styles.modalHeader}>
+          <View style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: contentPad }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <TouchableOpacity onPress={() => setCatModalVisible(false)}>
-                <Text style={styles.modalCancel}>{t('common.cancel')}</Text>
+                <Text style={[styles.modalCancel, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>{t('profile.editSpecialties')}</Text>
-              <TouchableOpacity
-                onPress={saveCategories}
-                disabled={savingCats}
-              >
-                <Text style={[styles.modalSave, savingCats && { color: colors.textMuted }]}>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>{t('profile.editSpecialties')}</Text>
+              <TouchableOpacity onPress={saveCategories} disabled={savingCats}>
+                <Text style={[styles.modalSave, { color: savingCats ? colors.textMuted : colors.accent }]}>
                   {savingCats ? t('common.loading') : t('common.save')}
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.modalSubtitle}>
+            <Text style={[styles.modalSub, { color: colors.textSecondary }]}>
               {t('profile.selectedCount', { count: selectedCats.length, max: 3 })}
             </Text>
-            <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+            <ScrollView style={{ paddingHorizontal: 20, paddingTop: 8 }} showsVerticalScrollIndicator={false}>
               {CATEGORY_GROUPS.map(group => (
-                <View key={group.slug} style={styles.catGroup}>
-                  <Text style={styles.catGroupLabel}>{group.name_ar}</Text>
+                <View key={group.slug} style={{ marginBottom: 16 }}>
+                  <Text style={[styles.catGroupLabel, { color: colors.textMuted }]}>{group.name_ar}</Text>
                   <View style={styles.catsWrap}>
-                    {group.categories.map(cat => {
+                    {group.categories.map((cat, i) => {
                       const selected = selectedCats.includes(cat.slug);
+                      const cc = CAT_COLORS[i % CAT_COLORS.length];
                       return (
                         <TouchableOpacity
                           key={cat.slug}
-                          style={[styles.catChip, selected && styles.catChipSelected]}
+                          style={[
+                            styles.catChip,
+                            selected
+                              ? { backgroundColor: cc + '20', borderColor: cc + '70' }
+                              : { backgroundColor: colors.surfaceAlt, borderColor: colors.border },
+                          ]}
                           onPress={() => toggleCat(cat.slug)}
                         >
-                          <Text style={[styles.catChipText, selected && styles.catChipTextSelected]}>
-                            {ICON_MAP[cat.icon] ?? '🔧'} {t(`categories.${cat.slug}`, cat.name_ar)}
+                          <Text style={styles.catChipIcon}>{ICON_MAP[cat.icon] ?? '🔧'}</Text>
+                          <Text style={[styles.catChipLabel, { color: selected ? cc : colors.textPrimary }]}>
+                            {t(`categories.${cat.slug}`, cat.name_ar)}
                           </Text>
                         </TouchableOpacity>
                       );
@@ -503,265 +886,145 @@ export default function ProviderProfile() {
           </View>
         </View>
       </Modal>
-
-      {/* ── Availability & Urgent toggles ── */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('profile.receptionStatus')}</Text>
-        <View style={styles.availCard}>
-          <View style={styles.availRow}>
-            <Switch
-              value={isAvailable}
-              onValueChange={toggleAvailable}
-              trackColor={{ false: colors.border, true: '#16A34A' }}
-              thumbColor="#fff"
-            />
-            <View style={styles.availTextWrap}>
-              <Text style={styles.availLabel}>{t('profile.availableNow')}</Text>
-              <Text style={styles.availSub}>
-                {isAvailable ? t('profile.visibleToClients') : t('profile.hiddenFromClients')}
-              </Text>
-            </View>
-          </View>
-
-          {isAvailable && (
-            <View style={[styles.availRow, styles.availRowBorder]}>
-              <Switch
-                value={urgentEnabled}
-                onValueChange={toggleUrgent}
-                trackColor={{ false: colors.border, true: '#DC2626' }}
-                thumbColor="#fff"
-              />
-              <View style={styles.availTextWrap}>
-                <Text style={styles.availLabel}>{t('profile.acceptUrgent')}</Text>
-                <Text style={styles.availSub}>
-                  {urgentEnabled ? t('profile.urgentOn') : t('profile.urgentOff')}
-                </Text>
-              </View>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* ── Language switcher ── */}
-      <TouchableOpacity style={styles.notifBtn} onPress={toggleLanguage}>
-        <Text style={styles.notifBtnIcon}>🌐</Text>
-        <Text style={styles.notifBtnText}>{t('profile.language')}</Text>
-      </TouchableOpacity>
-
-      {/* ── Theme picker ── */}
-      <View style={styles.notifBtn}>
-        <Text style={styles.notifBtnIcon}>🎨</Text>
-        <Text style={styles.notifBtnText}>{t('profile.theme')}</Text>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          {(['dark', 'light', 'system'] as const).map(opt => (
-            <TouchableOpacity
-              key={opt}
-              onPress={() => setTheme(opt)}
-              style={{
-                paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
-                backgroundColor: theme === opt ? colors.accent : colors.surface,
-                borderWidth: 1, borderColor: theme === opt ? colors.accent : colors.border,
-              }}
-            >
-              <Text style={{ fontSize: 12, color: theme === opt ? colors.bg : colors.textSecondary, fontWeight: '600' }}>
-                {opt === 'dark' ? 'داكن' : opt === 'light' ? 'فاتح' : 'تلقائي'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* ── Share public profile ── */}
-      <TouchableOpacity
-        style={styles.notifBtn}
-        onPress={() => router.push({ pathname: '/provider-profile', params: { provider_id: provider.id } })}
-      >
-        <Text style={styles.notifBtnIcon}>⬆️</Text>
-        <Text style={styles.notifBtnText}>{t('profile.sharePublicProfile')}</Text>
-        <Text style={styles.notifBtnArrow}>›</Text>
-      </TouchableOpacity>
-
-      {/* ── Notification settings ── */}
-      <TouchableOpacity
-        style={styles.notifBtn}
-        onPress={() => router.push('/notification-settings')}
-      >
-        <Text style={styles.notifBtnIcon}>🔔</Text>
-        <Text style={styles.notifBtnText}>{t('profile.notifications')}</Text>
-        <Text style={styles.notifBtnArrow}>›</Text>
-      </TouchableOpacity>
-
-      {/* ── Support ── */}
-      <TouchableOpacity
-        style={styles.notifBtn}
-        onPress={() => router.push('/support' as any)}
-      >
-        <Text style={styles.notifBtnIcon}>🎧</Text>
-        <Text style={styles.notifBtnText}>{t('profile.support')}</Text>
-        <Text style={styles.notifBtnArrow}>›</Text>
-      </TouchableOpacity>
-
-      {/* ── Help Center ── */}
-      <TouchableOpacity
-        style={styles.notifBtn}
-        onPress={() => router.push('/help-center?role=provider' as any)}
-      >
-        <Text style={styles.notifBtnIcon}>❓</Text>
-        <Text style={styles.notifBtnText}>{t('helpCenter.title')}</Text>
-        <Text style={styles.notifBtnArrow}>›</Text>
-      </TouchableOpacity>
-
-      {/* ── Sign out ── */}
-      <TouchableOpacity
-        style={styles.signOutBtn}
-        onPress={() => supabase.auth.signOut()}
-      >
-        <Text style={styles.signOutText}>{t('profile.logout')}</Text>
-      </TouchableOpacity>
-    </ScrollView>
     </View>
   );
 }
 
-function StatBox({ label, value }: { label: string; value: string }) {
-  const { colors } = useTheme();
-  const statStyles = useMemo(() => createStatStyles(colors), [colors]);
-  return (
-    <View style={statStyles.box}>
-      <Text style={statStyles.value}>{value}</Text>
-      <Text style={statStyles.label}>{label}</Text>
-    </View>
-  );
-}
-
-function createStatStyles(colors: AppColors) {
-  return StyleSheet.create({
-    box:   { flex: 1, backgroundColor: colors.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
-    value: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
-    label: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
-  });
-}
+// ─── Styles ───────────────────────────────────────────────────
 
 function createStyles(colors: AppColors, isRTL: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
-  container:  { flex: 1, backgroundColor: colors.bg },
-  scrollView: { flex: 1, backgroundColor: colors.bg },
-  content:    { paddingBottom: 24 },
-  center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+    container:  { flex: 1, backgroundColor: colors.bg },
+    scrollView: { flex: 1 },
+    center:     { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
-  heroCard:   { alignItems: 'center', paddingTop: 24, paddingBottom: 24, paddingHorizontal: 20 },
-  avatar:     { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  avatarText: { fontSize: 32, fontWeight: '700', color: colors.bg },
-  name:       { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
-  city:       { fontSize: 14, color: colors.textMuted, marginBottom: 12 },
-  tierPill:   { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6, marginBottom: 8 },
-  tierPillText:{ fontSize: 13, fontWeight: '700' },
-  verifiedBadge:{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#0C4A6E', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4 },
-  verifiedText: { fontSize: 12, color: '#7DD3FC', fontWeight: '600' },
+    // ── Hero ──
+    heroCover: {
+      paddingTop: 32, paddingBottom: 30, paddingHorizontal: 20,
+      alignItems: 'center', overflow: 'hidden',
+    },
+    blob1: {
+      position: 'absolute', width: 220, height: 220, borderRadius: 110,
+      top: -70, right: -60,
+    },
+    blob2: {
+      position: 'absolute', width: 160, height: 160, borderRadius: 80,
+      bottom: -40, left: -40,
+    },
+    avatarRing: {
+      width: 96, height: 96, borderRadius: 48,
+      borderWidth: 3, padding: 4, marginBottom: 16,
+    },
+    avatarInner: {
+      flex: 1, borderRadius: 40,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    avatarLetter: { fontSize: 36, fontWeight: '800' },
+    heroName:     { fontSize: 23, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
+    heroMetaRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap', justifyContent: 'center' },
+    heroCity:     { fontSize: 13, color: colors.textMuted },
+    verifiedPill: { backgroundColor: '#0C4A6E', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
+    verifiedText: { fontSize: 11, color: '#7DD3FC', fontWeight: '700' },
+    heroTagsRow:  { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' },
+    heroPill:     { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 },
+    heroPillDot:  { width: 7, height: 7, borderRadius: 3.5 },
+    heroPillText: { fontSize: 12, fontWeight: '700' },
 
-  statsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 16, marginBottom: 20 },
+    // ── Stats 2×2 ──
+    statsGrid: { paddingHorizontal: 16, marginBottom: 20, gap: 10 },
+    statsRow:  { flexDirection: 'row', gap: 10 },
 
-  section:      { paddingHorizontal: 16, marginBottom: 20 },
-  sectionHeader:    { marginBottom: 12 },
-  sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  sectionTitleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
-  sectionEmoji: { fontSize: 16 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto', alignSelf: 'stretch' },
-  sectionLink:  { fontSize: 13, color: colors.accent, fontWeight: '600', alignSelf: 'stretch', textAlign: ta },
+    // ── Section padding ──
+    sectionPad: { paddingHorizontal: 16, marginBottom: 20 },
 
-  // ── Portfolio mini grid ──
-  portfolioMiniStats: { flexDirection: 'row', gap: 16, justifyContent: 'flex-end', marginBottom: 10 },
-  portfolioMiniStat:  { fontSize: 12, color: colors.textMuted },
+    // ── Subscription card ──
+    subCard: { borderRadius: 22, padding: 22, borderWidth: 1.5, overflow: 'hidden' },
+    subGlow: { position: 'absolute', width: 180, height: 180, borderRadius: 90, top: -60, right: -50 },
+    subHeaderRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 },
+    subTierBadge:    { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 },
+    subTierText:     { fontSize: 13, fontWeight: '700' },
+    subPriceText:    { fontSize: 14, fontWeight: '600', color: colors.textSecondary },
+    trialBadge:      { backgroundColor: '#064E3B', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
+    trialText:       { fontSize: 12, color: '#6EE7B7', fontWeight: '700' },
+    subCreditsBlock: { alignItems: 'center', marginBottom: 18, gap: 4 },
+    subCreditsNum:   { fontSize: 60, fontWeight: '900', lineHeight: 68 },
+    subCreditsCaption: { fontSize: 13, color: colors.textSecondary },
+    bonusPill:       { backgroundColor: colors.accentDim, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: colors.accent + '44', marginTop: 4 },
+    bonusPillText:   { fontSize: 12, color: colors.accent, fontWeight: '700' },
+    subChipsRow:     { flexDirection: 'row', gap: 8, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 14 },
+    discChipGreen:   { backgroundColor: '#16A34A18', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#16A34A44' },
+    discChipGreenText: { fontSize: 12, color: '#4ADE80', fontWeight: '600' },
+    discChipBlue:    { backgroundColor: '#3B82F618', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 4, borderWidth: 1, borderColor: '#3B82F644' },
+    discChipBlueText: { fontSize: 12, color: '#93C5FD', fontWeight: '600' },
+    subExpiry:       { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 16 },
+    subCTA:          { borderRadius: 14, paddingVertical: 13, alignItems: 'center' },
+    subCTAText:      { fontSize: 15, fontWeight: '700' },
+    noSubCard:       { borderRadius: 22, padding: 26, borderWidth: 1, alignItems: 'center' },
+    noSubTitle:      { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
+    noSubSub:        { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
 
-  miniGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  miniCell:    { borderRadius: 10, overflow: 'hidden', backgroundColor: colors.surface },
-  miniTypeBadge: { position: 'absolute', top: 4, right: 4, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 6, paddingHorizontal: 4, paddingVertical: 2 },
-  miniVideoPlaceholder: { alignItems: 'center', justifyContent: 'center' },
-  miniAddCell: { borderWidth: 2, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent' },
-  miniAddIcon: { fontSize: 22, color: colors.accent, fontWeight: '700' },
-  miniAddText: { fontSize: 10, color: colors.textMuted, marginTop: 2 },
+    // ── Segmented tabs ──
+    segmentWrap: { flexDirection: 'row', borderRadius: 14, padding: 4, borderWidth: 1, marginBottom: 16 },
+    segmentBtn:  { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 11 },
+    segmentText: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
+    tabPane:     { minHeight: 110 },
 
-  portfolioViewAll:     { marginTop: 12, alignItems: 'center' },
-  portfolioViewAllText: { fontSize: 13, color: colors.accent, fontWeight: '600' },
+    // Empty states
+    emptyPane:      { backgroundColor: colors.surface, borderRadius: 18, padding: 28, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', gap: 8 },
+    emptyPaneTitle: { fontSize: 15, fontWeight: '700' },
+    emptyPaneSub:   { fontSize: 13, textAlign: 'center' },
 
-  portfolioEmpty:       { backgroundColor: colors.surface, borderRadius: 20, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', gap: 6 },
-  portfolioEmptyIcon:   { fontSize: 40, marginBottom: 4 },
-  portfolioEmptyTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  portfolioEmptySub:    { fontSize: 12, color: colors.textMuted },
-  portfolioEmptyBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 9, marginTop: 4 },
-  portfolioEmptyBtnText:{ fontSize: 13, fontWeight: '700', color: colors.bg },
+    // Categories
+    catsWrap:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    catChip:      { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1 },
+    catChipIcon:  { fontSize: 15 },
+    catChipLabel: { fontSize: 13, fontWeight: '600', color: colors.textPrimary },
+    catRemoveBtn: { width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+    catAddChip:   { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1.5, borderStyle: 'dashed' },
+    catsNote:     { fontSize: 11, textAlign: ta, marginTop: 8 },
+    catGroupLabel:{ fontSize: 13, fontWeight: '600', textAlign: ta, marginBottom: 8 },
 
-  // ── Loyalty ──
-  loyaltyCard:   { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-  loyaltyHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  loyaltyNext:   { fontSize: 13, color: colors.textSecondary, textAlign: 'auto', flex: 1 },
-  loyaltyCount:  { fontSize: 13, color: colors.accent, fontWeight: '700' },
-  progressBg:    { height: 8, backgroundColor: colors.bg, borderRadius: 4, overflow: 'hidden', marginBottom: 10 },
-  progressFill:  { height: '100%', backgroundColor: colors.accent, borderRadius: 4 },
-  loyaltyReward: { fontSize: 13, color: colors.textSecondary, textAlign: 'center' },
+    // Portfolio
+    portfolioMetaRow:   { flexDirection: 'row', alignItems: 'center', gap: 16, justifyContent: 'flex-end', marginBottom: 12 },
+    portfolioMetaText:  { fontSize: 12, fontWeight: '600' },
+    portfolioThumb:     { width: 112, height: 112, borderRadius: 14, overflow: 'hidden' },
+    portfolioTypeBadge: { position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 6, paddingHorizontal: 4, paddingVertical: 2 },
+    portfolioViewAll:   { alignItems: 'center', marginTop: 10 },
+    portfolioViewAllText: { fontSize: 13, fontWeight: '600' },
 
-  // ── Subscription ──
-  subCard:       { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-  subHeader:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  subTier:       { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
-  subEnds:       { fontSize: 12, color: colors.textMuted },
-  subPrice:      { fontSize: 22, fontWeight: '700', color: colors.accent },
-  discountBanner:{ backgroundColor: colors.accentDim, borderRadius: 10, padding: 10, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)' },
-  discountText:  { fontSize: 13, color: colors.accent, textAlign: 'center' },
-  creditsBadge:     { backgroundColor: 'rgba(201,168,76,0.10)', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, marginTop: 10, borderWidth: 1, borderColor: 'rgba(201,168,76,0.25)' },
-  creditsBadgeText: { fontSize: 13, fontWeight: '700', color: colors.accent, textAlign: 'auto' },
-  winDiscountText:  { fontSize: 13, color: '#86EFAC', marginTop: 8, textAlign: 'auto' },
-  repDiscountText:  { fontSize: 13, color: '#7DD3FC', marginTop: 4, textAlign: 'auto' },
+    // Loyalty
+    loyaltyCard:       { borderRadius: 18, padding: 18, borderWidth: 1 },
+    loyaltyHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
+    loyaltyTitle:      { fontSize: 15, fontWeight: '700' },
+    loyaltyCount:      { fontSize: 15, fontWeight: '700' },
+    milestoneBarRow:   { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+    milestoneLabelsRow:{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginBottom: 14 },
+    milestoneLabel:    { fontSize: 10 },
+    loyaltyRewardText: { fontSize: 13, textAlign: 'center', marginBottom: 4 },
+    loyaltyHint:       { fontSize: 12, textAlign: 'center' },
 
-  upgradeBtn:     { marginTop: 14, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 11, alignItems: 'center' },
-  upgradeBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
+    // Availability
+    groupLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 },
+    availCard:  { borderRadius: 16, borderWidth: 1, overflow: 'hidden' },
+    availRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14 },
+    availRowTop:{ borderTopWidth: 1 },
+    availLeft:  { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+    availIconBox:{ width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+    availLabel: { fontSize: 14, fontWeight: '600', marginBottom: 2 },
+    availSub:   { fontSize: 12 },
 
-  noSubCard:    { backgroundColor: colors.surface, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.border, alignItems: 'center', gap: 12 },
-  noSubText:    { fontSize: 14, color: colors.textMuted },
-  subscribeBtn: { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
-  subscribeBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
+    // Sign out
+    signOutRow:  { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1 },
+    signOutText: { flex: 1, fontSize: 14, fontWeight: '600', textAlign: ta },
 
-  // ── Categories ──
-  catsWrap:            { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  catChip:             { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.border },
-  catChipEditable:     { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1.5, borderColor: colors.accent },
-  catChipRemove:       { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.errorBg, alignItems: 'center', justifyContent: 'center' },
-  catChipRemoveText:   { fontSize: 14, color: colors.errorSoft, fontWeight: '700', lineHeight: 18, includeFontPadding: false },
-  catAddChip:          { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1.5, borderColor: colors.accent, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
-  catAddChipText:      { fontSize: 13, color: colors.accent, fontWeight: '600' },
-  catChipSelected:     { backgroundColor: colors.accentDim, borderColor: colors.accent },
-  catChipText:         { fontSize: 13, color: colors.textPrimary },
-  catChipTextSelected: { color: colors.accent, fontWeight: '600' },
-  maxCatsNote:         { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginTop: 6 },
-  addCatsHint:         { backgroundColor: colors.surface, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center' },
-  addCatsHintText:     { fontSize: 13, color: colors.textMuted },
-  catGroup:            { marginBottom: 16 },
-  catGroupLabel:       { fontSize: 13, color: colors.textMuted, fontWeight: '600', textAlign: 'auto', marginBottom: 8 },
-
-  // ── Category modal ──
-  modalOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalSheet:    { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '85%' },
-  modalHeader:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-  modalTitle:    { fontSize: 16, fontWeight: '700', color: colors.textPrimary },
-  modalCancel:   { fontSize: 14, color: colors.textMuted },
-  modalSave:     { fontSize: 14, fontWeight: '700', color: colors.accent },
-  modalSubtitle: { fontSize: 12, color: colors.textSecondary, textAlign: 'center', paddingVertical: 8, paddingHorizontal: 20 },
-  modalScroll:   { paddingHorizontal: 20, paddingTop: 8 },
-
-  notifBtn:      { flexDirection: 'row', alignItems: 'center', gap: 12, marginHorizontal: 16, marginTop: 8, marginBottom: 8, backgroundColor: colors.surface, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, borderWidth: 1, borderColor: colors.border },
-  notifBtnIcon:  { fontSize: 18 },
-  notifBtnText:  { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: ta, alignSelf: 'stretch' },
-  notifBtnArrow: { fontSize: 16, color: colors.textMuted },
-
-  signOutBtn:  { marginHorizontal: 16, marginTop: 8, borderRadius: 14, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: '#7F1D1D' },
-  signOutText: { fontSize: 15, color: '#FCA5A5' },
-
-  availCard:      { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
-  availRow:       { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
-  availRowBorder: { borderTopWidth: 1, borderTopColor: colors.border },
-  availTextWrap:  { flex: 1 },
-  availLabel:     { fontSize: 14, fontWeight: '600', color: colors.textPrimary, textAlign: ta, marginBottom: 2, alignSelf: 'stretch' },
-  availSub:       { fontSize: 12, color: colors.textMuted, textAlign: ta, alignSelf: 'stretch' },
+    // Modal
+    modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.65)', justifyContent: 'flex-end' },
+    modalSheet:   { borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '87%' },
+    modalHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1 },
+    modalTitle:   { fontSize: 16, fontWeight: '700' },
+    modalCancel:  { fontSize: 14 },
+    modalSave:    { fontSize: 14, fontWeight: '700' },
+    modalSub:     { fontSize: 12, textAlign: 'center', paddingVertical: 8, paddingHorizontal: 20 },
   });
 }
