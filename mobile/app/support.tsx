@@ -253,7 +253,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     faqA:      { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: colors.border, textAlign: ta },
 
     contactNote:      { backgroundColor: colors.accentDim, borderRadius: 14, padding: 16, marginTop: 12, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
-    contactNoteText:  { fontSize: 13, color: '#FCD34D', lineHeight: 20, marginBottom: 14, textAlign: ta },
+    contactNoteText:  { fontSize: 13, color: '#92400E', lineHeight: 20, marginBottom: 14, textAlign: ta },
     openTicketBtn:    { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
     openTicketBtnText:{ fontSize: 14, fontWeight: '700', color: colors.bg },
 
