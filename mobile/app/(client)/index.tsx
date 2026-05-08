@@ -23,7 +23,7 @@ import type { AppColors }               from '../../src/constants/colors';
 const { width: W } = Dimensions.get('window');
 const H_PAD    = 20;
 const CARD_GAP = 10;
-const CARD_W_3 = (W - H_PAD * 2 - CARD_GAP * 2) / 3;
+const CARD_W_3 = Math.floor((W - H_PAD * 2 - CARD_GAP * 2) / 3);
 
 // ─── Maps ─────────────────────────────────────────────────────
 
