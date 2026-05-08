@@ -121,16 +121,22 @@ export async function adjustCredits(
 ) {
   const { data: provider } = await supabaseAdmin
     .from('providers')
-    .select('subscription_credits, id')
+    .select('subscription_credits, bonus_credits, id')
     .eq('id', providerId)
     .single();
 
-  const current = (provider as any)?.subscription_credits ?? 0;
-  const updated = Math.max(0, current + amount);
+  // Combined current balance (matches what the admin UI shows)
+  const currentSub   = (provider as any)?.subscription_credits ?? 0;
+  const currentBonus = (provider as any)?.bonus_credits ?? 0;
+  const current      = currentSub + currentBonus;
+  // New total after delta
+  const updated      = Math.max(0, current + amount);
+  // Keep bonus separate; only subscription_credits absorbs the change
+  const newSub       = Math.max(0, updated - currentBonus);
 
   await supabaseAdmin
     .from('providers')
-    .update({ subscription_credits: updated })
+    .update({ subscription_credits: newSub })
     .eq('id', providerId);
 
   await logAudit({
@@ -143,8 +149,9 @@ export async function adjustCredits(
   });
 
   if ((provider as any)?.id) {
-    const isAdd      = amount >= 0;
+    const isAdd       = amount >= 0;
     const creditTitle = isAdd ? '💳 تمت إضافة رصيد إلى حسابك' : '💳 تم خصم رصيد من حسابك';
+    // `updated` = combined total, matching what the admin preview showed
     const creditBody  = isAdd
       ? `تمت إضافة ${amount} رصيد — رصيدك الحالي: ${updated}`
       : `تم خصم ${Math.abs(amount)} رصيد — رصيدك الحالي: ${updated}`;
