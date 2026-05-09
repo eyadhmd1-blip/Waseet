@@ -816,12 +816,14 @@ function createEmptyStyles(colors: AppColors, isRTL: boolean) {
 
 function EmptyFeedState({
   provider,
+  portfolioCount,
   isRTL,
   ta,
   onSubscribe,
   onProfile,
 }: {
   provider: (Provider & { user: User }) | null;
+  portfolioCount: number;
   isRTL: boolean;
   ta: 'left' | 'right';
   onSubscribe: () => void;
@@ -834,7 +836,7 @@ function EmptyFeedState({
   const hasCredits   = (provider?.subscription_tier === 'premium' ||
     !!(provider?.is_subscribed && ((provider.subscription_credits ?? 0) + (provider.bonus_credits ?? 0)) > 0));
   const hasBio       = !!(provider?.bio?.trim());
-  const hasPortfolio = (provider?.portfolio_urls?.length ?? 0) > 0;
+  const hasPortfolio = portfolioCount > 0 || (provider?.portfolio_urls?.length ?? 0) > 0;
   const profileOk    = hasBio && hasPortfolio;
 
   if (!isNew) {
@@ -950,6 +952,7 @@ export default function ProviderFeed() {
   const router = useRouter();
   const { count: notifCount } = useUnreadNotifCount();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
+  const [portfolioCount, setPortfolioCount] = useState(0);
   const [requests, setRequests]   = useState<RequestWithMeta[]>([]);
   // Map<request_id, BidMeta> — tracks every request this provider has already bid on
   const [myBidAmounts, setMyBidAmounts] = useState<Map<string, BidMeta>>(new Map());
@@ -1055,6 +1058,7 @@ export default function ProviderFeed() {
         { data: contractsData },
         { data: demoData },
         { data: myBidsData },
+        { count: portfolioItemCount },
       ] = await Promise.all([
         supabase.from('providers').select('*, user:users(*)').eq('id', authUser.id).single(),
         supabase
@@ -1071,9 +1075,11 @@ export default function ProviderFeed() {
           .limit(20),
         supabase.rpc('get_provider_demo', { p_provider_id: authUser.id }),
         supabase.from('bids').select('id, request_id, amount, is_boosted, boost_expires_at').eq('provider_id', authUser.id).eq('status', 'pending'),
+        supabase.from('portfolio_items').select('*', { count: 'exact', head: true }).eq('provider_id', authUser.id),
       ]);
 
       if (providerData)  setProvider(providerData);
+      setPortfolioCount(portfolioItemCount ?? 0);
       if (requestsData)  setRequests(requestsData);
       if (contractsData) setContracts(contractsData as RecurringContract[]);
       if (demoData)      setDemoStatus(demoData as DemoStatus);
@@ -1577,6 +1583,7 @@ export default function ProviderFeed() {
         ListEmptyComponent={
           <EmptyFeedState
             provider={provider}
+            portfolioCount={portfolioCount}
             isRTL={isRTL}
             ta={ta}
             onSubscribe={() => router.push('/subscribe' as any)}
