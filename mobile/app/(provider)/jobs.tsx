@@ -407,7 +407,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
   modalTitle:   { fontSize: 20, fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: ta },
   modalSub:     { fontSize: 13, color: colors.textMuted, lineHeight: 20, marginBottom: 28, textAlign: ta },
-  codeRow:      { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28 },
+  codeRow:      { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 28, direction: 'ltr' },
   codeBox:      { width: 48, height: 60, borderRadius: 12, backgroundColor: colors.bg, borderWidth: 1, borderColor: colors.border, fontSize: 24, fontWeight: '700', color: colors.textPrimary },
   codeBoxFilled:{ borderColor: colors.accent },
   modalBtns:       { flexDirection: 'row', gap: 12 },

@@ -257,7 +257,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     btn:          { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', width: '100%' },
     btnDisabled:  { backgroundColor: colors.border },
     btnText:      { fontSize: 17, fontWeight: '700', color: colors.bg },
-    otpRow:       { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32, width: '100%' },
+    otpRow:       { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32, width: '100%', direction: 'ltr' },
     otpInput: {
       width: 48, height: 56, borderRadius: 12,
       backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,

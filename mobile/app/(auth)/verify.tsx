@@ -251,7 +251,7 @@ function createStyles(colors: AppColors, isRTL: boolean, otpBoxSize: number) {
     title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: ta, alignSelf: 'stretch' },
     subtitle:   { fontSize: rs(15, 13, 17), color: colors.textMuted, marginBottom: 40, textAlign: ta, alignSelf: 'stretch' },
 
-    otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
+    otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32, direction: 'ltr' },
     otpInput: {
       width: otpBoxSize, height: otpBoxSize + 8, borderRadius: 12,
       backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
