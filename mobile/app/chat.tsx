@@ -121,7 +121,18 @@ export default function ChatScreen() {
 
       if (jobData) setJob(jobData as unknown as JobMeta);
       if (msgData) setMessages(msgData as Message[]);
-  
+
+      // Mark all incoming messages as read in the DB so the badge clears permanently
+      if (user && job_id) {
+        supabase
+          .from('messages')
+          .update({ is_read: true })
+          .eq('job_id', job_id)
+          .neq('sender_id', user.id)
+          .eq('is_read', false)
+          .then(() => {});
+      }
+
     } finally {
       setLoading(false);
     }
@@ -129,7 +140,7 @@ export default function ChatScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ── Refresh client_rating on focus (handles rating from another screen) ──
+  // ── Refresh client_rating + mark messages read on focus ─────
   useFocusEffect(useCallback(() => {
     if (!job_id) return;
     supabase
@@ -142,6 +153,19 @@ export default function ChatScreen() {
           setJob(prev => prev ? { ...prev, client_rating: data.client_rating } : prev);
         }
       });
+
+    // Re-mark incoming messages as read every time screen is focused
+    // (covers the case where new messages arrived while the screen was in background)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('job_id', job_id)
+        .neq('sender_id', session.user.id)
+        .eq('is_read', false)
+        .then(() => {});
+    });
   }, [job_id]));
 
   // ── Realtime subscription ─────────────────────────────────────
