@@ -34,6 +34,28 @@ const REP_COLOR: Record<string, string> = {
   elite:   '#10B981',
 };
 
+// ─── Avatar helpers ───────────────────────────────────────
+const AVATAR_PALETTE = [
+  '#E53E3E', '#DD6B20', '#D69E2E', '#38A169',
+  '#319795', '#3182CE', '#553C9A', '#B83280',
+  '#2C7A7B', '#276749', '#744210', '#2D3748',
+];
+
+function nameToAvatarColor(name: string): string {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) {
+    h = name.charCodeAt(i) + ((h << 5) - h);
+  }
+  return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length];
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '؟؟';
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 function timeGreeting(lang: string): string {
   const h = new Date().getHours();
   if (lang === 'ar') {
@@ -109,10 +131,11 @@ function RootHeader({
 }) {
   const s = makeStyles(colors, headerPad, isDark);
 
-  const isProvider = props.userRole === 'provider';
-  const firstName  = props.userName?.trim().split(' ')[0] ?? '';
-  const initial    = firstName.charAt(0).toUpperCase() || '?';
-  const greeting   = timeGreeting(lang);
+  const isProvider  = props.userRole === 'provider';
+  const firstName   = props.userName?.trim().split(' ')[0] ?? '';
+  const initials    = getInitials(props.userName ?? '');
+  const avatarColor = nameToAvatarColor(props.userName ?? (firstName || 'وسيط'));
+  const greeting    = timeGreeting(lang);
   const count      = props.notifCount ?? 0;
 
   // Provider stats
@@ -275,13 +298,16 @@ function RootHeader({
             ]}
           />
           <TouchableOpacity onPress={props.onAvatarPress} activeOpacity={0.75}>
-            <View style={[s.avatar, isProvider ? s.avatarPro : s.avatarCli]}>
-              <Text style={s.avatarLetter}>{initial}</Text>
+            <View style={[s.avatar, { backgroundColor: avatarColor }]}>
+              <Text style={s.avatarInitials}>{initials}</Text>
             </View>
-            {/* Online dot for provider */}
-            {isProvider && (
-              <View style={[s.onlineDot, { backgroundColor: isOnline ? '#22C55E' : '#9CA3AF' }]} />
-            )}
+            {/* Role + availability badge */}
+            <View style={[
+              s.roleBadge,
+              { borderColor: isProvider ? (isOnline ? '#22C55E' : '#9CA3AF') : '#3B82F6' },
+            ]}>
+              <Text style={s.roleBadgeText}>{isProvider ? '🔧' : '👤'}</Text>
+            </View>
           </TouchableOpacity>
         </Animated.View>
 
@@ -602,26 +628,28 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
       alignItems:     'center',
       justifyContent: 'center',
     },
-    avatarPro: {
-      backgroundColor: colors.accent,
+    avatarInitials: {
+      fontSize:      14,
+      fontWeight:    '700',
+      color:         '#fff',
+      letterSpacing: 0.5,
     },
-    avatarCli: {
-      backgroundColor: '#2563EB',
+    roleBadge: {
+      position:        'absolute',
+      bottom:          0,
+      right:           0,
+      width:           17,
+      height:          17,
+      borderRadius:    9,
+      backgroundColor: colors.bg,
+      borderWidth:     2,
+      alignItems:      'center',
+      justifyContent:  'center',
     },
-    avatarLetter: {
-      fontSize:   18,
-      fontWeight: '700',
-      color:      '#fff',
-    },
-    onlineDot: {
-      position:     'absolute',
-      bottom:       1,
-      right:        1,
-      width:        11,
-      height:       11,
-      borderRadius: 6,
-      borderWidth:  2,
-      borderColor:  colors.bg,
+    roleBadgeText: {
+      fontSize:           8,
+      lineHeight:         10,
+      includeFontPadding: false,
     },
 
     // Greeting
