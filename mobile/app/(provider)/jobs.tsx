@@ -82,8 +82,14 @@ export default function ProviderJobs() {
     }
   }, [tab]);
 
-  // Initial load
-  useEffect(() => { load(false); }, []);
+  // Initial load — ref guard prevents re-running when tab changes (which
+  // updates the load reference) since tab switches are handled separately below.
+  const initialLoaded = useRef(false);
+  useEffect(() => {
+    if (initialLoaded.current) return;
+    initialLoaded.current = true;
+    load(false);
+  }, [load]);
 
   // Silently refresh provider header info whenever this tab gains focus
   // (catches admin tier overrides, credit changes, etc. without full reload)
