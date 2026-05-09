@@ -135,7 +135,7 @@ function accStyles(colors: AppColors) {
 export default function HelpCenterScreen() {
   const { colors }        = useTheme();
   const { t }             = useLanguage();
-  const { headerPad, contentPad } = useInsets();
+  const { headerPad, contentPad, bottom } = useInsets();
   const router            = useRouter();
   const { role: roleParam } = useLocalSearchParams<{ role?: string }>();
   const role = (roleParam === 'provider' ? 'provider' : 'client') as 'client' | 'provider';
@@ -197,7 +197,7 @@ export default function HelpCenterScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[st.content, { paddingBottom: contentPad }]}
+        contentContainerStyle={st.content}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
@@ -244,19 +244,18 @@ export default function HelpCenterScreen() {
             </View>
             <Text style={st.actionArrow}>›</Text>
           </TouchableOpacity>
+        </View>
 
-          {/* Contact support */}
+        {/* ── Footer ───────────────────────────────────────────── */}
+        <View style={[st.footer, { paddingBottom: Math.max(bottom + 24, 48) }]}>
+          <View style={st.footerDivider} />
+          <Text style={st.footerHeading}>{t('helpCenter.footerHeading')}</Text>
           <TouchableOpacity
-            style={[st.actionBtn, st.supportBtn]}
+            style={st.footerBtn}
             onPress={() => router.push('/support' as any)}
             activeOpacity={0.85}
           >
-            <Text style={st.actionIcon}>💬</Text>
-            <View style={st.actionTextWrap}>
-              <Text style={st.actionTitle}>{t('helpCenter.contactTitle')}</Text>
-              <Text style={st.actionSub}>{t('helpCenter.contactSub')}</Text>
-            </View>
-            <Text style={st.actionArrow}>›</Text>
+            <Text style={st.footerBtnText}>{t('helpCenter.contactTitle')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -299,7 +298,7 @@ function styles(colors: AppColors) {
     searchInput: { flex: 1, fontSize: 14, color: colors.textPrimary, textAlign: 'right' },
     clearBtn:    { fontSize: 14, color: colors.textMuted, fontWeight: '700' },
 
-    content: { paddingHorizontal: 16, paddingTop: 12 },
+    content: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 0 },
 
     emptyWrap:  { alignItems: 'center', paddingVertical: 60 },
     emptyIcon:  { fontSize: 40, marginBottom: 12 },
@@ -316,7 +315,41 @@ function styles(colors: AppColors) {
       paddingHorizontal: 16, paddingBottom: 4,
     },
 
-    actionsWrap: { gap: 10, marginTop: 8, marginBottom: 20 },
+    actionsWrap: { gap: 10, marginTop: 8, marginBottom: 8 },
+
+    footer: {
+      marginHorizontal: -16,
+      paddingHorizontal: 16,
+      paddingTop: 28,
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+    },
+    footerDivider: {
+      width: 48, height: 3,
+      backgroundColor: colors.border,
+      borderRadius: 2,
+      marginBottom: 20,
+    },
+    footerHeading: {
+      fontSize: 14,
+      fontWeight: '700',
+      color: colors.textSecondary,
+      marginBottom: 14,
+      textAlign: 'center',
+    },
+    footerBtn: {
+      backgroundColor: colors.accent,
+      borderRadius: 14,
+      paddingVertical: 14,
+      paddingHorizontal: 40,
+      alignItems: 'center',
+      width: '100%',
+    },
+    footerBtnText: {
+      fontSize: 15,
+      fontWeight: '700',
+      color: colors.bg,
+    },
     actionBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 14,
       backgroundColor: colors.surface,
