@@ -16,8 +16,9 @@ import { useTheme } from '../src/context/ThemeContext';
 import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
-const TAG_KEYS = ['fast', 'excellent', 'affordable', 'professional', 'recommended', 'communication'] as const;
-type TagKey = typeof TAG_KEYS[number];
+const HIGH_TAG_KEYS = ['fast', 'excellent', 'affordable', 'professional', 'recommended', 'communication'] as const;
+const LOW_TAG_KEYS  = ['late', 'quality', 'overpriced', 'communication', 'unprofessional'] as const;
+type TagKey = typeof HIGH_TAG_KEYS[number] | typeof LOW_TAG_KEYS[number];
 
 export default function RateJobScreen() {
   const router = useRouter();
@@ -126,19 +127,23 @@ export default function RateJobScreen() {
           </Text>
         )}
 
-        {/* Quick tags */}
-        {rating >= 4 && (
+        {/* Quick tags — positive for 4-5 stars, negative for 1-3 */}
+        {rating > 0 && (
           <>
-            <Text style={styles.tagsLabel}>{t('rateJob.tagsLabel')}</Text>
+            <Text style={styles.tagsLabel}>
+              {rating >= 4 ? t('rateJob.tagsLabel') : t('rateJob.lowTagsLabel')}
+            </Text>
             <View style={styles.tagsWrap}>
-              {TAG_KEYS.map(key => (
+              {(rating >= 4 ? HIGH_TAG_KEYS : LOW_TAG_KEYS).map(key => (
                 <TouchableOpacity
                   key={key}
                   style={[styles.tag, tags.includes(key) && styles.tagActive]}
                   onPress={() => toggleTag(key)}
                 >
                   <Text style={[styles.tagText, tags.includes(key) && styles.tagTextActive]}>
-                    {t(`rateJob.tags.${key}` as any)}
+                    {rating >= 4
+                      ? t(`rateJob.tags.${key}` as any)
+                      : t(`rateJob.lowTags.${key}` as any)}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -158,6 +163,7 @@ export default function RateJobScreen() {
           numberOfLines={3}
           maxLength={500}
         />
+        <Text style={styles.charCount}>{t('rateJob.charCount', { count: review.length })}</Text>
 
         {/* Submit */}
         <TouchableOpacity
@@ -202,7 +208,8 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     tagText:   { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
     tagTextActive: { color: colors.accent },
 
-    reviewInput:    { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 90, textAlignVertical: 'top', marginBottom: 24 },
+    reviewInput:    { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 90, textAlignVertical: 'top', marginBottom: 4 },
+    charCount:      { fontSize: 12, color: colors.textMuted, textAlign: isRTL ? 'left' : 'right', marginBottom: 20 },
 
     submitBtn:         { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
     submitBtnDisabled: { backgroundColor: colors.border },

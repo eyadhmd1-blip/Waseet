@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, Modal,
+  ActivityIndicator, Alert, Modal, RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Share } from 'react-native';
@@ -67,6 +67,7 @@ export default function RequestDetail() {
   const [reportType, setReportType] = useState<string>('');
   const [submittingReport, setSubmittingReport] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [sortBy, setSortBy]         = useState<'price' | 'score'>('price');
   const [confirmCode, setConfirmCode] = useState<string | null>(null);
   const [activeJobId, setActiveJobId] = useState<string | null>(null);
@@ -126,6 +127,12 @@ export default function RequestDetail() {
   }, [id]);
 
   useEffect(() => { load(); }, [load]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  }, [load]);
 
   // Live-update the confirm code when provider sets it
   useEffect(() => {
@@ -326,7 +333,11 @@ export default function RequestDetail() {
 
       <AppHeader variant="stack" title={t('requests.detailTitle')} onBack={() => router.back()} />
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+      >
 
         {/* ── Request card ── */}
         <View style={styles.requestCard}>
@@ -414,19 +425,24 @@ export default function RequestDetail() {
                 <Text style={styles.noBidsSub}>{t('requests.noBidsSub')}</Text>
               </View>
             ) : (
-              visibleBids.map(bid => (
-                <BidCard
-                  key={bid.id}
-                  bid={bid}
-                  isBoosted={isBoostedActive(bid)}
-                  onAccept={() => setConfirmBid(bid)}
-                  onReport={() => { setReportTarget(bid); setReportType(''); }}
-                  onViewProfile={() => router.push({
-                    pathname: '/provider-profile',
-                    params: { provider_id: bid.provider.id },
-                  })}
-                />
-              ))
+              <>
+                {visibleBids.map(bid => (
+                  <BidCard
+                    key={bid.id}
+                    bid={bid}
+                    isBoosted={isBoostedActive(bid)}
+                    onAccept={() => setConfirmBid(bid)}
+                    onReport={() => { setReportTarget(bid); setReportType(''); }}
+                    onViewProfile={() => router.push({
+                      pathname: '/provider-profile',
+                      params: { provider_id: bid.provider.id },
+                    })}
+                  />
+                ))}
+                {bids.length >= 20 && (
+                  <Text style={styles.paginationNote}>{t('requests.bidsLimitNote')}</Text>
+                )}
+              </>
             )}
           </View>
         )}
@@ -781,14 +797,15 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   noBids:     { alignItems: 'center', paddingVertical: 32, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border },
   noBidsIcon: { fontSize: 40, marginBottom: 10 },
   noBidsText: { fontSize: 16, fontWeight: '600', color: colors.textPrimary, marginBottom: 6 },
-  noBidsSub:  { fontSize: 13, color: colors.textMuted },
+  noBidsSub:      { fontSize: 13, color: colors.textMuted },
+  paginationNote: { fontSize: 12, color: colors.textMuted, textAlign: 'center', paddingVertical: 10 },
 
   acceptedCard:      { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#15803D', flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   providerAvatarLg:  { width: 52, height: 52, borderRadius: 26, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   providerAvatarTextLg: { fontSize: 22, fontWeight: '700', color: colors.bg },
   acceptedInfo:      { flex: 1, gap: 4 },
   acceptedName:      { fontSize: 16, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },
-  tierPill:          { alignSelf: 'flex-end', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
+  tierPill:          { alignSelf: isRTL ? 'flex-end' : 'flex-start', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   tierPillText:      { fontSize: 11, fontWeight: '700' },
   verifiedText:      { fontSize: 12, color: '#7DD3FC' },
   acceptedAmount:    { alignItems: 'center' },
@@ -883,11 +900,11 @@ function createBidStyles(colors: AppColors, isRTL: boolean) {
   avatar:       { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
   avatarText:   { fontSize: 18, fontWeight: '700', color: colors.bg },
   providerInfo: { flex: 1 },
-  nameRow:      { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end', marginBottom: 4 },
+  nameRow:      { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: isRTL ? 'flex-end' : 'flex-start', marginBottom: 4 },
   providerName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   verified:     { fontSize: 12, color: '#7DD3FC', fontWeight: '700' },
   profileArrow: { fontSize: 12, color: colors.textMuted },
-  metaRow:      { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' },
+  metaRow:      { flexDirection: 'row', alignItems: 'center', gap: 6, justifyContent: isRTL ? 'flex-end' : 'flex-start', flexWrap: 'wrap' },
   tierBadge:    { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
   tierText:     { fontSize: 10, fontWeight: '700' },
   score:        { fontSize: 12, color: colors.textSecondary },

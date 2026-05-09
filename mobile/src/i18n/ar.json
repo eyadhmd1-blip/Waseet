@@ -213,7 +213,8 @@
     "freqWeekly": "أسبوعي",
     "freqBiweekly": "كل أسبوعين",
     "freqMonthly": "شهري",
-    "months": "أشهر"
+    "months": "أشهر",
+    "bidsLimitNote": "يتم عرض آخر ٢٠ عرضاً فقط"
   },
   "newRequest": {
     "title": "طلب جديد",
@@ -267,7 +268,9 @@
     "size_large": "كبير\n(> 20 كغ)",
     "successDone": "تم!",
     "successTitle": "تم نشر طلبك",
-    "successMsg": "ستصلك إشعارات عند تلقّي العروض"
+    "successMsg": "ستصلك إشعارات عند تلقّي العروض",
+    "exitWarning": "أدخلتَ بعض البيانات. هل تريد الخروج وفقدانها؟",
+    "exitConfirm": "خروج"
   },
   "requestDetail": {
     "title": "تفاصيل الطلب",
@@ -749,6 +752,15 @@
     "providerSub": "مزود الخدمة",
     "rateLabel": "كيف تقيّم تجربتك؟",
     "tagsLabel": "أضف تفاصيل (اختياري)",
+    "lowTagsLabel": "ما الذي يمكن تحسينه؟",
+    "charCount": "{{count}}/500",
+    "lowTags": {
+      "late": "تأخر في الموعد",
+      "quality": "جودة العمل دون المستوى",
+      "overpriced": "السعر مرتفع",
+      "communication": "ضعف التواصل",
+      "unprofessional": "غير محترف"
+    },
     "errSubmit": "تعذّر إرسال التقييم. حاول مجدداً.",
     "successTitle": "شكراً على تقييمك! 🌟",
     "successMsg": "ساعدت {{name}} على بناء سمعته في المنصة."
@@ -1034,6 +1046,9 @@
     "errDescRequired": "يرجى وصف الخدمة المطلوبة",
     "successTitle": "✅ تم نشر طلبك الدوري!",
     "successMsg": "سيبدأ المزودون في منطقتك بإرسال العروض. ستُنبَّه عند وصول عروض.",
+    "successHint": "سنقوم بإشعارك عند وصول أي عرض",
+    "successPrimaryBtn": "عرض طلباتي",
+    "successSecondaryBtn": "حسناً",
     "errSubmit": "لم يُنشر الطلب، حاول مجدداً"
   },
   "contractDetail": {
@@ -1090,7 +1105,8 @@
     "title": "المزودون المحفوظون",
     "noSaved": "لا توجد مزودون محفوظون",
     "noSavedDesc": "احفظ المزودين المميزين للرجوع إليهم لاحقاً",
-    "remove": "إزالة"
+    "remove": "إزالة",
+    "limitNote": "يتم عرض آخر ٥٠ مزوداً محفوظاً"
   },
   "notifSettings": {
     "headerTitle": "إعدادات الإشعارات",
@@ -1134,7 +1150,20 @@
     "emptyTitle": "لا توجد إشعارات بعد",
     "emptySub": "ستظهر هنا جميع إشعاراتك",
     "expandHint": "اضغط للقراءة كاملاً ▾",
-    "collapseHint": "اضغط للإغلاق ▴"
+    "collapseHint": "اضغط للإغلاق ▴",
+    "timeNow": "الآن",
+    "timeMinsAgo": "منذ {{count}} دقيقة",
+    "timeHoursAgo": "منذ {{count}} ساعة",
+    "timeDaysAgo": "منذ {{count}} يوم",
+    "groupToday": "اليوم",
+    "groupYesterday": "أمس",
+    "groupThisWeek": "هذا الأسبوع",
+    "groupOlder": "أقدم",
+    "deleteTitle": "حذف الإشعار",
+    "deleteConfirm": "هل تريد حذف هذا الإشعار؟",
+    "clearAllTitle": "حذف جميع الإشعارات",
+    "clearAllConfirm": "هل تريد حذف جميع الإشعارات نهائياً؟",
+    "clearAllBtn": "حذف الكل"
   },
   "supportNew": {
     "headerTitle": "تذكرة جديدة",
@@ -1157,7 +1186,8 @@
     "successTitle": "✅ تم إرسال تذكرتك",
     "successMsg": "سيرد عليك فريق الدعم خلال ٢–٤ ساعات.",
     "viewTicket": "عرض التذكرة",
-    "errSubmit": "تعذّر إرسال التذكرة. حاول مجدداً."
+    "errSubmit": "تعذّر إرسال التذكرة. حاول مجدداً.",
+    "charCount": "{{count}}/{{max}}"
   },
   "supportTickets": {
     "headerTitle": "تذاكري",

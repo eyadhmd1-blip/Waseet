@@ -251,24 +251,9 @@ export type RecurrenceFrequency = 'weekly' | 'biweekly' | 'monthly';
 export type ContractStatus      = 'bidding' | 'active' | 'paused' | 'completed' | 'cancelled';
 export type VisitStatus         = 'scheduled' | 'completed' | 'postponed' | 'missed';
 
-export const FREQ_LABEL: Record<RecurrenceFrequency, string> = {
-  weekly:   'أسبوعي',
-  biweekly: 'كل أسبوعين',
-  monthly:  'شهري',
-};
-
 export const FREQ_VISITS_PER_MONTH: Record<RecurrenceFrequency, number> = {
   weekly: 4, biweekly: 2, monthly: 1,
 };
-
-export const TIME_WINDOW_LABEL: Record<string, string> = {
-  morning:   'صباحاً (8-12)',
-  afternoon: 'ظهراً (12-5)',
-  evening:   'مساءً (5-9)',
-  flexible:  'مرن',
-};
-
-export const DAY_LABELS = ['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
 
 export interface RecurringContract {
   id: string;

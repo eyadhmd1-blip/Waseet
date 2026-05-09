@@ -541,9 +541,9 @@ export default function RecurringRequestScreen() {
         visible={showSuccess}
         title={t('recurringRequest.successTitle')}
         subtitle={t('recurringRequest.successMsg')}
-        hint="سنقوم بإشعارك عند وصول أي عرض"
-        primaryLabel="عرض طلباتي"
-        secondaryLabel="حسناً"
+        hint={t('recurringRequest.successHint')}
+        primaryLabel={t('recurringRequest.successPrimaryBtn')}
+        secondaryLabel={t('recurringRequest.successSecondaryBtn')}
         onPrimary={() => { setShowSuccess(false); router.replace({ pathname: '/(client)/requests', params: { tab: 'contracts' } } as any); }}
         onSecondary={() => { setShowSuccess(false); router.replace('/(client)'); }}
       />

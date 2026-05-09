@@ -147,7 +147,7 @@ export default function SupportNewScreen() {
           textAlign={ta}
           maxLength={120}
         />
-        <Text style={styles.charCount}>{subject.length}/120</Text>
+        <Text style={styles.charCount}>{t('supportNew.charCount', { count: subject.length, max: 120 })}</Text>
 
         {/* Description */}
         <Text style={styles.label}>{t('supportNew.descLabel')}</Text>
@@ -162,7 +162,7 @@ export default function SupportNewScreen() {
           numberOfLines={5}
           maxLength={1000}
         />
-        <Text style={styles.charCount}>{desc.length}/1000</Text>
+        <Text style={styles.charCount}>{t('supportNew.charCount', { count: desc.length, max: 1000 })}</Text>
 
         {/* Submit */}
         <TouchableOpacity

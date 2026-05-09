@@ -205,7 +205,8 @@
     "freqWeekly": "Weekly",
     "freqBiweekly": "Every 2 weeks",
     "freqMonthly": "Monthly",
-    "months": "months"
+    "months": "months",
+    "bidsLimitNote": "Showing the latest 20 bids only"
   },
   "newRequest": {
     "title": "New Request",
@@ -259,7 +260,9 @@
     "size_large": "Large\n(> 20 kg)",
     "successDone": "Done!",
     "successTitle": "Request Posted",
-    "successMsg": "You'll be notified when bids arrive"
+    "successMsg": "You'll be notified when bids arrive",
+    "exitWarning": "You've entered some data. Exit and discard changes?",
+    "exitConfirm": "Discard"
   },
   "requestDetail": {
     "title": "Request Details",
@@ -741,6 +744,15 @@
     "providerSub": "Service Provider",
     "rateLabel": "How was your experience?",
     "tagsLabel": "Add details (optional)",
+    "lowTagsLabel": "What could be improved?",
+    "charCount": "{{count}}/500",
+    "lowTags": {
+      "late": "Arrived late",
+      "quality": "Work quality below expectations",
+      "overpriced": "Overpriced",
+      "communication": "Poor communication",
+      "unprofessional": "Unprofessional"
+    },
     "errSubmit": "Failed to submit rating. Please try again.",
     "successTitle": "Thank you for your rating! 🌟",
     "successMsg": "You helped {{name}} build their reputation on the platform."
@@ -1026,6 +1038,9 @@
     "errDescRequired": "Please describe the service you need",
     "successTitle": "✅ Your recurring request was posted!",
     "successMsg": "Providers in your area will start sending offers. You'll be notified when offers arrive.",
+    "successHint": "We'll notify you when offers arrive",
+    "successPrimaryBtn": "View My Requests",
+    "successSecondaryBtn": "OK",
     "errSubmit": "Failed to post the request. Please try again."
   },
   "contractDetail": {
@@ -1082,7 +1097,8 @@
     "title": "Saved Providers",
     "noSaved": "No saved providers",
     "noSavedDesc": "Save your favourite providers to easily find them later",
-    "remove": "Remove"
+    "remove": "Remove",
+    "limitNote": "Showing the last 50 saved providers"
   },
   "notifSettings": {
     "headerTitle": "Notification Settings",
@@ -1126,7 +1142,20 @@
     "emptyTitle": "No notifications yet",
     "emptySub": "All your notifications will appear here",
     "expandHint": "Tap to read more ▾",
-    "collapseHint": "Tap to close ▴"
+    "collapseHint": "Tap to close ▴",
+    "timeNow": "Just now",
+    "timeMinsAgo": "{{count}}m ago",
+    "timeHoursAgo": "{{count}}h ago",
+    "timeDaysAgo": "{{count}}d ago",
+    "groupToday": "Today",
+    "groupYesterday": "Yesterday",
+    "groupThisWeek": "This week",
+    "groupOlder": "Older",
+    "deleteTitle": "Delete notification",
+    "deleteConfirm": "Delete this notification?",
+    "clearAllTitle": "Clear all notifications",
+    "clearAllConfirm": "Delete all notifications permanently?",
+    "clearAllBtn": "Clear all"
   },
   "supportNew": {
     "headerTitle": "New Ticket",
@@ -1149,7 +1178,8 @@
     "successTitle": "✅ Your ticket was sent",
     "successMsg": "Our support team will respond within 2–4 hours.",
     "viewTicket": "View Ticket",
-    "errSubmit": "Could not send the ticket. Please try again."
+    "errSubmit": "Could not send the ticket. Please try again.",
+    "charCount": "{{count}}/{{max}}"
   },
   "supportTickets": {
     "headerTitle": "My Tickets",

@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Animated, Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { TIER_META } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
@@ -123,6 +123,7 @@ export default function SavedProvidersScreen() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -184,6 +185,10 @@ export default function SavedProvidersScreen() {
             onUnsave={() => unsave(item)}
           />
         )}
+        ListFooterComponent={saved.length >= MAX_CARDS
+          ? <Text style={styles.limitNote}>{t('saved.limitNote')}</Text>
+          : null
+        }
       />
     </View>
   );
@@ -227,6 +232,8 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     cardActions:   { flexDirection: 'row', gap: 8 },
     unsaveBtn:     { alignSelf: 'flex-start', backgroundColor: colors.bg, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
     unsaveBtnText: { fontSize: 12, color: '#F87171' },
+
+    limitNote: { fontSize: 12, color: colors.textMuted, textAlign: 'center', paddingVertical: 16 },
 
     empty:     { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
     emptyIcon: { fontSize: 52, marginBottom: 14 },

@@ -54,7 +54,7 @@ export default function SupportScreen() {
           .from('support_faq')
           .select('id, question_ar, answer_ar, question_en, answer_en, category')
           .order('sort_order', { ascending: true })
-          .limit(10),
+          .limit(20),
         user
           ? supabase
               .from('support_tickets')

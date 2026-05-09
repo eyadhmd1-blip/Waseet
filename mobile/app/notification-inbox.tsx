@@ -44,13 +44,18 @@ const TYPE_ICON: Record<string, string> = {
   perseverance_reward:   '🏆',
   no_bids_reminder:      '⏰',
   subscription_expired:  '🔴',
+  subscription_expiring: '⚠️',
   subscription_warning:  '⚠️',
+  low_credits:           '💳',
+  no_credits:            '🚫',
+  trial_ended:           '🔔',
   admin_broadcast:       '📢',
   seasonal:              '📅',
   lifecycle:             '🔄',
   behavioral:            '🧠',
   ai:                    '✨',
   support_reply:         '💬',
+  new_request:           '📋',
   new_bid:               '💰',
   bid_rejected:          '❌',
   credits_added:         '💳',
@@ -58,6 +63,7 @@ const TYPE_ICON: Record<string, string> = {
   account_suspended:     '⚠️',
   account_unsuspended:   '✅',
   suggestion_approved:   '✅',
+  subscription_activated:'✅',
   new_contract:          '📅',
   urgent_request:        '⚡',
 };
@@ -66,46 +72,38 @@ function notifIcon(type: string | null): string {
   return TYPE_ICON[type ?? ''] ?? '🔔';
 }
 
-function relativeTime(iso: string, locale: string): string {
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+function relativeTime(iso: string, locale: string, t: TFn): string {
   const diff  = Date.now() - new Date(iso).getTime();
   const mins  = Math.floor(diff / 60_000);
   const hours = Math.floor(diff / 3_600_000);
   const days  = Math.floor(diff / 86_400_000);
 
-  if (locale === 'ar') {
-    if (mins  < 1)  return 'الآن';
-    if (mins  < 60) return `منذ ${mins} دقيقة`;
-    if (hours < 24) return `منذ ${hours} ساعة`;
-    if (days  < 7)  return `منذ ${days} يوم`;
-    return new Date(iso).toLocaleDateString('ar-JO', { day: 'numeric', month: 'short' });
-  }
-  if (mins  < 1)  return 'Just now';
-  if (mins  < 60) return `${mins}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days  < 7)  return `${days}d ago`;
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  if (mins  < 1)  return t('notifInbox.timeNow');
+  if (mins  < 60) return t('notifInbox.timeMinsAgo', { count: mins });
+  if (hours < 24) return t('notifInbox.timeHoursAgo', { count: hours });
+  if (days  < 7)  return t('notifInbox.timeDaysAgo', { count: days });
+  return new Date(iso).toLocaleDateString(
+    locale === 'ar' ? 'ar-JO' : 'en-GB',
+    { day: 'numeric', month: 'short' }
+  );
 }
 
-function dateGroupLabel(iso: string, locale: string): string {
+function dateGroupLabel(iso: string, t: TFn): string {
   const diff = Date.now() - new Date(iso).getTime();
   const days = Math.floor(diff / 86_400_000);
-  if (locale === 'ar') {
-    if (days < 1) return 'اليوم';
-    if (days < 2) return 'أمس';
-    if (days < 7) return 'هذا الأسبوع';
-    return 'أقدم';
-  }
-  if (days < 1) return 'Today';
-  if (days < 2) return 'Yesterday';
-  if (days < 7) return 'This week';
-  return 'Older';
+  if (days < 1) return t('notifInbox.groupToday');
+  if (days < 2) return t('notifInbox.groupYesterday');
+  if (days < 7) return t('notifInbox.groupThisWeek');
+  return t('notifInbox.groupOlder');
 }
 
-function groupByDate(items: NotifRow[], locale: string): DataItem[] {
+function groupByDate(items: NotifRow[], t: TFn): DataItem[] {
   const result: DataItem[] = [];
   let lastGroup = '';
   for (const item of items) {
-    const group = dateGroupLabel(item.created_at, locale);
+    const group = dateGroupLabel(item.created_at, t);
     if (group !== lastGroup) {
       result.push({ _type: 'header', id: `hdr_${group}`, label: group });
       lastGroup = group;
@@ -215,11 +213,11 @@ export default function NotificationInboxScreen() {
   // ── Long-press → delete prompt ──────────────────────────────
   const onLongPress = useCallback((item: NotifRow) => {
     Alert.alert(
-      locale === 'ar' ? 'حذف الإشعار' : 'Delete notification',
-      locale === 'ar' ? 'هل تريد حذف هذا الإشعار؟' : 'Delete this notification?',
+      t('notifInbox.deleteTitle'),
+      t('notifInbox.deleteConfirm'),
       [
-        { text: locale === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
-        { text: locale === 'ar' ? 'حذف' : 'Delete', style: 'destructive', onPress: () => deleteItem(item.id) },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.delete'), style: 'destructive', onPress: () => deleteItem(item.id) },
       ],
     );
   }, [locale, deleteItem]);
@@ -238,11 +236,12 @@ export default function NotificationInboxScreen() {
     }
 
     const routeData = {
-      screen:      item.screen      ?? undefined,
-      job_id:      (item.metadata?.job_id      as string) ?? undefined,
-      provider_id: (item.metadata?.provider_id as string) ?? undefined,
-      notif_id:    (item.metadata?.notif_id    as string) ?? undefined,
-      request_id:  (item.metadata?.request_id  as string) ?? undefined,
+      screen:         item.screen      ?? undefined,
+      job_id:         (item.metadata?.job_id         as string) ?? undefined,
+      provider_id:    (item.metadata?.provider_id    as string) ?? undefined,
+      notif_id:       (item.metadata?.notif_id       as string) ?? undefined,
+      request_id:     (item.metadata?.request_id     as string) ?? undefined,
+      provider_name:  (item.metadata?.provider_name  as string) ?? undefined,
     };
 
     const isLong     = (item.body?.length ?? 0) > 60 || item.title.length > 60;
@@ -274,12 +273,12 @@ export default function NotificationInboxScreen() {
   // ── Clear all ───────────────────────────────────────────────
   const clearAll = useCallback(() => {
     Alert.alert(
-      locale === 'ar' ? 'حذف جميع الإشعارات' : 'Clear all notifications',
-      locale === 'ar' ? 'هل تريد حذف جميع الإشعارات نهائياً؟' : 'Delete all notifications permanently?',
+      t('notifInbox.clearAllTitle'),
+      t('notifInbox.clearAllConfirm'),
       [
-        { text: locale === 'ar' ? 'إلغاء' : 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text:  locale === 'ar' ? 'حذف الكل' : 'Clear all',
+          text:  t('notifInbox.clearAllBtn'),
           style: 'destructive',
           onPress: async () => {
             const { data: { session } } = await supabase.auth.getSession();
@@ -293,7 +292,7 @@ export default function NotificationInboxScreen() {
   }, [locale]);
 
   // ── Grouped data ────────────────────────────────────────────
-  const groupedData = useMemo(() => groupByDate(items, locale), [items, locale]);
+  const groupedData = useMemo(() => groupByDate(items, t), [items, t]);
 
   // ── Render item ─────────────────────────────────────────────
   const renderItem = useCallback(({ item }: { item: DataItem }) => {
@@ -326,7 +325,7 @@ export default function NotificationInboxScreen() {
             <Text style={st.title} numberOfLines={expanded ? undefined : 2}>
               {item.title}
             </Text>
-            <Text style={st.time}>{relativeTime(item.created_at, locale)}</Text>
+            <Text style={st.time}>{relativeTime(item.created_at, locale, t)}</Text>
           </View>
           {!!item.body && (
             <Text style={st.body} numberOfLines={expanded ? undefined : 2}>

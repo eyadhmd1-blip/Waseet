@@ -157,11 +157,56 @@ export default function SupportThreadScreen() {
             } else {
               setTicket(prev => prev ? { ...prev, status: 'resolved' } : prev);
               load();
+              // Notify the provider their subscription is now active
+              notifyProviderActivated(ticket.user_id, ticket.plan_tier ?? '');
             }
           },
         },
       ]
     );
+  };
+
+  // ── Notify provider of subscription activation ───────────────
+  const notifyProviderActivated = async (providerId: string, tier: string) => {
+    try {
+      const [{ data: userData }, { data: tokenData }] = await Promise.all([
+        supabase.from('users').select('lang').eq('id', providerId).single(),
+        supabase.from('push_tokens').select('token').eq('user_id', providerId).maybeSingle(),
+      ]);
+      const lang = userData?.lang ?? 'ar';
+      const tierLabel = tier.charAt(0).toUpperCase() + tier.slice(1);
+      const title = lang === 'ar'
+        ? `✅ تم تفعيل اشتراكك (${tierLabel})`
+        : `✅ Subscription Activated (${tierLabel})`;
+      const body = lang === 'ar'
+        ? 'اشتراكك نشط الآن — ابدأ في تقديم العروض على الطلبات'
+        : 'Your subscription is now active — start bidding on requests';
+
+      await supabase.from('notifications').insert({
+        user_id:  providerId,
+        title,
+        body,
+        type:     'subscription_activated',
+        screen:   '/(provider)/profile',
+        metadata: { tier },
+      });
+
+      if (tokenData?.token) {
+        fetch('https://exp.host/--/api/v2/push/send', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body:    JSON.stringify({
+            to:        tokenData.token,
+            title,
+            body,
+            sound:     'default',
+            priority:  'high',
+            data:      { screen: '/(provider)/profile', tier },
+            channelId: 'default',
+          }),
+        }).catch(() => {});
+      }
+    } catch { /* non-blocking */ }
   };
 
   // ── Send message ──────────────────────────────────────────────

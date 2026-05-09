@@ -249,7 +249,25 @@ export default function NewRequestScreen() {
       <AppHeader
         variant="modal"
         title={STEP_TITLES[step]}
-        onClose={() => step === 1 ? router.back() : setStep((step - 1) as Step)}
+        onClose={() => {
+          if (step === 1) {
+            const hasData = !!(title.trim() || description.trim() || city || images.length);
+            if (hasData) {
+              Alert.alert(
+                t('common.attention'),
+                t('newRequest.exitWarning'),
+                [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  { text: t('newRequest.exitConfirm'), style: 'destructive', onPress: () => router.back() },
+                ]
+              );
+            } else {
+              router.back();
+            }
+          } else {
+            setStep((step - 1) as Step);
+          }
+        }}
         step={step}
         totalSteps={3}
       />
