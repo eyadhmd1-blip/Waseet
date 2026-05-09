@@ -443,14 +443,18 @@ export function AppHeader(props: AppHeaderProps) {
   if (props.variant === 'stack') {
     return (
       <View style={[s.base, s.stackBase]}>
-        <TouchableOpacity
-          style={s.iconBtn}
-          onPress={props.onBack}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name={backIcon} size={24} color={colors.textSecondary} />
-        </TouchableOpacity>
+        {props.onBack ? (
+          <TouchableOpacity
+            style={s.iconBtn}
+            onPress={props.onBack}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name={backIcon} size={24} color={colors.textSecondary} />
+          </TouchableOpacity>
+        ) : (
+          <View style={s.iconBtn} pointerEvents="none" />
+        )}
 
         <Text style={s.stackTitle} numberOfLines={1}>{props.title ?? ''}</Text>
 

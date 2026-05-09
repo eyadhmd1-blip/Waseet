@@ -298,7 +298,6 @@ export default function ProviderProfile() {
       <AppHeader
         variant="stack"
         title={t('profile.title')}
-        onBack={() => {}}
         actionIcon="settings-outline"
         onAction={() => router.push('/notification-settings')}
       />
