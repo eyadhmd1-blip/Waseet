@@ -240,8 +240,15 @@ export default function SubscribeScreen() {
       if (data) {
         setProvider(data);
         // Default to pro; if trial already used skip trial tier
-        const defaultTier = data.trial_used ? 'pro' : (params.tier ?? 'pro');
+        const initialTier = params.tier ?? 'pro';
+        const defaultTier = data.trial_used ? 'pro' : initialTier;
         setSelectedTier(defaultTier);
+        // Sync selection animation when the defaultTier differs from the
+        // initialTier (e.g. trial_used=true with params.tier='trial').
+        if (defaultTier !== initialTier) {
+          Animated.spring(planAnims[initialTier],  { toValue: 0, useNativeDriver: false, speed: 20 }).start();
+          Animated.spring(planAnims[defaultTier],  { toValue: 1, useNativeDriver: false, tension: 120, friction: 7 }).start();
+        }
       }
 
       Animated.timing(headerOp, { toValue: 1, duration: 500, delay: 100, useNativeDriver: true }).start();
