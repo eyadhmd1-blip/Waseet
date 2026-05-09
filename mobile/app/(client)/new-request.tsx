@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Image,
 } from 'react-native';
 import { SuccessModal } from '../../src/components/SuccessModal';
 import { SuggestServiceModal } from '../../src/components/SuggestServiceModal';
@@ -123,9 +123,12 @@ export default function NewRequestScreen() {
   };
 
   const pickImages = async () => {
+    const remaining = 4 - images.length;
+    if (remaining <= 0) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
+      selectionLimit: remaining,
       quality: 0.7,
     });
     if (!result.canceled) {
@@ -407,19 +410,29 @@ export default function NewRequestScreen() {
             </>
           )}
 
-          <Text style={styles.label}>{t('newRequest.photosOptional')}</Text>
+          <Text style={styles.label}>
+            {t('newRequest.photosOptional')}
+            <Text style={{ fontSize: 12, color: colors.textMuted }}> ({images.length}/4)</Text>
+          </Text>
           <View style={styles.imageRow}>
             {images.map((uri, i) => (
-              <View key={i} style={styles.imagePlaceholder}>
-                <Text style={{ color: colors.textMuted, fontSize: 11 }}>{i + 1}</Text>
-                <TouchableOpacity onPress={() => setImages(prev => prev.filter((_, idx) => idx !== i))}>
-                  <Text style={{ color: '#EF4444', fontSize: 18, marginTop: 4 }}>✕</Text>
+              <View key={i} style={styles.imageThumb}>
+                <Image source={{ uri }} style={styles.imageThumbImg} resizeMode="cover" />
+                <TouchableOpacity
+                  style={styles.imageRemoveBtn}
+                  onPress={() => setImages(prev => prev.filter((_, idx) => idx !== i))}
+                  hitSlop={{ top: 6, right: 6, bottom: 6, left: 6 }}
+                >
+                  <Text style={styles.imageRemoveText}>✕</Text>
                 </TouchableOpacity>
               </View>
             ))}
             {images.length < 4 && (
               <TouchableOpacity style={styles.addImageBtn} onPress={pickImages}>
-                <Text style={{ fontSize: 28, color: colors.textMuted }}>+</Text>
+                <Text style={{ fontSize: 30, color: colors.textMuted, lineHeight: 34 }}>+</Text>
+                <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }}>
+                  {4 - images.length} {t('newRequest.photosRemaining')}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -542,9 +555,12 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     cityText:      { color: colors.textSecondary, fontSize: 13 },
     cityTextActive:{ color: colors.accent },
 
-    imageRow:    { flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginBottom: 8 },
-    imagePlaceholder: { width: 80, height: 80, backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center' },
-    addImageBtn: { width: 80, height: 80, backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+    imageRow:        { flexDirection: 'row', gap: 10, flexWrap: 'wrap', marginBottom: 8 },
+    imageThumb:      { width: 80, height: 80, borderRadius: 10, overflow: 'hidden' },
+    imageThumbImg:   { width: '100%', height: '100%' },
+    imageRemoveBtn:  { position: 'absolute', top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(0,0,0,0.55)', alignItems: 'center', justifyContent: 'center' },
+    imageRemoveText: { color: '#fff', fontSize: 11, fontWeight: '700', lineHeight: 13 },
+    addImageBtn:     { width: 80, height: 80, backgroundColor: colors.surface, borderRadius: 10, borderWidth: 1, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
 
     priceCard:       { backgroundColor: colors.surface, borderRadius: 16, padding: 20, marginBottom: 20, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
     priceLabel:      { fontSize: 13, color: colors.textMuted, marginBottom: 10 },

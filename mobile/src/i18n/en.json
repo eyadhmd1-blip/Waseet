@@ -219,6 +219,7 @@
     "selectCity": "Select your city",
     "photos": "Photos",
     "photosOptional": "Photos (optional)",
+    "photosRemaining": "remaining",
     "addPhoto": "Add Photo",
     "urgent": "Urgent Request",
     "urgentDesc": "For emergencies that need an immediate response",
