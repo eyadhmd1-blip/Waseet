@@ -1,4 +1,5 @@
-import { useEffect, useState, useRef, useCallback, useMemo} from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Image,
   ActivityIndicator, Alert, Animated, Dimensions, PanResponder,
@@ -281,8 +282,12 @@ export default function PortfolioScreen() {
     }
   }, []);
 
-  useEffect(() => {
+  // Reload on every focus — ensures newly added items appear immediately
+  useFocusEffect(useCallback(() => {
     load();
+  }, [load]));
+
+  useEffect(() => {
     Animated.spring(fabAnim, { toValue: 1, tension: 60, friction: 7, delay: 400, useNativeDriver: true }).start();
     const loop = Animated.loop(
       Animated.sequence([
@@ -292,7 +297,7 @@ export default function PortfolioScreen() {
     );
     const timer = setTimeout(() => loop.start(), 1500);
     return () => { clearTimeout(timer); loop.stop(); };
-  }, [load]);
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

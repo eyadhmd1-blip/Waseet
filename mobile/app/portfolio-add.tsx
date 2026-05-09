@@ -679,7 +679,7 @@ export default function PortfolioAddScreen() {
         title={t('portfolioAdd.successTitle')}
         subtitle={t('portfolioAdd.successMsg')}
         primaryLabel={t('portfolioAdd.successOk')}
-        onPrimary={() => { setShowSuccess(false); router.back(); }}
+        onPrimary={() => { setShowSuccess(false); router.replace('/portfolio'); }}
       />
     </KeyboardAvoidingView>
   );

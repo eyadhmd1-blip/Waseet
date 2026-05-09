@@ -4,7 +4,7 @@ import {
   RefreshControl, ActivityIndicator, Image, Dimensions, Switch,
   Modal, Alert,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import {
   TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES,
@@ -174,6 +174,8 @@ export default function ProviderProfile() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+  // Refresh portfolio thumbnails whenever screen regains focus
+  useFocusEffect(useCallback(() => { load(); }, [load]));
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 12000);
     return () => clearTimeout(timer);
