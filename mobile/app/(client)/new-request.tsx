@@ -477,7 +477,7 @@ export default function NewRequestScreen() {
             {isCourier && packageSize    && <Row label={t('newRequest.packageSize')}    value={t(`newRequest.size_${packageSize}`)} isRTL={ta === 'right'} />}
             <Row label={t('newRequest.summaryDesc')}    value={description}  isRTL={ta === 'right'} multiline />
             {images.length > 0 && (
-              <Row label={t('newRequest.photos')} value={t('newRequest.summaryPhotos', { count: images.length })} isRTL={ta === 'right'} />
+              <Row label={t('newRequest.photos')} value={images.length === 1 ? t('newRequest.summaryPhoto') : t('newRequest.summaryPhotos', { count: images.length })} isRTL={ta === 'right'} />
             )}
           </View>
 
