@@ -449,10 +449,8 @@ export default function ProviderProfile() {
                     <View style={styles.discChipBlue}>
                       <Text style={styles.discChipBlueText}>
                         ⬆️ {isRTL
-                          ? `ارتقِ لـ ${['new','rising','trusted','expert'].includes(provider.reputation_tier)
-                              ? ['rising','trusted','expert','elite'][['new','rising','trusted','expert'].indexOf(provider.reputation_tier)]
-                              : 'elite'}`
-                          : 'Upgrade tier for bonus'}
+                          ? `ارتقِ لـ ${({ new: 'صاعد', rising: 'موثَّق', trusted: 'خبير', expert: 'نخبة' } as Record<string,string>)[provider.reputation_tier] ?? 'نخبة'}`
+                          : `Upgrade to ${({ new: 'Rising', rising: 'Trusted', trusted: 'Expert', expert: 'Elite' } as Record<string,string>)[provider.reputation_tier] ?? 'Elite'}`}
                       </Text>
                     </View>
                   )}
