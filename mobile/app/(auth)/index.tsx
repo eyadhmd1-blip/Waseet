@@ -6,7 +6,7 @@
 import { useEffect, useRef, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Animated, Dimensions, Easing, StyleSheet as RN,
+  Animated, Dimensions, Easing, Platform, StyleSheet as RN,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -240,10 +240,8 @@ function createStyles(colors: AppColors) {
   orbitWheel:   { position: 'absolute', top: 0, left: 0, width: ORBIT_RADIUS * 2, height: ORBIT_RADIUS * 2 },
   orbitIcon:    { position: 'absolute', fontSize: rs(22, 16, 26) },
   glow:         { position: 'absolute', top: ORBIT_RADIUS - GLOW_SIZE / 2, left: ORBIT_RADIUS - GLOW_SIZE / 2, width: GLOW_SIZE, height: GLOW_SIZE, borderRadius: GLOW_SIZE / 2, backgroundColor: colors.accent },
-  // adjustsFontSizeToFit is iOS-only — Android ignores it and renders full fontSize.
-  // Keep fontSize small enough to fit GLOW_SIZE*0.85 on any screen without relying on shrink.
-  // At rs(38,30,44) the max is 44px; "وسيط" in bold Arabic at 44px ≈ 120px < 144px container.
-  logoAr:       { fontSize: rs(38, 30, 44), fontWeight: '800', color: colors.accent, letterSpacing: 0, width: GLOW_SIZE * 0.85, textAlign: 'center', textShadowColor: 'rgba(201,168,76,0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 20 },
+  // adjustsFontSizeToFit is iOS-only. On Android cap lower so text fits without shrinking.
+  logoAr:       { fontSize: Platform.OS === 'ios' ? rs(42, 32, 48) : rs(34, 28, 38), fontWeight: '800', color: colors.accent, letterSpacing: 0, width: GLOW_SIZE * 0.85, textAlign: 'center', textShadowColor: 'rgba(201,168,76,0.4)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 20 },
   logoEn:       { fontSize: rs(18, 14, 22), fontWeight: '300', color: colors.textSecondary, letterSpacing: 9, marginTop: 2 },
   tagline:      { fontSize: rs(14, 12, 16), color: colors.textMuted, marginTop: 4, textAlign: 'center', letterSpacing: 0.5, paddingHorizontal: width * 0.08 },
   connRow:      { flexDirection: 'row', alignItems: 'center', marginTop: 36, paddingHorizontal: 12 },
