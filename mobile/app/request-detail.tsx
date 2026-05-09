@@ -169,10 +169,6 @@ export default function RequestDetail() {
       p_is_urgent: isUrgent,
     });
 
-    supabase.functions.invoke('notify-provider-bid-accepted', {
-      body: { job_id: jobId, is_urgent: isUrgent },
-    }).catch(() => {});
-
     supabase.functions.invoke('notify-providers-bid-rejected', {
       body: { request_id: id },
     }).catch(() => {});
