@@ -124,7 +124,7 @@ export default function ProviderJobs() {
   const handleTaskDone = async (job: JobWithMeta) => {
     setSendingCode(true);
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const exp  = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+    const exp  = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 h — field jobs take time
 
     const { error } = await supabase
       .from('jobs')
