@@ -545,7 +545,7 @@
       "inboxOnlySub": "Push notification could not be delivered, but the code is in the client's in-app notification inbox — ask them to open the app and check notifications",
       "sendFailedMsg": "Could not send the code — contact the client via chat and share the code manually",
       "errWrongCode": "Wrong code — ask the client to share the code again",
-      "errCodeExpired": "Code expired — press 'Job done' again to generate a new one",
+      "errCodeExpired": "Code expired — the 'Job done' button will reappear now so you can send a new code",
       "errNoCode": "No code generated yet — press 'Job done' first",
       "errNotActive": "This job is no longer active",
       "errUnauthorized": "Session expired — close the app and reopen it"

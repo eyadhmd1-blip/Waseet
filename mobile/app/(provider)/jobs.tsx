@@ -204,6 +204,25 @@ export default function ProviderJobs() {
           default:                  return errCode ?? error?.message ?? t('common.unknown');
         }
       })();
+
+      // When the code expires: clear it from DB + local state so the
+      // "Mark done" button reappears and the provider can generate a new code.
+      if (errCode === 'code_expired' && confirmJob) {
+        supabase.from('jobs')
+          .update({ confirm_code: null, confirm_code_exp: null })
+          .eq('id', confirmJob.id)
+          .then(() => {
+            setJobs(prev => prev.map(j =>
+              j.id === confirmJob.id
+                ? { ...j, confirm_code: undefined, confirm_code_exp: undefined }
+                : j
+            ));
+          });
+        setConfirmJob(null);
+        setCodeSent(false);
+        setCodeInput(['', '', '', '', '', '']);
+      }
+
       Alert.alert(t('common.error'), msg);
       return;
     }
