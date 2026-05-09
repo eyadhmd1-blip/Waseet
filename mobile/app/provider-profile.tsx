@@ -314,7 +314,7 @@ export default function ProviderPublicProfile() {
                 params: { provider_hint: provider_id },
               })}
             >
-              <Text style={styles.requestBtnText}>{t('providerProfile.directRequest')}</Text>
+              <Text style={styles.requestBtnText}>{t('providerProfile.directRequest')} {isRTL ? '←' : '→'}</Text>
             </TouchableOpacity>
           )}
         </Animated.View>
