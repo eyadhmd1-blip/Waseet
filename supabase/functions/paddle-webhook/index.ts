@@ -142,6 +142,18 @@ Deno.serve(async (req) => {
 
         const amountPaid = TIER_PRICE_JOD[tier] ?? 5;
 
+        // Idempotency check — skip if this transaction was already processed (BUG-003)
+        const { data: existing } = await supabaseAdmin
+          .from("subscriptions")
+          .select("id")
+          .eq("paddle_txn_id", data.id)
+          .maybeSingle();
+
+        if (existing) {
+          console.log(`[paddle-webhook] Duplicate event for txn ${data.id} — skipping`);
+          break;
+        }
+
         // Activate subscription via RPC (handles credits, trial_used, discount resets)
         await supabaseAdmin.rpc("activate_provider_subscription", {
           p_provider_id:   providerId,

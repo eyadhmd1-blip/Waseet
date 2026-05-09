@@ -102,6 +102,13 @@ export default function NotificationSettingsScreen() {
   useEffect(() => { load(); }, [load]);
 
   const save = async () => {
+    // Validate quiet hours range (BUG-024)
+    if (!QUIET_START_OPTIONS.includes(prefs.quiet_hour_start) ||
+        !QUIET_END_OPTIONS.includes(prefs.quiet_hour_end)) {
+      Alert.alert(t('common.error'), t('notifSettings.saveErr'));
+      return;
+    }
+
     setSaving(true);
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const user = _ses?.user;

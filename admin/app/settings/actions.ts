@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
-import { getAdminUsername } from '../lib/session';
+import { requireAdminSession } from '../lib/auth';
 import { revalidatePath } from 'next/cache';
 
 const SETTING_TYPES: Record<string, 'number' | 'boolean' | 'percent'> = {
@@ -35,7 +35,7 @@ export async function updateSetting(key: string, value: string, label: string) {
   const validationError = validateSettingValue(key, value);
   if (validationError) throw new Error(validationError);
 
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('platform_settings')
@@ -58,7 +58,7 @@ export async function updateSettings(updates: Array<{ key: string; value: string
     if (err) throw new Error(err);
   }
 
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
   const rows = updates.map(u => ({ key: u.key, value: u.value, label: u.label, updated_at: new Date().toISOString() }));
 
   await supabaseAdmin

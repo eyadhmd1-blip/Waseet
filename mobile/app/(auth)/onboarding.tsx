@@ -573,15 +573,18 @@ export default function OnboardingScreen() {
           bio: bio.trim() || null,
         };
 
-        // Always activate trial so provider has credits from day one,
-        // even if they selected a paid plan (payment activates the upgrade later).
-        providerPayload.is_subscribed       = true;
-        providerPayload.subscription_tier   = 'trial';
-        providerPayload.subscription_credits = 10;
-        providerPayload.trial_used          = true;
-        providerPayload.subscription_ends   = new Date(
-          Date.now() + 30 * 24 * 60 * 60 * 1000
-        ).toISOString();
+        // Only activate trial when provider explicitly chose the trial plan (BUG-014).
+        // Providers who select a paid plan go through the payment flow separately.
+        const effectivePlanForInsert = planOverride !== undefined ? planOverride : planChoice;
+        if (effectivePlanForInsert === 'trial' && !trialUsed) {
+          providerPayload.is_subscribed        = true;
+          providerPayload.subscription_tier    = 'trial';
+          providerPayload.subscription_credits = 10;
+          providerPayload.trial_used           = true;
+          providerPayload.subscription_ends    = new Date(
+            Date.now() + 30 * 24 * 60 * 60 * 1000
+          ).toISOString();
+        }
 
         const { error: provErr } = await supabase.from('providers').insert(providerPayload);
         if (provErr) {

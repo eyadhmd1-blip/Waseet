@@ -18,10 +18,10 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
 
-  const { valid } = await verifyToken(token);
+  const { valid, username } = await verifyToken(token);
+  const expectedUser = process.env.ADMIN_USERNAME;
 
-  if (!valid) {
-    // Token expired or invalid — clear cookie and redirect
+  if (!valid || !username || !expectedUser || username !== expectedUser) {
     const res = NextResponse.redirect(new URL('/login', req.url));
     res.cookies.delete(COOKIE_NAME);
     return res;

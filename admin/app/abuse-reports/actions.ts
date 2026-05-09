@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
-import { getAdminUsername } from '../lib/session';
+import { requireAdminSession } from '../lib/auth';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
@@ -31,7 +31,7 @@ export async function updateReportStatus(
   newStatus: string,
   notes: string,
 ) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('reports')
@@ -55,7 +55,7 @@ export async function updateReportStatus(
 }
 
 export async function suspendUser(userId: string, reason: string, userName?: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin.rpc('suspend_user', {
     p_user_id: userId,
@@ -81,7 +81,7 @@ export async function suspendUser(userId: string, reason: string, userName?: str
 }
 
 export async function unsuspendUser(userId: string, userName?: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin.rpc('unsuspend_user', { p_user_id: userId });
 

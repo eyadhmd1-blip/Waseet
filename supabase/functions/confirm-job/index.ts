@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     // ── Fetch job — verify caller is the provider ─────────────
     const { data: job, error: jobError } = await supabaseAdmin
       .from("jobs")
-      .select("id, provider_id, client_id, request_id, confirm_code, confirm_code_exp, status")
+      .select("id, provider_id, client_id, request_id, confirm_code, confirm_code_exp, status, confirm_attempts")
       .eq("id", job_id)
       .single();
 
@@ -67,6 +67,12 @@ Deno.serve(async (req) => {
     if (job.provider_id !== user.id) return json({ error: "not_your_job" }, 403);
     if (job.status !== "active") return json({ error: "job_not_active" }, 400);
     if (!job.confirm_code) return json({ error: "no_code_generated" }, 400);
+
+    // ── Brute-force lockout (BUG-005) ────────────────────────
+    const MAX_ATTEMPTS = 5;
+    if ((job.confirm_attempts ?? 0) >= MAX_ATTEMPTS) {
+      return json({ error: "too_many_attempts" }, 429);
+    }
 
     // ── Check expiry ──────────────────────────────────────────
     if (new Date(job.confirm_code_exp) < new Date()) {
@@ -77,8 +83,12 @@ Deno.serve(async (req) => {
     const expected = job.confirm_code as string;
     const provided = String(code).trim();
 
-    // Simple constant-time check (codes are short fixed-length)
     if (expected.length !== provided.length || expected !== provided) {
+      // Increment attempt counter before returning error
+      await supabaseAdmin
+        .from("jobs")
+        .update({ confirm_attempts: (job.confirm_attempts ?? 0) + 1 })
+        .eq("id", job_id);
       return json({ error: "wrong_code" }, 400);
     }
 
@@ -91,6 +101,7 @@ Deno.serve(async (req) => {
         status:              "completed",
         confirm_code:        null,
         confirm_code_exp:    null,
+        confirm_attempts:    0,
       })
       .eq("id", job_id);
 

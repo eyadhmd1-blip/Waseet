@@ -2,11 +2,11 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
-import { getAdminUsername } from '../lib/session';
+import { requireAdminSession } from '../lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export async function pauseContract(contractId: string, title: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('recurring_contracts')
@@ -26,7 +26,7 @@ export async function pauseContract(contractId: string, title: string) {
 }
 
 export async function resumeContract(contractId: string, title: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('recurring_contracts')
@@ -46,7 +46,7 @@ export async function resumeContract(contractId: string, title: string) {
 }
 
 export async function closeContract(contractId: string, title: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('recurring_contracts')

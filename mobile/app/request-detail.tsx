@@ -102,7 +102,18 @@ export default function RequestDetail() {
           .limit(20),
       ]);
 
-      if (reqData) setRequest(reqData);
+      if (reqData) {
+        // Ownership check (BUG-012): clients may only view their own requests.
+        // Providers may view any request (they browse to place bids).
+        const { data: roleRow } = user
+          ? await supabase.from('users').select('role').eq('id', user.id).single()
+          : { data: null };
+        if (roleRow?.role === 'client' && reqData.client_id !== user?.id) {
+          router.back();
+          return;
+        }
+        setRequest(reqData);
+      }
 
       if (bidsError) {
         console.error('[request-detail] bids query error:', bidsError);

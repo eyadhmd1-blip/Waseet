@@ -417,6 +417,12 @@ export default function PortfolioAddScreen() {
 
   const submit = async () => {
     if (!itemType) return;
+
+    // Guard: before/after requires both images (BUG-019)
+    if (itemType === 'before_after' && (!beforeUri || !afterUri)) return;
+    if (itemType === 'single' && !singleUri) return;
+    if (itemType === 'video'  && !videoUri)  return;
+
     setSubmitting(true);
 
     try {

@@ -117,12 +117,21 @@ export default function ContractDetailScreen() {
         supabase.from('users').select('role').eq('id', authUser.id).single(),
       ]);
 
-      if (contractData) setContract(contractData as RecurringContract);
-      if (bidsData)     setBids(bidsData as ContractBid[]);
-      if (visitsData)   setVisits(visitsData as ContractVisit[]);
-      if (roleData)     setMyRole(roleData.role as 'client' | 'provider');
+      if (contractData) {
+        // Ownership check (BUG-011): only participants may view the contract
+        const isParticipant =
+          authUser.id === contractData.client_id ||
+          authUser.id === (contractData as any).provider_id;
+        if (!isParticipant) {
+          router.back();
+          return;
+        }
+        setContract(contractData as RecurringContract);
+      }
+      if (bidsData)   setBids(bidsData as ContractBid[]);
+      if (visitsData) setVisits(visitsData as ContractVisit[]);
+      if (roleData)   setMyRole(roleData.role as 'client' | 'provider');
 
-  
     } finally {
       setLoading(false);
     }

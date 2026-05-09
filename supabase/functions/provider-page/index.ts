@@ -12,6 +12,19 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
+// BUG-010 FIX: HTML-escape all user-supplied strings before interpolating into
+// the HTML response. Without this, a provider whose full_name contains script
+// tags can execute arbitrary JavaScript in any browser that visits their link.
+function escapeHtml(s: unknown): string {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 const TIER_LABELS: Record<string, string> = {
   new: 'جديد', rising: 'صاعد', trusted: 'موثوق', expert: 'خبير', elite: 'نخبة',
 };
@@ -61,15 +74,26 @@ serve(async (req) => {
   supabase.rpc('increment_profile_view', { p_provider_id: prov.id }).catch(() => {});
 
   const tierColor = TIER_COLORS[prov.reputation_tier] ?? '#94A3B8';
-  const tierLabel = TIER_LABELS[prov.reputation_tier] ?? prov.reputation_tier;
-  const appDeepLink = `waseet://provider-profile?provider_id=${prov.id}`;
+  const tierLabel = TIER_LABELS[prov.reputation_tier] ?? escapeHtml(prov.reputation_tier);
+  // Deep link uses only the provider UUID (safe, UUID format enforced by DB)
+  const appDeepLink = `waseet://provider-profile?provider_id=${encodeURIComponent(prov.id)}`;
   const appStoreUrl = 'https://apps.apple.com/app/waseet';
   const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.waseet.app';
 
+  // Escaped display values — applied to every DB-sourced field in the HTML
+  const safeFullName   = escapeHtml(prov.full_name);
+  const safeCity       = escapeHtml(prov.city);
+  const safeFirstChar  = escapeHtml(prov.full_name?.charAt(0) ?? '?');
+  const safeLifetime   = escapeHtml(prov.lifetime_jobs);
+  const safeScore      = prov.score > 0 ? escapeHtml(prov.score.toFixed(1)) : '—';
+  const safeShareCount = escapeHtml(prov.share_count ?? 0);
+
   const portfolioHTML = (portfolio ?? []).map(item => {
     const thumb = item.media_urls?.[0];
-    return thumb
-      ? `<div class="port-thumb" style="background-image:url('${thumb}')">
+    // Escape the Storage URL to prevent attribute injection
+    const safeThumb = thumb ? escapeHtml(thumb) : null;
+    return safeThumb
+      ? `<div class="port-thumb" style="background-image:url('${safeThumb}')">
            ${item.item_type === 'before_after' ? '<span class="port-badge">🔄</span>' : ''}
          </div>`
       : `<div class="port-thumb port-video"><span>🎥</span></div>`;
@@ -80,10 +104,10 @@ serve(async (req) => {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>${prov.full_name} — وسيط</title>
-  <meta name="description" content="مزود خدمة موثّق على تطبيق وسيط · ${prov.city} · ${prov.lifetime_jobs} عمل منجز" />
-  <meta property="og:title"       content="${prov.full_name} — وسيط" />
-  <meta property="og:description" content="تقييم ${prov.score?.toFixed(1) ?? '—'} ⭐ · ${prov.lifetime_jobs} عمل · ${tierLabel}" />
+  <title>${safeFullName} — وسيط</title>
+  <meta name="description" content="مزود خدمة موثّق على تطبيق وسيط · ${safeCity} · ${safeLifetime} عمل منجز" />
+  <meta property="og:title"       content="${safeFullName} — وسيط" />
+  <meta property="og:description" content="تقييم ${safeScore} ⭐ · ${safeLifetime} عمل · ${tierLabel}" />
   <meta property="og:type"        content="profile" />
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -189,10 +213,10 @@ serve(async (req) => {
     <!-- Hero -->
     <div class="hero">
       <div class="hero-top">
-        <div class="avatar">${prov.full_name.charAt(0)}</div>
+        <div class="avatar">${safeFirstChar}</div>
         <div style="flex:1">
-          <div class="name">${prov.full_name}</div>
-          <div class="city">📍 ${prov.city}</div>
+          <div class="name">${safeFullName}</div>
+          <div class="city">📍 ${safeCity}</div>
           <div class="badges">
             <span class="badge tier-badge">${tierLabel}</span>
             ${prov.badge_verified ? '<span class="badge verified-badge">✓ موثّق</span>' : ''}
@@ -202,15 +226,15 @@ serve(async (req) => {
       </div>
       <div class="stats">
         <div class="stat-box">
-          <div class="stat-value">${prov.score > 0 ? prov.score.toFixed(1) : '—'} ⭐</div>
+          <div class="stat-value">${safeScore} ⭐</div>
           <div class="stat-label">التقييم</div>
         </div>
         <div class="stat-box">
-          <div class="stat-value">${prov.lifetime_jobs}</div>
+          <div class="stat-value">${safeLifetime}</div>
           <div class="stat-label">عمل منجز</div>
         </div>
         <div class="stat-box">
-          <div class="stat-value">${prov.share_count ?? 0} ⬆️</div>
+          <div class="stat-value">${safeShareCount} ⬆️</div>
           <div class="stat-label">مشاركة</div>
         </div>
       </div>
@@ -226,7 +250,7 @@ serve(async (req) => {
     <div class="cta-card">
       <div class="cta-title">حمّل تطبيق وسيط</div>
       <div class="cta-sub">
-        للتواصل مع ${prov.full_name} وآلاف المزودين الموثّقين في الأردن
+        للتواصل مع ${safeFullName} وآلاف المزودين الموثّقين في الأردن
       </div>
       <div class="store-btns">
         <a class="store-btn" href="${appStoreUrl}">App Store 🍎</a>

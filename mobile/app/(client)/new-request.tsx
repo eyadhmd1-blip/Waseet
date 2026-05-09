@@ -188,18 +188,31 @@ export default function NewRequestScreen() {
     }
 
     const uploadedUrls: string[] = [];
-    for (const uri of images) {
-      const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
-      // fetch().blob() produces empty/corrupt data on Android — use arrayBuffer() instead
-      const response = await fetch(uri);
-      const arrayBuffer = await response.arrayBuffer();
-      const { data: uploadData } = await supabase.storage
-        .from('request-images')
-        .upload(fileName, arrayBuffer, { contentType: 'image/jpeg' });
-      if (uploadData) {
-        const { data: { publicUrl } } = supabase.storage.from('request-images').getPublicUrl(fileName);
-        uploadedUrls.push(publicUrl);
+    const uploadedPaths: string[] = [];
+    try {
+      for (const uri of images) {
+        const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+        // fetch().blob() produces empty/corrupt data on Android — use arrayBuffer() instead
+        const response = await fetch(uri);
+        const arrayBuffer = await response.arrayBuffer();
+        const { data: uploadData, error: uploadErr } = await supabase.storage
+          .from('request-images')
+          .upload(fileName, arrayBuffer, { contentType: 'image/jpeg' });
+        if (uploadErr) throw uploadErr;
+        if (uploadData) {
+          uploadedPaths.push(uploadData.path);
+          const { data: { publicUrl } } = supabase.storage.from('request-images').getPublicUrl(uploadData.path);
+          uploadedUrls.push(publicUrl);
+        }
       }
+    } catch (uploadErr: any) {
+      // Clean up any successfully uploaded files before reporting failure (BUG-018)
+      if (uploadedPaths.length > 0) {
+        await supabase.storage.from('request-images').remove(uploadedPaths);
+      }
+      setSubmitting(false);
+      Alert.alert(t('common.error'), t('common.errorGeneral'));
+      return;
     }
 
     const { data: newReq, error } = await supabase.from('requests').insert({

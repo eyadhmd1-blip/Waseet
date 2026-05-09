@@ -81,15 +81,25 @@ Deno.serve(async (req: Request) => {
 
     const code = data.code as string;
 
-    // Send SMS via Unifonic REST API — if AppSid not yet configured, run in dev mode
+    // Send SMS via Unifonic REST API
     const appSid = Deno.env.get("UNIFONIC_APP_SID");
 
     if (!appSid) {
-      // DEV MODE: return the code directly so OTP flow works without SMS provider
-      console.warn("UNIFONIC_APP_SID not set — running in dev mode, returning code in response");
+      // BUG-001 FIX: Only expose dev_code when explicitly running in development
+      // environment. A missing AppSid in staging/production must be a hard error,
+      // not a silent bypass that exposes the OTP in the HTTP response.
+      const isDev = Deno.env.get("ENVIRONMENT") === "development";
+      if (isDev) {
+        console.warn("[send-otp] Dev mode — OTP returned in response (ENVIRONMENT=development)");
+        return new Response(
+          JSON.stringify({ success: true, dev_code: code }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      console.error("[send-otp] UNIFONIC_APP_SID is not configured in this environment");
       return new Response(
-        JSON.stringify({ success: true, dev_code: code }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "SMS_PROVIDER_NOT_CONFIGURED" }),
+        { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 

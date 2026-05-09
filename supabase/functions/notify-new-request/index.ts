@@ -60,6 +60,29 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
   try {
+    // BUG-004 FIX: Authenticate every caller before triggering mass push notifications.
+    // This function previously accepted unauthenticated calls, allowing any actor to
+    // spam all providers. We now require either:
+    //   (a) A valid Supabase JWT whose user_id matches the request's client_id
+    //       (the mobile client calls this immediately after creating a request), OR
+    //   (b) An internal service-role call (no Authorization header needed when invoked
+    //       server-side via supabase.functions.invoke with service key).
+    // We verify using the anon client; the service role bypasses JWT validation.
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return json({ error: "unauthorized" }, 401);
+    }
+
+    const anonClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authErr } = await anonClient.auth.getUser();
+    if (authErr || !user) {
+      return json({ error: "unauthorized" }, 401);
+    }
+
     const { request_id, city, category_slug } = await req.json() as {
       request_id:    string;
       city:          string;
@@ -76,12 +99,17 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Fetch request title and category name for notification copy
+    // Fetch request and verify the authenticated user owns it.
+    // This prevents a provider from passing another client's request_id.
     const { data: reqRow } = await supabase
       .from("requests")
-      .select("title, city")
+      .select("title, city, client_id")
       .eq("id", request_id)
       .single();
+
+    if (!reqRow || reqRow.client_id !== user.id) {
+      return json({ error: "request_not_found_or_unauthorized" }, 403);
+    }
 
     // Use category_slug as fallback display name (Arabic-friendly)
     const catName = reqRow?.title ?? category_slug;

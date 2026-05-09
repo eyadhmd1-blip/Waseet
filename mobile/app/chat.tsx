@@ -116,7 +116,8 @@ export default function ChatScreen() {
           .from('messages')
           .select('*')
           .eq('job_id', job_id)
-          .order('created_at', { ascending: true }),
+          .order('created_at', { ascending: true })
+          .limit(50),
       ]);
 
       if (jobData) setJob(jobData as unknown as JobMeta);

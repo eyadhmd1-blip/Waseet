@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
+import { requireAdminSession } from '../lib/auth';
 import { revalidatePath } from 'next/cache';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -27,6 +28,7 @@ async function insertNotification(userId: string, title: string, body: string, t
 }
 
 export async function suspendProvider(providerId: string, userId: string, name: string, reason: string) {
+  await requireAdminSession();
   await supabaseAdmin
     .from('providers')
     .update({ is_active: false, suspended_at: new Date().toISOString(), suspension_reason: reason })
@@ -51,6 +53,7 @@ export async function suspendProvider(providerId: string, userId: string, name: 
 }
 
 export async function unsuspendProvider(providerId: string, name: string) {
+  await requireAdminSession();
   await supabaseAdmin
     .from('providers')
     .update({ is_active: true, suspended_at: null, suspension_reason: null })
@@ -82,6 +85,7 @@ export async function unsuspendProvider(providerId: string, name: string) {
 }
 
 export async function verifyProvider(providerId: string, name: string) {
+  await requireAdminSession();
   await supabaseAdmin
     .from('providers')
     .update({ badge_verified: true })
@@ -98,6 +102,7 @@ export async function verifyProvider(providerId: string, name: string) {
 }
 
 export async function unverifyProvider(providerId: string, name: string) {
+  await requireAdminSession();
   await supabaseAdmin
     .from('providers')
     .update({ badge_verified: false })
@@ -119,6 +124,10 @@ export async function adjustCredits(
   amount: number,
   reason: string,
 ) {
+  await requireAdminSession();
+  if (!Number.isInteger(amount) || amount === 0) {
+    throw new Error('INVALID_AMOUNT');
+  }
   const { data: provider } = await supabaseAdmin
     .from('providers')
     .select('subscription_credits, bonus_credits, id')
@@ -170,6 +179,7 @@ export async function overrideTier(
   newTier: string,
   oldTier: string,
 ) {
+  await requireAdminSession();
   // tier_locked = true prevents update_provider_score() trigger from
   // auto-resetting this tier when the provider completes future jobs.
   await supabaseAdmin
@@ -189,6 +199,7 @@ export async function overrideTier(
 }
 
 export async function unlockTier(providerId: string, name: string) {
+  await requireAdminSession();
   await supabaseAdmin
     .from('providers')
     .update({ tier_locked: false })
@@ -219,6 +230,19 @@ export async function manualActivateSubscription(
   paymentRef: string,
   notes: string,
 ) {
+  await requireAdminSession();
+
+  // BUG-028 FIX: Validate periodMonths before calling the RPC.
+  // periodMonths=0 would create a subscription that expires immediately.
+  if (!Number.isInteger(periodMonths) || periodMonths < 1 || periodMonths > 24) {
+    throw new Error('INVALID_PERIOD_MONTHS');
+  }
+
+  const VALID_TIERS = new Set(['trial', 'basic', 'pro', 'premium']);
+  if (!VALID_TIERS.has(tier)) {
+    throw new Error('INVALID_TIER');
+  }
+
   // Block trial re-activation
   if (tier === 'trial') {
     const { data: prov } = await supabaseAdmin

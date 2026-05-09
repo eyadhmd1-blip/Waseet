@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
-import { getAdminUsername } from '../lib/session';
+import { requireAdminSession } from '../lib/auth';
 import { revalidatePath } from 'next/cache';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -31,7 +31,7 @@ async function sendPushToUser(userId: string, title: string, body: string, data?
 
 export async function replyToTicket(ticketId: string, body: string) {
   if (!body?.trim()) throw new Error('Reply body cannot be empty');
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin.from('support_messages').insert({
     ticket_id: ticketId,
@@ -87,7 +87,7 @@ export async function replyToTicket(ticketId: string, body: string) {
 }
 
 export async function resolveTicket(ticketId: string, subject: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('support_tickets')
@@ -107,7 +107,7 @@ export async function resolveTicket(ticketId: string, subject: string) {
 }
 
 export async function assignTicket(ticketId: string, adminUserId: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('support_tickets')

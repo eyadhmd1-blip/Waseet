@@ -53,6 +53,25 @@ export default function RateJobScreen() {
 
     setSubmit(true);
 
+    // Verify job is completed and not already rated (BUG-029)
+    const { data: jobCheck } = await supabase
+      .from('jobs')
+      .select('status, confirmed_by_client, client_rating')
+      .eq('id', job_id)
+      .single();
+
+    if (!jobCheck || jobCheck.status !== 'completed' || !jobCheck.confirmed_by_client) {
+      setSubmit(false);
+      Alert.alert(t('common.error'), t('rateJob.errSubmit'));
+      return;
+    }
+
+    if (jobCheck.client_rating !== null) {
+      setSubmit(false);
+      router.replace('/(client)/requests');
+      return;
+    }
+
     const tagStr = tags.length > 0
       ? `\n\n✓ ${tags.map(k => t(`rateJob.tags.${k}` as any)).join(' · ')}`
       : '';
@@ -64,7 +83,9 @@ export default function RateJobScreen() {
         client_rating: rating,
         client_review: fullReview || null,
       })
-      .eq('id', job_id);
+      .eq('id', job_id)
+      .eq('status', 'completed')
+      .is('client_rating', null);
 
     setSubmit(false);
 

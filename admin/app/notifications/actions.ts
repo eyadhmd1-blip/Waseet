@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
+import { requireAdminSession } from '../lib/auth';
 import { revalidatePath } from 'next/cache';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -67,6 +68,8 @@ export async function sendBroadcast(params: {
   segment:  'all' | 'clients' | 'providers' | 'subscribed_providers';
   city?:    string;
 }) {
+  await requireAdminSession();
+
   const { title, body, segment, city } = params;
 
   let ids: string[] = [];

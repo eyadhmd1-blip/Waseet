@@ -2,7 +2,7 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
-import { getAdminUsername } from '../lib/session';
+import { requireAdminSession } from '../lib/auth';
 import { revalidatePath } from 'next/cache';
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
@@ -27,7 +27,7 @@ async function insertNotification(userId: string, title: string, body: string, t
 }
 
 export async function disableUser(userId: string, userName: string, reason: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('users')
@@ -53,7 +53,7 @@ export async function disableUser(userId: string, userName: string, reason: stri
 }
 
 export async function enableUser(userId: string, userName: string) {
-  const admin = await getAdminUsername();
+  const admin = await requireAdminSession();
 
   await supabaseAdmin
     .from('users')
