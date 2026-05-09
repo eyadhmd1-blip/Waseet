@@ -1476,33 +1476,21 @@ export default function ProviderFeed() {
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const user = _ses?.user;
 
-    const { data: creditResult, error: creditError } = await supabase.rpc('submit_bid_with_credits', {
-      p_request_id:  target.id,
-      p_provider_id: user!.id,
-      p_amount:      price,
-      p_note:        note.trim() || null,
-      p_credit_cost: CREDIT_COST.contract,
-    });
-    if (creditError) {
-      setContractModal(prev => ({ ...prev, loading: false }));
-      Alert.alert(t('common.error'), creditError.message);
-      return;
-    }
-    const creditRes = creditResult as { error?: string };
-    if (creditRes?.error) {
-      showBidError(creditRes.error, () => setContractModal({ target: null, amount: '', note: '', loading: false }));
-      return;
-    }
-
-    const { error } = await supabase.rpc('submit_contract_bid', {
+    const { data: rpcResult, error } = await supabase.rpc('submit_contract_bid_with_credits', {
       p_contract_id:     target.id,
       p_provider_id:     user!.id,
       p_price_per_visit: price,
       p_note:            note.trim() || null,
+      p_credit_cost:     CREDIT_COST.contract,
     });
     setContractModal(prev => ({ ...prev, loading: false }));
 
     if (error) { Alert.alert(t('common.error'), error.message); return; }
+    const result = rpcResult as { error?: string; bid_id?: string };
+    if (result?.error) {
+      showBidError(result.error, () => setContractModal({ target: null, amount: '', note: '', loading: false }), result);
+      return;
+    }
     setContractModal({ target: null, amount: '', note: '', loading: false });
     Alert.alert(t('providerFeed.successContractBidTitle'), t('providerFeed.successContractBidMsg'));
     load();
