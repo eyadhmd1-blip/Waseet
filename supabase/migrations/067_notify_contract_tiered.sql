@@ -18,6 +18,9 @@ CREATE INDEX IF NOT EXISTS idx_notifications_new_contract_cooldown
   WHERE type = 'new_contract';
 
 -- ── Replace RPC with tiered version ──────────────────────────
+-- Must DROP first because return type changes (new columns added)
+DROP FUNCTION IF EXISTS get_available_providers_for_contract(TEXT, TEXT);
+
 CREATE OR REPLACE FUNCTION get_available_providers_for_contract(
   p_city          TEXT,
   p_category_slug TEXT
