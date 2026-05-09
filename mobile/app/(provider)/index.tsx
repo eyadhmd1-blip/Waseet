@@ -1085,7 +1085,12 @@ export default function ProviderFeed() {
 
       if (providerData)  setProvider(providerData);
       setPortfolioCount(portfolioItemCount ?? 0);
-      if (requestsData)  setRequests(requestsData);
+      if (requestsData) {
+        // Deduplicate by id — guards against PostgREST returning duplicate rows
+        // when bids_count join produces multiple matching rows per request
+        const seen = new Set<string>();
+        setRequests(requestsData.filter((r: any) => !seen.has(r.id) && seen.add(r.id)));
+      }
       if (contractsData) setContracts(contractsData as RecurringContract[]);
       if (demoData)      setDemoStatus(demoData as DemoStatus);
       if (myBidsData)    setMyBidAmounts(new Map(myBidsData.map((b: any) => [b.request_id, { amount: b.amount, bidId: b.id, is_boosted: b.is_boosted, boost_expires_at: b.boost_expires_at }])));
