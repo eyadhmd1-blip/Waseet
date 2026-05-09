@@ -5,7 +5,7 @@ import {
   ActivityIndicator, Alert, Linking, Image, Modal,
   Dimensions,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { Share } from 'react-native';
 import { Audio }           from 'expo-av';
 import { Video, ResizeMode } from 'expo-av';
@@ -128,6 +128,21 @@ export default function ChatScreen() {
   }, [job_id]);
 
   useEffect(() => { load(); }, [load]);
+
+  // ── Refresh client_rating on focus (handles rating from another screen) ──
+  useFocusEffect(useCallback(() => {
+    if (!job_id) return;
+    supabase
+      .from('jobs')
+      .select('client_rating')
+      .eq('id', job_id)
+      .single()
+      .then(({ data }) => {
+        if (data && data.client_rating !== undefined) {
+          setJob(prev => prev ? { ...prev, client_rating: data.client_rating } : prev);
+        }
+      });
+  }, [job_id]));
 
   // ── Realtime subscription ─────────────────────────────────────
 
