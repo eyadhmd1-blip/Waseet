@@ -59,7 +59,7 @@ Deno.serve(async (req) => {
     // ── Fetch job — verify caller is the provider ─────────────
     const { data: job, error: jobError } = await supabaseAdmin
       .from("jobs")
-      .select("id, provider_id, client_id, confirm_code, confirm_code_exp, status")
+      .select("id, provider_id, client_id, request_id, confirm_code, confirm_code_exp, status")
       .eq("id", job_id)
       .single();
 
@@ -95,6 +95,13 @@ Deno.serve(async (req) => {
       .eq("id", job_id);
 
     if (updateError) return json({ error: updateError.message }, 500);
+
+    // ── Mark request completed ────────────────────────────────
+    // Client's request list reads from `requests` table — must sync status.
+    await supabaseAdmin
+      .from("requests")
+      .update({ status: "completed", updated_at: new Date().toISOString() })
+      .eq("id", job.request_id);
 
     // ── Notify client to rate the provider ────────────────────
     // Fire-and-forget: failures here must not block the success response
