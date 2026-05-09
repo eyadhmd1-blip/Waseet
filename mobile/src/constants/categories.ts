@@ -63,7 +63,8 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     categories: [
       { id: '', slug: 'cupping_massage', name_ar: 'حجامة ومساج',           name_en: 'Cupping & Massage',    group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'massage',      sort_order: 23, is_active: true },
       { id: '', slug: 'home_nursing',    name_ar: 'تمريض وعناية منزلية',   name_en: 'Home Nursing & Care',  group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'nurse',        sort_order: 24, is_active: true },
-      { id: '', slug: 'beauty_barber',   name_ar: 'حلاقة وتجميل منزلي',    name_en: 'Home Beauty & Barber', group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'haircut',      sort_order: 25, is_active: true },
+      { id: '', slug: 'beauty_women', name_ar: 'تجميل نسائي منزلي',   name_en: "Women's Home Beauty", group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'lipstick',  sort_order: 25, is_active: true },
+      { id: '', slug: 'beauty_men',   name_ar: 'حلاقة رجالية منزلية', name_en: "Men's Home Barber",   group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'scissors',  sort_order: 26, is_active: true },
     ],
   },
 
@@ -179,7 +180,9 @@ export const ICON_MAP: Record<string, string> = {
   // الصحة والعناية
   massage:        '💆',  // حجامة ومساج
   nurse:          '🩹',  // تمريض وعناية منزلية
-  haircut:        '💇',  // حلاقة وتجميل منزلي
+  lipstick:       '💅',  // تجميل نسائي منزلي
+  scissors:       '✂️',  // حلاقة رجالية منزلية
+  haircut:        '💇',  // legacy beauty_barber
   // المناسبات والفعاليات
   photo:          '📸',  // تصوير فوتوغرافي وفيديو
   cake:           '🎂',  // حلويات وكيك مناسبات
@@ -241,6 +244,8 @@ export const CATEGORY_PLACEHOLDERS: Record<string, { title_ar: string; title_en:
   computer_repair:     { title_ar: 'مثال: حاسوب يُعيد التشغيل بشكل مفاجئ',     title_en: 'e.g. Computer restarting unexpectedly',             desc_ar: 'صف المشكلة ومتى تحدث وعمر الجهاز',                             desc_en: 'Describe the problem, when it occurs, and device age' },
   cupping_massage:     { title_ar: 'مثال: جلسة مساج كامل في المنزل',            title_en: 'e.g. Full body massage session at home',            desc_ar: 'حدد المدة المفضلة ونوع المساج وعدد الأشخاص',                   desc_en: 'Specify preferred duration, massage type, and number of people' },
   home_nursing:        { title_ar: 'مثال: ممرض منزلي لمريض بعد العملية',        title_en: 'e.g. Home nurse for post-surgery care',             desc_ar: 'اذكر طبيعة الحالة وعدد ساعات الرعاية المطلوبة',                desc_en: 'Mention the condition and required hours of care' },
+  beauty_women:        { title_ar: 'مثال: مكياج وتسريح شعر للعروس',             title_en: 'e.g. Bridal makeup and hair styling',               desc_ar: 'حددي الخدمات المطلوبة وعدد الأشخاص والمناسبة',                  desc_en: 'Specify the services needed, number of people, and occasion' },
+  beauty_men:          { title_ar: 'مثال: قص شعر ولحية في المنزل',              title_en: 'e.g. Home haircut and beard trim',                  desc_ar: 'حدد عدد الأشخاص والخدمات المطلوبة',                            desc_en: 'Specify number of people and required services' },
   beauty_barber:       { title_ar: 'مثال: قص وتسريح شعر في المنزل',             title_en: 'e.g. Home haircut and styling',                     desc_ar: 'حدد عدد الأشخاص والخدمات المطلوبة',                            desc_en: 'Specify number of people and required services' },
   photography:         { title_ar: 'مثال: تصوير حفل تخرج',                      title_en: 'e.g. Graduation ceremony photography',             desc_ar: 'أذكر نوع المناسبة وعدد الساعات وهل تريد فيديو',                desc_en: 'Mention the event type, hours needed, and whether video is needed' },
   pastry_cakes:        { title_ar: 'مثال: كيكة عيد ميلاد مزخرفة',               title_en: 'e.g. Decorated birthday cake',                      desc_ar: 'حدد الحجم والتصميم والنكهة وعدد الأشخاص',                      desc_en: 'Specify size, design, flavor, and number of people' },
