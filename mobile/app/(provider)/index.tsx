@@ -542,12 +542,12 @@ function RequestCard({
         {/* Footer */}
         <View style={styles.cardFooter}>
           <View style={styles.cardLeft}>
-            <Text style={styles.cardCity}>📍 {item.city}</Text>
+            <Text style={styles.cardCity} numberOfLines={1}>📍 {item.city}</Text>
             {bidsCount > 0 && !isUrgent && (
-              <Text style={styles.bidsCount}>{t('providerFeed.bidCount', { count: bidsCount })}</Text>
+              <Text style={styles.bidsCount} numberOfLines={1}>{t('providerFeed.bidCount', { count: bidsCount })}</Text>
             )}
             {biddingEndsLabel && !isUrgent && (
-              <Text style={styles.biddingEnds}>⏱ {biddingEndsLabel}</Text>
+              <Text style={styles.biddingEnds} numberOfLines={1}>⏱ {biddingEndsLabel}</Text>
             )}
           </View>
 
