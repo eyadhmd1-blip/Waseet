@@ -99,7 +99,7 @@ export default function RequestDetail() {
       ]);
 
       if (reqData)  setRequest(reqData);
-      if (bidsData) setBids((bidsData as BidWithProvider[]).filter(b => b.provider?.is_available !== false));
+      if (bidsData) setBids(bidsData as BidWithProvider[]);
 
       if (reqData?.status === 'in_progress') {
         const { data: jobData } = await supabase
