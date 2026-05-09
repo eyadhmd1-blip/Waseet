@@ -78,7 +78,10 @@ export default function RequestDetail() {
       const user = _ses?.user;
       if (user) setMyId(user.id);
 
-      const [{ data: reqData }, { data: bidsData }] = await Promise.all([
+      const [
+        { data: reqData },
+        { data: bidsData, error: bidsError },
+      ] = await Promise.all([
         supabase
           .from('requests')
           .select('*, category:service_categories(name_ar, name_en, icon)')
@@ -87,7 +90,7 @@ export default function RequestDetail() {
         supabase
           .from('bids')
           .select(`
-            *, is_boosted, boost_expires_at,
+            *,
             provider:providers(
               id, score, reputation_tier, badge_verified, lifetime_jobs, is_available,
               user:users(full_name, city)
@@ -98,8 +101,13 @@ export default function RequestDetail() {
           .limit(20),
       ]);
 
-      if (reqData)  setRequest(reqData);
-      if (bidsData) setBids(bidsData as BidWithProvider[]);
+      if (reqData) setRequest(reqData);
+
+      if (bidsError) {
+        console.error('[request-detail] bids query error:', bidsError);
+      } else if (bidsData) {
+        setBids(bidsData as BidWithProvider[]);
+      }
 
       if (reqData?.status === 'in_progress') {
         const { data: jobData } = await supabase
@@ -654,7 +662,7 @@ function BidCard({
   const { colors } = useTheme();
   const { t, ta, isRTL } = useLanguage();
   const bidStyles = useMemo(() => createBidStyles(colors, isRTL), [colors, isRTL]);
-  const tier = TIER_META[bid.provider.reputation_tier as keyof typeof TIER_META];
+  const tier = TIER_META[bid.provider?.reputation_tier as keyof typeof TIER_META] ?? TIER_META['new'];
   const [noteExpanded, setNoteExpanded] = useState(false);
   const noteLines = noteExpanded ? undefined : 3;
 
@@ -690,7 +698,7 @@ function BidCard({
             <View style={bidStyles.metaRow}>
               <View style={[bidStyles.tierBadge, { backgroundColor: tier.color + '22' }]}>
                 <Text style={[bidStyles.tierText, { color: tier.color }]}>
-                  {t(`dashboard.tier${bid.provider.reputation_tier.charAt(0).toUpperCase() + bid.provider.reputation_tier.slice(1)}` as any)}
+                  {t(`dashboard.tier${tier.tier.charAt(0).toUpperCase() + tier.tier.slice(1)}` as any)}
                 </Text>
               </View>
               {bid.provider.score > 0 && (
