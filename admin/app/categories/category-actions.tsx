@@ -1,13 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { logCategoryToggle, logCategoryAdd } from './actions';
-
-const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+import { toggleCategory, addCategory } from './actions';
 
 // ── Toggle active/inactive ────────────────────────────────────
 
@@ -18,9 +12,8 @@ export function ToggleCategory({ id, isActive }: { id: string; isActive: boolean
   const toggle = async () => {
     setLoading(true);
     const newActive = !active;
-    await sb.from('service_categories').update({ is_active: newActive }).eq('id', id);
     setActive(newActive);
-    await logCategoryToggle(id, newActive);
+    await toggleCategory(id, newActive);
     setLoading(false);
   };
 
@@ -77,22 +70,20 @@ export function AddCategoryForm({ maxSort }: { maxSort: number }) {
     }
     setLoading(true); setError(''); setSuccess('');
     const trimmedSlug = slug.trim().toLowerCase().replace(/\s+/g, '_');
-    const { error: dbErr } = await sb.from('service_categories').insert({
-      slug:      trimmedSlug,
-      name_ar:   nameAr.trim(),
-      name_en:   nameEn.trim() || null,
-      icon:      trimmedIcon,
+    const result = await addCategory({
+      slug:       trimmedSlug,
+      name_ar:    nameAr.trim(),
+      name_en:    nameEn.trim() || null,
+      icon:       trimmedIcon,
       group_slug: group,
-      group_ar:  GROUPS.find(g => g.slug === group)?.name ?? group,
-      group_en:  null,
+      group_ar:   GROUPS.find(g => g.slug === group)?.name ?? group,
       sort_order: maxSort + 1,
     });
-    if (dbErr) { setLoading(false); setError(dbErr.message); return; }
-    await logCategoryAdd(trimmedSlug, nameAr.trim());
+    if (result.error) { setLoading(false); setError(result.error); return; }
     setLoading(false);
     setSuccess('تمت الإضافة بنجاح!');
     setSlug(''); setNameAr(''); setNameEn(''); setIcon('wrench');
-    setTimeout(() => { setSuccess(''); setOpen(false); window.location.reload(); }, 1200);
+    setTimeout(() => { setSuccess(''); setOpen(false); }, 1200);
   };
 
   if (!open) {
