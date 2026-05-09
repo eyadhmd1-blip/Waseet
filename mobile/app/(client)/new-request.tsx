@@ -27,8 +27,7 @@ export default function NewRequestScreen() {
     category: preselectedCategory,
     notif_id: notifId,
     repost_from: repostFromId,
-    provider_hint: providerHint,
-  } = useLocalSearchParams<{ category?: string; notif_id?: string; repost_from?: string; provider_hint?: string }>();
+  } = useLocalSearchParams<{ category?: string; notif_id?: string; repost_from?: string }>();
 
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const { groups } = useCategories();
@@ -214,7 +213,6 @@ export default function NewRequestScreen() {
       ai_suggested_price_max:  aiPrice?.max ?? null,
       ai_suggested_currency:   'JOD',
       status:                  'open',
-      ...(providerHint && { provider_hint: providerHint }),
       ...(isCourier && {
         pickup_address:  pickupAddress.trim(),
         dropoff_address: dropoffAddress.trim(),

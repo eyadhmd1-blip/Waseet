@@ -16,10 +16,10 @@ import type { AppColors } from '../../src/constants/colors';
 // ─── Saved Card ───────────────────────────────────────────────
 
 function SavedCard({
-  item, anim, onView, onUnsave, onRequest, colors,
+  item, anim, onView, onUnsave, colors,
 }: {
   item: SavedProvider; anim: Animated.Value;
-  onView: () => void; onUnsave: () => void; onRequest: () => void;
+  onView: () => void; onUnsave: () => void;
   colors: AppColors;
 }) {
   const { t, ta, isRTL } = useLanguage();
@@ -57,9 +57,6 @@ function SavedCard({
           <View style={styles.cardActions}>
             <TouchableOpacity style={styles.unsaveBtn} onPress={onUnsave}>
               <Text style={styles.unsaveBtnText}>{t('saved.remove')} 🗑</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.requestBtn} onPress={onRequest}>
-              <Text style={styles.requestBtnText}>{t('newRequest.title')} {ta === 'right' ? '←' : '→'}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -185,10 +182,6 @@ export default function SavedProvidersScreen() {
             colors={colors}
             onView={() => router.push({ pathname: '/provider-profile', params: { provider_id: item.provider_id } })}
             onUnsave={() => unsave(item)}
-            onRequest={() => router.push({
-              pathname: '/(client)/new-request',
-              params: { provider_hint: item.provider_id },
-            })}
           />
         )}
       />
@@ -232,10 +225,8 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     meta:    { fontSize: 12, color: colors.textMuted },
 
     cardActions:   { flexDirection: 'row', gap: 8 },
-    unsaveBtn:     { flex: 1, backgroundColor: colors.bg, borderRadius: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
+    unsaveBtn:     { alignSelf: 'flex-start', backgroundColor: colors.bg, borderRadius: 10, paddingVertical: 8, paddingHorizontal: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
     unsaveBtnText: { fontSize: 12, color: '#F87171' },
-    requestBtn:    { flex: 2, backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 8, alignItems: 'center' },
-    requestBtnText:{ fontSize: 12, fontWeight: '700', color: colors.bg },
 
     empty:     { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
     emptyIcon: { fontSize: 52, marginBottom: 14 },

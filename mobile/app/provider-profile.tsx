@@ -306,17 +306,6 @@ export default function ProviderPublicProfile() {
             <Text style={styles.shareBtnText}>{t('providerProfile.share')}</Text>
           </TouchableOpacity>
 
-          {myRole === 'client' && provider_id && (
-            <TouchableOpacity
-              style={styles.requestBtn}
-              onPress={() => router.push({
-                pathname: '/(client)/new-request',
-                params: { provider_hint: provider_id },
-              })}
-            >
-              <Text style={styles.requestBtnText}>{t('providerProfile.directRequest')} {isRTL ? '←' : '→'}</Text>
-            </TouchableOpacity>
-          )}
         </Animated.View>
 
         {/* ── Portfolio gallery ── */}
@@ -464,9 +453,6 @@ function createStyles(colors: AppColors, isRTL = false) {
   saveBtnTextActive:{ color: colors.bg },
   shareBtn:        { flex: 1, minWidth: 80, backgroundColor: colors.surface, borderRadius: 12, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   shareBtnText:    { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
-  requestBtn:      { flex: 1, minWidth: 100, backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  requestBtnText:  { fontSize: 13, fontWeight: '700', color: colors.bg },
-
   section:       { marginBottom: 20 },
   sectionTitle:  { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },
   portfolioGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
