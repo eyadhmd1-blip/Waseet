@@ -155,10 +155,19 @@ export default function NotificationInboxScreen() {
     const { data } = await q;
     if (!data) return;
 
+    // Mark all fetched notifications as read immediately in local state,
+    // then persist to DB — so the badge count is 0 when the user navigates back.
+    const hasUnread = (data as NotifRow[]).some(n => !n.is_read);
+    const readData  = (data as NotifRow[]).map(n => ({ ...n, is_read: true }));
+
     if (reset) {
-      setItems(data as NotifRow[]);
+      setItems(readData);
     } else {
-      setItems(prev => [...prev, ...(data as NotifRow[])]);
+      setItems(prev => [...prev, ...readData]);
+    }
+
+    if (hasUnread) {
+      await supabase.rpc('mark_all_notifications_read', { p_user_id: session.user.id });
     }
 
     if (data.length > 0) {
