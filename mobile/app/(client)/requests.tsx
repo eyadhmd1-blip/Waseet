@@ -106,12 +106,12 @@ export default function ClientRequests() {
     });
   }, []);
 
-  const FILTERS: { key: Filter; label: string }[] = [
+  const FILTERS: { key: Filter; label: string; emptyLabel?: string }[] = [
     { key: 'all',         label: t('requests.filterAll') },
-    { key: 'open',        label: t('requests.filterOpen') },
-    { key: 'in_progress', label: t('requests.filterInProgress') },
-    { key: 'completed',   label: t('requests.filterCompleted') },
-    { key: 'expired',     label: t('requests.filterExpired') },
+    { key: 'open',        label: t('requests.filterOpen'),        emptyLabel: t('requests.filterOpenEmpty') },
+    { key: 'in_progress', label: t('requests.filterInProgress'),  emptyLabel: t('requests.filterInProgressEmpty') },
+    { key: 'completed',   label: t('requests.filterCompleted'),   emptyLabel: t('requests.filterCompletedEmpty') },
+    { key: 'expired',     label: t('requests.filterExpired'),     emptyLabel: t('requests.filterExpiredEmpty') },
   ];
 
   const SUMMARY_CARDS: { key: Filter; emoji: string }[] = [
@@ -505,7 +505,7 @@ export default function ClientRequests() {
                   </View>
                   <Text style={styles.emptyTitle}>
                     {t('requests.noRequestsFiltered', {
-                      label: FILTERS.find(f => f.key === filter)?.label ?? '',
+                      label: FILTERS.find(f => f.key === filter)?.emptyLabel ?? '',
                     })}
                   </Text>
                   <TouchableOpacity
@@ -618,7 +618,7 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     summaryLabel: { fontSize: 10, color: colors.textMuted, fontWeight: '500', textAlign: 'center' },
 
     // ── List
-    listContent: { paddingHorizontal: H_PAD, paddingBottom: 32, gap: 10 },
+    listContent: { paddingHorizontal: H_PAD, paddingBottom: 32, gap: 10, flexGrow: 1 },
 
     // ── Card
     card: {
@@ -666,7 +666,7 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     contractChipText: { fontSize: 12, color: colors.textSecondary },
 
     // ── Empty state
-    empty:         { alignItems: 'center', paddingTop: 60, paddingHorizontal: H_PAD },
+    empty:         { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: H_PAD },
     emptyIconWrap: {
       width:           80,
       height:          80,
