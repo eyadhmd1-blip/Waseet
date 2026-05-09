@@ -1239,7 +1239,8 @@
     "car_tires": "Tires & Oil Change",
     "car_ac": "Car AC & Cooling",
     "car_bodywork": "Bodywork & Paint",
-    "car_cleaning": "Car Wash & Detailing"
+    "car_cleaning": "Car Wash & Detailing",
+    "gardening": "Landscaping & Gardening"
   },
   "tiers": {
     "new": "New",
