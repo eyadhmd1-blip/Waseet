@@ -8,7 +8,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import {
   TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES,
-  CATEGORY_GROUPS, TIER_UPGRADE_CREDITS, ICON_MAP,
+  CATEGORY_GROUPS, TIER_UPGRADE_CREDITS, ICON_MAP, JORDAN_CITIES,
 } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User, PortfolioItem } from '../../src/types';
@@ -142,10 +142,13 @@ export default function ProviderProfile() {
   const [portfolioItems, setPortfolioItems]   = useState<PortfolioItem[]>([]);
   const [isAvailable, setIsAvailable]         = useState(true);
   const [urgentEnabled, setUrgentEnabled]     = useState(true);
-  const [catModalVisible, setCatModalVisible] = useState(false);
-  const [selectedCats, setSelectedCats]       = useState<string[]>([]);
-  const [savingCats, setSavingCats]           = useState(false);
-  const [activeTab, setActiveTab]             = useState<'specialties' | 'portfolio'>('specialties');
+  const [catModalVisible,  setCatModalVisible]  = useState(false);
+  const [selectedCats,     setSelectedCats]     = useState<string[]>([]);
+  const [savingCats,       setSavingCats]        = useState(false);
+  const [activeTab,        setActiveTab]         = useState<'specialties' | 'portfolio'>('specialties');
+  const [cityModalVisible, setCityModalVisible] = useState(false);
+  const [selectedCity,     setSelectedCity]     = useState('');
+  const [savingCity,       setSavingCity]       = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -246,6 +249,25 @@ export default function ProviderProfile() {
     else { setCatModalVisible(false); load(); }
   };
 
+  const openCityModal = () => {
+    setSelectedCity(provider?.user?.city ?? '');
+    setCityModalVisible(true);
+  };
+
+  const saveCity = async () => {
+    if (!selectedCity) return;
+    setSavingCity(true);
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const authUser = _ses?.user;
+    if (!authUser) { setSavingCity(false); return; }
+    const { error } = await supabase.from('users').update({ city: selectedCity }).eq('id', authUser.id);
+    setSavingCity(false);
+    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    // Optimistic update — no need to refetch everything
+    setProvider(prev => prev ? { ...prev, user: { ...prev.user, city: selectedCity } } : prev);
+    setCityModalVisible(false);
+  };
+
   if (loading) {
     return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
   }
@@ -305,11 +327,29 @@ export default function ProviderProfile() {
           {/* Name */}
           <Text style={styles.heroName}>{provider.user?.full_name}</Text>
 
-          {/* City + Verified */}
+          {/* City (tappable) + Verified */}
           <View style={styles.heroMetaRow}>
-            {provider.user?.city ? (
-              <Text style={styles.heroCity}>📍 {provider.user.city}</Text>
-            ) : null}
+            <TouchableOpacity
+              onPress={openCityModal}
+              activeOpacity={0.7}
+              style={[
+                styles.heroCityChip,
+                provider.user?.city
+                  ? { backgroundColor: tierColor + '15', borderColor: tierColor + '45' }
+                  : { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderStyle: 'dashed' },
+              ]}
+            >
+              <Text style={{ fontSize: 13 }}>📍</Text>
+              <Text style={[
+                styles.heroCityText,
+                { color: provider.user?.city ? tierColor : colors.textMuted },
+              ]}>
+                {provider.user?.city
+                  ? provider.user.city
+                  : (isRTL ? 'أضف مدينتك' : 'Add city')}
+              </Text>
+              <Text style={{ fontSize: 10, color: provider.user?.city ? tierColor : colors.textMuted, opacity: 0.7 }}>✏️</Text>
+            </TouchableOpacity>
             {provider.badge_verified ? (
               <View style={styles.verifiedPill}>
                 <Text style={styles.verifiedText}>✓ {t('providerProfile.verified')}</Text>
@@ -830,6 +870,78 @@ export default function ProviderProfile() {
 
       </ScrollView>
 
+      {/* ── City Edit Modal ── */}
+      <Modal
+        visible={cityModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setCityModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalSheet, { backgroundColor: colors.surface, paddingBottom: contentPad }]}>
+            {/* Header */}
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <TouchableOpacity onPress={() => setCityModalVisible(false)}>
+                <Text style={[styles.modalCancel, { color: colors.textMuted }]}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
+                📍 {isRTL ? 'اختر مدينتك' : 'Select City'}
+              </Text>
+              <TouchableOpacity onPress={saveCity} disabled={savingCity || !selectedCity}>
+                <Text style={[styles.modalSave, {
+                  color: savingCity || !selectedCity ? colors.textMuted : tierColor,
+                }]}>
+                  {savingCity ? t('common.loading') : t('common.save')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Subtitle */}
+            <Text style={[styles.modalSub, { color: colors.textSecondary }]}>
+              {isRTL
+                ? 'المدينة تحدد الطلبات التي تظهر لك في الفيد'
+                : 'Your city determines which requests appear in your feed'}
+            </Text>
+
+            {/* City grid */}
+            <ScrollView
+              style={{ paddingHorizontal: 16, paddingTop: 4 }}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.cityGrid}>
+                {JORDAN_CITIES.map(city => {
+                  const active = selectedCity === city;
+                  return (
+                    <TouchableOpacity
+                      key={city}
+                      onPress={() => setSelectedCity(city)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.cityGridChip,
+                        active
+                          ? { backgroundColor: tierColor + '20', borderColor: tierColor, borderWidth: 2 }
+                          : { backgroundColor: colors.surfaceAlt, borderColor: colors.border, borderWidth: 1 },
+                      ]}
+                    >
+                      {active && (
+                        <Text style={{ fontSize: 10, color: tierColor, fontWeight: '900', marginBottom: 2 }}>✓</Text>
+                      )}
+                      <Text style={[
+                        styles.cityGridText,
+                        { color: active ? tierColor : colors.textPrimary, fontWeight: active ? '700' : '500' },
+                      ]}>
+                        {t(`cities.${city}`, city)}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <View style={{ height: 20 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* ── Category Edit Modal ── */}
       <Modal
         visible={catModalVisible}
@@ -924,6 +1036,20 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     heroName:     { fontSize: 23, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
     heroMetaRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap', justifyContent: 'center' },
     heroCity:     { fontSize: 13, color: colors.textMuted },
+    heroCityChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
+      borderWidth: 1,
+    },
+    heroCityText: { fontSize: 13, fontWeight: '600' },
+    // City grid in modal
+    cityGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingBottom: 8 },
+    cityGridChip:  {
+      width: (W - 32 - 20) / 3,
+      borderRadius: 14, paddingVertical: 12,
+      alignItems: 'center', justifyContent: 'center', gap: 2,
+    },
+    cityGridText:  { fontSize: 13, textAlign: 'center' },
     verifiedPill: { backgroundColor: '#0C4A6E', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 },
     verifiedText: { fontSize: 11, color: '#7DD3FC', fontWeight: '700' },
     heroTagsRow:  { flexDirection: 'row', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' },
