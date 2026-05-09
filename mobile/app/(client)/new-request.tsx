@@ -199,7 +199,7 @@ export default function NewRequestScreen() {
       }
     }
 
-    const { error } = await supabase.from('requests').insert({
+    const { data: newReq, error } = await supabase.from('requests').insert({
       client_id:               user.id,
       category_slug:           selectedCat?.slug ?? '',
       title:                   title.trim(),
@@ -216,7 +216,7 @@ export default function NewRequestScreen() {
         dropoff_address: dropoffAddress.trim(),
         package_size:    packageSize,
       }),
-    });
+    }).select('id').single();
 
     setSubmitting(false);
 
@@ -227,6 +227,13 @@ export default function NewRequestScreen() {
 
     if (notifId) {
       supabase.rpc('mark_notification_converted', { notif_id: notifId }).then(() => {});
+    }
+
+    // Notify matching providers (active + recently lapsed + medium-inactive)
+    if (newReq?.id) {
+      supabase.functions.invoke('notify-new-request', {
+        body: { request_id: newReq.id, city, category_slug: selectedCat!.slug },
+      }).catch(() => {});
     }
 
     setShowSuccess(true);
