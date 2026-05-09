@@ -12,7 +12,8 @@ import {
   KeyboardAvoidingView, Platform, AppState, Image, Dimensions,
 } from 'react-native';
 
-const Dimensions_width = Dimensions.get('window').width;
+const Dimensions_width  = Dimensions.get('window').width;
+const Dimensions_height = Dimensions.get('window').height;
 import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST, ICON_MAP } from '../../src/constants/categories';
@@ -2030,12 +2031,12 @@ export default function ProviderFeed() {
             {imageViewer?.urls.map((url, i) => (
               <Pressable
                 key={i}
-                style={{ width: Dimensions_width, flex: 1, justifyContent: 'center', alignItems: 'center' }}
+                style={{ width: Dimensions_width, height: Dimensions_height, justifyContent: 'center', alignItems: 'center' }}
                 onPress={() => setImageViewer(null)}
               >
                 <Image
                   source={{ uri: url }}
-                  style={{ width: Dimensions_width, height: '100%' }}
+                  style={{ width: Dimensions_width, height: Dimensions_height }}
                   resizeMode="contain"
                 />
               </Pressable>
