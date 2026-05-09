@@ -14,6 +14,7 @@ import { useLanguage } from '../../src/hooks/useLanguage';
 import type { Provider, User, PortfolioItem } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
 import { calcLoyaltyProgress } from '../../src/utils/pricing';
+import { getInitials } from '../../src/utils/avatar';
 import { useTheme } from '../../src/context/ThemeContext';
 import { AppHeader } from '../../src/components/AppHeader';
 import type { AppColors } from '../../src/constants/colors';
@@ -320,7 +321,7 @@ export default function ProviderProfile() {
           <View style={[styles.avatarRing, { borderColor: tierColor + 'BB' }]}>
             <View style={[styles.avatarInner, { backgroundColor: tierColor + '25' }]}>
               <Text style={[styles.avatarLetter, { color: tierColor }]}>
-                {provider.user?.full_name?.charAt(0)?.toUpperCase() ?? '?'}
+                {getInitials(provider.user?.full_name ?? '')}
               </Text>
             </View>
           </View>
@@ -1031,7 +1032,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
       flex: 1, borderRadius: 40,
       alignItems: 'center', justifyContent: 'center',
     },
-    avatarLetter: { fontSize: 36, fontWeight: '800' },
+    avatarLetter: { fontSize: 28, fontWeight: '800', letterSpacing: 1 },
     heroName:     { fontSize: 23, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, textAlign: 'center' },
     heroMetaRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap', justifyContent: 'center' },
     heroCity:     { fontSize: 13, color: colors.textMuted },

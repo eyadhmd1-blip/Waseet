@@ -16,6 +16,7 @@ import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
 import type { AppColors } from '../src/constants/colors';
+import { getInitials, nameToAvatarColor } from '../src/utils/avatar';
 
 const GRACE_SECONDS = 60;
 
@@ -235,9 +236,9 @@ export default function GracePeriodScreen() {
 
       {/* Provider chip */}
       <View style={styles.providerChip}>
-        <View style={styles.providerAvatar}>
+        <View style={[styles.providerAvatar, { backgroundColor: nameToAvatarColor(provider_name ?? '') }]}>
           <Text style={styles.providerAvatarText}>
-            {provider_name?.charAt(0) ?? '?'}
+            {getInitials(provider_name ?? '')}
           </Text>
         </View>
         <View style={styles.providerInfo}>
@@ -327,7 +328,7 @@ function createStyles(colors: AppColors) {
 
   providerChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 16, padding: 14, marginBottom: 28, width: '100%', borderWidth: 1, borderColor: colors.border, gap: 12 },
   providerAvatar:     { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
-  providerAvatarText: { fontSize: 20, fontWeight: '700', color: colors.bg },
+  providerAvatarText: { fontSize: 14, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
   providerInfo:       { flex: 1 },
   providerName:       { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: 'auto' },
   providerAmt:        { fontSize: 18, fontWeight: '700', color: colors.accent, textAlign: 'auto', marginTop: 2 },

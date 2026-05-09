@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { JORDAN_CITIES } from '../../src/constants/categories';
 import { calcStatusCounts } from '../../src/utils/pricing';
+import { getInitials } from '../../src/utils/avatar';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { User } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -254,7 +255,7 @@ export default function ClientProfile() {
           {/* avatar with accent ring */}
           <View style={styles.avatarRing}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{user.full_name.charAt(0)}</Text>
+              <Text style={styles.avatarText}>{getInitials(user.full_name)}</Text>
             </View>
           </View>
 
@@ -505,7 +506,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
       backgroundColor: colors.accent,
       alignItems: 'center', justifyContent: 'center',
     },
-    avatarText: { fontSize: 36, fontWeight: '800', color: colors.bg },
+    avatarText: { fontSize: 28, fontWeight: '800', color: colors.bg, letterSpacing: 1 },
 
     heroName:  { fontSize: 22, fontWeight: '800', color: colors.textPrimary, marginBottom: 12, textAlign: 'center' },
 

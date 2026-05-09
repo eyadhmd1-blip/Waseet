@@ -18,6 +18,7 @@ import {
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
 import { AppHeader } from '../src/components/AppHeader';
+import { getInitials, nameToAvatarColor } from '../src/utils/avatar';
 import type { AppColors } from '../src/constants/colors';
 
 const CONTRACT_COLOR = '#10B981';
@@ -320,9 +321,9 @@ export default function ContractDetailScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>{t('contractDetail.sectionProvider')}</Text>
             <View style={styles.acceptedCard}>
-              <View style={styles.acceptedAvatar}>
+              <View style={[styles.acceptedAvatar, { backgroundColor: nameToAvatarColor((acceptedBid.provider?.user as any)?.full_name ?? '') }]}>
                 <Text style={styles.acceptedAvatarText}>
-                  {(acceptedBid.provider?.user as any)?.full_name?.charAt(0) ?? '?'}
+                  {getInitials((acceptedBid.provider?.user as any)?.full_name ?? '')}
                 </Text>
               </View>
               <View style={{ flex: 1 }}>
@@ -426,8 +427,8 @@ function BidCard({
   return (
     <View style={bc.card}>
       <View style={bc.top}>
-        <View style={bc.avatar}>
-          <Text style={bc.avatarText}>{provName.charAt(0)}</Text>
+        <View style={[bc.avatar, { backgroundColor: nameToAvatarColor(provName) }]}>
+          <Text style={bc.avatarText}>{getInitials(provName)}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <View style={[bc.nameRow, {}]}>
@@ -460,7 +461,7 @@ function createBc(colors: AppColors, isRTL: boolean) {
   card:          { backgroundColor: colors.surface, borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: colors.border },
   top:           { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   avatar:        { width: 40, height: 40, borderRadius: 20, backgroundColor: CONTRACT_DIM, alignItems: 'center', justifyContent: 'center' },
-  avatarText:    { fontSize: 18, fontWeight: '700', color: CONTRACT_COLOR },
+  avatarText:    { fontSize: 14, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
   nameRow:       { alignItems: 'center', gap: 6, marginBottom: 2 },
   name:          { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   verified:      { fontSize: 12, color: colors.infoSoft, backgroundColor: colors.infoBg, borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
@@ -578,7 +579,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
   acceptedCard:        { backgroundColor: colors.surface, borderRadius: 16, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: CONTRACT_COLOR },
   acceptedAvatar:      { width: 44, height: 44, borderRadius: 22, backgroundColor: CONTRACT_DIM, alignItems: 'center', justifyContent: 'center' },
-  acceptedAvatarText:  { fontSize: 20, fontWeight: '700', color: CONTRACT_COLOR },
+  acceptedAvatarText:  { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
   acceptedName:        { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
   acceptedPrice:       { fontSize: 13, color: CONTRACT_COLOR, fontWeight: '600', textAlign: ta },
   verifiedBadge:       { backgroundColor: colors.infoBg, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },

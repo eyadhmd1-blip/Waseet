@@ -1083,7 +1083,7 @@ function ProfileCardBubble({
       <View style={pcStyles.header}>
         <View style={[pcStyles.avatar, { backgroundColor: tierColor + '33' }]}>
           <Text style={[pcStyles.avatarText, { color: tierColor }]}>
-            {prov?.user?.full_name?.charAt(0) ?? '?'}
+            {getInitials(prov?.user?.full_name ?? '')}
           </Text>
         </View>
         <View style={pcStyles.info}>
@@ -1129,6 +1129,7 @@ function ProfileCardBubble({
 // Import TIER_META for colors — inline map used above, import needed for type safety
 import { TIER_META } from '../src/constants/categories';
 import { AppHeader } from '../src/components/AppHeader';
+import { getInitials } from '../src/utils/avatar';
 import type { AppColors } from '../src/constants/colors';
 
 function createPcStyles(colors: AppColors, ta: 'left' | 'right') {
@@ -1139,7 +1140,7 @@ function createPcStyles(colors: AppColors, ta: 'left' | 'right') {
 
   header:     { flexDirection: 'row', gap: 10, alignItems: 'flex-start', marginBottom: 10 },
   avatar:     { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  avatarText: { fontSize: 18, fontWeight: '800' },
+  avatarText: { fontSize: 14, fontWeight: '800', letterSpacing: 0.5 },
   info:       { flex: 1 },
   name:       { fontSize: 14, fontWeight: '700', color: colors.textPrimary, textAlign: ta, marginBottom: 2 },
   city:       { fontSize: 11, color: colors.textMuted, textAlign: ta, marginBottom: 4 },

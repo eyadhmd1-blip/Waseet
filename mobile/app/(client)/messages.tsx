@@ -8,6 +8,7 @@ import { supabase } from '../../src/lib/supabase';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
 import { HEADER_PAD } from '../../src/utils/layout';
+import { getInitials, nameToAvatarColor } from '../../src/utils/avatar';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
 
@@ -170,8 +171,8 @@ export default function ClientMessages() {
         activeOpacity={0.8}
         onPress={() => openChat(item.id)}
       >
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{providerName.charAt(0)}</Text>
+        <View style={[styles.avatar, { backgroundColor: nameToAvatarColor(providerName) }]}>
+          <Text style={styles.avatarText}>{getInitials(providerName)}</Text>
         </View>
 
         <View style={styles.cardInfo}>
@@ -249,7 +250,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
     card:        { flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 },
     avatar:      { width: 50, height: 50, borderRadius: 25, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-    avatarText:  { fontSize: 20, fontWeight: '700', color: colors.bg },
+    avatarText:  { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
     cardInfo:    { flex: 1, gap: 4 },
 
     cardTopRow:    { flexDirection: isRTL ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center' },
