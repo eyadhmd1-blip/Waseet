@@ -24,7 +24,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
       { id: '', slug: 'gypsum',           name_ar: 'جبصين وديكور داخلي',  name_en: 'Gypsum & Drywall',      group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'gypsum',       sort_order: 12, is_active: true },
       { id: '', slug: 'renovation',       name_ar: 'أعمال بناء وترميم',   name_en: 'Renovation & Building', group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'bricks',       sort_order: 13, is_active: true },
       { id: '', slug: 'glass',            name_ar: 'زجاج ومرايا',          name_en: 'Glass & Mirrors',       group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'glass-pane',   sort_order: 14, is_active: true },
-      { id: '', slug: 'gardening',        name_ar: 'تنسيق الحدائق والبستنة', name_en: 'Landscaping & Gardening', group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'leaf',         sort_order: 15, is_active: true },
+      { id: '', slug: 'gardening',        name_ar: 'تنسيق الحدائق والبستنة', name_en: 'Landscaping & Gardening', group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'sprout',       sort_order: 15, is_active: true },
     ],
   },
 
@@ -164,6 +164,7 @@ export const ICON_MAP: Record<string, string> = {
   gypsum:         '🏗️',  // جبصين وديكور داخلي
   bricks:         '🧱',  // أعمال بناء وترميم
   'glass-pane':   '🪞',  // زجاج ومرايا
+  sprout:         '🌱',  // تنسيق الحدائق والبستنة
   // تنظيف ونقل
   sparkles:       '✨',  // تنظيف منزلي
   truck:          '🚚',  // نقل عفش وتوصيل
