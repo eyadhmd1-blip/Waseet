@@ -133,7 +133,7 @@
     "repostBtn": "Re-post Request",
     "repostPrefilled": "Your previous request details have been pre-filled — review and update before posting",
     "reviewingBanner": "Bidding closed — choose a provider now",
-    "biddingEndsIn": "Bidding ends in {{time}}",
+    "biddingEndsIn": "Ends in: {{time}}",
     "biddingClosed": "Bidding closed",
     "bidsOf": "{{count}} of {{max}} bids",
     "emptyBtn": "Post your first request",

@@ -9,7 +9,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Modal, TextInput,
   Alert, ScrollView, Animated, Easing, Pressable, I18nManager,
-  KeyboardAvoidingView, Platform, AppState,
+  KeyboardAvoidingView, Platform, AppState, Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -429,6 +429,7 @@ function RequestCard({
   onBidPress,
   onUrgentAccept,
   onBoostPress,
+  onDetailPress,
 }: {
   item: RequestWithMeta;
   index: number;
@@ -438,6 +439,7 @@ function RequestCard({
   onBidPress: () => void;
   onUrgentAccept: () => void;
   onBoostPress?: () => void;
+  onDetailPress: () => void;
 }) {
   const { colors } = useTheme();
   const { t, lang, isRTL } = useLanguage();
@@ -463,7 +465,7 @@ function RequestCard({
 
   return (
     <Animated.View style={{ opacity: entranceAnim, transform: [{ translateY }] }}>
-      <View style={[styles.card, isLocked && styles.cardLocked, isUrgent && urgentStyles.urgentCard]}>
+      <Pressable onPress={onDetailPress} style={[styles.card, isLocked && styles.cardLocked, isUrgent && urgentStyles.urgentCard]}>
         {isLocked && index <= 3 && <LockedShimmer />}
 
         {/* Urgent top bar */}
@@ -569,7 +571,7 @@ function RequestCard({
             <BidButton locked={isLocked} onPress={onBidPress} />
           )}
         </View>
-      </View>
+      </Pressable>
     </Animated.View>
   );
 }
@@ -988,6 +990,9 @@ export default function ProviderFeed() {
   const [contractModal, setContractModal] = useState<{
     target: RecurringContract | null; amount: string; note: string; loading: boolean;
   }>({ target: null, amount: '', note: '', loading: false });
+
+  // Request detail bottom sheet
+  const [detailSheet, setDetailSheet] = useState<RequestWithMeta | null>(null);
 
   // Pending job commitment (bid accepted by client, provider must confirm)
   const [pendingCommit, setPendingCommit] = useState<{
@@ -1603,6 +1608,7 @@ export default function ProviderFeed() {
               onBidPress={() => handleBidPress(item, index)}
               onUrgentAccept={() => setUrgentModal(prev => ({ ...prev, target: item }))}
               onBoostPress={bidMeta ? () => setBoostModal({ bidMeta, requestId: item.id }) : undefined}
+              onDetailPress={() => setDetailSheet(item)}
             />
           );
         }}
@@ -1951,6 +1957,134 @@ export default function ProviderFeed() {
         onDismiss={() => { setShowCreditsTooltip(false); markTooltip('credits'); }}
       />
 
+      {/* ── Request Detail Bottom Sheet ───────────────────────── */}
+      <Modal
+        visible={!!detailSheet}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDetailSheet(null)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setDetailSheet(null)}>
+          <Pressable style={[styles.detailSheet, { paddingBottom: contentPad }]} onPress={() => {}}>
+
+            {/* Handle bar */}
+            <View style={styles.detailHandle} />
+
+            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+              {/* Category + urgent badge */}
+              <View style={styles.detailCatRow}>
+                <Text style={styles.detailCat}>
+                  {ICON_MAP[detailSheet?.category?.icon ?? ''] ?? '🔧'} {detailSheet?.category?.name_ar ?? detailSheet?.category_slug}
+                </Text>
+                {detailSheet?.is_urgent && (
+                  <View style={urgentStyles.urgentBadge}>
+                    <Text style={urgentStyles.urgentBadgeText}>{t('providerFeed.urgentBadge')}</Text>
+                  </View>
+                )}
+              </View>
+
+              {/* Title */}
+              <Text style={styles.detailTitle}>{detailSheet?.title}</Text>
+
+              {/* Full description */}
+              <Text style={styles.detailDesc}>{detailSheet?.description}</Text>
+
+              {/* Client images */}
+              {(detailSheet?.image_urls?.length ?? 0) > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.detailImgScroll}
+                  contentContainerStyle={{ gap: 10, paddingHorizontal: 2 }}
+                >
+                  {detailSheet!.image_urls.map((url, i) => (
+                    <Image key={i} source={{ uri: url }} style={styles.detailImg} resizeMode="cover" />
+                  ))}
+                </ScrollView>
+              )}
+
+              {/* Info rows */}
+              <View style={styles.detailInfoBox}>
+                <View style={styles.detailInfoRow}>
+                  <Text style={styles.detailInfoIcon}>📍</Text>
+                  <Text style={styles.detailInfoValue}>
+                    {detailSheet?.city}{detailSheet?.district ? ` — ${detailSheet.district}` : ''}
+                  </Text>
+                </View>
+
+                {detailSheet?.bidding_ends_at && (() => {
+                  const msLeft = new Date(detailSheet.bidding_ends_at!).getTime() - Date.now();
+                  if (msLeft <= 0) return null;
+                  const h = Math.floor(msLeft / 3600000);
+                  const m = Math.floor((msLeft % 3600000) / 60000);
+                  return (
+                    <View style={styles.detailInfoRow}>
+                      <Text style={styles.detailInfoIcon}>⏱</Text>
+                      <Text style={styles.detailInfoValue}>
+                        {t('requests.biddingEndsIn', { time: h > 0 ? `${h}h ${m}m` : `${m}m` })}
+                      </Text>
+                    </View>
+                  );
+                })()}
+
+                {detailSheet?.ai_suggested_price_min && (
+                  <View style={styles.detailInfoRow}>
+                    <Text style={styles.detailInfoIcon}>💰</Text>
+                    <Text style={[styles.detailInfoValue, { color: colors.accent, fontWeight: '700' }]}>
+                      {detailSheet.ai_suggested_price_min}–{detailSheet.ai_suggested_price_max} د.أ
+                    </Text>
+                  </View>
+                )}
+
+                {(detailSheet?.bids_count?.[0]?.count ?? 0) > 0 && (
+                  <View style={styles.detailInfoRow}>
+                    <Text style={styles.detailInfoIcon}>👥</Text>
+                    <Text style={styles.detailInfoValue}>
+                      {t('providerFeed.bidCount', { count: detailSheet!.bids_count![0].count })}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+
+            {/* CTA button */}
+            {detailSheet && myBidAmounts.has(detailSheet.id) ? (
+              <View style={styles.detailSubmittedRow}>
+                <Text style={styles.detailSubmittedText}>
+                  {t('providerFeed.submittedBanner', { amount: myBidAmounts.get(detailSheet.id)!.amount })}
+                </Text>
+              </View>
+            ) : detailSheet?.is_urgent ? (
+              <TouchableOpacity
+                style={styles.detailBidBtn}
+                activeOpacity={0.85}
+                onPress={() => {
+                  const target = detailSheet;
+                  setDetailSheet(null);
+                  setUrgentModal({ target, loading: false });
+                }}
+              >
+                <Text style={styles.detailBidBtnText}>{t('providerFeed.acceptUrgent')}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.detailBidBtn}
+                activeOpacity={0.85}
+                onPress={() => {
+                  const target = detailSheet!;
+                  const idx = filtered.findIndex(r => r.id === target.id);
+                  setDetailSheet(null);
+                  handleBidPress(target, idx);
+                }}
+              >
+                <Text style={styles.detailBidBtnText}>{t('providerFeed.submitBid')}</Text>
+              </TouchableOpacity>
+            )}
+
+          </Pressable>
+        </Pressable>
+      </Modal>
+
     </View>
   );
 }
@@ -2119,6 +2253,24 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   contractHeaderTitle: { fontSize: 16, fontWeight: '700', color: CONTRACT_COLOR },
   contractHeaderSub:   { fontSize: 12, color: colors.textMuted },
   contractScroll:  { flexGrow: 0 },
+
+  // ── Request detail bottom sheet
+  detailSheet:         { backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '88%' },
+  detailHandle:        { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  detailCatRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  detailCat:           { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
+  detailTitle:         { fontSize: 20, fontWeight: '800', color: colors.textPrimary, textAlign: ta, marginBottom: 10, lineHeight: 28 },
+  detailDesc:          { fontSize: 14, color: colors.textSecondary, textAlign: ta, lineHeight: 22, marginBottom: 14 },
+  detailImgScroll:     { marginBottom: 16 },
+  detailImg:           { width: 140, height: 105, borderRadius: 12, backgroundColor: colors.border },
+  detailInfoBox:       { backgroundColor: colors.bg, borderRadius: 14, padding: 14, gap: 10, marginBottom: 16 },
+  detailInfoRow:       { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  detailInfoIcon:      { fontSize: 16, width: 24, textAlign: 'center' },
+  detailInfoValue:     { fontSize: 14, color: colors.textPrimary, flex: 1, textAlign: ta },
+  detailBidBtn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 8 },
+  detailBidBtnText:    { fontSize: 16, fontWeight: '800', color: colors.bg },
+  detailSubmittedRow:  { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 14, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
+  detailSubmittedText: { fontSize: 14, fontWeight: '700', color: colors.textSecondary },
   });
 }
 // ── Contract bid modal styles

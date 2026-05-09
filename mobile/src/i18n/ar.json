@@ -137,7 +137,7 @@
     "repostBtn": "اعادة نشر الطلب",
     "repostPrefilled": "تم تعبئة بيانات طلبك السابق — راجعها وعدّلها قبل النشر",
     "reviewingBanner": "انتهت المزايدة — اختر مزوّداً الآن",
-    "biddingEndsIn": "ينتهي قبول العروض خلال {{time}}",
+    "biddingEndsIn": "ينتهي: {{time}}",
     "biddingClosed": "أُغلق قبول العروض",
     "bidsOf": "{{count}} من {{max}} عروض",
     "emptyBtn": "انشر طلبك الأول",
