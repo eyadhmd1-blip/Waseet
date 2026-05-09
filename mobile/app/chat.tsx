@@ -853,17 +853,17 @@ export default function ChatScreen() {
               </TouchableOpacity>
             ))}
             <View style={styles.reportBtns}>
-              <TouchableOpacity style={styles.reportCancelBtn} onPress={() => setReportModalVisible(false)}>
-                <Text style={styles.reportCancelText}>{t('common.cancel')}</Text>
-              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.reportSubmitBtn, (!reportType || submittingReport) && styles.reportSubmitDisabled]}
                 onPress={submitReport}
                 disabled={!reportType || submittingReport}
               >
-                <Text style={styles.reportSubmitText}>
+                <Text style={[styles.reportSubmitText, (!reportType || submittingReport) && styles.reportSubmitTextDisabled]}>
                   {submittingReport ? t('common.loading') : t('report.submit')}
                 </Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.reportCancelBtn} onPress={() => setReportModalVisible(false)}>
+                <Text style={styles.reportCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1292,8 +1292,9 @@ function createStyles(colors: AppColors, ta: 'left' | 'right') {
   reportBtns:          { flexDirection: 'row', gap: 12, marginTop: 24 },
   reportCancelBtn:     { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
   reportCancelText:    { fontSize: 14, color: colors.textMuted },
-  reportSubmitBtn:     { flex: 1, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
-  reportSubmitDisabled:{ backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
-  reportSubmitText:    { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  reportSubmitBtn:         { flex: 1, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+  reportSubmitDisabled:    { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
+  reportSubmitText:        { fontSize: 14, fontWeight: '700', color: '#FFF' },
+  reportSubmitTextDisabled:{ color: colors.textMuted },
   });
 }
