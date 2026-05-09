@@ -1142,6 +1142,10 @@ export default function ProviderFeed() {
         setPendingCommit({ job_id: data.id, title: req.title ?? 'طلب', is_urgent: !!req.is_urgent });
       }
 
+      // Guard against StrictMode double-mount: remove stale channel before creating
+      const staleJobs = supabase.getChannels().find(ch => ch.topic === `realtime:provider_jobs:${user.id}`);
+      if (staleJobs) await supabase.removeChannel(staleJobs);
+
       // Realtime: JOIN included in SELECT so no secondary fetch per INSERT
       channel = supabase
         .channel(`provider_jobs:${user.id}`)
@@ -1176,8 +1180,12 @@ export default function ProviderFeed() {
   useEffect(() => {
     let profileChannel: ReturnType<typeof supabase.channel> | null = null;
 
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
+
+      // Guard against StrictMode double-mount: remove stale channel before creating
+      const staleProfile = supabase.getChannels().find(ch => ch.topic === `realtime:provider_profile:${user.id}`);
+      if (staleProfile) await supabase.removeChannel(staleProfile);
 
       profileChannel = supabase
         .channel(`provider_profile:${user.id}`)
