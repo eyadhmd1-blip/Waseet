@@ -8,7 +8,7 @@
  */
 
 type Role = 'client' | 'provider' | 'onboarding' | 'unverified' | null;
-type Handler = (role: Role) => void;
+type Handler = (role: Role, redirectTo?: string) => void;
 
 let _handler: Handler | null = null;
 
@@ -16,6 +16,6 @@ export function setRoleUpdateHandler(fn: Handler): void {
   _handler = fn;
 }
 
-export function notifyRoleUpdate(role: Role): void {
-  _handler?.(role);
+export function notifyRoleUpdate(role: Role, redirectTo?: string): void {
+  _handler?.(role, redirectTo);
 }

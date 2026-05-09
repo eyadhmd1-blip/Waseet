@@ -139,11 +139,15 @@ function RootLayoutInner() {
 
   const router   = useRouter();
   const segments = useSegments();
-  const notifListenerRef = useRef<Notifications.Subscription | null>(null);
+  const notifListenerRef  = useRef<Notifications.Subscription | null>(null);
+  const pendingRedirect   = useRef<string | null>(null);
 
   // ── Register direct role-update bridge for onboarding screen ──
   useEffect(() => {
-    setRoleUpdateHandler((r) => setRole(r as any));
+    setRoleUpdateHandler((r, redirectTo) => {
+      if (redirectTo) pendingRedirect.current = redirectTo;
+      setRole(r as any);
+    });
     return () => setRoleUpdateHandler(() => {});
   }, []);
 
@@ -300,10 +304,19 @@ function RootLayoutInner() {
     } else if ((role as string) === 'unverified') {
       if ((segments[0] as string) !== 'verify-phone') router.replace('/verify-phone' as any);
     } else {
-      // Redirect logged-in users who somehow ended up in the auth group
+      // Redirect logged-in users who somehow ended up in the auth group.
+      // pendingRedirect lets onboarding send paid-plan providers to /subscribe
+      // instead of the default /(provider) home.
       if (inAuth) {
-        if (role === 'client')   router.replace('/(client)');
-        if (role === 'provider') router.replace('/(provider)');
+        const redirect = pendingRedirect.current;
+        if (redirect) {
+          pendingRedirect.current = null;
+          router.replace(redirect as any);
+        } else if (role === 'client') {
+          router.replace('/(client)');
+        } else if (role === 'provider') {
+          router.replace('/(provider)');
+        }
       }
       // Only redirect cross-role access: client in provider area, or provider in client area.
       // Root-level shared screens (support, notification-settings, recurring-request, etc.)

@@ -596,9 +596,14 @@ export default function OnboardingScreen() {
       // Sync planChoice state so handleExplore routes correctly
       if (planOverride !== undefined) setPlanChoice(planOverride);
 
+      const effectivePlan = planOverride !== undefined ? planOverride : planChoice;
+      const isPaid = role === 'provider' && effectivePlan !== 'trial' && effectivePlan !== null;
+
       // Directly signal _layout.tsx with the real role so the route guard
       // resolves instantly without waiting for onAuthStateChange.
-      notifyRoleUpdate(role);
+      // For paid plans, pass a redirect target so the guard sends the provider
+      // to the subscribe screen instead of the default /(provider) home.
+      notifyRoleUpdate(role, isPaid ? `/subscribe?tier=${effectivePlan}` : undefined);
 
       setDone(true);
     } catch (err: any) {
