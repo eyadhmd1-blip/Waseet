@@ -41,7 +41,7 @@ async function getContracts(page: number, status?: string) {
     .select(`
       id, title, city, category_slug, frequency, duration_months,
       price_per_visit, status, completed_visits, starts_at, created_at,
-      client:users(full_name),
+      client:users!client_id(full_name),
       contract_bids(id),
       provider:users!provider_id(full_name)
     `, { count: 'exact' })
