@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 
 const Dimensions_width = Dimensions.get('window').width;
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST, ICON_MAP } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
@@ -1183,6 +1183,25 @@ export default function ProviderFeed() {
     setup().catch(console.error);
     return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
+
+  // ── Clear banner when returning from provider-confirm ────────
+  // Realtime only fires on INSERT; UPDATE (confirm/decline) doesn't clear it.
+  // Re-check on every focus so banner disappears after provider acts.
+  useFocusEffect(useCallback(() => {
+    if (!pendingCommit) return;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from('jobs')
+        .select('id')
+        .eq('id', pendingCommit.job_id)
+        .is('provider_committed_at', null)
+        .eq('provider_declined', false)
+        .gt('provider_commit_deadline', new Date().toISOString())
+        .maybeSingle()
+        .then(({ data }) => { if (!data) setPendingCommit(null); });
+    });
+  }, [pendingCommit?.job_id]));
 
   // ── Realtime: sync provider profile changes (credits, subscription) ──
   useEffect(() => {
