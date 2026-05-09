@@ -103,3 +103,5 @@ BEGIN
   );
 END;
 $$;
+
+GRANT EXECUTE ON FUNCTION boost_bid(UUID, UUID) TO authenticated;
