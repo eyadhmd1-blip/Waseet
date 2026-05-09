@@ -172,11 +172,12 @@ function RootLayoutInner() {
       if (data?.notif_id) markNotifOpened(String(data.notif_id));
 
       handleNotifTap({
-        screen:      data?.screen      as string | undefined,
-        notif_id:    data?.notif_id    as string | undefined,
-        provider_id: data?.provider_id as string | undefined,
-        job_id:      data?.job_id      as string | undefined,
-        request_id:  data?.request_id  as string | undefined,
+        screen:         data?.screen         as string | undefined,
+        notif_id:       data?.notif_id       as string | undefined,
+        provider_id:    data?.provider_id    as string | undefined,
+        job_id:         data?.job_id         as string | undefined,
+        request_id:     data?.request_id     as string | undefined,
+        provider_name:  data?.provider_name  as string | undefined,
       }, router);
     });
 

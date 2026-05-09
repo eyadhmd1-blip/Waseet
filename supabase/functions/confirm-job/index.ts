@@ -96,6 +96,61 @@ Deno.serve(async (req) => {
 
     if (updateError) return json({ error: updateError.message }, 500);
 
+    // ── Notify client to rate the provider ────────────────────
+    // Fire-and-forget: failures here must not block the success response
+    (async () => {
+      try {
+        const [providerRes, clientRes, tokenRes] = await Promise.all([
+          supabaseAdmin.from("users").select("full_name").eq("id", job.provider_id).single(),
+          supabaseAdmin.from("users").select("lang").eq("id", job.client_id).single(),
+          supabaseAdmin.from("push_tokens").select("token").eq("user_id", job.client_id).maybeSingle(),
+        ]);
+
+        const lang         = clientRes.data?.lang ?? "ar";
+        const providerName = providerRes.data?.full_name ?? (lang === "ar" ? "المزود" : "Provider");
+
+        const title = lang === "ar"
+          ? `✅ اكتمل العمل مع ${providerName}`
+          : `✅ Job completed with ${providerName}`;
+        const body = lang === "ar"
+          ? "شاركنا رأيك — تقييمك يساعد المجتمع ويكافئ المزودين المتميزين ⭐"
+          : "Share your experience — your rating helps the community and rewards top providers ⭐";
+
+        // In-app notification (shows in notification inbox)
+        await supabaseAdmin.from("notifications").insert({
+          user_id:  job.client_id,
+          title,
+          body,
+          type:     "job_rated",
+          screen:   "rate_job",
+          metadata: { job_id, provider_name: providerName },
+        });
+
+        // Push notification (works even when app is closed)
+        if (tokenRes.data?.token) {
+          await fetch("https://exp.host/--/api/v2/push/send", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json" },
+            body:    JSON.stringify({
+              to:        tokenRes.data.token,
+              title,
+              body,
+              sound:     "default",
+              priority:  "high",
+              data: {
+                screen:        "rate_job",
+                job_id,
+                provider_name: providerName,
+              },
+              channelId: "default",
+            }),
+          });
+        }
+      } catch (_) {
+        // Intentionally swallowed — notification failure must not affect the success response
+      }
+    })();
+
     return json({ success: true });
 
   } catch (err) {

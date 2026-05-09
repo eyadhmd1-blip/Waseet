@@ -1,13 +1,14 @@
 import type { Router } from 'expo-router';
 
 export interface NotifRouteData {
-  screen?:      string;
-  job_id?:      string;
-  provider_id?: string;
-  notif_id?:    string;
-  request_id?:  string;
-  contract_id?: string;
-  type?:        string;
+  screen?:        string;
+  job_id?:        string;
+  provider_id?:   string;
+  notif_id?:      string;
+  request_id?:    string;
+  contract_id?:   string;
+  type?:          string;
+  provider_name?: string;
 }
 
 export function handleNotifTap(data: NotifRouteData, router: Router) {
@@ -73,6 +74,18 @@ export function handleNotifTap(data: NotifRouteData, router: Router) {
     // Provider: contract feed
     case 'contract_feed':
       router.push('/(provider)' as any);
+      break;
+
+    // Client: rate provider after job completion
+    case 'rate_job':
+      if (job_id) {
+        router.push({
+          pathname: '/rate-job',
+          params: { job_id, provider_name: data.provider_name ?? '' },
+        } as any);
+      } else {
+        router.push('/(client)/requests' as any);
+      }
       break;
 
     // Subscribe / upgrade screen
