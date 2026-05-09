@@ -9,8 +9,10 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Modal, TextInput,
   Alert, ScrollView, Animated, Easing, Pressable, I18nManager,
-  KeyboardAvoidingView, Platform, AppState, Image,
+  KeyboardAvoidingView, Platform, AppState, Image, Dimensions,
 } from 'react-native';
+
+const Dimensions_width = Dimensions.get('window').width;
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST, ICON_MAP } from '../../src/constants/categories';
@@ -993,6 +995,7 @@ export default function ProviderFeed() {
 
   // Request detail bottom sheet
   const [detailSheet, setDetailSheet] = useState<RequestWithMeta | null>(null);
+  const [imageViewer, setImageViewer] = useState<{ urls: string[]; index: number } | null>(null);
 
   // Pending job commitment (bid accepted by client, provider must confirm)
   const [pendingCommit, setPendingCommit] = useState<{
@@ -1970,6 +1973,58 @@ export default function ProviderFeed() {
         onDismiss={() => { setShowCreditsTooltip(false); markTooltip('credits'); }}
       />
 
+      {/* ── Full-screen Image Viewer ──────────────────────────── */}
+      <Modal
+        visible={!!imageViewer}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setImageViewer(null)}
+        statusBarTranslucent
+      >
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
+          {/* Close button */}
+          <TouchableOpacity
+            style={{ position: 'absolute', top: 48, right: 16, zIndex: 10, backgroundColor: '#00000088', borderRadius: 20, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' }}
+            onPress={() => setImageViewer(null)}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: '#fff', fontSize: 20, lineHeight: 22 }}>✕</Text>
+          </TouchableOpacity>
+
+          {/* Counter */}
+          {(imageViewer?.urls.length ?? 0) > 1 && (
+            <View style={{ position: 'absolute', top: 48, left: 0, right: 0, alignItems: 'center', zIndex: 10 }}>
+              <Text style={{ color: '#ffffffaa', fontSize: 14, fontWeight: '600' }}>
+                {(imageViewer?.index ?? 0) + 1} / {imageViewer?.urls.length}
+              </Text>
+            </View>
+          )}
+
+          {/* Swipeable image list */}
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            contentOffset={{ x: (imageViewer?.index ?? 0) * Dimensions_width, y: 0 }}
+            style={{ flex: 1 }}
+          >
+            {imageViewer?.urls.map((url, i) => (
+              <Pressable
+                key={i}
+                style={{ width: Dimensions_width, flex: 1, justifyContent: 'center', alignItems: 'center' }}
+                onPress={() => setImageViewer(null)}
+              >
+                <Image
+                  source={{ uri: url }}
+                  style={{ width: Dimensions_width, height: '100%' }}
+                  resizeMode="contain"
+                />
+              </Pressable>
+            ))}
+          </ScrollView>
+        </View>
+      </Modal>
+
       {/* ── Request Detail Bottom Sheet ───────────────────────── */}
       <Modal
         visible={!!detailSheet}
@@ -1983,7 +2038,7 @@ export default function ProviderFeed() {
             {/* Handle bar */}
             <View style={styles.detailHandle} />
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+            <ScrollView showsVerticalScrollIndicator={false}>
               {/* Category + urgent badge */}
               <View style={styles.detailCatRow}>
                 <Text style={styles.detailCat}>
@@ -2011,7 +2066,13 @@ export default function ProviderFeed() {
                   contentContainerStyle={{ gap: 10, paddingHorizontal: 2 }}
                 >
                   {detailSheet!.image_urls.map((url, i) => (
-                    <Image key={i} source={{ uri: url }} style={styles.detailImg} resizeMode="cover" />
+                    <TouchableOpacity
+                      key={i}
+                      activeOpacity={0.85}
+                      onPress={() => setImageViewer({ urls: detailSheet!.image_urls, index: i })}
+                    >
+                      <Image source={{ uri: url }} style={styles.detailImg} resizeMode="cover" />
+                    </TouchableOpacity>
                   ))}
                 </ScrollView>
               )}
@@ -2268,7 +2329,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   contractScroll:  { flexGrow: 0 },
 
   // ── Request detail bottom sheet
-  detailSheet:         { backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '88%' },
+  detailSheet:         { backgroundColor: colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, position: 'absolute', bottom: 0, left: 0, right: 0, maxHeight: '88%' },
   detailHandle:        { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   detailCatRow:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   detailCat:           { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
