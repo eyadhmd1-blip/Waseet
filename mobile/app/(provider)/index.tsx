@@ -2189,7 +2189,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   commitBannerUrgent:     { backgroundColor: '#450A0A', borderBottomColor: 'rgba(239,68,68,0.3)' },
   commitBannerTitle:      { fontSize: 13, fontWeight: '800', color: '#7DD3FC', textAlign: ta },
   commitBannerTitleUrgent:{ color: '#FCA5A5' },
-  commitBannerSub:        { fontSize: 11, color: '#475569', textAlign: ta, marginTop: 2 },
+  commitBannerSub:        { fontSize: 12, color: '#BAE6FD', textAlign: ta, marginTop: 2 },
   commitBannerArrow:      { fontSize: 18, color: '#38BDF8', fontWeight: '700' },
 
   // ── Header
