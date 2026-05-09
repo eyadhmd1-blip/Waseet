@@ -763,7 +763,7 @@
     "faq2Q": "Is payment secure?",
     "faq2A": "Yes, payment is processed via Paddle — one of the world's largest payment platforms.",
     "faq3Q": "What is the difference between plans?",
-    "faq3A": "The main difference is the number of active services and priority ranking in search results.",
+    "faq3A": "The main difference is the monthly bid credits and priority ranking in search results.",
     "orderLabel": "Monthly Total",
     "checkoutBtn": "Subscribe to {{name}}",
     "checkoutSub": "Secure payment via Paddle",
@@ -771,9 +771,11 @@
     "paymentSetupMsg": "Payment system is being finalized. Available soon.\n\nContact us for early subscription.",
     "errCannotOpen": "Could not open the payment page",
     "errUnexpected": "An unexpected error occurred",
-    "featureBasicServices": "3 active services",
-    "featureProServices": "10 active services",
-    "featurePremiumServices": "Unlimited services",
+    "featureCredits_trial":   "10 credits · One-time only",
+    "featureCredits_basic":   "20 credits / month",
+    "featureCredits_pro":     "50 credits / month",
+    "featureCredits_premium": "Unlimited credits*",
+    "featureMaxBids":         "Max 5 active bids at once",
     "featureProfile": "Professional profile",
     "featureNormalRank": "Normal search ranking",
     "featureReplies": "Respond to offers",
@@ -1260,30 +1262,38 @@
     "الطفيلة": "Tafilah"
   },
   "plans": {
+    "trial": {
+      "name": "Trial",
+      "features": [
+        "10 credits · One-time only",
+        "Professional profile",
+        "Respond to offers"
+      ]
+    },
     "basic": {
       "name": "Basic",
       "features": [
-        "3 active services",
-        "Normal search ranking",
-        "Professional profile"
+        "20 credits / month",
+        "Professional profile",
+        "Respond to offers"
       ]
     },
     "pro": {
       "name": "Pro",
       "features": [
-        "10 active services",
+        "50 credits / month",
         "Priority ranking",
-        "Verified badge",
+        "Verified provider badge ✓",
         "Basic analytics"
       ]
     },
     "premium": {
-      "name": "Premium",
+      "name": "Elite",
       "features": [
-        "Unlimited services",
+        "Unlimited credits*",
+        "Max 5 active bids at once",
         "Always top of search",
-        "Full analytics dashboard",
-        "Homepage feature"
+        "Full analytics dashboard"
       ]
     }
   },
