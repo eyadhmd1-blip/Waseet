@@ -68,6 +68,11 @@ export function ProviderSubHeader({
     );
   }
 
+  // ── Premium (unlimited) — never out of credits
+  if (subscriptionTier === 'premium') {
+    return null;
+  }
+
   // ── Zero credits ─────────────────────────────────────────────
   if (subscriptionCredits === 0 && bonusCredits === 0) {
     return (
