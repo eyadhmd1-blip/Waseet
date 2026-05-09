@@ -144,6 +144,10 @@ export default function ProviderJobs() {
     setSendingCode(false);
     setCodeSent(true);
     setConfirmJob(job);
+    // Mark confirm_code as set in local state so the "Mark done" button hides
+    // immediately — prevents re-pressing from generating a new code before the
+    // client has a chance to share the first one (would cause wrong_code error).
+    setJobs(prev => prev.map(j => j.id === job.id ? { ...j, confirm_code: code } : j));
 
     // If push notification failed but inbox delivery succeeded — inform provider
     if (notifResult && !notifResult.sent && notifResult.inbox) {
@@ -182,7 +186,24 @@ export default function ProviderJobs() {
     setConfirmLoading(false);
 
     if (error || data?.error) {
-      const msg = data?.error ?? error?.message ?? t('common.unknown');
+      // Parse the actual error code from the Edge Function response body
+      let errCode: string | undefined = data?.error;
+      if (!errCode && error) {
+        try {
+          const body = await (error as any).context?.json?.();
+          errCode = body?.error;
+        } catch (_) {}
+      }
+      const msg = (() => {
+        switch (errCode) {
+          case 'wrong_code':        return t('profile.confirmModal.errWrongCode');
+          case 'code_expired':      return t('profile.confirmModal.errCodeExpired');
+          case 'no_code_generated': return t('profile.confirmModal.errNoCode');
+          case 'job_not_active':    return t('profile.confirmModal.errNotActive');
+          case 'unauthorized':      return t('profile.confirmModal.errUnauthorized');
+          default:                  return errCode ?? error?.message ?? t('common.unknown');
+        }
+      })();
       Alert.alert(t('common.error'), msg);
       return;
     }
