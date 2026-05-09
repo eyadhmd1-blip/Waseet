@@ -132,7 +132,7 @@ export default function NotificationInboxScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore,     setHasMore]     = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const cursorRef = useRef<string | null>(null);
+  const cursorRef = useRef<{ created_at: string; id: string } | null>(null);
 
   // ── Fetch page ──────────────────────────────────────────────
   const fetchPage = useCallback(async (reset: boolean) => {
@@ -144,10 +144,12 @@ export default function NotificationInboxScreen() {
       .select('id, title, body, type, screen, metadata, is_read, created_at')
       .eq('user_id', session.user.id)
       .order('created_at', { ascending: false })
+      .order('id',         { ascending: false })
       .limit(PAGE);
 
     if (!reset && cursorRef.current) {
-      q = q.lt('created_at', cursorRef.current);
+      const { created_at, id } = cursorRef.current;
+      q = q.or(`created_at.lt.${created_at},and(created_at.eq.${created_at},id.lt.${id})`);
     }
 
     const { data } = await q;
@@ -159,7 +161,10 @@ export default function NotificationInboxScreen() {
       setItems(prev => [...prev, ...(data as NotifRow[])]);
     }
 
-    if (data.length > 0) cursorRef.current = data[data.length - 1].created_at;
+    if (data.length > 0) {
+      const last = data[data.length - 1];
+      cursorRef.current = { created_at: last.created_at, id: last.id };
+    }
     setHasMore(data.length === PAGE);
   }, []);
 
