@@ -191,11 +191,12 @@ export default function NewRequestScreen() {
     const uploadedUrls: string[] = [];
     for (const uri of images) {
       const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+      // fetch().blob() produces empty/corrupt data on Android — use arrayBuffer() instead
       const response = await fetch(uri);
-      const blob = await response.blob();
+      const arrayBuffer = await response.arrayBuffer();
       const { data: uploadData } = await supabase.storage
         .from('request-images')
-        .upload(fileName, blob, { contentType: 'image/jpeg' });
+        .upload(fileName, arrayBuffer, { contentType: 'image/jpeg' });
       if (uploadData) {
         const { data: { publicUrl } } = supabase.storage.from('request-images').getPublicUrl(fileName);
         uploadedUrls.push(publicUrl);

@@ -997,6 +997,17 @@ export default function ProviderFeed() {
   // Request detail bottom sheet
   const [detailSheet, setDetailSheet] = useState<RequestWithMeta | null>(null);
   const [imageViewer, setImageViewer] = useState<{ urls: string[]; index: number } | null>(null);
+  const imageScrollRef = useRef<ScrollView>(null);
+
+  // Scroll to the tapped image after the modal mounts
+  // contentOffset is ignored on Android — ref.scrollTo is reliable
+  useEffect(() => {
+    if (!imageViewer || imageViewer.index === 0) return;
+    const t = setTimeout(() => {
+      imageScrollRef.current?.scrollTo({ x: imageViewer.index * Dimensions_width, animated: false });
+    }, 50);
+    return () => clearTimeout(t);
+  }, [imageViewer]);
 
   // Pending job commitment (bid accepted by client, provider must confirm)
   const [pendingCommit, setPendingCommit] = useState<{
@@ -2022,11 +2033,11 @@ export default function ProviderFeed() {
 
           {/* Swipeable image list */}
           <ScrollView
+            ref={imageScrollRef}
             horizontal
             pagingEnabled
             showsHorizontalScrollIndicator={false}
-            contentOffset={{ x: (imageViewer?.index ?? 0) * Dimensions_width, y: 0 }}
-            style={{ flex: 1 }}
+            style={{ flex: 1, height: Dimensions_height }}
           >
             {imageViewer?.urls.map((url, i) => (
               <Pressable
