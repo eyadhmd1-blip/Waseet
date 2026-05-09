@@ -1,6 +1,6 @@
 // ============================================================
 // WASEET — Subscription Payment Screen
-// Provider-facing: plan selection → discount → checkout via Paddle
+// Provider-facing: plan selection → discount → checkout via CliQ
 // ============================================================
 
 import { useEffect, useRef, useState, useCallback, useMemo} from 'react';
