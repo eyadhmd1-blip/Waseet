@@ -72,14 +72,14 @@ if (Platform.OS === 'android') {
   Notifications.setNotificationChannelAsync('default', {
     name:        'الإشعارات العامة',
     importance:  Notifications.AndroidImportance.MAX,
-    sound:       'default',
+    sound:       'notification.wav',
     vibrationPattern: [0, 250, 250, 250],
     lightColor:  '#C9A84C',
   });
   Notifications.setNotificationChannelAsync('urgent', {
     name:        'الطلبات الطارئة',
     importance:  Notifications.AndroidImportance.MAX,
-    sound:       'default',
+    sound:       'notification.wav',
     vibrationPattern: [0, 100, 100, 100, 100, 100],
     lightColor:  '#EF4444',
   });
