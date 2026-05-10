@@ -8,6 +8,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
@@ -30,9 +31,9 @@ type Priority = 'normal' | 'urgent';
 export default function SupportNewScreen() {
   const router = useRouter();
   const { t, ta, isRTL } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   const [category,   setCategory] = useState<CategoryKey | null>(null);
   const [priority,   setPriority] = useState<Priority>('normal');
@@ -96,13 +97,15 @@ export default function SupportNewScreen() {
     );
   };
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <AppHeader variant="stack" title={t('supportNew.headerTitle')} onBack={() => router.back()} />
-
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
         {/* Category */}
@@ -207,11 +210,12 @@ export default function SupportNewScreen() {
         </Text>
 
       </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
@@ -222,7 +226,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     label: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginTop: 20, marginBottom: 10, alignSelf: 'stretch', textAlign: ta },
 
     catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    catCard:       { width: '30%', backgroundColor: colors.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 6 },
+    catCard:       { width: '30%', backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)', borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)', gap: 6 },
     catCardActive: { borderColor: colors.accent, backgroundColor: colors.accentDim },
     catIcon:       { fontSize: 24 },
     catLabel:      { fontSize: 12, fontWeight: '600', color: colors.textMuted, textAlign: 'center' },

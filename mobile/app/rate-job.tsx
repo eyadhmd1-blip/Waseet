@@ -9,6 +9,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
@@ -23,13 +24,13 @@ type TagKey = typeof HIGH_TAG_KEYS[number] | typeof LOW_TAG_KEYS[number];
 export default function RateJobScreen() {
   const router = useRouter();
   const { t, ta, isRTL } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { job_id, provider_name } = useLocalSearchParams<{
     job_id: string;
     provider_name: string;
   }>();
 
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   const [rating, setRating]       = useState(0);
   const [hovered, setHovered]     = useState(0);
@@ -103,13 +104,15 @@ export default function RateJobScreen() {
     );
   };
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <AppHeader variant="stack" title={t('rateJob.title')} onBack={() => router.replace('/(client)/requests' as any)} />
-
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={styles.content}
@@ -204,11 +207,12 @@ export default function RateJobScreen() {
           }
         </TouchableOpacity>
       </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
@@ -216,7 +220,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
     content: { flexGrow: 1, padding: 24 },
 
-    provChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 28, gap: 12, borderWidth: 1, borderColor: colors.border },
+    provChip:       { flexDirection: 'row', alignItems: 'center', backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)', borderRadius: 16, padding: 16, marginBottom: 28, gap: 12, borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)' },
     provAvatar:     { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center' },
     provAvatarText: { fontSize: 20, fontWeight: '700', color: colors.bg },
     provName:       { fontSize: 16, fontWeight: '700', color: colors.textPrimary, alignSelf: 'stretch', textAlign: ta },

@@ -8,6 +8,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
@@ -33,9 +34,9 @@ interface TicketSummary {
 export default function SupportScreen() {
   const router = useRouter();
   const { t, ta, lang, isRTL } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   const [faq,       setFaq]       = useState<FaqItem[]>([]);
   const [summary,   setSummary]   = useState<TicketSummary>({ open: 0, in_review: 0, total: 0 });
@@ -96,10 +97,12 @@ export default function SupportScreen() {
     );
   }
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   return (
     <View style={styles.container}>
       <AppHeader variant="stack" title={t('support.headerTitle')} onBack={() => router.back()} />
-
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {/* Admin inbox shortcut — only visible to admins */}
@@ -213,11 +216,12 @@ export default function SupportScreen() {
         </View>
 
       </ScrollView>
+      </LinearGradient>
     </View>
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
@@ -232,7 +236,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     heroSub:   { fontSize: 14, color: colors.textMuted },
 
     actionsRow:      { flexDirection: 'row', gap: 12, marginBottom: 16 },
-    actionCard:      { flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 18, alignItems: 'center', borderWidth: 1, borderColor: colors.border, gap: 8 },
+    actionCard:      { flex: 1, backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)', borderRadius: 16, padding: 18, alignItems: 'center', borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)', gap: 8 },
     actionIcon:      { fontSize: 28 },
     actionLabel:     { fontSize: 13, fontWeight: '700', color: colors.textPrimary },
     actionBadge:     { position: 'absolute', top: 8, left: 8, backgroundColor: colors.accent, borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },

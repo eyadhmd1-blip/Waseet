@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TouchableOpacity,
   Switch, ActivityIndicator, Alert, Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
@@ -38,9 +39,9 @@ const QUIET_END_OPTIONS   = [6, 7, 8, 9];
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function NotificationSettingsScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, isRTL } = useLanguage();
-  const st = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
+  const st = useMemo(() => createSt(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router = useRouter();
 
   const [prefs,   setPrefs]   = useState<Prefs>(DEFAULTS);
@@ -139,10 +140,12 @@ export default function NotificationSettingsScreen() {
     );
   }
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   return (
     <View style={st.container}>
       <AppHeader variant="stack" title={t('notifSettings.headerTitle')} onBack={() => router.back()} />
-
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <Animated.ScrollView
         style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
         contentContainerStyle={st.scroll}
@@ -298,6 +301,7 @@ export default function NotificationSettingsScreen() {
             }
           </TouchableOpacity>
       </Animated.ScrollView>
+      </LinearGradient>
     </View>
   );
 }
@@ -349,7 +353,7 @@ function Divider() {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors, isRTL: boolean) {
+function createSt(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
@@ -358,10 +362,10 @@ function createSt(colors: AppColors, isRTL: boolean) {
 
   sectionTitle: { fontSize: 13, fontWeight: '700', color: colors.textMuted, marginBottom: 8, marginTop: 16, textAlign: ta },
 
-  card:         { backgroundColor: colors.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.border },
+  card:         { backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)', borderRadius: 18, padding: 16, borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)' },
   cardDisabled: { opacity: 0.5 },
 
-  masterCard:  { backgroundColor: colors.surface, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: colors.border, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  masterCard:  { backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)', borderRadius: 18, padding: 18, borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
   masterLeft:  { alignItems: 'center', gap: 14 },
   masterIcon:  { fontSize: 28 },
   masterTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 2, textAlign: ta },
