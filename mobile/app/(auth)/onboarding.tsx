@@ -516,6 +516,23 @@ function Step1RoleNew({
         onPress={() => onSelect(isClient ? 'client' : 'provider')}
         activeOpacity={0.9}
       >
+        {/* Selection banner */}
+        <View style={{
+          backgroundColor: isActive ? accent : (isDark ? colors.surface : '#F0F0F0'),
+          paddingVertical: 8,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+        }}>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: isActive ? '#fff' : (isDark ? colors.textMuted : '#9CA3AF') }}>
+            {isActive ? '✓' : '○'}
+          </Text>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: isActive ? '#fff' : (isDark ? colors.textMuted : '#9CA3AF') }}>
+            {isActive ? 'تم الاختيار' : 'اضغط للاختيار'}
+          </Text>
+        </View>
+
         {/* Gender-neutral abstract illustration */}
         <View style={{
           width: cardW, height: charH,
@@ -537,19 +554,6 @@ function Step1RoleNew({
           <Text style={{ position: 'absolute', top: charH * 0.13, left: cardW * 0.10, fontSize: charH * 0.10, opacity: 0.75 }}>{isClient ? '💬' : '📊'}</Text>
           <Text style={{ position: 'absolute', bottom: charH * 0.12, right: cardW * 0.10, fontSize: charH * 0.10, opacity: 0.75 }}>{isClient ? '✅' : '💰'}</Text>
           <Text style={{ position: 'absolute', bottom: charH * 0.16, left: cardW * 0.13, fontSize: charH * 0.09, opacity: 0.65 }}>{isClient ? '✨' : '⭐'}</Text>
-        </View>
-
-        {/* Selection checkmark */}
-        <View style={{
-          position: 'absolute', top: 10,
-          right: isRTL ? undefined : 10,
-          left:  isRTL ? 10 : undefined,
-          width: 24, height: 24, borderRadius: 12,
-          backgroundColor: isActive ? accent : 'transparent',
-          borderWidth: 2, borderColor: isActive ? accent : (isDark ? colors.border : '#D1D5DB'),
-          alignItems: 'center', justifyContent: 'center',
-        }}>
-          {isActive && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✓</Text>}
         </View>
 
         {/* Card text content */}
