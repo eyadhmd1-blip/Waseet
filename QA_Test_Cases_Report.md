@@ -32,6 +32,7 @@
 19. [Automation Candidates](#19-automation-candidates)
 20. [UX — Inline Validation & Error Display](#20-ux--inline-validation--error-display)
 21. [CAT — Categories & Service Data](#21-cat--categories--service-data)
+22. [OBD — Onboarding Screen Redesign](#22-obd--onboarding-screen-redesign)
 
 ---
 
@@ -72,7 +73,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | LOC | 14 | 2 | 6 | 4 | 2 |
 | UX | 16 | 0 | 8 | 8 | 0 |
 | CAT | 4 | 0 | 2 | 2 | 0 |
-| **TOTAL** | **366** | **110** | **146** | **91** | **28** |
+| OBD | 8 | 0 | 4 | 4 | 0 |
+| **TOTAL** | **374** | **110** | **150** | **95** | **28** |
 
 ---
 
@@ -3110,6 +3112,146 @@ Test DB:         Supabase staging project (isolated)
 
 ---
 
+---
+
+## 22. OBD — Onboarding Screen Redesign
+
+### High-Risk Areas
+- شاشة اختيار الدور تعرض الشخصيات بشكل صحيح على مختلف أحجام الشاشات
+- الـ Gradient والألوان تتبدل صحيحاً بين Light/Dark
+- الخطوات 2–5 تبقى كما هي بدون تأثر
+
+---
+
+#### OBD-001
+**Name:** عرض شخصية طالب الخدمة (seated client) في البطاقة اليسرى  
+**Priority:** High | **Type:** Functional / Visual  
+**Preconditions:** مستخدم جديد يفتح شاشة الـ Onboarding للمرة الأولى.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح شاشة Onboarding (مستخدم جديد) | تظهر شاشة Step 1 بخلفية كريمية دافئة مع LinearGradient |
+| 2 | افحص البطاقة اليسرى "أنا طالب خدمة" | تعرض شخصية الشاب الجالس (الـ hoodie الأصفر) بوضوح |
+| 3 | تأكد من الحد الذهبي والـ checkmark | البطاقة محددة افتراضياً بحد ذهبي وعلامة ✓ |
+
+**Expected Result:** الشخصية مقصوصة صحيحاً من الـ sprite sheet، لا قطع في الصورة.  
+**Automation Candidate:** No
+
+---
+
+#### OBD-002
+**Name:** عرض شخصية مزود الخدمة (provider tablet) في البطاقة اليمنى  
+**Priority:** High | **Type:** Functional / Visual  
+**Preconditions:** شاشة Step 1 مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افحص البطاقة اليمنى "أنا مزود خدمة" | تعرض شخصية المزود بالأوفرول الأزرق يحمل التابلت |
+| 2 | اضغط على البطاقة اليمنى | تُحدَّد بحد أزرق وـ checkmark أزرق |
+| 3 | تحقق أن البطاقة اليسرى تُلغى تحديدها | الحد الذهبي يختفي من بطاقة العميل |
+
+**Expected Result:** التبديل بين البطاقتين سلس، الشخصية الصحيحة في كل بطاقة.  
+**Automation Candidate:** No
+
+---
+
+#### OBD-003
+**Name:** زر "ابدأ الآن" يتقدم إلى الخطوة 2 حسب الدور المختار  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** Step 1 مفتوحة، اختار دور.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختر "أنا طالب خدمة" ثم اضغط "ابدأ الآن 🚀" | ينتقل إلى Step 2 (إدخال الاسم والمدينة) |
+| 2 | عد وابدأ من جديد، اختر "أنا مزود خدمة" ثم "ابدأ الآن" | ينتقل إلى Step 2 (نفس الخطوة لكن مع حقل البايو) |
+| 3 | تحقق أن progress bar يُعرض في Step 2 | شريط التقدم يظهر في الخطوات التالية |
+
+**Expected Result:** الدور المختار ينعكس صحيحاً على مسار الخطوات (client: 2 خطوات، provider: 4 خطوات).  
+**Automation Candidate:** No
+
+---
+
+#### OBD-004
+**Name:** التحقق من الـ Social Proof Row (+12,000 مستخدم)  
+**Priority:** Medium | **Type:** Visual / UX  
+**Preconditions:** شاشة Step 1.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افحص الصف فوق البطاقات | 3 دوائر ألوان متداخلة + ★★★★★ + نص "+12,000 مستخدم يثقون بنا" |
+| 2 | تحقق في RTL (عربي) | الصف يعكس اتجاهه بشكل صحيح |
+| 3 | تحقق في Dark Mode | الألوان تتكيف مع خلفية داكنة |
+
+**Expected Result:** الـ Social proof مرئي ومقروء في جميع الحالات.  
+**Automation Candidate:** No
+
+---
+
+#### OBD-005
+**Name:** Trust Badges تظهر على الشاشات الكبيرة وتختفي على الصغيرة  
+**Priority:** Medium | **Type:** Responsive  
+**Preconditions:** Step 1 على أجهزة مختلفة الحجم.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح Step 1 على جهاز بشاشة أكبر من 700pt (مثل iPhone 14) | تظهر Trust Badges: آمن وموثوق / بدون تعقيد / دعم 24/7 |
+| 2 | افتح على جهاز بشاشة أصغر من 700pt (مثل iPhone SE) | التصنيفات الثلاثة مخفية لتوفير المساحة |
+| 3 | تأكد أن زر "ابدأ الآن" مرئي دائماً في كلا الحالتين | الزر لا يختفي أبداً |
+
+**Expected Result:** Layout responsive — لا overflow، لا قطع في المحتوى.  
+**Automation Candidate:** No
+
+---
+
+#### OBD-006
+**Name:** Dark Mode — LinearGradient والبطاقات  
+**Priority:** Medium | **Type:** Visual  
+**Preconditions:** الجهاز في وضع Dark Mode.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فعّل Dark Mode وافتح Onboarding | الخلفية داكنة دافئة (dark gradient)، ليست بيضاء أو كريمية |
+| 2 | افحص البطاقتين | خلفية داكنة مع حدود ملونة (ذهبي/أزرق عند التحديد) |
+| 3 | افحص منطقة الشخصية في البطاقة | خلفية الشخصية تستخدم `colors.surface` بدل الأبيض |
+
+**Expected Result:** Dark Mode متسق مع باقي التطبيق، لا ألوان بيضاء صارخة.  
+**Automation Candidate:** No
+
+---
+
+#### OBD-007
+**Name:** الخطوات 2–5 لا تتأثر بعد التعديل  
+**Priority:** High | **Type:** Regression  
+**Preconditions:** مستخدم يكمل Onboarding كاملاً.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "ابدأ الآن" من Step 1 | ينتقل إلى Step 2 مع progress bar |
+| 2 | أكمل Step 2 (الاسم والمدينة) | ينتقل طبيعياً |
+| 3 | لـ Provider: أكمل Step 3 (التخصصات) و Step 4 (الخطة) | كل الخطوات تعمل بدون تغيير |
+| 4 | أكمل التسجيل | ينتهي بشاشة "Done" ويتوجه للتطبيق |
+
+**Expected Result:** كل المنطق الموجود (handleSubmit، notifyRoleUpdate، trial activation) يعمل بشكل كامل.  
+**Automation Candidate:** No
+
+---
+
+#### OBD-008
+**Name:** Regression — زر الرجوع في الخطوات 2+ لا يعود للتصميم القديم  
+**Priority:** High | **Type:** Regression  
+**Preconditions:** مستخدم في Step 2.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | من Step 2، اضغط زر الرجوع "←" | يرجع إلى Step 1 بالتصميم الجديد (LinearGradient + شخصيات) |
+| 2 | الدور المختار سابقاً محفوظ | البطاقة المحددة تبقى محددة |
+| 3 | اضغط "ابدأ الآن" مجدداً | يتقدم إلى Step 2 بسلاسة |
+
+**Expected Result:** التنقل ذهاباً وإياباً يعمل بشكل صحيح مع التصميم الجديد.  
+**Automation Candidate:** No
+
+---
+
 *End of Waseet QA Test Cases Report v1.1*  
-*Total Test Cases: 366 across 16 modules*  
-*Critical: 110 | High: 146 | Medium: 91 | Low: 28*
+*Total Test Cases: 374 across 17 modules*  
+*Critical: 110 | High: 150 | Medium: 95 | Low: 28*
