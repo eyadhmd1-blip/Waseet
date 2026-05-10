@@ -34,6 +34,7 @@
 21. [CAT — Categories & Service Data](#21-cat--categories--service-data)
 22. [OBD — Onboarding Screen Redesign](#22-obd--onboarding-screen-redesign)
 23. [VFY — Verify Screen Redesign](#23-vfy--verify-screen-redesign)
+24. [REG — Register Screen Redesign](#24-reg--register-screen-redesign)
 
 ---
 
@@ -76,7 +77,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | CAT | 4 | 0 | 2 | 2 | 0 |
 | OBD | 8 | 0 | 4 | 4 | 0 |
 | VFY | 6 | 0 | 3 | 3 | 0 |
-| **TOTAL** | **380** | **110** | **153** | **98** | **28** |
+| REG | 6 | 0 | 3 | 3 | 0 |
+| **TOTAL** | **386** | **110** | **156** | **101** | **28** |
 
 ---
 
@@ -3354,6 +3356,106 @@ Test DB:         Supabase staging project (isolated)
 
 ---
 
-*End of Waseet QA Test Cases Report v1.2*  
-*Total Test Cases: 380 across 18 modules*  
-*Critical: 110 | High: 153 | Medium: 98 | Low: 28*
+---
+
+## 24. REG — Register Screen Redesign
+
+#### REG-001
+**Name:** LinearGradient + Logo يظهران في شاشة التسجيل  
+**Priority:** High | **Type:** Visual  
+**Preconditions:** مستخدم جديد أكمل التحقق من OTP ووصل إلى شاشة التسجيل.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح شاشة Register (Light Mode) | خلفية LinearGradient #FDF6E3 → #FFFBF8، لوجو 64×64 في الأعلى |
+| 2 | بدّل إلى Dark Mode | التدرج يتغير إلى colors.bg → #1A1407 |
+| 3 | تحقق من العنوان | "✨ أكمل تسجيلك" بخط 800 bold مركزي |
+
+**Expected Result:** التصميم متسق مع منظومة الألوان الجديدة.  
+**Automation Candidate:** No
+
+---
+
+#### REG-002
+**Name:** بطاقات اختيار الدور — Selection Banner  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** شاشة Register مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | لاحظ بطاقتَي الدور في الحالة الافتراضية | بطاقة "طالب الخدمة" محددة (بانر ذهبي "✓ تم الاختيار")، بطاقة "مزود الخدمة" رمادية |
+| 2 | اضغط بطاقة "مزود الخدمة" | البانر يتحول إلى أزرق "✓ تم الاختيار"، البطاقة السابقة ترجع رمادية |
+| 3 | يظهر شارة التجربة المجانية | "🎁 تجربة مجانية 30 يوم + 10 رصيد ترحيبي" بلون أزرق |
+
+**Expected Result:** اختيار الدور واضح بصرياً مع تغذية راجعة فورية.  
+**Automation Candidate:** No
+
+---
+
+#### REG-003
+**Name:** شارة التجربة المجانية — تظهر وتختفي حسب الدور  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** شاشة Register مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | الدور الافتراضي "طالب الخدمة" | شارة التجربة المجانية مخفية |
+| 2 | اضغط "مزود الخدمة" | شارة "🎁 تجربة مجانية 30 يوم" تظهر |
+| 3 | اضغط "طالب الخدمة" مجدداً | الشارة تختفي |
+
+**Expected Result:** الشارة تظهر فقط لـ provider.  
+**Automation Candidate:** No
+
+---
+
+#### REG-004
+**Name:** Input Card الاسم — التحقق من الحقل الفارغ  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** شاشة Register مفتوحة، حقل الاسم فارغ.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اترك حقل الاسم فارغاً واضغط "إنشاء الحساب" | حد البطاقة يتحول إلى أحمر #EF4444، رسالة "⚠️ يرجى إدخال اسمك الكامل" |
+| 2 | اكتب اسماً | الحد يعود لللون الذهبي، الرسالة تختفي |
+| 3 | تحقق من شكل Input Card | خلفية بيضاء/شفافة، حد ذهبي 1.5px، label "الاسم الكامل" بذهبي |
+
+**Expected Result:** التحقق يعمل مع التصميم الجديد.  
+**Automation Candidate:** No
+
+---
+
+#### REG-005
+**Name:** City Chips — الاختيار والتصميم  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** شاشة Register مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | لاحظ قائمة المدن الأفقية | chips بحد رمادي خفيف، قابلة للتمرير |
+| 2 | اضغط "عمّان" | الـ chip يصبح borderColor #C9A84C + خلفية ذهبية خفيفة + نص ذهبي bold |
+| 3 | اضغط "إنشاء الحساب" بدون اختيار مدينة | رسالة "⚠️ يرجى اختيار مدينتك" |
+
+**Expected Result:** اختيار المدينة واضح ومميز بصرياً.  
+**Automation Candidate:** No
+
+---
+
+#### REG-006
+**Name:** Regression — منطق التسجيل الكامل محفوظ بعد التصميم  
+**Priority:** Medium | **Type:** Regression  
+**Preconditions:** حساب اختبار، OTP تم التحقق منه.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | سجّل كـ "طالب خدمة" باسم ومدينة | ينتقل إلى /(client) |
+| 2 | سجّل كـ "مزود خدمة" | ينتقل إلى /(provider)، يُنشأ صف في providers بـ trial |
+| 3 | سجّل برقم هاتف مكرر | Alert بـ auth.phoneAlreadyRegistered مع خيار الذهاب لـ Login |
+
+**Expected Result:** handleRegister يعمل بالضبط كما قبل التصميم.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v1.3*  
+*Total Test Cases: 386 across 19 modules*  
+*Critical: 110 | High: 156 | Medium: 101 | Low: 28*
