@@ -458,12 +458,6 @@ function StepDone({
 const GOLD_COLOR = '#C9A84C';
 const BLUE_COLOR = '#3B82F6';
 
-// Sprite sheet constants (1536 × 1024 px, ratio 1.5)
-// Layout: 4 characters across top 57%, 5 icons middle, 3 avatars bottom
-// Char[0] seated client  → left offset 0
-// Char[2] provider tablet → left offset -2 * cardWidth
-const SPRITE_RATIO    = 1.5;   // width / height
-const SPRITE_CHAR_PCT = 0.57;  // characters occupy top 57% of sheet height
 
 function Step1RoleNew({
   role, onSelect, onNext,
@@ -478,12 +472,8 @@ function Step1RoleNew({
   const CARD_GAP = 10;
   const cardW    = (screenW - H_PAD * 2 - CARD_GAP) / 2;
 
-  // Sprite display dimensions: show full sprite at 4× card width so each
-  // character occupies exactly cardW pixels of horizontal viewport.
-  const spriteDispW = cardW * 4;
-  const spriteDispH = spriteDispW / SPRITE_RATIO;
-  // Character viewport height: top 57% of displayed sheet, capped for small screens
-  const charH = Math.min(spriteDispH * SPRITE_CHAR_PCT, screenH * (isSmall ? 0.21 : 0.27));
+  // Illustration area height: proportional to card width, capped for small screens
+  const charH = Math.min(cardW * 1.05, screenH * (isSmall ? 0.21 : 0.27));
 
   const gradColors: [string, string] = isDark
     ? [colors.bg, '#1A1407']
@@ -509,9 +499,6 @@ function Step1RoleNew({
     const chips     = isClient ? CLIENT_CHIPS : PROVIDER_CHIPS;
     const title     = isClient ? 'أنا طالب خدمة' : 'أنا مزود خدمة';
     const subtitle  = isClient ? 'ابحث عن أفضل مزود\nضمن دقايق' : 'أبدأ باستقبال الطلبات\nوزيد دخلك';
-    // Provider = 3rd character in sprite (index 2), offset = 2 × cardW to the left
-    const imgLeft   = isClient ? 0 : -(cardW * 2);
-
     return (
       <TouchableOpacity
         style={[{
@@ -529,13 +516,27 @@ function Step1RoleNew({
         onPress={() => onSelect(isClient ? 'client' : 'provider')}
         activeOpacity={0.9}
       >
-        {/* Character illustration — clipped from sprite sheet */}
-        <View style={{ width: cardW, height: charH, overflow: 'hidden', backgroundColor: isDark ? colors.surface : '#FAFAF8' }}>
-          <Image
-            source={require('../../assets/images/onboarding_assets.png')}
-            style={{ position: 'absolute', width: spriteDispW, height: spriteDispH, left: imgLeft, top: 0 }}
-            resizeMode="cover"
-          />
+        {/* Gender-neutral abstract illustration */}
+        <View style={{
+          width: cardW, height: charH,
+          backgroundColor: isDark
+            ? (isActive ? accent + '18' : colors.bg)
+            : (isClient ? '#FFF9EC' : '#EEF4FF'),
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          {/* Glow circle */}
+          <View style={{
+            width: charH * 0.65, height: charH * 0.65, borderRadius: charH * 0.325,
+            backgroundColor: isActive ? accent + '22' : (isDark ? colors.surface : accent + '12'),
+            alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Text style={{ fontSize: charH * 0.28 }}>{isClient ? '🔍' : '🛠️'}</Text>
+          </View>
+          {/* Floating decorative icons */}
+          <Text style={{ position: 'absolute', top: charH * 0.10, right: cardW * 0.12, fontSize: charH * 0.13, opacity: 0.85 }}>⭐</Text>
+          <Text style={{ position: 'absolute', top: charH * 0.13, left: cardW * 0.10, fontSize: charH * 0.10, opacity: 0.75 }}>{isClient ? '💬' : '📊'}</Text>
+          <Text style={{ position: 'absolute', bottom: charH * 0.12, right: cardW * 0.10, fontSize: charH * 0.10, opacity: 0.75 }}>{isClient ? '✅' : '💰'}</Text>
+          <Text style={{ position: 'absolute', bottom: charH * 0.16, left: cardW * 0.13, fontSize: charH * 0.09, opacity: 0.65 }}>{isClient ? '✨' : '⭐'}</Text>
         </View>
 
         {/* Selection checkmark */}
