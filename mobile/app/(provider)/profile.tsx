@@ -4,6 +4,7 @@ import {
   RefreshControl, ActivityIndicator, Image, Dimensions, Switch,
   Modal, Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import {
@@ -131,9 +132,9 @@ function SettingsGroup({
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function ProviderProfile() {
-  const { colors, theme, setTheme } = useTheme();
+  const { colors, theme, setTheme, isDark } = useTheme();
   const { t, isRTL, toggleLanguage } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const { contentPad } = useInsets();
   const router = useRouter();
 
@@ -296,6 +297,10 @@ export default function ProviderProfile() {
   const lowCredits       = !isPremium && subCredits > 0 && subCredits <= 3 && provider.is_subscribed;
   const creditColor      = noCredits ? '#EF4444' : lowCredits ? '#F59E0B' : tierColor;
 
+  const gradColors: [string, string] = isDark
+    ? [colors.bg, '#1A1407']
+    : ['#FDF6E3', '#FFFBF8'];
+
   return (
     <View style={styles.container}>
       <AppHeader
@@ -304,6 +309,7 @@ export default function ProviderProfile() {
         actionIcon="settings-outline"
         onAction={() => router.push('/notification-settings')}
       />
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={{ paddingBottom: contentPad + 32 }}
@@ -1005,13 +1011,14 @@ export default function ProviderProfile() {
           </View>
         </View>
       </Modal>
+      </LinearGradient>
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:  { flex: 1, backgroundColor: colors.bg },
@@ -1072,7 +1079,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     sectionPad: { paddingHorizontal: 16, marginBottom: 20 },
 
     // ── Subscription card ──
-    subCard: { borderRadius: 22, padding: 22, borderWidth: 1.5, overflow: 'hidden' },
+    subCard: { borderRadius: 22, padding: 22, borderWidth: 1.5, overflow: 'hidden', borderColor: isDark ? colors.border : 'rgba(201,168,76,0.25)' },
     subGlow: { position: 'absolute', width: 180, height: 180, borderRadius: 90, top: -60, right: -50 },
     subHeaderRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 },
     subTierBadge:    { borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5, borderWidth: 1 },
@@ -1093,7 +1100,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     subExpiry:       { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 16 },
     subCTA:          { borderRadius: 14, paddingVertical: 13, alignItems: 'center' },
     subCTAText:      { fontSize: 15, fontWeight: '700' },
-    noSubCard:       { borderRadius: 22, padding: 26, borderWidth: 1, alignItems: 'center' },
+    noSubCard:       { borderRadius: 22, padding: 26, borderWidth: 1, alignItems: 'center', borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)' },
     noSubTitle:      { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
     noSubSub:        { fontSize: 13, color: colors.textMuted, textAlign: 'center' },
 
