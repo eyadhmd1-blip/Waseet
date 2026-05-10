@@ -17,6 +17,7 @@ import { CATEGORY_GROUPS, CATEGORY_PLACEHOLDERS, ICON_MAP } from '../src/constan
 import { useCategories } from '../src/hooks/useCategories';
 import type { ServiceCategory } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AppHeader } from '../src/components/AppHeader';
 import { useTheme } from '../src/context/ThemeContext';
 import type { AppColors } from '../src/constants/colors';
@@ -176,10 +177,10 @@ function ConfirmModal({
 // ─── Main Screen ─────────────────────────────────────────────
 
 export default function UrgentRequestScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, lang, isRTL } = useLanguage();
   const ta = isRTL ? 'right' : 'left' as const;
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router = useRouter();
 
   const { groups } = useCategories();
@@ -314,7 +315,7 @@ export default function UrgentRequestScreen() {
         step={step}
         totalSteps={2}
       />
-
+      <LinearGradient colors={isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8']} style={{ flex: 1 }}>
       {/* ── Step content ── */}
       <Animated.View style={{ flex: 1, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
 
@@ -459,13 +460,14 @@ export default function UrgentRequestScreen() {
         onPrimary={() => { setShowSuccess(false); router.replace('/(client)/requests'); }}
         onSecondary={() => { setShowSuccess(false); router.replace('/(client)'); }}
       />
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
 // ─── Styles ──────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL: boolean = false) {
+function createStyles(colors: AppColors, isRTL: boolean = false, isDark: boolean = false) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
@@ -484,7 +486,7 @@ function createStyles(colors: AppColors, isRTL: boolean = false) {
   groupChipText:       { color: colors.textSecondary, fontSize: 13 },
   groupChipTextActive: { color: '#EF4444', fontWeight: '600' },
 
-  catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  catGrid:       { flexDirection: 'row', flexWrap: 'wrap', gap: 12, backgroundColor: isDark ? 'transparent' : 'transparent' },
   catCard:       { width: '30%', backgroundColor: colors.surface, borderRadius: 14, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   catCardActive: { borderColor: '#EF4444', backgroundColor: '#450A0A' },
   catIcon:       { fontSize: 28, marginBottom: 6 },

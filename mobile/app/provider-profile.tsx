@@ -16,6 +16,7 @@ import { TIER_META, CATEGORY_GROUPS, ICON_MAP } from '../src/constants/categorie
 import type { Provider, User, PortfolioItem } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
 
@@ -70,9 +71,9 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
 // ─── Main Screen ─────────────────────────────────────────────
 
 export default function ProviderPublicProfile() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, ta, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router = useRouter();
   const { provider_id } = useLocalSearchParams<{ provider_id: string }>();
 
@@ -227,7 +228,7 @@ export default function ProviderPublicProfile() {
         actionIcon="share-outline"
         onAction={handleShare}
       />
-
+      <LinearGradient colors={isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8']} style={{ flex: 1 }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
 
         {/* ── Hero card ── */}
@@ -399,14 +400,14 @@ export default function ProviderPublicProfile() {
           </KeyboardAvoidingView>
         </View>
       </Modal>
-
+      </LinearGradient>
     </View>
   );
 }
 
 // ─── Styles ──────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL = false) {
+function createStyles(colors: AppColors, isRTL = false, isDark = false) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
@@ -418,7 +419,7 @@ function createStyles(colors: AppColors, isRTL = false) {
 
   content: { padding: 16, paddingBottom: 60 },
 
-  heroCard: { backgroundColor: colors.surface, borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1, borderColor: colors.border },
+  heroCard: { backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)', borderRadius: 20, padding: 18, marginBottom: 14, borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)' },
   heroTop:  { flexDirection: 'row', gap: 14, alignItems: 'flex-start', marginBottom: 16 },
   avatar:   { width: 72, height: 72, borderRadius: 36, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 30, fontWeight: '800' },

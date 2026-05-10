@@ -17,6 +17,7 @@ import {
 } from '../src/types';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
 import { AppHeader } from '../src/components/AppHeader';
 import { getInitials, nameToAvatarColor } from '../src/utils/avatar';
 import type { AppColors } from '../src/constants/colors';
@@ -32,9 +33,9 @@ const VISIT_STATUS_COLOR: Record<string, string> = {
 };
 
 export default function ContractDetailScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, ta, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router = useRouter();
   const { contract_id } = useLocalSearchParams<{ contract_id: string }>();
 
@@ -204,7 +205,7 @@ export default function ContractDetailScreen() {
   return (
     <View style={styles.root}>
       <AppHeader variant="stack" title={t('contractDetail.headerTitle')} onBack={() => router.back()} />
-
+      <LinearGradient colors={isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8']} style={{ flex: 1 }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={CONTRACT_COLOR} />}
@@ -373,6 +374,7 @@ export default function ContractDetailScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      </LinearGradient>
     </View>
   );
 }
@@ -544,7 +546,7 @@ function createVr(colors: AppColors, isRTL: boolean) {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean = false) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   root:   { flex: 1, backgroundColor: colors.bg },
@@ -558,7 +560,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   heroTitle:    { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
   heroCity:     { fontSize: 13, color: colors.textMuted, textAlign: ta },
 
-  statusBadge:       { backgroundColor: colors.bg, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: colors.border },
+  statusBadge:       { backgroundColor: isDark ? colors.bg : 'rgba(255,255,255,0.92)', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 4, borderWidth: 1, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)' },
   statusBadgeActive: { borderColor: CONTRACT_COLOR, backgroundColor: CONTRACT_DIM },
   statusText:        { fontSize: 11, color: colors.textSecondary, fontWeight: '600' },
 
