@@ -21,9 +21,9 @@ type JobWithMeta = Job & {
 };
 
 export default function ProviderJobs() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router = useRouter();
   const { count: notifCount } = useUnreadNotifCount();
   const [tab, setTab]             = useState<JobTab>('active');
@@ -406,7 +406,7 @@ export default function ProviderJobs() {
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
@@ -416,13 +416,20 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
   tabRow:        { flexDirection: 'row', marginHorizontal: 20, backgroundColor: colors.surface, borderRadius: 12, padding: 4, marginBottom: 16 },
   tabBtn:        { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
-  tabBtnActive:  { backgroundColor: colors.bg },
+  tabBtnActive:  { backgroundColor: colors.accent },
   tabText:       { fontSize: 14, color: colors.textSecondary },
-  tabTextActive: { color: colors.textPrimary, fontWeight: '700' },
+  tabTextActive: { color: isDark ? '#000' : '#fff', fontWeight: '700' },
 
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
 
-  card:       { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border },
+  card: {
+    backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)',
+    borderRadius: 16, padding: 16, marginBottom: 12,
+    borderWidth: 1.5,
+    borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)',
+    shadowColor: '#C9A84C', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 2,
+  },
   cardTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
   cardMeta:   { fontSize: 12, color: colors.textMuted, marginBottom: 4, textAlign: ta },
   clientName: { fontSize: 13, color: colors.textSecondary, marginBottom: 14, textAlign: ta },
