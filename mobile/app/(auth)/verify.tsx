@@ -2,35 +2,40 @@ import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput,
   TouchableOpacity, Alert, useWindowDimensions,
+  ScrollView, Image, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
-import { HEADER_PAD, rs } from '../../src/utils/layout';
+import { rs } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
 
-const RESEND_COOLDOWN = 60; // seconds
+const RESEND_COOLDOWN = 60;
 
 export default function VerifyScreen() {
-  useInsets();
+  const { headerPad, contentPad } = useInsets();
   const router = useRouter();
   const { phone, dev_code } = useLocalSearchParams<{ phone: string; dev_code?: string }>();
   const { t, isRTL } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { width: screenW } = useWindowDimensions();
-  const otpBoxSize = Math.min(64, Math.max(38, Math.floor((screenW - 48) / 6) - 6));
+  const otpBoxSize = Math.min(56, Math.max(40, Math.floor((screenW - 72) / 6) - 4));
 
-  const [otp, setOtp]           = useState(['', '', '', '', '', '']);
-  const [otpError, setOtpError] = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [otp, setOtp]             = useState(['', '', '', '', '', '']);
+  const [otpError, setOtpError]   = useState(false);
+  const [loading, setLoading]     = useState(false);
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
   const inputs = useRef<TextInput[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const styles = useMemo(() => createStyles(colors, isRTL, otpBoxSize), [colors, isRTL, otpBoxSize]);
+  const styles = useMemo(
+    () => createStyles(colors, isRTL, isDark, otpBoxSize),
+    [colors, isRTL, isDark, otpBoxSize],
+  );
 
   // ── Countdown timer ───────────────────────────────────────────
   const startCountdown = useCallback(() => {
@@ -120,10 +125,7 @@ export default function VerifyScreen() {
 
       if (userData?.is_suspended) {
         await supabase.auth.signOut();
-        Alert.alert(
-          t('common.error'),
-          t('auth.accountSuspended'),
-        );
+        Alert.alert(t('common.error'), t('auth.accountSuspended'));
         return;
       }
 
@@ -134,7 +136,7 @@ export default function VerifyScreen() {
       } else {
         router.replace('/(client)');
       }
-    } catch (err: any) {
+    } catch {
       Alert.alert(t('common.error'), t('auth.wrongCodeMsg'));
       setOtp(['', '', '', '', '', '']);
       inputs.current[0]?.focus();
@@ -162,7 +164,6 @@ export default function VerifyScreen() {
         return;
       }
 
-      // Reset OTP inputs and restart countdown
       setOtp(['', '', '', '', '', '']);
       inputs.current[0]?.focus();
       startCountdown();
@@ -175,107 +176,315 @@ export default function VerifyScreen() {
 
   const canResend = countdown === 0 && !resending;
 
+  const gradColors: [string, string] = isDark
+    ? [colors.bg, '#1A1407']
+    : ['#FDF6E3', '#FFFBF8'];
+
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.back} onPress={() => router.back()}>
-        <Text style={styles.backText}>{isRTL ? '→' : '←'}</Text>
-      </TouchableOpacity>
-
-      <View style={styles.content}>
-        <Text style={styles.title}>{t('auth.enterOtp')}</Text>
-        <Text style={styles.subtitle}>
-          {t('auth.otpSentTo')} {phone}
-        </Text>
-
-        {/* OTP boxes */}
-        <View style={styles.otpRow}>
-          {otp.map((digit, i) => (
-            <TextInput
-              key={i}
-              ref={ref => { if (ref) inputs.current[i] = ref; }}
-              style={[styles.otpInput, digit ? styles.otpFilled : null]}
-              value={digit}
-              onChangeText={v => handleChange(v.replace(/\D/g, ''), i)}
-              keyboardType="number-pad"
-              maxLength={1}
-              textAlign="center"
-              selectTextOnFocus
-            />
-          ))}
-        </View>
-
-        {otpError && otp.join('').length < 6 && (
-          <Text style={styles.errorHint}>⚠️ يرجى إدخال الرمز المكون من 6 أرقام كاملاً</Text>
-        )}
-
-        {/* Verify button */}
+    <LinearGradient colors={gradColors} style={{ flex: 1 }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        {/* Back button */}
         <TouchableOpacity
-          style={[styles.btn, loading && styles.btnDisabled]}
-          onPress={handleVerify}
-          disabled={loading}
-          activeOpacity={0.85}
+          style={[styles.back, { paddingTop: headerPad }]}
+          onPress={() => router.back()}
+          activeOpacity={0.7}
         >
-          <Text style={styles.btnText}>
-            {loading ? t('auth.verifying') : t('auth.verify')}
-          </Text>
+          <View style={styles.backBtn}>
+            <Text style={styles.backArrow}>{isRTL ? '→' : '←'}</Text>
+          </View>
         </TouchableOpacity>
 
-        {/* Resend row */}
-        <View style={styles.resendRow}>
-          {countdown > 0 ? (
-            // Countdown active
-            <Text style={styles.resendHint}>
-              {t('auth.resendIn')}{' '}
-              <Text style={styles.resendCountdown}>
-                0:{String(countdown).padStart(2, '0')}
-              </Text>
-            </Text>
-          ) : (
-            // Countdown done — show resend button
-            <TouchableOpacity onPress={handleResend} disabled={!canResend}>
-              <Text style={[styles.resendBtn, !canResend && styles.resendBtnDisabled]}>
-                {resending ? t('auth.resending') : t('auth.resend')}
-              </Text>
-            </TouchableOpacity>
+        <ScrollView
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: contentPad }]}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          bounces={false}
+        >
+          {/* Logo */}
+          <View style={styles.logoWrap}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={styles.logo}
+            />
+          </View>
+
+          {/* Title + subtitle */}
+          <Text style={styles.title}>🔐 {t('auth.enterOtp')}</Text>
+          <Text style={styles.subtitle}>{t('auth.otpSentTo')}</Text>
+
+          {/* Phone display badge */}
+          <View style={styles.phoneBadge}>
+            <Text style={styles.phoneBadgeText}>{phone}</Text>
+          </View>
+
+          {/* OTP card */}
+          <View style={[styles.otpCard, otpError && styles.otpCardError]}>
+            <Text style={styles.otpLabel}>رمز التحقق</Text>
+            <View style={styles.otpRow}>
+              {otp.map((digit, i) => (
+                <TextInput
+                  key={i}
+                  ref={ref => { if (ref) inputs.current[i] = ref; }}
+                  style={[
+                    styles.otpBox,
+                    digit ? styles.otpBoxFilled : null,
+                    otpError ? styles.otpBoxError : null,
+                  ]}
+                  value={digit}
+                  onChangeText={v => handleChange(v.replace(/\D/g, ''), i)}
+                  keyboardType="number-pad"
+                  maxLength={1}
+                  textAlign="center"
+                  selectTextOnFocus
+                />
+              ))}
+            </View>
+          </View>
+
+          {/* Inline error */}
+          {otpError && otp.join('').length < 6 && (
+            <Text style={styles.errorHint}>⚠️ يرجى إدخال الرمز المكون من 6 أرقام كاملاً</Text>
           )}
-        </View>
-      </View>
-    </View>
+
+          {/* Countdown / resend */}
+          <View style={styles.resendWrap}>
+            {countdown > 0 ? (
+              <View style={styles.countdownBadge}>
+                <Text style={styles.countdownText}>
+                  ⏱ إعادة الإرسال بعد{' '}
+                  <Text style={styles.countdownNum}>0:{String(countdown).padStart(2, '0')}</Text>
+                </Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={[styles.resendBtn, !canResend && styles.resendBtnDisabled]}
+                onPress={handleResend}
+                disabled={!canResend}
+                activeOpacity={0.75}
+              >
+                <Text style={[styles.resendBtnText, !canResend && styles.resendBtnTextDisabled]}>
+                  {resending ? t('auth.resending') : `📨 ${t('auth.resend')}`}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Verify button */}
+          <TouchableOpacity
+            style={[styles.btn, loading && styles.btnDisabled]}
+            onPress={handleVerify}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.btnText}>
+              {loading ? t('auth.verifying') : `✅ ${t('auth.verify')}`}
+            </Text>
+          </TouchableOpacity>
+
+          {/* Security badge */}
+          <View style={styles.securityBadge}>
+            <Text style={styles.securityText}>🔒 الرمز صالح لمدة 10 دقائق فقط</Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean, otpBoxSize: number) {
-  const ta = isRTL ? 'right' : 'left';
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean, otpBoxSize: number) {
+  const ta     = isRTL ? 'right' : 'left';
+  const ACCENT = '#C9A84C';
+
   return StyleSheet.create({
-    container:  { flex: 1, backgroundColor: colors.bg },
+    // Back button
     back: {
-      paddingHorizontal: 24,
-      paddingTop:        HEADER_PAD,
-      paddingBottom:     8,
+      paddingHorizontal: 20,
+      paddingBottom:     4,
       alignItems:        isRTL ? 'flex-end' : 'flex-start',
     },
-    backText:   { fontSize: 24, color: colors.textSecondary },
-    content:    { flex: 1, paddingHorizontal: 24, paddingTop: 24 },
-    title:      { fontSize: rs(28, 22, 32), fontWeight: '700', color: colors.textPrimary, marginBottom: 8, textAlign: ta, alignSelf: 'stretch' },
-    subtitle:   { fontSize: rs(15, 13, 17), color: colors.textMuted, marginBottom: 40, textAlign: ta, alignSelf: 'stretch' },
-
-    otpRow:     { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32, direction: 'ltr' },
-    otpInput: {
-      width: otpBoxSize, height: otpBoxSize + 8, borderRadius: 12,
-      backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border,
-      fontSize: rs(24, 18, 28), fontWeight: '700', color: colors.textPrimary,
+    backBtn: {
+      width: 40, height: 40, borderRadius: 20,
+      backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.75)',
+      alignItems: 'center', justifyContent: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 6,
+      elevation: 2,
     },
-    otpFilled:  { borderColor: colors.accent },
+    backArrow: { fontSize: 20, color: colors.textSecondary },
 
-    btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
-    btnDisabled:{ backgroundColor: colors.border },
-    errorHint:  { fontSize: 13, color: '#EF4444', marginBottom: 12, textAlign: 'center' },
-    btnText:    { fontSize: rs(17, 15, 19), fontWeight: '700', color: colors.bg },
+    scrollContent: {
+      paddingHorizontal: 24,
+      paddingTop: 12,
+    },
 
-    resendRow:       { marginTop: 24, alignItems: 'center' },
-    resendHint:        { fontSize: 13, color: colors.textMuted, textAlign: ta, alignSelf: 'stretch' },
-    resendCountdown:   { fontSize: 13, fontWeight: '700', color: colors.accent },
-    resendBtn:         { fontSize: 14, color: colors.accent, fontWeight: '600', paddingVertical: 4, textAlign: ta },
-    resendBtnDisabled: { color: colors.textMuted },
+    // Logo
+    logoWrap: { alignItems: 'center', marginBottom: 20 },
+    logo:     { width: 64, height: 64, borderRadius: 16 },
+
+    // Title + subtitle
+    title: {
+      fontSize:     rs(26, 22, 30),
+      fontWeight:   '800',
+      color:        colors.textPrimary,
+      textAlign:    'center',
+      marginBottom: 8,
+    },
+    subtitle: {
+      fontSize:     rs(14, 12, 16),
+      color:        colors.textMuted,
+      textAlign:    'center',
+      marginBottom: 12,
+    },
+
+    // Phone badge
+    phoneBadge: {
+      alignSelf:         'center',
+      backgroundColor:   isDark ? colors.surface : 'rgba(201,168,76,0.10)',
+      borderRadius:      24,
+      paddingVertical:   8,
+      paddingHorizontal: 20,
+      marginBottom:      28,
+      borderWidth:       1,
+      borderColor:       isDark ? colors.border : 'rgba(201,168,76,0.35)',
+    },
+    phoneBadgeText: {
+      fontSize:      16,
+      fontWeight:    '700',
+      color:         ACCENT,
+      letterSpacing: 1.5,
+      direction:     'ltr',
+    } as any,
+
+    // OTP card
+    otpCard: {
+      backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)',
+      borderRadius:    16,
+      padding:         20,
+      borderWidth:     1.5,
+      borderColor:     isDark ? colors.border : 'rgba(201,168,76,0.35)',
+      marginBottom:    8,
+      shadowColor:     ACCENT,
+      shadowOffset:    { width: 0, height: 4 },
+      shadowOpacity:   0.10,
+      shadowRadius:    12,
+      elevation:       3,
+    },
+    otpCardError: { borderColor: '#EF4444' },
+    otpLabel: {
+      fontSize:     12,
+      fontWeight:   '700',
+      color:        ACCENT,
+      marginBottom: 16,
+      textAlign:    ta,
+    },
+    otpRow: {
+      flexDirection:  'row',
+      justifyContent: 'space-between',
+      direction:      'ltr',
+    },
+    otpBox: {
+      width:           otpBoxSize,
+      height:          otpBoxSize + 8,
+      borderRadius:    12,
+      backgroundColor: isDark ? colors.bg : 'rgba(201,168,76,0.06)',
+      borderWidth:     1.5,
+      borderColor:     isDark ? colors.border : 'rgba(201,168,76,0.25)',
+      fontSize:        rs(22, 18, 26),
+      fontWeight:      '800',
+      color:           colors.textPrimary,
+    },
+    otpBoxFilled: {
+      borderColor:     ACCENT,
+      backgroundColor: isDark ? 'rgba(201,168,76,0.15)' : 'rgba(201,168,76,0.10)',
+    },
+    otpBoxError: { borderColor: '#EF4444' },
+
+    // Error hint
+    errorHint: {
+      fontSize:     13,
+      color:        '#EF4444',
+      marginBottom: 8,
+      textAlign:    'center',
+    },
+
+    // Countdown / resend
+    resendWrap: {
+      alignItems:   'center',
+      marginTop:    4,
+      marginBottom: 20,
+    },
+    countdownBadge: {
+      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+      borderRadius:    24,
+      paddingVertical:   8,
+      paddingHorizontal: 16,
+    },
+    countdownText: {
+      fontSize:  13,
+      color:     colors.textMuted,
+      textAlign: 'center',
+    },
+    countdownNum: {
+      fontWeight: '700',
+      color:      ACCENT,
+    },
+    resendBtn: {
+      backgroundColor: isDark ? 'rgba(201,168,76,0.12)' : 'rgba(201,168,76,0.10)',
+      borderRadius:    24,
+      borderWidth:     1,
+      borderColor:     ACCENT,
+      paddingVertical:   10,
+      paddingHorizontal: 24,
+    },
+    resendBtnDisabled: {
+      borderColor:     colors.border,
+      backgroundColor: 'transparent',
+    },
+    resendBtnText: {
+      fontSize:   14,
+      fontWeight: '700',
+      color:      ACCENT,
+    },
+    resendBtnTextDisabled: { color: colors.textMuted },
+
+    // CTA button
+    btn: {
+      backgroundColor: ACCENT,
+      borderRadius:    16,
+      paddingVertical: 17,
+      alignItems:      'center',
+      marginBottom:    16,
+      shadowColor:     ACCENT,
+      shadowOffset:    { width: 0, height: 6 },
+      shadowOpacity:   0.35,
+      shadowRadius:    12,
+      elevation:       6,
+    },
+    btnDisabled: { backgroundColor: colors.border, shadowOpacity: 0, elevation: 0 },
+    btnText: {
+      fontSize:   rs(17, 15, 19),
+      fontWeight: '800',
+      color:      '#fff',
+    },
+
+    // Security badge
+    securityBadge: {
+      backgroundColor: isDark ? 'rgba(16,185,129,0.12)' : 'rgba(16,185,129,0.08)',
+      borderRadius:    10,
+      paddingVertical:   10,
+      paddingHorizontal: 14,
+      alignItems:      'center',
+    },
+    securityText: {
+      fontSize:   12,
+      color:      '#10B981',
+      fontWeight: '600',
+      textAlign:  'center',
+    },
   });
 }

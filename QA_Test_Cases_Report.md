@@ -33,6 +33,7 @@
 20. [UX — Inline Validation & Error Display](#20-ux--inline-validation--error-display)
 21. [CAT — Categories & Service Data](#21-cat--categories--service-data)
 22. [OBD — Onboarding Screen Redesign](#22-obd--onboarding-screen-redesign)
+23. [VFY — Verify Screen Redesign](#23-vfy--verify-screen-redesign)
 
 ---
 
@@ -74,7 +75,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | UX | 16 | 0 | 8 | 8 | 0 |
 | CAT | 4 | 0 | 2 | 2 | 0 |
 | OBD | 8 | 0 | 4 | 4 | 0 |
-| **TOTAL** | **374** | **110** | **150** | **95** | **28** |
+| VFY | 6 | 0 | 3 | 3 | 0 |
+| **TOTAL** | **380** | **110** | **153** | **98** | **28** |
 
 ---
 
@@ -3252,6 +3254,106 @@ Test DB:         Supabase staging project (isolated)
 
 ---
 
-*End of Waseet QA Test Cases Report v1.1*  
-*Total Test Cases: 374 across 17 modules*  
-*Critical: 110 | High: 150 | Medium: 95 | Low: 28*
+---
+
+## 23. VFY — Verify Screen Redesign
+
+#### VFY-001
+**Name:** LinearGradient background يظهر بشكل صحيح  
+**Priority:** High | **Type:** Visual  
+**Preconditions:** المستخدم انتقل من شاشة Login إلى Verify.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح شاشة Verify (Light Mode) | خلفية LinearGradient من #FDF6E3 إلى #FFFBF8 |
+| 2 | بدّل إلى Dark Mode | الخلفية تتغير إلى colors.bg → #1A1407 |
+| 3 | قارن مع شاشة Login | نفس التدرج اللوني المتطابق |
+
+**Expected Result:** التصميم متسق مع منظومة الألوان الجديدة في الوضعين.  
+**Automation Candidate:** No
+
+---
+
+#### VFY-002
+**Name:** عرض رقم الهاتف في الـ Phone Badge  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** المستخدم أدخل 0791234567 في Login وانتقل إلى Verify.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | لاحظ الـ Phone Badge تحت العنوان | يعرض +9627912345 67 بخط ذهبي fontWeight 700 |
+| 2 | تحقق من اللون | لون ACCENT #C9A84C |
+| 3 | تحقق من حدود البطاقة | borderColor rgba(201,168,76,0.35) في Light |
+
+**Expected Result:** رقم الهاتف معروض بوضوح في بادج مميز.  
+**Automation Candidate:** No
+
+---
+
+#### VFY-003
+**Name:** مربعات OTP — الحالات الثلاث (فارغ / ممتلئ / خطأ)  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** شاشة Verify مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | المربعات فارغة | حدود خفيفة rgba(201,168,76,0.25)، خلفية شفافة |
+| 2 | اكتب رقماً في المربع الأول | المربع يصبح borderColor #C9A84C + خلفية ذهبية خفيفة |
+| 3 | اضغط زر "تحقق" مع مربعات ناقصة | جميع المربعات تأخذ borderColor #EF4444 + رسالة خطأ |
+
+**Expected Result:** الـ OTP Card يعكس الحالة بشكل بصري واضح.  
+**Automation Candidate:** No
+
+---
+
+#### VFY-004
+**Name:** التنقل التلقائي بين مربعات OTP  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** شاشة Verify مفتوحة، لوحة المفاتيح ظاهرة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اكتب رقماً في المربع الأول | التركيز ينتقل تلقائياً إلى المربع الثاني |
+| 2 | احذف رقماً من المربع الثالث | التركيز يرجع إلى المربع الثاني |
+| 3 | اكتب 6 أرقام متتالية | التركيز ينتهي عند المربع السادس |
+
+**Expected Result:** التنقل التلقائي يعمل بسلاسة في الاتجاهين.  
+**Automation Candidate:** No
+
+---
+
+#### VFY-005
+**Name:** Countdown Badge + زر إعادة الإرسال  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** شاشة Verify مفتوحة حديثاً.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | لاحظ منطقة الـ Resend مباشرة | يظهر CountdownBadge "⏱ إعادة الإرسال بعد 0:60" |
+| 2 | انتظر 60 ثانية | يختفي الـ Badge ويظهر زر "📨 إعادة إرسال الرمز" |
+| 3 | اضغط زر إعادة الإرسال | يُرسل OTP جديد، العداد يبدأ من 0:60 من جديد |
+
+**Expected Result:** منطقة الـ Countdown تتبدل بين Badge والزر بشكل صحيح.  
+**Automation Candidate:** No
+
+---
+
+#### VFY-006
+**Name:** Regression — كامل منطق التحقق محفوظ بعد التصميم  
+**Priority:** Medium | **Type:** Regression  
+**Preconditions:** حساب اختبار صالح بـ OTP معروف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أدخل OTP خاطئ واضغط تحقق | Alert بـ auth.wrongCode، المربعات تُصفَّر |
+| 2 | أدخل OTP صحيح واضغط تحقق | ينتقل إلى /(client) أو /(auth)/onboarding حسب الحالة |
+| 3 | اختبر حساباً موقوفاً | Alert بـ auth.accountSuspended، يبقى في شاشة Verify |
+
+**Expected Result:** منطق handleVerify يعمل بالضبط كما قبل التصميم.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v1.2*  
+*Total Test Cases: 380 across 18 modules*  
+*Critical: 110 | High: 153 | Medium: 98 | Low: 28*
