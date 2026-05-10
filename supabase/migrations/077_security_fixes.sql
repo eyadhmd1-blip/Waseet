@@ -31,6 +31,19 @@ ALTER TABLE jobs
 ALTER TABLE subscriptions
   ADD COLUMN IF NOT EXISTS paddle_txn_id TEXT;
 
+-- Nullify duplicate paddle_txn_id values (keep the latest, clear the rest)
+-- so the unique index can be created safely even if dev data has collisions.
+WITH ranked AS (
+  SELECT id,
+         ROW_NUMBER() OVER (PARTITION BY paddle_txn_id ORDER BY created_at DESC) AS rn
+  FROM subscriptions
+  WHERE paddle_txn_id IS NOT NULL
+)
+UPDATE subscriptions
+SET paddle_txn_id = NULL
+FROM ranked
+WHERE subscriptions.id = ranked.id AND ranked.rn > 1;
+
 CREATE UNIQUE INDEX IF NOT EXISTS idx_subscriptions_paddle_txn_id
   ON subscriptions (paddle_txn_id)
   WHERE paddle_txn_id IS NOT NULL;
@@ -230,8 +243,12 @@ BEGIN
     WHEN 'basic'   THEN 20
     WHEN 'pro'     THEN 50
     WHEN 'premium' THEN 0   -- unlimited sentinel; subscription_credits unused
-    ELSE RAISE EXCEPTION 'invalid tier: %', p_tier
+    ELSE NULL
   END;
+
+  IF v_credits IS NULL THEN
+    RAISE EXCEPTION 'invalid tier: %', p_tier;
+  END IF;
 
   UPDATE providers SET
     is_subscribed        = true,

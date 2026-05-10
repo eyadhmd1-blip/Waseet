@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS manual_payments (
 
 ALTER TABLE manual_payments ENABLE ROW LEVEL SECURITY;
 -- Providers and clients have no access; service_role (admin) bypasses RLS
+DROP POLICY IF EXISTS "manual_payments_no_access" ON manual_payments;
 CREATE POLICY "manual_payments_no_access"
   ON manual_payments FOR ALL TO authenticated USING (false);
 
