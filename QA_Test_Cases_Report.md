@@ -35,6 +35,7 @@
 22. [OBD — Onboarding Screen Redesign](#22-obd--onboarding-screen-redesign)
 23. [VFY — Verify Screen Redesign](#23-vfy--verify-screen-redesign)
 24. [REG — Register Screen Redesign](#24-reg--register-screen-redesign)
+25. [THME — App-Wide Theme & Visual Redesign](#25-thme--app-wide-theme--visual-redesign)
 
 ---
 
@@ -3456,6 +3457,214 @@ Test DB:         Supabase staging project (isolated)
 
 ---
 
-*End of Waseet QA Test Cases Report v1.3*  
-*Total Test Cases: 386 across 19 modules*  
+---
+
+## 25. THME — App-Wide Theme & Visual Redesign
+
+**Scope:** تغطية التصميم المحدّث بـ LinearGradient + نظام ألوان ذهبي (#C9A84C) على جميع الشاشات.  
+**Screens affected:** verify-phone، help-center، portfolio، portfolio-add، subscribe، urgent-request، support، support-new، notification-settings، notification-inbox، provider/profile، provider/index، rate-job، provider-profile، contract-detail، request-detail، chat.
+
+---
+
+#### THME-001
+**Name:** LinearGradient — Light Mode Background  
+**Priority:** High | **Type:** Visual  
+**Preconditions:** الجهاز في Light Mode، الشاشة المطلوبة مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح أي شاشة محدّثة (مثل request-detail، chat، portfolio-add) في Light Mode | الخلفية تُظهر تدرجاً من #FDF6E3 إلى #FFFBF8 بدلاً من لون صلب |
+| 2 | تمرير المحتوى | التدرج ثابت كخلفية، المحتوى يتمرر فوقه |
+| 3 | قارن مع شاشة غير محدّثة | الشاشات المحدّثة أكثر دفئاً ووضوحاً |
+
+**Expected Result:** التدرج الذهبي الفاتح يظهر في Light Mode على جميع الشاشات المحدّثة.  
+**Automation Candidate:** No
+
+---
+
+#### THME-002
+**Name:** LinearGradient — Dark Mode Background  
+**Priority:** High | **Type:** Visual  
+**Preconditions:** الجهاز في Dark Mode.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فعّل Dark Mode على الجهاز | التدرج يتحول من colors.bg إلى #1A1407 |
+| 2 | تنقّل بين شاشات مختلفة (chat, subscribe, provider feed) | التدرج يظهر في جميعها بألوان الـ Dark Mode |
+| 3 | قارن البطاقات في Dark Mode | حدود البطاقات تستخدم colors.border (رمادي/أبيض شفاف) |
+
+**Expected Result:** التدرج الداكن يظهر في Dark Mode بدون تضارب ألوان.  
+**Automation Candidate:** No
+
+---
+
+#### THME-003
+**Name:** بطاقات — حد ذهبي في Light Mode  
+**Priority:** Medium | **Type:** Visual  
+**Preconditions:** Light Mode، أي شاشة تحتوي بطاقات.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح request-detail | بطاقة الطلب لها حد بلون rgba(201,168,76,0.20) |
+| 2 | افتح chat | فقاعات الرسائل الواردة لها حد rgba(201,168,76,0.15) |
+| 3 | افتح portfolio-add | بطاقات نوع العمل لها حد rgba(201,168,76,0.20) |
+
+**Expected Result:** جميع البطاقات في Light Mode تستخدم الحد الذهبي الخفيف.  
+**Automation Candidate:** No
+
+---
+
+#### THME-004
+**Name:** Regression — منطق Chat محفوظ بعد التصميم  
+**Priority:** Critical | **Type:** Regression  
+**Preconditions:** job نشط، شاشة chat مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أرسل رسالة نصية | الرسالة تُضاف فورياً (optimistic) وتنتقل إلى DB |
+| 2 | أرسل موقعك الحالي | فقاعة الموقع تظهر مع إحداثيات وزر "فتح الخريطة" |
+| 3 | اضغط طويلاً على زر المايكروفون > أرسل | رسالة صوتية تُرسل بعد التوقف |
+| 4 | افتح الشاشة في Dark Mode | التدرج الداكن يظهر خلف القائمة فقط، شريط الإدخال يبقى بلون colors.surface |
+
+**Expected Result:** جميع وظائف الدردشة تعمل كما قبل التصميم، والتدرج يظهر في منطقة الرسائل فقط.  
+**Automation Candidate:** No
+
+---
+
+#### THME-005
+**Name:** Regression — request-detail منطق قبول العروض محفوظ  
+**Priority:** Critical | **Type:** Regression  
+**Preconditions:** طلب مفتوح مع عروض pending.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح request-detail | التدرج يظهر خلف ScrollView |
+| 2 | اضغط "قبول" على عرض | Modal التأكيد يظهر (خارج LinearGradient) |
+| 3 | أكّد القبول | ينتقل إلى grace-period، العروض الأخرى تُرفض |
+| 4 | تحقق من modal الإبلاغ | يعمل بشكل مستقل عن LinearGradient |
+
+**Expected Result:** منطق قبول العروض يعمل بالضبط كما قبل التصميم.  
+**Automation Candidate:** No
+
+---
+
+#### THME-006
+**Name:** Regression — portfolio-add رفع الصور محفوظ  
+**Priority:** High | **Type:** Regression  
+**Preconditions:** provider مسجّل، شاشة portfolio-add مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختر نوع "صورة واحدة" | بطاقة الاختيار تتحول للون الذهبي، خطوة 2 متاحة |
+| 2 | اضغط "التالي" بدون اختيار صورة | رسالة ⚠️ تظهر |
+| 3 | ارفع صورة > أكّد في نافذة المعاينة | الصورة تُقتطع 4:3 وترفع |
+| 4 | أكمل الخطوة 3 واضغط "نشر" | العنصر يُضاف إلى portfolio |
+| 5 | تحقق من SuccessModal | يظهر داخل LinearGradient بشكل صحيح |
+
+**Expected Result:** تدفق رفع المحفظة كامل بدون أي تراجع.  
+**Automation Candidate:** No
+
+---
+
+#### THME-007
+**Name:** Regression — شاشة verify-phone التدرج يغطي الشاشة الكاملة  
+**Priority:** Medium | **Type:** Visual + Regression  
+**Preconditions:** شاشة verify-phone مفتوحة (بعد إدخال الهاتف).
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | لاحظ شاشة verify-phone | LinearGradient يُغطي الشاشة كاملةً (لا AppHeader) |
+| 2 | أدخل 6 أرقام OTP | حقل الإدخال يُجمعها، زر التحقق يُفعَّل |
+| 3 | أدخل OTP خاطئاً | رسالة خطأ تظهر |
+| 4 | أدخل OTP صحيحاً | ينتقل إلى register أو الصفحة الرئيسية |
+
+**Expected Result:** شاشة OTP تعمل كالمعتاد، التدرج يظهر خلف المحتوى.  
+**Automation Candidate:** No
+
+---
+
+#### THME-008
+**Name:** Regression — subscribe اشتراك كامل  
+**Priority:** High | **Type:** Regression  
+**Preconditions:** provider بدون اشتراك.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح subscribe | LinearGradient خلف ScrollView + قسم CTA |
+| 2 | اضغط على خطة | بطاقة الخطة تتحول للون الذهبي |
+| 3 | اضغط "اشترك الآن" | ينتقل إلى Paddle checkout |
+| 4 | تحقق من FAQs | قابلة للطي/فتح بشكل طبيعي |
+
+**Expected Result:** تدفق الاشتراك يعمل كما قبل التصميم.  
+**Automation Candidate:** No
+
+---
+
+#### THME-009
+**Name:** Regression — notification-inbox وnotification-settings  
+**Priority:** Medium | **Type:** Regression  
+**Preconditions:** حساب مع إشعارات.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح notification-inbox | LinearGradient خلف FlatList |
+| 2 | اضغط على إشعار | ينتقل إلى الصفحة المرتبطة |
+| 3 | افتح notification-settings | LinearGradient خلف Animated.ScrollView |
+| 4 | عطّل نوع إشعار ثم أعده | الحالة تُحفظ في DB |
+
+**Expected Result:** الإشعارات تعمل بالكامل مع التصميم الجديد.  
+**Automation Candidate:** No
+
+---
+
+#### THME-010
+**Name:** Regression — help-center وsupport وsupport-new  
+**Priority:** Medium | **Type:** Regression  
+**Preconditions:** أي مستخدم مسجّل.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح help-center | LinearGradient من الجذر (لا AppHeader خارجي) |
+| 2 | افتح support | بطاقات الإجراءات بحد ذهبي في Light Mode |
+| 3 | افتح support-new > اختر فئة > اكتب موضوعاً ورسالة > أرسل | التذكرة تُرسل بنجاح |
+
+**Expected Result:** وظائف الدعم تعمل بلا تراجع.  
+**Automation Candidate:** No
+
+---
+
+#### THME-011
+**Name:** Regression — contract-detail وprovider-profile وrate-job  
+**Priority:** Medium | **Type:** Regression  
+**Preconditions:** عقد نشط، provider profile متاح.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح contract-detail | LinearGradient خلف ScrollView، statusBadge بحد ذهبي |
+| 2 | افتح provider-profile | LinearGradient بعد AppHeader، heroCard بحد ذهبي |
+| 3 | افتح rate-job > اختر 5 نجوم > أرسل | التقييم يُحفظ ويظهر في الملف الشخصي |
+
+**Expected Result:** وظائف هذه الشاشات محفوظة مع التصميم الجديد.  
+**Automation Candidate:** No
+
+---
+
+#### THME-012
+**Name:** Regression — portfolio وprovider feed وurgent-request  
+**Priority:** Medium | **Type:** Regression  
+**Preconditions:** provider لديه ملف كامل.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح portfolio | LinearGradient خلف FlatList، صور تُفتح في Lightbox |
+| 2 | افتح provider/index (feed) | LinearGradient بعد ProviderSubHeader، البطاقات بحد ذهبي |
+| 3 | افتح urgent-request > أكمل الطلب | الطلب يُرسل كـ is_urgent=true |
+
+**Expected Result:** وظائف هذه الشاشات كاملة مع التصميم المحدّث.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v1.4*  
+*Total Test Cases: 398 across 25 modules*  
 *Critical: 110 | High: 156 | Medium: 101 | Low: 28*
