@@ -14,6 +14,7 @@ import {
 
 const Dimensions_width  = Dimensions.get('window').width;
 const Dimensions_height = Dimensions.get('window').height;
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST, ICON_MAP } from '../../src/constants/categories';
@@ -300,9 +301,9 @@ function BidButton({
   locked: boolean;
   onPress: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const scale = useRef(new Animated.Value(1)).current;
 
   const handlePress = () => {
@@ -340,9 +341,9 @@ function UpsellModal({
   onClose: () => void;
   onSubscribe: (tier: string) => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const rocketY   = useRef(new Animated.Value(0)).current;
   const sheetY    = useRef(new Animated.Value(500)).current;
   const sheetOp   = useRef(new Animated.Value(0)).current;
@@ -444,9 +445,9 @@ function RequestCard({
   onBoostPress?: () => void;
   onDetailPress: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const urgentStyles = useMemo(() => createUrgentStyles(colors, isRTL), [colors, isRTL]);
   const bidsCount     = item.bids_count?.[0]?.count ?? 0;
   const isNew         = Date.now() - new Date(item.created_at).getTime() < 60 * 60 * 1000;
@@ -947,9 +948,9 @@ function EmptyFeedState({
 const MAX_CARDS = 30;
 
 export default function ProviderFeed() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, ta, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const urgentStyles = useMemo(() => createUrgentStyles(colors, isRTL), [colors, isRTL]);
   const demoBidStyles = useMemo(() => createDemoBidStyles(colors, isRTL), [colors, isRTL]);
   const cBidStyles = useMemo(() => createCBidStyles(colors, isRTL), [colors, isRTL]);
@@ -1503,8 +1504,12 @@ export default function ProviderFeed() {
 
   const tierMeta = provider ? TIER_META[provider.reputation_tier] : null;
 
+  const gradColors: [string, string] = isDark
+    ? [colors.bg, '#1A1407']
+    : ['#FDF6E3', '#FFFBF8'];
+
   if (loading) {
-    return <View style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></View>;
+    return <LinearGradient colors={gradColors} style={styles.center}><ActivityIndicator color={colors.accent} size="large" /></LinearGradient>;
   }
 
   return (
@@ -1533,6 +1538,7 @@ export default function ProviderFeed() {
         subscriptionEnds={provider?.subscription_ends}
         onUpgrade={() => router.push('/subscribe' as any)}
       />
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
 
       {/* ── Pending commitment banner ─────────────────────────── */}
       {pendingCommit && (
@@ -2195,6 +2201,7 @@ export default function ProviderFeed() {
         </Pressable>
       </Modal>
 
+      </LinearGradient>
     </View>
   );
 }
@@ -2214,7 +2221,7 @@ function createDemoBidStyles(_colors: AppColors, isRTL: boolean) {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
@@ -2266,7 +2273,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   listContent: { paddingHorizontal: 16, paddingBottom: 32 },
 
   // ── Cards
-  card:       { backgroundColor: colors.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
+  card:       { backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: isDark ? 0 : 0.05, shadowRadius: 6, elevation: isDark ? 0 : 1 },
   cardLocked: { opacity: 0.82 },
   cardTop:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   cardCat:    { fontSize: 12, color: colors.textMuted },
