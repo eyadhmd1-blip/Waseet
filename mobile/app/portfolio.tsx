@@ -5,6 +5,7 @@ import {
   ActivityIndicator, Alert, Animated, Dimensions, PanResponder,
   Modal, RefreshControl, Platform, StatusBar,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Video, ResizeMode } from 'expo-av';
 import { supabase }          from '../src/lib/supabase';
@@ -249,9 +250,9 @@ type LightboxState =
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function PortfolioScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, lang, isRTL } = useLanguage();
-  const st = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
+  const st = useMemo(() => createSt(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const baStyles = useMemo(() => createBaStyles(colors), [colors]);
   const router = useRouter();
 
@@ -342,10 +343,12 @@ export default function PortfolioScreen() {
     );
   }
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   return (
     <View style={st.container}>
       <AppHeader variant="stack" title={t('portfolio.headerTitle')} onBack={() => router.back()} />
-
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <FlatList
         data={items}
         keyExtractor={i => i.id}
@@ -454,6 +457,7 @@ export default function PortfolioScreen() {
           ) : null}
         </View>
       </Modal>
+      </LinearGradient>
     </View>
   );
 }
@@ -485,7 +489,7 @@ function createStCard(colors: AppColors) {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors, isRTL: boolean) {
+function createSt(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container:   { flex: 1, backgroundColor: colors.bg },

@@ -9,6 +9,7 @@ import {
   Animated, Easing, Alert, ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { SUBSCRIPTION_PLANS } from '../src/constants/categories';
@@ -110,7 +111,7 @@ function PlanCard({
 }) {
   const { colors } = useTheme();
   const { t, ta, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, false), [colors, isRTL]);
   const accentColor = PLAN_COLORS[plan.tier];
   const features    = PLAN_FEATURE_KEYS[plan.tier] ?? [];
   const popular     = PLAN_POPULAR[plan.tier];
@@ -198,9 +199,9 @@ function PlanCard({
 
 // ─── Main Screen ──────────────────────────────────────────────
 export default function SubscribeScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, ta, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router   = useRouter();
   const params   = useLocalSearchParams<{ tier?: string }>();
   const [provider, setProvider]         = useState<(Provider & { user: User }) | null>(null);
@@ -363,10 +364,12 @@ export default function SubscribeScreen() {
     { q: t('subscribe.faq3Q'),       a: t('subscribe.faq3A_cliq') },
   ];
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   return (
     <View style={styles.container}>
       <AppHeader variant="stack" title={t('subscribe.headerTitle')} onBack={() => router.back()} />
-
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -458,6 +461,7 @@ export default function SubscribeScreen() {
           }
         </TouchableOpacity>
       </Animated.View>
+      </LinearGradient>
     </View>
   );
 }
@@ -466,7 +470,7 @@ export default function SubscribeScreen() {
 function FAQItem({ q, a }: { q: string; a: string }) {
   const { colors } = useTheme();
   const { ta, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, false), [colors, isRTL]);
   const [open, setOpen] = useState(false);
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -493,7 +497,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
 
 // ─── Styles ──────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },

@@ -12,6 +12,7 @@ import {
   TouchableOpacity, TextInput, LayoutAnimation,
   Platform, UIManager,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme }    from '../src/context/ThemeContext';
 import { useLanguage } from '../src/hooks/useLanguage';
@@ -133,7 +134,7 @@ function accStyles(colors: AppColors) {
 // ─── Main screen ──────────────────────────────────────────────
 
 export default function HelpCenterScreen() {
-  const { colors }        = useTheme();
+  const { colors, isDark } = useTheme();
   const { t }             = useLanguage();
   const { headerPad, contentPad, bottom } = useInsets();
   const router            = useRouter();
@@ -165,10 +166,11 @@ export default function HelpCenterScreen() {
       .filter(s => s.items.length > 0);
   }, [query, role, t]);
 
-  const st = styles(colors);
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+  const st = styles(colors, isDark);
 
   return (
-    <View style={st.root}>
+    <LinearGradient colors={gradColors} style={st.root}>
 
       {/* Header */}
       <View style={[st.header, { paddingTop: headerPad }]}>
@@ -268,13 +270,13 @@ export default function HelpCenterScreen() {
         onDone={() => { setReplayVisible(false); dismissCarousel(); }}
       />
 
-    </View>
+    </LinearGradient>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function styles(colors: AppColors) {
+function styles(colors: AppColors, isDark: boolean) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.bg },
 
@@ -310,8 +312,8 @@ function styles(colors: AppColors) {
     sectionEmoji:  { fontSize: 18 },
     sectionTitle:  { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
     sectionCard: {
-      backgroundColor: colors.surface, borderRadius: 16,
-      borderWidth: 1, borderColor: colors.border,
+      backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)', borderRadius: 16,
+      borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)',
       paddingHorizontal: 16, paddingBottom: 4,
     },
 
