@@ -4,6 +4,7 @@ import {
   RefreshControl, ActivityIndicator, TextInput, Alert,
   KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { JORDAN_CITIES } from '../../src/constants/categories';
@@ -12,9 +13,10 @@ import { getInitials } from '../../src/utils/avatar';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { User } from '../../src/types';
 import { useInsets } from '../../src/hooks/useInsets';
-import { HEADER_PAD } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
+
+const ACCENT = '#C9A84C';
 
 type Stats = {
   total:       number;
@@ -94,10 +96,10 @@ const ss = StyleSheet.create({
 // ─── Main Component ───────────────────────────────────────────
 
 export default function ClientProfile() {
-  const { colors, theme, setTheme } = useTheme();
+  const { colors, isDark, theme, setTheme } = useTheme();
   const { t, lang, toggleLanguage, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
-  const { contentPad } = useInsets();
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
+  const { headerPad, contentPad } = useInsets();
   const router = useRouter();
 
   const [user,       setUser]       = useState<User | null>(null);
@@ -217,8 +219,12 @@ export default function ClientProfile() {
 
   // ── Render ───────────────────────────────────────────────────
 
+  const gradColors: [string, string] = isDark
+    ? [colors.bg, '#1A1407']
+    : ['#FDF6E3', '#FFFBF8'];
+
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
 
       {/* ── Sticky save bar ── */}
       <Animated.View
@@ -239,16 +245,17 @@ export default function ClientProfile() {
         </TouchableOpacity>
       </Animated.View>
 
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: contentPad + 24 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} />}
       >
 
         {/* ══ HERO HEADER ══════════════════════════════════════ */}
-        <View style={styles.hero}>
+        <View style={[styles.hero, { paddingTop: headerPad + 8 }]}>
           {/* subtle accent glow layer */}
           <View style={[StyleSheet.absoluteFillObject, styles.heroGlow]} pointerEvents="none" />
 
@@ -438,17 +445,18 @@ export default function ClientProfile() {
         </View>
 
       </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
 
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.bg },
+    container: { flex: 1 },
     center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
 
     // ── Save bar ──
@@ -466,7 +474,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
     // ── Hero ──
     hero: {
-      paddingTop: HEADER_PAD,
+      paddingTop: 0,
       paddingBottom: 36,
       paddingHorizontal: 24,
       alignItems: 'center',
@@ -539,15 +547,22 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     },
 
     // ── Edit form ──
-    fieldLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 8, marginTop: 16, textAlign: ta, fontWeight: '600' },
+    fieldLabel: { fontSize: 12, color: ACCENT, marginBottom: 8, marginTop: 16, textAlign: ta, fontWeight: '700' },
     fieldInput: {
-      backgroundColor: colors.bg, borderRadius: 12,
+      backgroundColor: isDark ? colors.bg : 'rgba(255,255,255,0.85)',
+      borderRadius: 12,
       paddingHorizontal: 16, paddingVertical: 13,
       color: colors.textPrimary, fontSize: 15,
-      borderWidth: 1, borderColor: colors.border,
+      borderWidth: 1.5,
+      borderColor: isDark ? colors.border : 'rgba(201,168,76,0.35)',
       marginBottom: 4,
     },
-    cityChip:     { backgroundColor: colors.bg, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.border },
+    cityChip: {
+      backgroundColor: isDark ? colors.bg : 'rgba(255,255,255,0.85)',
+      borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8,
+      borderWidth: 1.5,
+      borderColor: isDark ? colors.border : 'rgba(201,168,76,0.25)',
+    },
     cityChipText: { color: colors.textSecondary, fontSize: 13 },
 
     // ── Quick actions ──
