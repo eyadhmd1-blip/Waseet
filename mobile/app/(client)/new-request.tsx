@@ -50,6 +50,13 @@ export default function NewRequestScreen() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [repostBanner, setRepostBanner] = useState(false);
 
+  const [titleError,   setTitleError]   = useState(false);
+  const [descError,    setDescError]    = useState(false);
+  const [cityError,    setCityError]    = useState(false);
+  const [pickupError,  setPickupError]  = useState(false);
+  const [dropoffError, setDropoffError] = useState(false);
+  const [sizeError,    setSizeError]    = useState(false);
+
   // Courier-specific fields
   const [pickupAddress,  setPickupAddress]  = useState('');
   const [dropoffAddress, setDropoffAddress] = useState('');
@@ -153,14 +160,25 @@ export default function NewRequestScreen() {
   }, [selectedCat, description]);
 
   const handleStep2Continue = () => {
-    if (!title.trim()) { Alert.alert(t('common.attention'), t('newRequest.titleRequired')); return; }
-    if (!description.trim() || description.length < 20) { Alert.alert(t('common.attention'), t('newRequest.descRequired')); return; }
-    if (!city) { Alert.alert(t('common.attention'), t('newRequest.cityRequired')); return; }
+    const t1 = !title.trim();
+    const d1 = !description.trim() || description.length < 20;
+    const c1 = !city;
+    setTitleError(t1);
+    setDescError(d1);
+    setCityError(c1);
+
+    let courierInvalid = false;
     if (isCourier) {
-      if (!pickupAddress.trim())  { Alert.alert(t('common.attention'), t('newRequest.pickupRequired'));  return; }
-      if (!dropoffAddress.trim()) { Alert.alert(t('common.attention'), t('newRequest.dropoffRequired')); return; }
-      if (!packageSize)           { Alert.alert(t('common.attention'), t('newRequest.sizeRequired'));    return; }
+      const p1 = !pickupAddress.trim();
+      const d2 = !dropoffAddress.trim();
+      const s1 = !packageSize;
+      setPickupError(p1);
+      setDropoffError(d2);
+      setSizeError(s1);
+      courierInvalid = p1 || d2 || s1;
     }
+
+    if (t1 || d1 || c1 || courierInvalid) return;
     fetchAiPrice();
     setStep(3);
   };
@@ -349,7 +367,7 @@ export default function NewRequestScreen() {
 
           <Text style={styles.label}>{t('newRequest.requestTitle')}</Text>
           <TextInput
-            style={styles.input}
+            style={[styles.input, titleError && styles.inputError]}
             placeholder={
               (lang === 'ar'
                 ? CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.title_ar
@@ -358,13 +376,16 @@ export default function NewRequestScreen() {
             }
             placeholderTextColor={colors.textMuted}
             value={title}
-            onChangeText={setTitle}
+            onChangeText={v => { setTitle(v); if (titleError) setTitleError(false); }}
             maxLength={80}
           />
+          {titleError && (
+            <Text style={styles.errorHint}>⚠️ يرجى إدخال عنوان للطلب</Text>
+          )}
 
           <Text style={styles.label}>{t('newRequest.description')}</Text>
           <TextInput
-            style={[styles.input, styles.inputMultiline]}
+            style={[styles.input, styles.inputMultiline, descError && styles.inputError]}
             placeholder={
               (lang === 'ar'
                 ? CATEGORY_PLACEHOLDERS[selectedCat?.slug ?? '']?.desc_ar
@@ -373,12 +394,19 @@ export default function NewRequestScreen() {
             }
             placeholderTextColor={colors.textMuted}
             value={description}
-            onChangeText={setDescription}
+            onChangeText={v => { setDescription(v); if (descError) setDescError(false); }}
             multiline
             numberOfLines={4}
             maxLength={500}
           />
-          <Text style={styles.charCount}>{description.length}/500</Text>
+          <Text style={styles.charCount}>
+            {description.length < 20
+              ? `${description.length} / 20 أحرف كحد أدنى`
+              : `${description.length}/500`}
+          </Text>
+          {descError && (
+            <Text style={styles.errorHint}>⚠️ يرجى وصف طلبك بـ 20 حرفاً على الأقل حتى يتمكن المزود من فهم احتياجك</Text>
+          )}
 
           <Text style={styles.label}>{t('newRequest.city')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.cityScroll}>
@@ -386,7 +414,7 @@ export default function NewRequestScreen() {
               <TouchableOpacity
                 key={c}
                 style={[styles.cityChip, city === c && styles.cityChipActive]}
-                onPress={() => setCity(c)}
+                onPress={() => { setCity(c); if (cityError) setCityError(false); }}
               >
                 <Text style={[styles.cityText, city === c && styles.cityTextActive]}>
                   {t(`cities.${c}`, c)}
@@ -394,31 +422,40 @@ export default function NewRequestScreen() {
               </TouchableOpacity>
             ))}
           </ScrollView>
+          {cityError && (
+            <Text style={styles.errorHint}>⚠️ يرجى اختيار مدينتك من القائمة</Text>
+          )}
 
           {/* ── Courier fields ── */}
           {isCourier && (
             <>
               <Text style={styles.label}>{t('newRequest.pickupAddress')}</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, pickupError && styles.inputError]}
                 placeholder={t('newRequest.pickupPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 value={pickupAddress}
-                onChangeText={setPickupAddress}
+                onChangeText={v => { setPickupAddress(v); if (pickupError) setPickupError(false); }}
                 maxLength={200}
                 textAlign={ta}
               />
+              {pickupError && (
+                <Text style={styles.errorHint}>⚠️ يرجى إدخال عنوان الاستلام</Text>
+              )}
 
               <Text style={styles.label}>{t('newRequest.dropoffAddress')}</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, dropoffError && styles.inputError]}
                 placeholder={t('newRequest.dropoffPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 value={dropoffAddress}
-                onChangeText={setDropoffAddress}
+                onChangeText={v => { setDropoffAddress(v); if (dropoffError) setDropoffError(false); }}
                 maxLength={200}
                 textAlign={ta}
               />
+              {dropoffError && (
+                <Text style={styles.errorHint}>⚠️ يرجى إدخال عنوان التوصيل</Text>
+              )}
 
               <Text style={styles.label}>{t('newRequest.packageSize')}</Text>
               <View style={styles.sizeRow}>
@@ -426,7 +463,7 @@ export default function NewRequestScreen() {
                   <TouchableOpacity
                     key={size}
                     style={[styles.sizeChip, packageSize === size && styles.sizeChipActive]}
-                    onPress={() => setPackageSize(size)}
+                    onPress={() => { setPackageSize(size); if (sizeError) setSizeError(false); }}
                   >
                     <Text style={styles.sizeIcon}>
                       {size === 'small' ? '📬' : size === 'medium' ? '📦' : '🗳️'}
@@ -437,6 +474,9 @@ export default function NewRequestScreen() {
                   </TouchableOpacity>
                 ))}
               </View>
+              {sizeError && (
+                <Text style={styles.errorHint}>⚠️ يرجى اختيار حجم الطرد</Text>
+              )}
             </>
           )}
 
@@ -468,9 +508,9 @@ export default function NewRequestScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.btn, (!title || !description || !city) && styles.btnDisabled]}
+            style={styles.btn}
             onPress={handleStep2Continue}
-            disabled={!title || !description || !city}
+            activeOpacity={0.85}
           >
             <Text style={styles.btnText}>{t('newRequest.next')}</Text>
           </TouchableOpacity>
@@ -576,8 +616,10 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
     label:     { fontSize: 13, color: colors.textSecondary, marginBottom: 8, marginTop: 16, alignSelf: 'stretch', textAlign: ta },
     input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border, textAlign: ta },
+    inputError: { borderColor: '#EF4444' },
     inputMultiline: { height: 120, textAlignVertical: 'top', paddingTop: 14 },
     charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch', textAlign: ta },
+    errorHint: { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 4, alignSelf: 'stretch', textAlign: ta },
 
     cityScroll:    { marginBottom: 8 },
     cityChip:      { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },

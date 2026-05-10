@@ -196,6 +196,7 @@ export default function UrgentRequestScreen() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [descError, setDescError]     = useState(false);
 
   const fadeAnim  = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -238,9 +239,10 @@ export default function UrgentRequestScreen() {
 
   const handleReview = () => {
     if (description.trim().length < 10) {
-      Alert.alert(t('common.attention'), t('urgentRequest.descTooShort'));
+      setDescError(true);
       return;
     }
+    setDescError(false);
     fetchAiPrice(selectedCat!, description);
     setShowConfirm(true);
   };
@@ -387,14 +389,21 @@ export default function UrgentRequestScreen() {
               }
               placeholderTextColor={colors.textMuted}
               value={description}
-              onChangeText={setDescription}
+              onChangeText={v => { setDescription(v); if (descError) setDescError(false); }}
               textAlign={ta}
               multiline
               numberOfLines={4}
               maxLength={200}
               autoFocus
             />
-            <Text style={styles.charCount}>{description.length}/200</Text>
+            <Text style={styles.charCount}>
+              {description.trim().length < 10
+                ? `${description.length} / 10 أحرف كحد أدنى`
+                : `${description.length}/200`}
+            </Text>
+            {descError && description.trim().length < 10 && (
+              <Text style={styles.errorHint}>⚠️ يرجى وصف المشكلة بـ 10 أحرف على الأقل حتى يتمكن المزود من فهم طلبك</Text>
+            )}
 
             {(aiMin || aiLoading) && (
               <View style={styles.aiPreview}>
@@ -418,9 +427,8 @@ export default function UrgentRequestScreen() {
             <GuaranteeBadge />
 
             <TouchableOpacity
-              style={[styles.urgentBtn, description.trim().length < 10 && styles.btnDisabled]}
+              style={styles.urgentBtn}
               onPress={handleReview}
-              disabled={description.trim().length < 10}
               activeOpacity={0.85}
             >
               <Text style={styles.urgentBtnText}>{t('urgentRequest.reviewBtn')}</Text>
@@ -492,7 +500,8 @@ function createStyles(colors: AppColors, isRTL: boolean = false) {
 
   fieldLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 8, alignSelf: 'stretch', textAlign: ta },
   descInput:  { backgroundColor: colors.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: '#7F1D1D', textAlignVertical: 'top', height: 120, textAlign: ta },
-  charCount:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16, alignSelf: 'stretch', textAlign: ta },
+  charCount:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 4, alignSelf: 'stretch', textAlign: ta },
+  errorHint:  { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },
 
   aiPreview:     { backgroundColor: colors.infoBg, borderRadius: 10, padding: 12, marginBottom: 14, borderWidth: 1, borderColor: colors.info },
   aiPreviewText: { fontSize: 13, color: colors.infoSoft, alignSelf: 'stretch', textAlign: ta },

@@ -36,6 +36,7 @@ export default function RateJobScreen() {
   const [review, setReview]       = useState('');
   const [tags, setTags]           = useState<TagKey[]>([]);
   const [submitting, setSubmit]   = useState(false);
+  const [ratingError, setRatingError] = useState(false);
 
   const toggleTag = (tag: TagKey) => {
     setTags(prev =>
@@ -47,9 +48,10 @@ export default function RateJobScreen() {
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      Alert.alert(t('common.attention'), t('rateJob.selectStar'));
+      setRatingError(true);
       return;
     }
+    setRatingError(false);
 
     setSubmit(true);
 
@@ -131,7 +133,7 @@ export default function RateJobScreen() {
           {[1, 2, 3, 4, 5].map(n => (
             <TouchableOpacity
               key={n}
-              onPress={() => { setRating(n); setHovered(0); }}
+              onPress={() => { setRating(n); setHovered(0); if (ratingError) setRatingError(false); }}
               onPressIn={() => setHovered(n)}
               onPressOut={() => setHovered(0)}
               activeOpacity={0.7}
@@ -146,6 +148,9 @@ export default function RateJobScreen() {
           <Text style={styles.starLabel}>
             {t(`rateJob.stars.${displayRating}` as any)}
           </Text>
+        )}
+        {ratingError && rating === 0 && (
+          <Text style={styles.errorHint}>⚠️ يرجى اختيار تقييم (نجمة واحدة على الأقل) قبل الإرسال</Text>
         )}
 
         {/* Quick tags — positive for 4-5 stars, negative for 1-3 */}
@@ -188,9 +193,10 @@ export default function RateJobScreen() {
 
         {/* Submit */}
         <TouchableOpacity
-          style={[styles.submitBtn, (rating === 0 || submitting) && styles.submitBtnDisabled]}
+          style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
           onPress={handleSubmit}
-          disabled={rating === 0 || submitting}
+          disabled={submitting}
+          activeOpacity={0.85}
         >
           {submitting
             ? <ActivityIndicator color={colors.bg} />
@@ -231,6 +237,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
     reviewInput:    { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 90, textAlignVertical: 'top', marginBottom: 4 },
     charCount:      { fontSize: 12, color: colors.textMuted, textAlign: isRTL ? 'left' : 'right', marginBottom: 20 },
+    errorHint:      { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 8, textAlign: 'center' },
 
     submitBtn:         { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
     submitBtnDisabled: { backgroundColor: colors.border },

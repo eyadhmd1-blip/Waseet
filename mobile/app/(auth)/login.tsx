@@ -24,13 +24,14 @@ export default function LoginScreen() {
   const { colors } = useTheme();
   const [phone, setPhone]     = useState('');
   const [loading, setLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState(false);
 
   // Rebuild styles whenever colors OR text direction changes
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const handleSendOtp = async () => {
     const raw = normalizeDigits(phone).trim().replace(/\s+/g, '');
-    if (!raw) return;
+    if (!raw) { setPhoneError(true); return; }
 
     const formatted = raw.startsWith('+')
       ? raw
@@ -110,15 +111,19 @@ export default function LoginScreen() {
             placeholderTextColor="#475569"
             keyboardType="phone-pad"
             value={phone}
-            onChangeText={setPhone}
+            onChangeText={v => { setPhone(v); if (phoneError) setPhoneError(false); }}
             maxLength={10}
           />
         </View>
+        {phoneError && (
+          <Text style={styles.errorHint}>⚠️ يرجى إدخال رقم هاتفك</Text>
+        )}
 
         <TouchableOpacity
-          style={[styles.btn, (!phone || loading) && styles.btnDisabled]}
+          style={[styles.btn, loading && styles.btnDisabled]}
           onPress={handleSendOtp}
-          disabled={!phone || loading}
+          disabled={loading}
+          activeOpacity={0.85}
         >
           <Text style={styles.btnText}>
             {loading ? t('auth.sending') : t('auth.sendCode')}
@@ -192,5 +197,6 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
     btnDisabled:{ backgroundColor: colors.border },
     btnText:    { fontSize: 17, fontWeight: '700', color: colors.bg },
+    errorHint:  { fontSize: 13, color: '#EF4444', marginBottom: 12, textAlign: ta as any },
   });
 }

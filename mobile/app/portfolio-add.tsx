@@ -280,6 +280,8 @@ export default function PortfolioAddScreen() {
   const [submitting,  setSubmitting]  = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [preview,     setPreview]     = useState<PreviewState | null>(null);
+  const [step1Error,  setStep1Error]  = useState(false);
+  const [step2Error,  setStep2Error]  = useState(false);
 
   const typeAnims = useRef(TYPE_KEYS.map(() => new Animated.Value(1))).current;
   const fadeAnim  = useRef(new Animated.Value(1)).current;
@@ -293,6 +295,7 @@ export default function PortfolioAddScreen() {
 
   const selectType = (type: PortfolioItemType, idx: number) => {
     setItemType(type);
+    if (step1Error) setStep1Error(false);
     Animated.sequence([
       Animated.spring(typeAnims[idx], { toValue: 0.93, useNativeDriver: true, tension: 200, friction: 5 }),
       Animated.spring(typeAnims[idx], { toValue: 1,    useNativeDriver: true, tension: 200, friction: 5 }),
@@ -332,7 +335,7 @@ export default function PortfolioAddScreen() {
     }
 
     if (!result.canceled && result.assets[0]) {
-      setPreview({ uri: result.assets[0].uri, asset: result.assets[0], onConfirm: onPick });
+      setPreview({ uri: result.assets[0].uri, asset: result.assets[0], onConfirm: (uri) => { onPick(uri); if (step2Error) setStep2Error(false); } });
     }
   };
 
@@ -398,6 +401,7 @@ export default function PortfolioAddScreen() {
     });
     if (!result.canceled && result.assets[0]) {
       setVideoUri(result.assets[0].uri);
+      if (step2Error) setStep2Error(false);
     }
   };
 
@@ -412,6 +416,18 @@ export default function PortfolioAddScreen() {
     if (itemType === 'video')        return !!videoUri;
     return false;
   })();
+
+  const handleNext = () => {
+    if (step === 1) {
+      if (!canAdvanceStep1) { setStep1Error(true); return; }
+      setStep1Error(false);
+      goToStep(2);
+    } else if (step === 2) {
+      if (!canAdvanceStep2) { setStep2Error(true); return; }
+      setStep2Error(false);
+      goToStep(3);
+    }
+  };
 
   // ── Submit ────────────────────────────────────────────────
 
@@ -496,6 +512,9 @@ export default function PortfolioAddScreen() {
           );
         })}
       </View>
+      {step1Error && !itemType && (
+        <Text style={st.errorHint}>⚠️ يرجى اختيار نوع العمل أولاً للمتابعة</Text>
+      )}
     </>
   );
 
@@ -571,6 +590,15 @@ export default function PortfolioAddScreen() {
             )}
           </>
         )}
+      {step2Error && !canAdvanceStep2 && (
+        <Text style={st.errorHint}>
+          {itemType === 'before_after'
+            ? '⚠️ يرجى رفع صورة "قبل" وصورة "بعد" للمتابعة'
+            : itemType === 'video'
+            ? '⚠️ يرجى اختيار فيديو للمتابعة'
+            : '⚠️ يرجى رفع صورة للمتابعة'}
+        </Text>
+      )}
       </>
     );
   };
@@ -647,9 +675,9 @@ export default function PortfolioAddScreen() {
       <View style={st.footer}>
         {step < 3 ? (
           <TouchableOpacity
-            style={[st.nextBtn, !(step === 1 ? canAdvanceStep1 : canAdvanceStep2) && st.nextBtnDisabled]}
-            onPress={() => goToStep((step + 1) as 2 | 3)}
-            disabled={!(step === 1 ? canAdvanceStep1 : canAdvanceStep2)}
+            style={st.nextBtn}
+            onPress={handleNext}
+            activeOpacity={0.85}
           >
             <Text style={st.nextBtnText}>{t('portfolioAdd.nextBtn')}</Text>
           </TouchableOpacity>
@@ -732,5 +760,6 @@ function createSt(colors: AppColors, isRTL: boolean, bottomInset: number) {
   nextBtn:         { backgroundColor: colors.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center' },
   nextBtnDisabled: { backgroundColor: colors.border },
   nextBtnText:     { fontSize: 16, fontWeight: '800', color: colors.bg },
+  errorHint:       { fontSize: 13, color: '#EF4444', marginTop: 16, textAlign: isRTL ? 'right' : 'left' as const },
   });
 }

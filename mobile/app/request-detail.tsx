@@ -237,8 +237,12 @@ export default function RequestDetail() {
 
   // ── Submit report ────────────────────────────────────────────
 
+  const [reportTypeError, setReportTypeError] = useState(false);
+
   const submitReport = async () => {
-    if (!reportType || !reportTarget) return;
+    if (!reportType) { setReportTypeError(true); return; }
+    if (!reportTarget) return;
+    setReportTypeError(false);
     setSubmittingReport(true);
     const { data, error } = await supabase.rpc('submit_report', {
       p_reported_user_id: reportTarget.provider.id,
@@ -316,7 +320,7 @@ export default function RequestDetail() {
               <TouchableOpacity
                 key={type}
                 style={[styles.reportOption, reportType === type && styles.reportOptionSelected]}
-                onPress={() => setReportType(type)}
+                onPress={() => { setReportType(type); if (reportTypeError) setReportTypeError(false); }}
               >
                 <View style={[styles.reportRadio, reportType === type && styles.reportRadioSelected]} />
                 <Text style={[styles.reportOptionText, reportType === type && styles.reportOptionTextSelected]}>
@@ -324,17 +328,22 @@ export default function RequestDetail() {
                 </Text>
               </TouchableOpacity>
             ))}
+
+            {reportTypeError && !reportType && (
+              <Text style={styles.reportErrorHint}>⚠️ يرجى اختيار سبب البلاغ</Text>
+            )}
             <View style={styles.reportBtns}>
               <TouchableOpacity
-                style={[styles.reportSubmitBtn, (!reportType || submittingReport) && styles.reportSubmitDisabled]}
+                style={[styles.reportSubmitBtn, submittingReport && styles.reportSubmitDisabled]}
                 onPress={submitReport}
-                disabled={!reportType || submittingReport}
+                disabled={submittingReport}
+                activeOpacity={0.85}
               >
-                <Text style={[styles.reportSubmitText, (!reportType || submittingReport) && styles.reportSubmitTextDisabled]}>
+                <Text style={[styles.reportSubmitText, submittingReport && styles.reportSubmitTextDisabled]}>
                   {submittingReport ? t('common.loading') : t('report.submit')}
                 </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.reportCancelBtn} onPress={() => setReportTarget(null)}>
+              <TouchableOpacity style={styles.reportCancelBtn} onPress={() => { setReportTarget(null); setReportTypeError(false); }}>
                 <Text style={styles.reportCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
@@ -886,6 +895,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   reportSubmitDisabled:    { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   reportSubmitText:        { fontSize: 14, fontWeight: '700', color: '#FFF' },
   reportSubmitTextDisabled:{ color: colors.textMuted },
+  reportErrorHint:         { fontSize: 13, color: '#EF4444', marginBottom: 8, textAlign: 'center' },
   reviewingBanner:     { backgroundColor: '#422006', borderRadius: 14, borderWidth: 1, borderColor: '#92400E', paddingHorizontal: 16, paddingVertical: 14, marginBottom: 16 },
   reviewingBannerText: { fontSize: 14, fontWeight: '700', color: '#FED7AA', textAlign: 'center' },
   bidsOf:              { fontSize: 12, fontWeight: '400', color: colors.textMuted },

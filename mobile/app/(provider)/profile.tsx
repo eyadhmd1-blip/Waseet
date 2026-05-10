@@ -150,6 +150,7 @@ export default function ProviderProfile() {
   const [cityModalVisible, setCityModalVisible] = useState(false);
   const [selectedCity,     setSelectedCity]     = useState('');
   const [savingCity,       setSavingCity]       = useState(false);
+  const [cityError,        setCityError]        = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -258,7 +259,8 @@ export default function ProviderProfile() {
   };
 
   const saveCity = async () => {
-    if (!selectedCity) return;
+    if (!selectedCity) { setCityError(true); return; }
+    setCityError(false);
     setSavingCity(true);
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const authUser = _ses?.user;
@@ -887,9 +889,9 @@ export default function ProviderProfile() {
               <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>
                 📍 {isRTL ? 'اختر مدينتك' : 'Select City'}
               </Text>
-              <TouchableOpacity onPress={saveCity} disabled={savingCity || !selectedCity}>
+              <TouchableOpacity onPress={saveCity} disabled={savingCity} activeOpacity={0.85}>
                 <Text style={[styles.modalSave, {
-                  color: savingCity || !selectedCity ? colors.textMuted : tierColor,
+                  color: savingCity ? colors.textMuted : tierColor,
                 }]}>
                   {savingCity ? t('common.loading') : t('common.save')}
                 </Text>
@@ -902,6 +904,11 @@ export default function ProviderProfile() {
                 ? 'المدينة تحدد الطلبات التي تظهر لك في الفيد'
                 : 'Your city determines which requests appear in your feed'}
             </Text>
+            {cityError && !selectedCity && (
+              <Text style={{ fontSize: 13, color: '#EF4444', textAlign: 'center', marginBottom: 8, paddingHorizontal: 16 }}>
+                ⚠️ يرجى اختيار مدينتك أولاً
+              </Text>
+            )}
 
             {/* City grid */}
             <ScrollView
@@ -914,7 +921,7 @@ export default function ProviderProfile() {
                   return (
                     <TouchableOpacity
                       key={city}
-                      onPress={() => setSelectedCity(city)}
+                      onPress={() => { setSelectedCity(city); if (cityError) setCityError(false); }}
                       activeOpacity={0.7}
                       style={[
                         styles.cityGridChip,

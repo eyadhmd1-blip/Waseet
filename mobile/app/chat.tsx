@@ -620,8 +620,12 @@ export default function ChatScreen() {
 
   // ── Submit report ─────────────────────────────────────────────
 
+  const [reportTypeError, setReportTypeError] = useState(false);
+
   const submitReport = async () => {
-    if (!reportType || !job) return;
+    if (!reportType) { setReportTypeError(true); return; }
+    if (!job) return;
+    setReportTypeError(false);
     const otherUserId = myId === job.client_id
       ? job.provider?.user?.full_name  // we need the actual provider_id
       : job.client_id;
@@ -884,7 +888,7 @@ export default function ChatScreen() {
               <TouchableOpacity
                 key={type}
                 style={[styles.reportOption, reportType === type && styles.reportOptionSelected]}
-                onPress={() => setReportType(type)}
+                onPress={() => { setReportType(type); if (reportTypeError) setReportTypeError(false); }}
               >
                 <View style={[styles.reportRadio, reportType === type && styles.reportRadioSelected]} />
                 <Text style={[styles.reportOptionText, reportType === type && styles.reportOptionTextSelected]}>
@@ -892,13 +896,18 @@ export default function ChatScreen() {
                 </Text>
               </TouchableOpacity>
             ))}
+
+            {reportTypeError && !reportType && (
+              <Text style={styles.reportErrorHint}>⚠️ يرجى اختيار سبب البلاغ</Text>
+            )}
             <View style={styles.reportBtns}>
               <TouchableOpacity
-                style={[styles.reportSubmitBtn, (!reportType || submittingReport) && styles.reportSubmitDisabled]}
+                style={[styles.reportSubmitBtn, submittingReport && styles.reportSubmitDisabled]}
                 onPress={submitReport}
-                disabled={!reportType || submittingReport}
+                disabled={submittingReport}
+                activeOpacity={0.85}
               >
-                <Text style={[styles.reportSubmitText, (!reportType || submittingReport) && styles.reportSubmitTextDisabled]}>
+                <Text style={[styles.reportSubmitText, submittingReport && styles.reportSubmitTextDisabled]}>
                   {submittingReport ? t('common.loading') : t('report.submit')}
                 </Text>
               </TouchableOpacity>
@@ -1333,6 +1342,7 @@ function createStyles(colors: AppColors, ta: 'left' | 'right') {
   reportBtns:          { flexDirection: 'row', gap: 12, marginTop: 24 },
   reportCancelBtn:     { flex: 1, paddingVertical: 13, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: 'center' },
   reportCancelText:    { fontSize: 14, color: colors.textMuted },
+  reportErrorHint:     { fontSize: 13, color: '#EF4444', marginBottom: 8, textAlign: 'center' },
   reportSubmitBtn:         { flex: 1, backgroundColor: '#DC2626', borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
   reportSubmitDisabled:    { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },
   reportSubmitText:        { fontSize: 14, fontWeight: '700', color: '#FFF' },

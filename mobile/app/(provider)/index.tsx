@@ -973,6 +973,9 @@ export default function ProviderFeed() {
 
   // Grouped: demo bid modal state
   const [demoModal, setDemoModal] = useState({ open: false, amount: '', note: '', loading: false });
+  const [bidAmountError,      setBidAmountError]      = useState(false);
+  const [contractAmountError, setContractAmountError] = useState(false);
+  const [demoAmountError,     setDemoAmountError]     = useState(false);
 
   // Grouped: bid modal state
   const [bidModal, setBidModal] = useState<{
@@ -1273,7 +1276,7 @@ export default function ProviderFeed() {
   };
 
   const submitDemoBid = async () => {
-    if (!demoModal.amount) return;
+    if (!demoModal.amount) { setDemoAmountError(true); return; }
     const amount = parseFloat(demoModal.amount);
     if (isNaN(amount) || amount <= 0) {
       Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
@@ -1367,7 +1370,8 @@ export default function ProviderFeed() {
 
   const submitBid = async () => {
     const { target, amount: amountStr, note } = bidModal;
-    if (!target || !amountStr) return;
+    if (!target) return;
+    if (!amountStr) { setBidAmountError(true); return; }
     const amount = parseFloat(amountStr);
     if (isNaN(amount) || amount <= 0) {
       Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
@@ -1465,7 +1469,8 @@ export default function ProviderFeed() {
 
   const submitContractBid = async () => {
     const { target, amount: amountStr, note } = contractModal;
-    if (!target || !amountStr) return;
+    if (!target) return;
+    if (!amountStr) { setContractAmountError(true); return; }
     const price = parseFloat(amountStr);
     if (isNaN(price) || price <= 0) {
       Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
@@ -1678,14 +1683,17 @@ export default function ProviderFeed() {
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidAmountLabel')}</Text>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, bidAmountError && styles.inputError]}
               placeholder="0.00"
               placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               value={bidModal.amount}
-              onChangeText={text => setBidModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
+              onChangeText={text => { setBidModal(prev => ({ ...prev, amount: sanitizeAmount(text) })); if (bidAmountError) setBidAmountError(false); }}
               textAlign={ta}
             />
+            {bidAmountError && (
+              <Text style={styles.errorHint}>⚠️ يرجى إدخال مبلغ العرض</Text>
+            )}
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
@@ -1699,13 +1707,14 @@ export default function ProviderFeed() {
             />
 
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setBidModal(prev => ({ ...prev, target: null, amount: '', note: '' }))}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => { setBidModal(prev => ({ ...prev, target: null, amount: '', note: '' })); setBidAmountError(false); }}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalSubmit, (!bidModal.amount || bidModal.loading) && styles.btnDisabled]}
+                style={[styles.modalSubmit, bidModal.loading && styles.btnDisabled]}
                 onPress={submitBid}
-                disabled={!bidModal.amount || bidModal.loading}
+                disabled={bidModal.loading}
+                activeOpacity={0.85}
               >
                 {bidModal.loading
                   ? <ActivityIndicator color={colors.bg} size="small" />
@@ -1735,14 +1744,17 @@ export default function ProviderFeed() {
             )}
             <Text style={styles.modalLabel}>{t('providerFeed.contractVisitPriceLabel')}</Text>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, contractAmountError && styles.inputError]}
               placeholder="0.00"
               placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               value={contractModal.amount}
-              onChangeText={text => setContractModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
+              onChangeText={text => { setContractModal(prev => ({ ...prev, amount: sanitizeAmount(text) })); if (contractAmountError) setContractAmountError(false); }}
               textAlign={ta}
             />
+            {contractAmountError && (
+              <Text style={styles.errorHint}>⚠️ يرجى إدخال السعر لكل زيارة</Text>
+            )}
             {contractModal.amount && contractModal.target && !isNaN(parseFloat(contractModal.amount)) && (
               <View style={cBidStyles.totalBox}>
                 <Text style={cBidStyles.totalLabel}>{t('providerFeed.contractTotalExpected')}</Text>
@@ -1762,13 +1774,14 @@ export default function ProviderFeed() {
               multiline
             />
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setContractModal(prev => ({ ...prev, target: null, amount: '', note: '' }))}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => { setContractModal(prev => ({ ...prev, target: null, amount: '', note: '' })); setContractAmountError(false); }}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[cBidStyles.submitBtn, (!contractModal.amount || contractModal.loading) && styles.btnDisabled]}
+                style={[cBidStyles.submitBtn, contractModal.loading && styles.btnDisabled]}
                 onPress={submitContractBid}
-                disabled={!contractModal.amount || contractModal.loading}
+                disabled={contractModal.loading}
+                activeOpacity={0.85}
               >
                 {contractModal.loading
                   ? <ActivityIndicator color="#fff" size="small" />
@@ -1937,14 +1950,17 @@ export default function ProviderFeed() {
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidAmountLabel')}</Text>
             <TextInput
-              style={styles.modalInput}
+              style={[styles.modalInput, demoAmountError && styles.inputError]}
               placeholder="0.00"
               placeholderTextColor={colors.textMuted}
               keyboardType="decimal-pad"
               value={demoModal.amount}
-              onChangeText={text => setDemoModal(prev => ({ ...prev, amount: sanitizeAmount(text) }))}
+              onChangeText={text => { setDemoModal(prev => ({ ...prev, amount: sanitizeAmount(text) })); if (demoAmountError) setDemoAmountError(false); }}
               textAlign={ta}
             />
+            {demoAmountError && (
+              <Text style={styles.errorHint}>⚠️ يرجى إدخال مبلغ العرض</Text>
+            )}
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
@@ -1958,13 +1974,14 @@ export default function ProviderFeed() {
             />
 
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setDemoModal(prev => ({ ...prev, open: false, amount: '', note: '' }))}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => { setDemoModal(prev => ({ ...prev, open: false, amount: '', note: '' })); setDemoAmountError(false); }}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[demoBidStyles.submitBtn, (!demoModal.amount || demoModal.loading) && styles.btnDisabled]}
+                style={[demoBidStyles.submitBtn, demoModal.loading && styles.btnDisabled]}
                 onPress={submitDemoBid}
-                disabled={!demoModal.amount || demoModal.loading}
+                disabled={demoModal.loading}
+                activeOpacity={0.85}
               >
                 {demoModal.loading
                   ? <ActivityIndicator color="#fff" size="small" />
@@ -2319,6 +2336,8 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   modalAiHint:  { fontSize: 13, color: colors.accent, textAlign: ta, marginBottom: 16, fontWeight: '600' },
   modalLabel:   { fontSize: 13, color: colors.textSecondary, textAlign: ta, marginBottom: 8, marginTop: 12 },
   modalInput:   { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
+  inputError:   { borderColor: '#EF4444' },
+  errorHint:    { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 4, textAlign: isRTL ? 'right' : 'left' as const },
   modalBtns:    { flexDirection: 'row', gap: 12, marginTop: 20 },
   modalCancel:      { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },
   modalCancelText:  { fontSize: 15, color: colors.textSecondary },

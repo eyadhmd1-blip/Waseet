@@ -40,10 +40,18 @@ export default function SupportNewScreen() {
   const [desc,       setDesc]     = useState('');
   const [submitting, setSubmit]   = useState(false);
 
-  const canSubmit = !!category && subject.trim().length >= 5 && desc.trim().length >= 10;
+  const [catError,     setCatError]     = useState(false);
+  const [subjectError, setSubjectError] = useState(false);
+  const [descError,    setDescError]    = useState(false);
 
   const handleSubmit = async () => {
-    if (!canSubmit) return;
+    const c1 = !category;
+    const s1 = subject.trim().length < 5;
+    const d1 = desc.trim().length < 10;
+    setCatError(c1);
+    setSubjectError(s1);
+    setDescError(d1);
+    if (c1 || s1 || d1) return;
     setSubmit(true);
 
     const { data: { session: _ses } } = await supabase.auth.getSession();
@@ -104,7 +112,7 @@ export default function SupportNewScreen() {
             <TouchableOpacity
               key={c.key}
               style={[styles.catCard, category === c.key && styles.catCardActive]}
-              onPress={() => setCategory(c.key)}
+              onPress={() => { setCategory(c.key); if (catError) setCatError(false); }}
               activeOpacity={0.8}
             >
               <Text style={styles.catIcon}>{c.icon}</Text>
@@ -114,6 +122,9 @@ export default function SupportNewScreen() {
             </TouchableOpacity>
           ))}
         </View>
+        {catError && (
+          <Text style={styles.errorHint}>⚠️ يرجى اختيار نوع المشكلة</Text>
+        )}
 
         {/* Priority */}
         <Text style={styles.label}>{t('supportNew.priorityLabel')}</Text>
@@ -139,36 +150,51 @@ export default function SupportNewScreen() {
         {/* Subject */}
         <Text style={styles.label}>{t('supportNew.subjectLabel')}</Text>
         <TextInput
-          style={styles.input}
+          style={[styles.input, subjectError && styles.inputError]}
           placeholder={t('supportNew.subjectPlaceholder')}
           placeholderTextColor={colors.textMuted}
           value={subject}
-          onChangeText={setSubject}
+          onChangeText={v => { setSubject(v); if (subjectError) setSubjectError(false); }}
           textAlign={ta}
           maxLength={120}
         />
-        <Text style={styles.charCount}>{t('supportNew.charCount', { count: subject.length, max: 120 })}</Text>
+        <Text style={styles.charCount}>
+          {subject.length < 5
+            ? `${subject.length} / 5 أحرف كحد أدنى`
+            : t('supportNew.charCount', { count: subject.length, max: 120 })}
+        </Text>
+        {subjectError && (
+          <Text style={styles.errorHint}>⚠️ يرجى كتابة موضوع المشكلة بـ 5 أحرف على الأقل</Text>
+        )}
 
         {/* Description */}
         <Text style={styles.label}>{t('supportNew.descLabel')}</Text>
         <TextInput
-          style={[styles.input, styles.textarea]}
+          style={[styles.input, styles.textarea, descError && styles.inputError]}
           placeholder={t('supportNew.descPlaceholder')}
           placeholderTextColor={colors.textMuted}
           value={desc}
-          onChangeText={setDesc}
+          onChangeText={v => { setDesc(v); if (descError) setDescError(false); }}
           textAlign={ta}
           multiline
           numberOfLines={5}
           maxLength={1000}
         />
-        <Text style={styles.charCount}>{t('supportNew.charCount', { count: desc.length, max: 1000 })}</Text>
+        <Text style={styles.charCount}>
+          {desc.length < 10
+            ? `${desc.length} / 10 أحرف كحد أدنى`
+            : t('supportNew.charCount', { count: desc.length, max: 1000 })}
+        </Text>
+        {descError && (
+          <Text style={styles.errorHint}>⚠️ يرجى شرح مشكلتك بـ 10 أحرف على الأقل لنتمكن من مساعدتك</Text>
+        )}
 
         {/* Submit */}
         <TouchableOpacity
-          style={[styles.submitBtn, !canSubmit && styles.submitBtnDisabled]}
+          style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
           onPress={handleSubmit}
-          disabled={!canSubmit || submitting}
+          disabled={submitting}
+          activeOpacity={0.85}
         >
           {submitting
             ? <ActivityIndicator color={colors.bg} />
@@ -209,8 +235,10 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     priorityBtnText:   { fontSize: 14, fontWeight: '700', color: colors.textMuted },
 
     input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border },
+    inputError: { borderColor: '#EF4444' },
     textarea:  { minHeight: 120, textAlignVertical: 'top', paddingTop: 12 },
     charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch', textAlign: ta },
+    errorHint: { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 4, alignSelf: 'stretch', textAlign: ta },
 
     submitBtn:         { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center', marginTop: 24 },
     submitBtnDisabled: { backgroundColor: colors.border },

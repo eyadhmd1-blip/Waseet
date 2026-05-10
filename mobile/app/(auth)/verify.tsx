@@ -23,6 +23,7 @@ export default function VerifyScreen() {
   const otpBoxSize = Math.min(64, Math.max(38, Math.floor((screenW - 48) / 6) - 6));
 
   const [otp, setOtp]           = useState(['', '', '', '', '', '']);
+  const [otpError, setOtpError] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [resending, setResending] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
@@ -63,6 +64,7 @@ export default function VerifyScreen() {
     const next = [...otp];
     next[index] = value;
     setOtp(next);
+    if (otpError) setOtpError(false);
     if (value && index < 5) inputs.current[index + 1]?.focus();
     if (!value && index > 0) inputs.current[index - 1]?.focus();
   };
@@ -70,7 +72,8 @@ export default function VerifyScreen() {
   // ── Verify OTP ────────────────────────────────────────────────
   const handleVerify = async () => {
     const code = otp.join('');
-    if (code.length < 6) return;
+    if (code.length < 6) { setOtpError(true); return; }
+    setOtpError(false);
 
     setLoading(true);
     try {
@@ -201,11 +204,16 @@ export default function VerifyScreen() {
           ))}
         </View>
 
+        {otpError && otp.join('').length < 6 && (
+          <Text style={styles.errorHint}>⚠️ يرجى إدخال الرمز المكون من 6 أرقام كاملاً</Text>
+        )}
+
         {/* Verify button */}
         <TouchableOpacity
-          style={[styles.btn, (otp.join('').length < 6 || loading) && styles.btnDisabled]}
+          style={[styles.btn, loading && styles.btnDisabled]}
           onPress={handleVerify}
-          disabled={otp.join('').length < 6 || loading}
+          disabled={loading}
+          activeOpacity={0.85}
         >
           <Text style={styles.btnText}>
             {loading ? t('auth.verifying') : t('auth.verify')}
@@ -261,6 +269,7 @@ function createStyles(colors: AppColors, isRTL: boolean, otpBoxSize: number) {
 
     btn:        { backgroundColor: colors.accent, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
     btnDisabled:{ backgroundColor: colors.border },
+    errorHint:  { fontSize: 13, color: '#EF4444', marginBottom: 12, textAlign: 'center' },
     btnText:    { fontSize: rs(17, 15, 19), fontWeight: '700', color: colors.bg },
 
     resendRow:       { marginTop: 24, alignItems: 'center' },

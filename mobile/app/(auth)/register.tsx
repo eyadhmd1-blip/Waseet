@@ -23,14 +23,17 @@ export default function RegisterScreen() {
   const [fullName, setFullName] = useState('');
   const [city, setCity]         = useState('');
   const [loading, setLoading]   = useState(false);
+  const [nameError, setNameError] = useState(false);
+  const [cityError, setCityError] = useState(false);
 
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
   const handleRegister = async () => {
-    if (!fullName.trim() || !city) {
-      Alert.alert(t('common.attention'), t('auth.fillAllFields'));
-      return;
-    }
+    const n1 = !fullName.trim();
+    const c1 = !city;
+    setNameError(n1);
+    setCityError(c1);
+    if (n1 || c1) return;
 
     setLoading(true);
     const { data: { session: _ses } } = await supabase.auth.getSession();
@@ -120,12 +123,15 @@ export default function RegisterScreen() {
       {/* Full name */}
       <Text style={styles.label}>{t('auth.fullName')}</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, nameError && styles.inputError]}
         placeholder={t('auth.fullNamePlaceholder')}
         placeholderTextColor="#475569"
         value={fullName}
-        onChangeText={setFullName}
+        onChangeText={v => { setFullName(v); if (nameError) setNameError(false); }}
       />
+      {nameError && (
+        <Text style={styles.errorHint}>⚠️ يرجى إدخال اسمك الكامل</Text>
+      )}
 
       {/* City */}
       <Text style={styles.label}>{t('auth.city')}</Text>
@@ -134,7 +140,7 @@ export default function RegisterScreen() {
           <TouchableOpacity
             key={c}
             style={[styles.cityChip, city === c && styles.cityChipActive]}
-            onPress={() => setCity(c)}
+            onPress={() => { setCity(c); if (cityError) setCityError(false); }}
           >
             <Text style={[styles.cityText, city === c && styles.cityTextActive]}>
               {t(`cities.${c}`, c)}
@@ -142,11 +148,15 @@ export default function RegisterScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      {cityError && (
+        <Text style={styles.errorHint}>⚠️ يرجى اختيار مدينتك</Text>
+      )}
 
       <TouchableOpacity
-        style={[styles.btn, (!fullName || !city || loading) && styles.btnDisabled]}
+        style={[styles.btn, loading && styles.btnDisabled]}
         onPress={handleRegister}
-        disabled={!fullName || !city || loading}
+        disabled={loading}
+        activeOpacity={0.85}
       >
         <Text style={styles.btnText}>
           {loading ? t('auth.registering') : t('auth.createAccount')}
@@ -176,6 +186,8 @@ function createStyles(colors: AppColors, isRTL: boolean) {
       paddingVertical: 14, color: colors.textPrimary, fontSize: 16,
       borderWidth: 1, borderColor: colors.border, textAlign: ta,
     },
+    inputError:    { borderColor: '#EF4444' },
+    errorHint:     { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 4, textAlign: ta },
     cityScroll:    { marginBottom: 8 },
     cityChip:      { backgroundColor: colors.surface, borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, marginEnd: 8, borderWidth: 1, borderColor: colors.border },
     cityChipActive:{ borderColor: colors.accent, backgroundColor: colors.accentDim },
