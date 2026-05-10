@@ -53,9 +53,9 @@ function capitalize(s: string): string {
 // ─── Component ────────────────────────────────────────────────
 
 export default function ProviderDashboard() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, ta, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router = useRouter();
   const { count: notifCount } = useUnreadNotifCount();
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
@@ -374,9 +374,9 @@ function KpiCard({
   sub: string;
   accent?: boolean;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { ta, isRTL } = useLanguage();
-  const kpiStyles = useMemo(() => createKpiStyles(colors, isRTL), [colors, isRTL]);
+  const kpiStyles = useMemo(() => createKpiStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   return (
     <View style={[kpiStyles.card, accent && kpiStyles.cardAccent, { alignItems: ta === 'right' ? 'flex-end' : 'flex-start' }]}>
       <Text style={kpiStyles.icon}>{icon}</Text>
@@ -389,7 +389,7 @@ function KpiCard({
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   outerContainer: { flex: 1, backgroundColor: colors.bg },
@@ -401,9 +401,9 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   headerTitle:  { fontSize: 24, fontWeight: '700', color: colors.textPrimary, textAlign: ta },
   periodToggle: { flexDirection: 'row', backgroundColor: colors.surface, borderRadius: 10, padding: 3, borderWidth: 1, borderColor: colors.border },
   periodBtn:         { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
-  periodBtnActive:   { backgroundColor: colors.accent },
-  periodBtnText:     { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
-  periodBtnTextActive:{ color: colors.bg },
+  periodBtnActive:    { backgroundColor: colors.accent },
+  periodBtnText:      { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  periodBtnTextActive:{ color: isDark ? '#000' : '#fff' },
 
   identityStrip: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, marginBottom: 20, flexWrap: 'wrap' },
   tierPill:      { borderRadius: 12, paddingHorizontal: 12, paddingVertical: 5 },
@@ -418,7 +418,14 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   section:      { paddingHorizontal: 16, marginBottom: 24 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, textAlign: ta },
 
-  chartCard:  { backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
+  chartCard: {
+    backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)',
+    borderRadius: 16, padding: 16,
+    borderWidth: 1.5,
+    borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)',
+    shadowColor: '#C9A84C', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 2,
+  },
   chartEmpty: { alignItems: 'center', paddingVertical: 28 },
   chartEmptyText: { fontSize: 14, color: colors.textMuted },
   chartBars:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 110, paddingTop: 20 },
@@ -429,7 +436,13 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   barFillEmpty:{ backgroundColor: colors.border },
   barLabel:   { fontSize: 10, color: colors.textMuted },
 
-  jobRow:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: colors.surface, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: colors.border },
+  jobRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)',
+    borderRadius: 14, padding: 14, marginBottom: 8,
+    borderWidth: 1.5,
+    borderColor: isDark ? colors.border : 'rgba(201,168,76,0.18)',
+  },
   jobLeft:   { flex: 1, marginEnd: 12 },
   jobTitle:  { fontSize: 14, fontWeight: '600', color: colors.textPrimary, marginBottom: 4, textAlign: ta },
   jobDate:   { fontSize: 11, color: colors.textMuted, textAlign: ta },
@@ -448,11 +461,19 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   });
 }
 
-function createKpiStyles(colors: AppColors, isRTL: boolean) {
+function createKpiStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
-  card:       { width: '47%', backgroundColor: colors.surface, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: colors.border },
-  cardAccent: { borderColor: 'rgba(201,168,76,0.30)', backgroundColor: colors.accentDim },
+  card: {
+    width: '47%',
+    backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)',
+    borderRadius: 16, padding: 16,
+    borderWidth: 1.5,
+    borderColor: isDark ? colors.border : 'rgba(201,168,76,0.18)',
+    shadowColor: '#C9A84C', shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07, shadowRadius: 8, elevation: 2,
+  },
+  cardAccent: { borderColor: 'rgba(201,168,76,0.40)', backgroundColor: colors.accentDim },
   icon:       { fontSize: 24, marginBottom: 8 },
   value:      { fontSize: 22, fontWeight: '700', color: colors.textPrimary, marginBottom: 4 },
   valueAccent:{ color: colors.accent },
