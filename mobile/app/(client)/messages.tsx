@@ -3,14 +3,16 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
-import { HEADER_PAD } from '../../src/utils/layout';
 import { getInitials, nameToAvatarColor } from '../../src/utils/avatar';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
+
+const ACCENT = '#C9A84C';
 
 type ConversationJob = {
   id: string;
@@ -29,10 +31,10 @@ type LastMsg = {
 };
 
 const JOB_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  active:    { bg: '#78350F', text: '#FCD34D' },
-  completed: { bg: '#14532D', text: '#86EFAC' },
-  cancelled: { bg: '#3B0764', text: '#C4B5FD' },
-  disputed:  { bg: '#7F1D1D', text: '#FCA5A5' },
+  active:    { bg: 'rgba(245,158,11,0.15)',  text: '#FCD34D' },
+  completed: { bg: 'rgba(16,185,129,0.15)',  text: '#34D399' },
+  cancelled: { bg: 'rgba(139,92,246,0.15)',  text: '#C4B5FD' },
+  disputed:  { bg: 'rgba(239,68,68,0.15)',   text: '#FCA5A5' },
 };
 
 const MSG_TYPE_KEY: Record<string, string> = {
@@ -55,17 +57,18 @@ function fmtTime(iso: string, lang: string): string {
 export default function ClientMessages() {
   const router = useRouter();
   const { t, lang, isRTL } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const { headerPad, contentPad } = useInsets();
 
-  const [jobs, setJobs]               = useState<ConversationJob[]>([]);
-  const [lastMsgMap, setLastMsgMap]   = useState<Record<string, LastMsg>>({});
-  const [unreadMap, setUnreadMap]     = useState<Record<string, number>>({});
-  const [myId, setMyId]               = useState<string | null>(null);
-  const [loading, setLoading]         = useState(true);
-  const [refreshing, setRefreshing]   = useState(false);
-  const channelRef                    = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [jobs, setJobs]             = useState<ConversationJob[]>([]);
+  const [lastMsgMap, setLastMsgMap] = useState<Record<string, LastMsg>>({});
+  const [unreadMap, setUnreadMap]   = useState<Record<string, number>>({});
+  const [myId, setMyId]             = useState<string | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const channelRef                  = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   const JOB_STATUS_LABEL: Record<string, string> = {
     active:    t('providerJobs.statusActive'),
@@ -122,7 +125,6 @@ export default function ClientMessages() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Realtime: watch for new messages on any active job
   useEffect(() => {
     if (!myId || jobs.length === 0) return;
     const jobIds = new Set(jobs.map(j => j.id));
@@ -151,13 +153,14 @@ export default function ClientMessages() {
   }, [load]);
 
   const openChat = useCallback((jobId: string) => {
-    // Clear unread badge optimistically
     setUnreadMap(prev => ({ ...prev, [jobId]: 0 }));
     router.push({ pathname: '/chat', params: { job_id: jobId } });
   }, [router]);
 
+  const totalUnread = Object.values(unreadMap).reduce((s, n) => s + n, 0);
+
   const renderItem = ({ item }: { item: ConversationJob }) => {
-    const itemColors  = JOB_STATUS_COLORS[item.status] ?? JOB_STATUS_COLORS.active;
+    const itemColors   = JOB_STATUS_COLORS[item.status] ?? JOB_STATUS_COLORS.active;
     const providerName = item.provider?.user?.full_name ?? '—';
     const lastMsg      = lastMsgMap[item.id];
     const unread       = unreadMap[item.id] ?? 0;
@@ -171,18 +174,28 @@ export default function ClientMessages() {
         activeOpacity={0.8}
         onPress={() => openChat(item.id)}
       >
+        {/* Avatar */}
         <View style={[styles.avatar, { backgroundColor: nameToAvatarColor(providerName) }]}>
           <Text style={styles.avatarText}>{getInitials(providerName)}</Text>
+          {unread > 0 && (
+            <View style={styles.unreadDot} />
+          )}
         </View>
 
-        <View style={styles.cardInfo}>
-          <View style={styles.cardTopRow}>
+        {/* Content */}
+        <View style={styles.cardContent}>
+          <View style={styles.topRow}>
             <Text style={styles.personName} numberOfLines={1}>{providerName}</Text>
             <Text style={styles.cardTime}>
               {fmtTime(lastMsg?.created_at ?? item.created_at, lang)}
             </Text>
           </View>
-          <View style={styles.cardBottomRow}>
+
+          <Text style={styles.requestTitle} numberOfLines={1}>
+            {item.request?.title}
+          </Text>
+
+          <View style={styles.bottomRow}>
             <Text
               style={[styles.lastMsgText, unread > 0 && styles.lastMsgUnread]}
               numberOfLines={1}
@@ -206,70 +219,183 @@ export default function ClientMessages() {
     );
   };
 
+  const gradColors: [string, string] = isDark
+    ? [colors.bg, '#1A1407']
+    : ['#FDF6E3', '#FFFBF8'];
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>{t('chat.title')}</Text>
+    <LinearGradient colors={gradColors} style={{ flex: 1 }}>
+      {/* Header */}
+      <View style={[styles.header, { paddingTop: headerPad }]}>
+        <View>
+          <Text style={styles.headerTitle}>💬 {t('chat.title')}</Text>
+          {totalUnread > 0 && (
+            <Text style={styles.headerSub}>{totalUnread} رسالة غير مقروءة</Text>
+          )}
+        </View>
       </View>
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator color={colors.accent} />
+          <ActivityIndicator color={ACCENT} size="large" />
         </View>
       ) : (
         <FlatList
           data={jobs}
           keyExtractor={item => item.id}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
+          contentContainerStyle={[styles.listContent, { paddingBottom: contentPad + 24 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ACCENT} />
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Text style={styles.emptyIcon}>💬</Text>
+              <View style={styles.emptyIconWrap}>
+                <Text style={{ fontSize: 40 }}>💬</Text>
+              </View>
               <Text style={styles.emptyTitle}>{t('chat.noConversations')}</Text>
               <Text style={styles.emptySub}>{t('chat.noConvSub')}</Text>
             </View>
           }
         />
       )}
-    </View>
+    </LinearGradient>
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
-    container:   { flex: 1, backgroundColor: colors.bg },
-    center:      { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    header:      { paddingHorizontal: 20, paddingTop: HEADER_PAD, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
-    headerTitle: { fontSize: 24, fontWeight: '700', color: colors.textPrimary, textAlign: ta },
-    listContent: { paddingVertical: 8 },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
-    card:        { flexDirection: isRTL ? 'row-reverse' : 'row', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border, gap: 12 },
-    avatar:      { width: 50, height: 50, borderRadius: 25, backgroundColor: colors.accent, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-    avatarText:  { fontSize: 16, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
-    cardInfo:    { flex: 1, gap: 4 },
+    // Header
+    header: {
+      paddingHorizontal: 20,
+      paddingBottom:     16,
+    },
+    headerTitle: {
+      fontSize:   22,
+      fontWeight: '800',
+      color:      colors.textPrimary,
+      textAlign:  ta,
+    },
+    headerSub: {
+      fontSize:   12,
+      color:      ACCENT,
+      fontWeight: '600',
+      marginTop:  3,
+      textAlign:  ta,
+    },
 
-    cardTopRow:    { flexDirection: isRTL ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center' },
-    personName:    { fontSize: 15, fontWeight: '700', color: colors.textPrimary, flex: 1, textAlign: ta },
-    cardTime:      { fontSize: 11, color: colors.textMuted, flexShrink: 0, marginStart: 8 },
+    listContent: { paddingHorizontal: 16, paddingTop: 8 },
 
-    cardBottomRow: { flexDirection: isRTL ? 'row-reverse' : 'row', justifyContent: 'space-between', alignItems: 'center' },
-    lastMsgText:   { fontSize: 13, color: colors.textMuted, flex: 1, textAlign: ta },
+    // Conversation card
+    card: {
+      flexDirection:   isRTL ? 'row-reverse' : 'row',
+      alignItems:      'center',
+      backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.90)',
+      borderRadius:    16,
+      padding:         14,
+      marginBottom:    10,
+      borderWidth:     1.5,
+      borderColor:     isDark ? colors.border : 'rgba(201,168,76,0.20)',
+      gap:             12,
+      shadowColor:     '#000',
+      shadowOffset:    { width: 0, height: 2 },
+      shadowOpacity:   0.05,
+      shadowRadius:    6,
+      elevation:       1,
+    },
+
+    // Avatar
+    avatar: {
+      width: 52, height: 52, borderRadius: 26,
+      alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0,
+      position:   'relative',
+    },
+    avatarText: {
+      fontSize:   17,
+      fontWeight: '800',
+      color:      '#fff',
+      letterSpacing: 0.5,
+    },
+    unreadDot: {
+      position:        'absolute',
+      top:             0,
+      right:           isRTL ? undefined : 0,
+      left:            isRTL ? 0 : undefined,
+      width:           12,
+      height:          12,
+      borderRadius:    6,
+      backgroundColor: '#EF4444',
+      borderWidth:     2,
+      borderColor:     isDark ? colors.surface : '#fff',
+    },
+
+    // Card content
+    cardContent: { flex: 1, gap: 3 },
+
+    topRow: {
+      flexDirection:  isRTL ? 'row-reverse' : 'row',
+      justifyContent: 'space-between',
+      alignItems:     'center',
+    },
+    personName: {
+      fontSize:   15,
+      fontWeight: '800',
+      color:      colors.textPrimary,
+      flex:       1,
+      textAlign:  ta,
+    },
+    cardTime: {
+      fontSize:    11,
+      color:       colors.textMuted,
+      flexShrink:  0,
+      marginStart: 8,
+    },
+
+    requestTitle: {
+      fontSize:   12,
+      color:      ACCENT,
+      fontWeight: '600',
+      textAlign:  ta,
+    },
+
+    bottomRow: {
+      flexDirection:  isRTL ? 'row-reverse' : 'row',
+      justifyContent: 'space-between',
+      alignItems:     'center',
+      marginTop:      2,
+    },
+    lastMsgText:   { fontSize: 12, color: colors.textMuted, flex: 1, textAlign: ta },
     lastMsgUnread: { color: colors.textSecondary, fontWeight: '600' },
 
-    unreadBadge:  { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, flexShrink: 0 },
-    unreadText:   { fontSize: 11, fontWeight: '700', color: '#fff' },
+    unreadBadge: {
+      minWidth:         22,
+      height:           22,
+      borderRadius:     11,
+      backgroundColor:  '#EF4444',
+      alignItems:       'center',
+      justifyContent:   'center',
+      paddingHorizontal: 5,
+      flexShrink:       0,
+    },
+    unreadText: { fontSize: 11, fontWeight: '800', color: '#fff' },
 
-    statusBadge:  { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0 },
-    statusText:   { fontSize: 10, fontWeight: '700' },
+    statusBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3, flexShrink: 0 },
+    statusText:  { fontSize: 10, fontWeight: '700' },
 
-    empty:      { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
-    emptyIcon:  { fontSize: 56, marginBottom: 16 },
-    emptyTitle: { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 8 },
+    // Empty state
+    empty:        { alignItems: 'center', paddingTop: 80, paddingHorizontal: 40 },
+    emptyIconWrap: {
+      width: 80, height: 80, borderRadius: 24,
+      backgroundColor: isDark ? 'rgba(201,168,76,0.12)' : 'rgba(201,168,76,0.08)',
+      alignItems: 'center', justifyContent: 'center',
+      marginBottom: 16,
+    },
+    emptyTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginBottom: 8, textAlign: ta },
     emptySub:   { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 22 },
   });
 }
