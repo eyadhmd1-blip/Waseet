@@ -12,6 +12,7 @@ import type { ServiceRequest, Bid, RequestStatus } from '../src/types';
 import { useTheme } from '../src/context/ThemeContext';
 import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -50,9 +51,9 @@ function getStatusColors(colors: AppColors): Record<RequestStatus, { bg: string;
 // ─── Component ────────────────────────────────────────────────
 
 export default function RequestDetail() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, ta, lang, isRTL } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router  = useRouter();
   const locale  = lang === 'ar' ? 'ar-JO' : 'en-GB';
   const { id }  = useLocalSearchParams<{ id: string }>();
@@ -353,6 +354,10 @@ export default function RequestDetail() {
 
       <AppHeader variant="stack" title={t('requests.detailTitle')} onBack={() => router.back()} />
 
+      <LinearGradient
+        colors={isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8']}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -620,6 +625,7 @@ export default function RequestDetail() {
         })()}
 
       </ScrollView>
+      </LinearGradient>
 
       {/* ── Confirm Accept Modal ── */}
       <Modal visible={!!confirmBid} transparent animationType="slide">
@@ -779,7 +785,7 @@ function BidCard({
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean = false) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
@@ -791,7 +797,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
   content: { padding: 16, paddingBottom: 48 },
 
-  requestCard:  { backgroundColor: colors.surface, borderRadius: 18, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: colors.border },
+  requestCard:  { backgroundColor: colors.surface, borderRadius: 18, padding: 18, marginBottom: 20, borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)' },
   cardTopRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   statusBadge:  { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   statusText:   { fontSize: 12, fontWeight: '700' },

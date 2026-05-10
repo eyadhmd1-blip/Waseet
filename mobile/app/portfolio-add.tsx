@@ -17,6 +17,7 @@ import { useTheme }         from '../src/context/ThemeContext';
 import { AppHeader }        from '../src/components/AppHeader';
 import { useInsets }        from '../src/hooks/useInsets';
 import type { AppColors }   from '../src/constants/colors';
+import { LinearGradient }   from 'expo-linear-gradient';
 
 const { width: W } = Dimensions.get('window');
 
@@ -262,11 +263,11 @@ function createUbSt(colors: AppColors) {
 // ─── Main Screen ──────────────────────────────────────────────
 
 export default function PortfolioAddScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, lang, isRTL } = useLanguage();
   const { bottom: bottomInset } = useInsets();
   const ta = isRTL ? 'right' : 'left' as const;
-  const st = useMemo(() => createSt(colors, isRTL, bottomInset), [colors, isRTL, bottomInset]);
+  const st = useMemo(() => createSt(colors, isRTL, bottomInset, isDark), [colors, isRTL, bottomInset, isDark]);
   const router = useRouter();
 
   const [step,        setStep]        = useState<1 | 2 | 3>(1);
@@ -658,6 +659,10 @@ export default function PortfolioAddScreen() {
         totalSteps={3}
       />
 
+      <LinearGradient
+        colors={isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8']}
+        style={{ flex: 1 }}
+      >
       <ScrollView
         contentContainerStyle={st.scroll}
         showsVerticalScrollIndicator={false}
@@ -715,13 +720,14 @@ export default function PortfolioAddScreen() {
         primaryLabel={t('portfolioAdd.successOk')}
         onPrimary={() => { setShowSuccess(false); router.replace('/portfolio'); }}
       />
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors, isRTL: boolean, bottomInset: number) {
+function createSt(colors: AppColors, isRTL: boolean, bottomInset: number, isDark: boolean = false) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
 
@@ -732,7 +738,7 @@ function createSt(colors: AppColors, isRTL: boolean, bottomInset: number) {
   stepSub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22, marginBottom: 28, textAlign: ta },
 
   typeGrid:          { gap: 12 },
-  typeCard:          { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 2, borderColor: colors.border },
+  typeCard:          { backgroundColor: colors.surface, borderRadius: 20, padding: 20, borderWidth: 1.5, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)' },
   typeCardSelected:  { borderColor: colors.accent, backgroundColor: colors.accentDim },
   typeEmoji:         { fontSize: 32, marginBottom: 10, textAlign: ta },
   typeTitle:         { fontSize: 17, fontWeight: '800', color: colors.textPrimary, marginBottom: 4, textAlign: ta },

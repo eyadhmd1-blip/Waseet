@@ -17,6 +17,7 @@ import { useLanguage }     from '../src/hooks/useLanguage';
 import { useTheme }        from '../src/context/ThemeContext';
 import { useInsets }       from '../src/hooks/useInsets';
 import type { Message }    from '../src/types';
+import { LinearGradient }  from 'expo-linear-gradient';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
@@ -50,11 +51,11 @@ function formatTime(iso: string, locale: string) {
 // ─── Component ────────────────────────────────────────────────
 
 export default function ChatScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
   const { t, ta, lang } = useLanguage();
-  const styles = useMemo(() => createStyles(colors, ta), [colors, ta]);
+  const styles = useMemo(() => createStyles(colors, ta, isDark), [colors, ta, isDark]);
   const locale = lang === 'ar' ? 'ar-JO' : 'en-GB';
   const { job_id } = useLocalSearchParams<{ job_id: string }>();
 
@@ -928,6 +929,10 @@ export default function ChatScreen() {
       />
 
       {/* ── Messages ── */}
+      <LinearGradient
+        colors={isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8']}
+        style={{ flex: 1 }}
+      >
       <FlatList
         ref={listRef}
         data={messages}
@@ -943,6 +948,7 @@ export default function ChatScreen() {
         }
         renderItem={renderMessage}
       />
+      </LinearGradient>
 
       {/* ── Recording HUD ── */}
       {recordState === 'recording' && (
@@ -1195,7 +1201,7 @@ function createPcStyles(colors: AppColors, ta: 'left' | 'right') {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createStyles(colors: AppColors, ta: 'left' | 'right') {
+function createStyles(colors: AppColors, ta: 'left' | 'right', isDark: boolean = false) {
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.bg },
   center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
@@ -1216,7 +1222,7 @@ function createStyles(colors: AppColors, ta: 'left' | 'right') {
 
   bubble:       { maxWidth: '78%', borderRadius: 18, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleMine:   { backgroundColor: colors.accent, borderBottomRightRadius: 4 },
-  bubbleTheirs: { backgroundColor: colors.surface, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: colors.border },
+  bubbleTheirs: { backgroundColor: colors.surface, borderBottomLeftRadius: 4, borderWidth: 1, borderColor: isDark ? colors.border : 'rgba(201,168,76,0.15)' },
 
   bubbleText:       { fontSize: 15, lineHeight: 22 },
   bubbleTextMine:   { color: colors.bg },
