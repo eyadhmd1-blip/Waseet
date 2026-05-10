@@ -1,0 +1,3115 @@
+# Waseet Application — Comprehensive QA Test Cases Report
+
+**Document Version:** 1.0  
+**Prepared By:** Senior QA Lead  
+**Application:** Waseet (وسيط) — Service Marketplace Platform  
+**Platforms:** React Native (iOS/Android), Next.js Admin Portal  
+**Backend:** Supabase (PostgreSQL + Edge Functions + Realtime)  
+**Date:** 2026-05-07  
+
+---
+
+## Table of Contents
+
+1. [Executive Summary](#1-executive-summary)
+2. [Coverage Matrix](#2-coverage-matrix)
+3. [AUTH — Authentication & Onboarding](#3-auth--authentication--onboarding)
+4. [REQ — Service Request Management](#4-req--service-request-management)
+5. [BID — Bid Management](#5-bid--bid-management)
+6. [JOB — Job Lifecycle](#6-job--job-lifecycle)
+7. [SUB — Subscriptions & Credits](#7-sub--subscriptions--credits)
+8. [MSG — Messaging & Chat](#8-msg--messaging--chat)
+9. [NTF — Notifications & Push](#9-ntf--notifications--push)
+10. [PRO — Provider Profile & Portfolio](#10-pro--provider-profile--portfolio)
+11. [CNT — Recurring Contracts](#11-cnt--recurring-contracts)
+12. [SPT — Support & Help Center](#12-spt--support--help-center)
+13. [ADM — Admin Portal](#13-adm--admin-portal)
+14. [SEC — Security Testing](#14-sec--security-testing)
+15. [PER — Performance & Load](#15-per--performance--load)
+16. [LOC — Localization & RTL](#16-loc--localization--rtl)
+17. [Risk Assessment](#17-risk-assessment)
+18. [Regression Suite](#18-regression-suite)
+19. [Automation Candidates](#19-automation-candidates)
+20. [UX — Inline Validation & Error Display](#20-ux--inline-validation--error-display)
+21. [CAT — Categories & Service Data](#21-cat--categories--service-data)
+
+---
+
+## 1. Executive Summary
+
+### Application Overview
+Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **clients (طالب الخدمة)** who post service requests with **providers (مزود الخدمة)** who bid on those requests. The platform covers 50+ service categories across 10 groups (maintenance, cleaning, technical, health & beauty, events, education, freelance, handicrafts, pets, car services). An **Admin Portal** (Next.js) provides full operational control.
+
+### Key Business Flows
+| Flow | Risk Level | Critical |
+|------|-----------|---------|
+| Phone OTP authentication | HIGH | Yes |
+| Request creation → bid → job lifecycle | CRITICAL | Yes |
+| Credit deduction on bid submission | CRITICAL | Yes |
+| Grace period & provider commitment window | HIGH | Yes |
+| Subscription activation via Paddle webhook | HIGH | Yes |
+| 6-digit confirmation code for job completion | HIGH | Yes |
+| Recurring contract visit scheduling | MEDIUM | Yes |
+| Provider reputation tier progression | MEDIUM | No |
+| Admin subscription manual activation | HIGH | Yes |
+
+### Test Statistics
+| Module | Test Cases | Critical | High | Medium | Low |
+|--------|-----------|---------|------|--------|-----|
+| AUTH | 28 | 8 | 10 | 7 | 3 |
+| REQ | 38 | 10 | 14 | 10 | 4 |
+| BID | 36 | 12 | 14 | 7 | 3 |
+| JOB | 30 | 12 | 10 | 6 | 2 |
+| SUB | 28 | 10 | 10 | 6 | 2 |
+| MSG | 20 | 4 | 8 | 6 | 2 |
+| NTF | 22 | 6 | 8 | 6 | 2 |
+| PRO | 22 | 4 | 8 | 8 | 2 |
+| CNT | 28 | 8 | 10 | 8 | 2 |
+| SPT | 18 | 4 | 6 | 6 | 2 |
+| ADM | 36 | 10 | 14 | 9 | 3 |
+| SEC | 28 | 14 | 10 | 4 | 0 |
+| PER | 18 | 6 | 8 | 4 | 0 |
+| LOC | 14 | 2 | 6 | 4 | 2 |
+| UX | 16 | 0 | 8 | 8 | 0 |
+| CAT | 4 | 0 | 2 | 2 | 0 |
+| **TOTAL** | **366** | **110** | **146** | **91** | **28** |
+
+---
+
+## 2. Coverage Matrix
+
+| Test Type | Modules Covered |
+|-----------|----------------|
+| Functional Testing | AUTH, REQ, BID, JOB, SUB, MSG, PRO, CNT, SPT, ADM |
+| Regression Testing | All modules (Critical + High priority cases) |
+| Negative Testing | AUTH, REQ, BID, JOB, SUB, SEC |
+| Boundary & Edge Cases | AUTH, BID, SUB, CNT, NTF |
+| Security Testing | AUTH, SEC, ADM, API |
+| Performance & Load | PER, BID, MSG, NTF |
+| API Integration | BID (credits RPC), SUB (Paddle webhook), NTF (Expo push) |
+| Role & Permission | AUTH, ADM, SEC |
+| Notification & Realtime | NTF, MSG, JOB |
+| Payment/Wallet | SUB |
+| Localization | LOC, all UI modules |
+| UI/UX Alignment | All UI modules |
+
+---
+
+## 3. AUTH — Authentication & Onboarding
+
+### High-Risk Areas
+- OTP brute-force (3-attempt limit + 10-min expiry)
+- Expired OTP reuse attack
+- Duplicate phone registration
+- Role assignment immutability post-signup
+- SecureStore token persistence across app kills
+
+---
+
+#### AUTH-001
+**Name:** Successful new user registration as Client  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Phone number not registered in `users` table; SMS gateway operational.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open app → tap Register | Registration screen displayed with full_name, phone, role fields |
+| 2 | Enter full_name: "أحمد محمد", phone: "+962791234567", role: client | Fields populated correctly |
+| 3 | Tap "إرسال رمز التحقق" | OTP SMS sent; verify screen appears; timer starts (10 min) |
+| 4 | Enter correct 6-digit OTP | `phone_otps.verified_at` set; `users` row inserted with role='client' |
+| 5 | Select city "Amman" | Profile complete; routed to `(client)/index.tsx` home |
+
+**Expected Result:** User row inserted with `phone_verified=true`, `role='client'`. Auth token stored in Expo SecureStore.  
+**Automation Candidate:** Yes (Detox E2E)
+
+---
+
+#### AUTH-002
+**Name:** Successful new user registration as Provider  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Unique phone; SMS gateway operational.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Register with role: provider | `providers` row auto-created with default values: `is_subscribed=false`, `trial_used=false`, `bid_credits=0` |
+| 2 | Complete onboarding | Provider routed to `(provider)/index.tsx` |
+
+**Expected Result:** Both `users` and `providers` rows created atomically. `subscription_tier` defaults to null until trial activated.  
+**Automation Candidate:** Yes
+
+---
+
+#### AUTH-003
+**Name:** OTP expired before entry  
+**Priority:** Critical | **Type:** Negative  
+**Preconditions:** User requested OTP; wait 11 minutes without entering code.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Wait 11 minutes after OTP sent | Timer shows 00:00 |
+| 2 | Enter any 6-digit code | Error: "انتهت صلاحية الرمز. أعد الإرسال." |
+| 3 | Check `phone_otps` table | `expires_at` < now(); `verified_at` is null |
+
+**Expected Result:** OTP rejected; user prompted to resend. No session created.  
+**Automation Candidate:** Yes (mock time)
+
+---
+
+#### AUTH-004
+**Name:** OTP brute-force — 3 wrong attempts  
+**Priority:** Critical | **Type:** Security  
+**Preconditions:** Valid OTP sent to phone.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Enter wrong OTP 3 times consecutively | After 3rd failure: account locked for OTP; error displayed |
+| 2 | Enter correct OTP (4th attempt) | Still rejected; "تجاوزت عدد المحاولات المسموح بها" |
+| 3 | Check `phone_otps.attempts` | = 3 (max) |
+
+**Expected Result:** `attempts >= 3` blocks further verification. Must request new OTP.  
+**Automation Candidate:** Yes
+
+---
+
+#### AUTH-005
+**Name:** Duplicate phone number registration  
+**Priority:** Critical | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Register with phone "+962791234567" (already registered) | After OTP verification: error "هذا الرقم مسجل مسبقاً" |
+| 2 | Check `users` table | No duplicate row created |
+
+**Expected Result:** Unique constraint on `users.phone` prevents duplicate. User guided to login.  
+**Automation Candidate:** Yes
+
+---
+
+#### AUTH-006
+**Name:** Returning user login — correct OTP  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open app → Login | Phone field displayed |
+| 2 | Enter registered phone | OTP sent |
+| 3 | Enter correct OTP | Routed to correct home based on `users.role` |
+
+**Expected Result:** Session restored. Provider → `(provider)/index.tsx`; Client → `(client)/index.tsx`.
+
+---
+
+#### AUTH-007
+**Name:** Login with unregistered phone  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Enter phone not in `users` table | Error: "هذا الرقم غير مسجل. هل تريد التسجيل؟" with Register CTA |
+
+---
+
+#### AUTH-008
+**Name:** Invalid phone format on registration  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Enter phone "12345" | Validation error: "رقم الهاتف غير صحيح" |
+| 2 | Enter phone "abc" | Same validation error |
+| 3 | Enter phone "" | "الرقم مطلوب" |
+| 4 | Enter phone "+962791234567" (13 chars) | Accepted |
+
+---
+
+#### AUTH-009
+**Name:** Empty full_name on registration  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Leave full_name blank, submit | "الاسم الكامل مطلوب" |
+| 2 | Enter single character | Should reject (min length) |
+| 3 | Enter 100+ character name | Trimmed or validation error |
+
+---
+
+#### AUTH-010
+**Name:** City selection required before profile complete  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Complete OTP verification | City picker shown |
+| 2 | Skip without selecting city | Submit blocked; "اختر مدينتك" error |
+| 3 | Select from 12 valid cities | Profile saved; home screen loaded |
+
+---
+
+#### AUTH-011
+**Name:** App kill & resume — session persistence  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Login as provider | Session active |
+| 2 | Force-kill app | — |
+| 3 | Reopen app | Directly routed to `(provider)/index.tsx` without re-login |
+
+**Expected Result:** Auth token in Expo SecureStore survives process kill.
+
+---
+
+#### AUTH-012
+**Name:** Onboarding shown only once  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | First login → onboarding tutorial shown | Navigate all slides |
+| 2 | Complete → home | — |
+| 3 | Kill & reopen app | No onboarding shown; direct to home |
+
+---
+
+#### AUTH-013
+**Name:** Role immutability after registration  
+**Priority:** High | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Register as client | `users.role = 'client'` |
+| 2 | Attempt to set `role='provider'` via direct Supabase query | RLS policy denies; `users.role` unchanged |
+
+**Expected Result:** Role cannot be changed post-signup without admin intervention. No self-escalation.
+
+---
+
+#### AUTH-014
+**Name:** OTP reuse after successful verification  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Use OTP successfully | `verified_at` set |
+| 2 | Attempt to reuse same OTP | Rejected: "تم استخدام هذا الرمز مسبقاً" |
+
+---
+
+#### AUTH-015
+**Name:** Logout clears session  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Login → go to profile | — |
+| 2 | Tap Logout | SecureStore token cleared; Supabase session ended |
+| 3 | Navigate to protected route | Redirected to login screen |
+
+---
+
+#### AUTH-016
+**Name:** Admin user cannot access mobile app client/provider routes  
+**Priority:** Critical | **Type:** Role & Permission
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Login with `role='admin'` on mobile app | Mobile app checks role; redirected to admin screen or shows error |
+
+---
+
+#### AUTH-017 – AUTH-028 (Additional Auth Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| AUTH-017 | Phone with country code variations (+962, 00962, 0) | Medium | Boundary |
+| AUTH-018 | SMS delivery failure — resend OTP CTA visible | High | Negative |
+| AUTH-019 | Concurrent login from two devices — last token wins | Medium | Functional |
+| AUTH-020 | Profile photo upload on registration — valid/invalid formats | Medium | Functional |
+| AUTH-021 | Profile photo > 5MB rejected | Medium | Boundary |
+| AUTH-022 | Very long bio on provider profile — character limit enforced | Low | Boundary |
+| AUTH-023 | Phone number with spaces/dashes ("+962 79 123 4567") | Medium | Boundary |
+| AUTH-024 | Deep link from OTP SMS opens app directly | Medium | Functional |
+| AUTH-025 | Network offline during OTP request — error shown, retry offered | High | Negative |
+| AUTH-026 | Network offline during registration submit | High | Negative |
+| AUTH-027 | Provider registration — categories selection (multi-select) | High | Functional |
+| AUTH-028 | Provider registration — no categories selected (submit blocked) | Medium | Negative |
+
+---
+
+## 4. REQ — Service Request Management
+
+### High-Risk Areas
+- AI price suggestion call failing silently
+- Image upload to Supabase Storage — size/format/CORS
+- Urgent request premium % calculation
+- Request expiry auto-cancel (24h for urgent)
+- Status transitions (open→reviewing→in_progress→completed)
+
+---
+
+#### REQ-001
+**Name:** Create standard service request — full happy path  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Logged in as client; network available; at least one category active.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Tap "طلب جديد" | new-request.tsx opens — step 1: category selection |
+| 2 | Select category "plumbing" | Step 2: request details |
+| 3 | Enter title: "إصلاح تسرب مياه في المطبخ" (min 10 chars ✓) | — |
+| 4 | Enter description: "يوجد تسرب تحت الحوض يحتاج استبدال..." (min 20 chars ✓) | — |
+| 5 | Select city "Amman", district "خلدا" | — |
+| 6 | Upload 2 images (< 5MB each, JPEG) | Images preview shown; uploaded to Supabase Storage |
+| 7 | Review AI price suggestion | `ai_suggested_price_min`/`max` displayed |
+| 8 | Submit | `requests` row inserted; `status='open'`; `views_count=0` |
+
+**Expected Result:** Request visible in client's request list. Providers in same city+category notified.  
+**Automation Candidate:** Yes
+
+---
+
+#### REQ-002
+**Name:** Request title below minimum length  
+**Priority:** High | **Type:** Boundary/Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Enter title "إصلاح" (5 chars) | Submit blocked; "العنوان يجب أن يكون 10 أحرف على الأقل" |
+| 2 | Enter title with exactly 10 chars | Accepted |
+
+---
+
+#### REQ-003
+**Name:** Request description below minimum length  
+**Priority:** High | **Type:** Boundary/Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Enter description with 19 chars | Submit blocked; validation error |
+| 2 | Enter exactly 20 chars | Accepted |
+
+---
+
+#### REQ-004
+**Name:** Upload 4 images (exceeds limit)  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Attempt to upload 4th image | CTA disabled or error: "الحد الأقصى 3 صور" |
+
+---
+
+#### REQ-005
+**Name:** Upload image > 5MB  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Select image file > 5MB | Error: "حجم الصورة يجب أن يكون أقل من 5MB" |
+| 2 | Check `requests.image_urls` | No URL added |
+
+---
+
+#### REQ-006
+**Name:** Upload invalid file type (PDF instead of image)  
+**Priority:** Medium | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Attempt to upload .pdf file | Rejected: "نوع الملف غير مدعوم" |
+
+---
+
+#### REQ-007
+**Name:** AI price suggestion API failure  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Create request for category without AI support | AI price fields remain null; no error shown to user; submission proceeds normally |
+| 2 | Create request while `ai-price-suggest` edge function is down | Request submits without AI price; non-blocking error logged |
+
+---
+
+#### REQ-008
+**Name:** Create urgent request  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Client logged in; category supports urgent.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Select "طلب عاجل" option | urgent-request.tsx loads |
+| 2 | Submit request | `is_urgent=true`; `urgent_premium_pct` set (20–50%); `urgent_expires_at = now() + 24h` |
+| 3 | Providers notified | Special urgent push notification sent |
+
+---
+
+#### REQ-009
+**Name:** Urgent request auto-expires after 24h with no bids  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Create urgent request | `urgent_expires_at` set |
+| 2 | Wait 24h without any bids | `status` transitions to 'expired'; `notify-no-bids` function fires |
+| 3 | Check client notification | "لم يتلقَ طلبك أي عروض. جرب تعديل التفاصيل" |
+
+---
+
+#### REQ-010
+**Name:** View own requests list — filtering and status  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to `(client)/requests.tsx` | All client requests listed |
+| 2 | Filter by status "open" | Only open requests shown |
+| 3 | Filter by status "completed" | Only completed requests shown |
+
+---
+
+#### REQ-011
+**Name:** Request detail — bid count visible to client  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open request-detail.tsx for request with 3 bids | `bids_count=3` displayed; bids listed (amount, provider name, note) |
+
+---
+
+#### REQ-012
+**Name:** Request with no city selected — submit blocked  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Fill all fields except city | Submit button disabled or inline error: "اختر المدينة" |
+
+---
+
+#### REQ-013
+**Name:** Request cancelled by client  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open an 'open' or 'reviewing' request | Cancel option available |
+| 2 | Confirm cancellation with reason | `status='cancelled'`; `cancelled_reason` saved; pending bids auto-rejected |
+
+---
+
+#### REQ-014
+**Name:** Client cannot cancel in_progress job request  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open request with `status='in_progress'` | Cancel option disabled or shows "لا يمكن إلغاء طلب قيد التنفيذ" |
+
+---
+
+#### REQ-015
+**Name:** Views count increments on request open  
+**Priority:** Low | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider opens request detail | `requests.views_count` incremented by 1 |
+| 2 | Same provider opens again | Should not double-count (debounce expected) |
+
+---
+
+#### REQ-016
+**Name:** Request detail for expired request — no bid allowed  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider opens an expired request | Bid button absent or disabled; "انتهت صلاحية هذا الطلب" shown |
+
+---
+
+#### REQ-017
+**Name:** Create recurring service request  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open recurring-request.tsx | Frequency selector (weekly/biweekly/monthly) shown |
+| 2 | Select frequency: monthly, duration: 6 months | Correct fields populated |
+| 3 | Select preferred_day: Tuesday, preferred_time_window: morning | — |
+| 4 | Submit | `recurring_contracts` row inserted with `status='bidding'` |
+
+---
+
+#### REQ-018
+**Name:** Courier request — pickup and dropoff fields required  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Select category "courier" | Pickup address + dropoff address fields appear |
+| 2 | Submit without pickup | Validation error |
+| 3 | Fill both fields and submit | Request created with courier-specific data |
+
+---
+
+#### REQ-019 – REQ-038 (Additional Request Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| REQ-019 | Request submitted while offline — queued or error shown | High | Negative |
+| REQ-020 | Client edits open request (update title/description) | Medium | Functional |
+| REQ-021 | Client cannot edit request once status is reviewing | Medium | Negative |
+| REQ-022 | Request with only whitespace in title | High | Negative |
+| REQ-023 | Request with only whitespace in description | High | Negative |
+| REQ-024 | AI price suggestion shows loading state | Low | UI/UX |
+| REQ-025 | Category picker — all 50 categories load with correct icons | Medium | Functional |
+| REQ-026 | Category picker — inactive category not shown | Medium | Functional |
+| REQ-027 | Request image order preserved after submit | Low | Functional |
+| REQ-028 | Request status transition: open→reviewing (on first bid) | High | Functional |
+| REQ-029 | Request status transition: reviewing→in_progress (on acceptance) | Critical | Functional |
+| REQ-030 | Request status transition: in_progress→completed (after rating) | Critical | Functional |
+| REQ-031 | Max bids per request (if `max_bids` set) — additional bids rejected | High | Boundary |
+| REQ-032 | `bidding_ends_at` enforced — bids after deadline rejected | High | Boundary |
+| REQ-033 | Client cannot see other clients' requests | Critical | Security |
+| REQ-034 | Request with injected SQL in title | Critical | Security |
+| REQ-035 | Request with XSS in description | Critical | Security |
+| REQ-036 | Request with 3000-char description (max boundary) | Medium | Boundary |
+| REQ-037 | Newly posted request appears on provider home feed immediately | High | Realtime |
+| REQ-038 | Client request list pagination — 20+ requests | Medium | Performance |
+
+---
+
+## 5. BID — Bid Management
+
+### High-Risk Areas
+- Atomic credit deduction via `submit_bid_with_credits()` RPC
+- 24-hour rejection cooldown enforcement
+- Premium tier 5 concurrent pending bid cap
+- Unsubscribed provider bid attempt
+- Bid price vs. category min/max limits
+
+---
+
+#### BID-001
+**Name:** Provider submits bid — normal request, credit deduction  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Provider subscribed (basic tier, 20 credits); request is 'open'; provider hasn't bid before.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider opens request-detail.tsx | "قدم عرضاً" button visible |
+| 2 | Enter amount: 35 JOD, note: "لدي خبرة 5 سنوات" | — |
+| 3 | Submit bid | `bids` row inserted; `status='pending'`; `credit_cost=1` |
+| 4 | Check `providers.subscription_credits` | Decreased by 1 (from 20 → 19) |
+| 5 | Client receives push notification | "حصلت على عرض جديد من [Provider Name]" |
+
+**Expected Result:** Bid + credit deduction are atomic — both succeed or both roll back.  
+**Automation Candidate:** Yes (critical regression)
+
+---
+
+#### BID-002
+**Name:** Provider bids on urgent request — 2 credits deducted  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider (20 credits) bids on urgent request | `credit_cost=2`; credits: 20 → 18 |
+
+---
+
+#### BID-003
+**Name:** Provider bids on recurring contract — 3 credits deducted  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider (20 credits) bids on contract bid | `credit_cost=3`; credits: 20 → 17 |
+
+---
+
+#### BID-004
+**Name:** Provider with 0 credits attempts to bid  
+**Priority:** Critical | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider with 0 credits opens request | Bid button disabled or shows "رصيدك غير كافٍ" |
+| 2 | Attempt via API directly | `submit_bid_with_credits()` RPC rejects with credit insufficient error |
+| 3 | Check `providers.subscription_credits` | Unchanged (0) |
+
+**Expected Result:** No bid created; credits not changed to negative.  
+**Automation Candidate:** Yes
+
+---
+
+#### BID-005
+**Name:** Unsubscribed provider attempts to bid  
+**Priority:** Critical | **Type:** Security/Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider with `is_subscribed=false` opens request | Bid button shows "اشترك للتقديم" |
+| 2 | Attempt to force-POST bid via API | RPC checks subscription; bid rejected |
+
+---
+
+#### BID-006
+**Name:** 24-hour cooldown after bid rejection from same client  
+**Priority:** Critical | **Type:** Business Rule
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider submits bid; client rejects it | `bids.status='rejected'`; `rejected_at` stamped |
+| 2 | Provider tries to bid on same client's new request within 24h | Bid blocked: "لا يمكن التقديم على طلبات هذا العميل خلال 24 ساعة من الرفض" |
+| 3 | Attempt after 24h | Bid allowed normally |
+
+**Expected Result:** Cooldown scoped to (provider_id, client_id) pair within 30-day window.  
+**Automation Candidate:** Yes (mock time)
+
+---
+
+#### BID-007
+**Name:** Premium tier — 5 concurrent pending bids cap  
+**Priority:** Critical | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Premium provider has 5 bids in 'pending' status | `active_bid_count = 5` |
+| 2 | Attempt 6th bid | Blocked: "وصلت للحد الأقصى من العروض النشطة (5)" |
+| 3 | One bid gets accepted/rejected | `active_bid_count = 4` |
+| 4 | Submit 6th bid | Succeeds |
+
+---
+
+#### BID-008
+**Name:** Provider withdraws pending bid  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider has pending bid | Status shown as 'pending' |
+| 2 | Provider taps "سحب العرض" | `bids.status='withdrawn'`; credits refunded? (verify business rule) |
+
+**Note:** Verify if credits are refunded on withdrawal — this is a critical business rule to confirm.
+
+---
+
+#### BID-009
+**Name:** Bid amount below category minimum  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Category "electrical" has min_bid=15 JOD | — |
+| 2 | Provider enters bid amount: 10 JOD | Error: "الحد الأدنى للعرض هو 15 د.أ" |
+| 3 | Enter exactly 15 JOD | Accepted |
+
+---
+
+#### BID-010
+**Name:** Bid amount above category maximum  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Category "cleaning" has max_bid=200 JOD | — |
+| 2 | Provider enters 201 JOD | Error: "الحد الأقصى للعرض هو 200 د.أ" |
+| 3 | Enter exactly 200 JOD | Accepted |
+
+---
+
+#### BID-011
+**Name:** Client accepts bid — job created  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client opens request with 3 bids | Bids listed with amounts and provider details |
+| 2 | Client taps "قبول" on first bid | Confirmation dialog shown |
+| 3 | Confirm acceptance | `jobs` row created; `bids.status='accepted'`; other bids → 'rejected' |
+| 4 | Request status | `requests.status='in_progress'` |
+| 5 | Provider notified | Push: "تم قبول عرضك!" |
+
+**Expected Result:** Atomic — job created + bids updated + request status updated together.  
+**Automation Candidate:** Yes
+
+---
+
+#### BID-012
+**Name:** Client rejects specific bid  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client rejects provider's bid | `bids.status='rejected'`; rejection cooldown starts for that provider |
+| 2 | Provider notified | Push: "تم رفض عرضك" |
+
+---
+
+#### BID-013
+**Name:** Provider bids 0 or negative amount  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Enter bid amount: 0 | Error: "يجب أن يكون العرض أكبر من صفر" |
+| 2 | Enter bid amount: -5 | Same error |
+
+---
+
+#### BID-014
+**Name:** Provider bids on own request (if provider is also client)  
+**Priority:** High | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider (who also has client role) views own request | Bid button absent or blocked with error |
+
+---
+
+#### BID-015
+**Name:** Concurrent bid submissions — credit race condition  
+**Priority:** Critical | **Type:** Concurrency
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider has exactly 1 credit | — |
+| 2 | Simultaneously submit two bids | Only one bid succeeds; second fails with "رصيد غير كافٍ" |
+| 3 | Check credits | Exactly 0 (not -1) |
+
+**Expected Result:** `submit_bid_with_credits()` uses row-level locking to prevent race.  
+**Automation Candidate:** Yes (concurrent API calls test)
+
+---
+
+#### BID-016
+**Name:** Trial provider bid — credits from trial allotment  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider activates trial (10 credits) | `subscription_tier='trial'`, credits=10 |
+| 2 | Submit 10 normal bids | All succeed; credits → 0 |
+| 3 | Submit 11th bid | Blocked: credit insufficient |
+
+---
+
+#### BID-017
+**Name:** Bid note with XSS content  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Submit bid with note: `<script>alert(1)</script>` | Note stored as plain text; not executed in client's bid list |
+
+---
+
+#### BID-018 – BID-036 (Additional Bid Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| BID-018 | Provider bid rejection rate tracked over 30-day window | High | Functional |
+| BID-019 | High rejection rate affects provider search ranking | Medium | Functional |
+| BID-020 | Bid with very long note (> 500 chars) | Medium | Boundary |
+| BID-021 | Provider bid on completed request | High | Negative |
+| BID-022 | Provider bid on cancelled request | High | Negative |
+| BID-023 | Two providers bid same amount — both shown to client | Medium | Functional |
+| BID-024 | Provider profile card shown within bid detail | Medium | UI/UX |
+| BID-025 | Bid list sorted by: amount (asc/desc), provider score | Medium | Functional |
+| BID-026 | Bid submission offline — queued or error | High | Negative |
+| BID-027 | Provider views own bid history | Low | Functional |
+| BID-028 | Bonus credits used only after base credits exhausted | High | Functional |
+| BID-029 | Bid on inactive category | High | Negative |
+| BID-030 | Client sees bid count without seeing bid amounts until reviewing | Medium | Business Rule |
+| BID-031 | Provider cannot see other providers' bid amounts | Critical | Security |
+| BID-032 | Bid with non-JOD currency (if supported) | Low | Functional |
+| BID-033 | Provider submits duplicate bid on same request | High | Negative |
+| BID-034 | Smart retract modal shows when provider retracts active bids | Medium | UI/UX |
+| BID-035 | Active-bids indicator count on provider dashboard | Medium | Functional |
+| BID-036 | Tier-based concurrent bid caps enforced per subscription tier | Critical | Functional |
+
+---
+
+## 6. JOB — Job Lifecycle
+
+### High-Risk Areas
+- Grace period timer (1 min): client undo window
+- Provider commitment deadline (5 min urgent / 15 min normal)
+- 6-digit confirmation code: generation, delivery, expiry, and fraud
+- Rating submission — affects provider score and reputation tier
+- Job status machine correctness
+
+---
+
+#### JOB-001
+**Name:** Grace period — client undoes acceptance within 1 minute  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client accepts bid | Job created; `client_grace_expires_at = now() + 1min`; grace-period.tsx shown |
+| 2 | Within 60 seconds, client taps "تراجع" | Job deleted/cancelled; bid status → 'pending' again; request → 'reviewing' |
+| 3 | Provider NOT notified | Provider commitment timer never started |
+
+**Expected Result:** Clean rollback. No orphan jobs.  
+**Automation Candidate:** Yes (mock time)
+
+---
+
+#### JOB-002
+**Name:** Grace period expires — provider commitment timer starts  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client accepts bid for normal request | Grace period starts (1 min) |
+| 2 | Grace period expires without undo | `provider_commit_deadline = grace_expires + 15min` |
+| 3 | Provider receives commitment notification | "يرجى التأكيد على القبول خلال 15 دقيقة" |
+
+---
+
+#### JOB-003
+**Name:** Provider commits to job within deadline  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider receives commitment notification | provider-confirm.tsx opens |
+| 2 | Taps "قبول التنفيذ" | `provider_committed_at = now()`; `provider_declined = false` |
+| 3 | Client receives 6-digit confirmation code | `confirm_code` (6 digits); `confirm_code_exp = now() + 24h` |
+
+---
+
+#### JOB-004
+**Name:** Provider declines job commitment  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider taps "رفض" on commitment screen | `provider_declined = true` |
+| 2 | Job status | Job cancelled; request → back to 'reviewing' |
+| 3 | Refund logic | Credits refunded to provider (verify business rule) |
+| 4 | Client notified | "انسحب مزود الخدمة. يمكنك قبول عرض آخر" |
+
+---
+
+#### JOB-005
+**Name:** Provider misses commitment deadline — auto-decline  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | `provider_commit_deadline` passes without action | System auto-sets `provider_declined=true` |
+| 2 | `send-delayed-commit-notifications` edge function fires | Client notified: "لم يستجب مزود الخدمة في الوقت المحدد" |
+| 3 | Request | Returned to 'reviewing'; other bids can be accepted |
+
+---
+
+#### JOB-006
+**Name:** Client uses confirmation code — job marked complete  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider provides 6-digit code verbally | — |
+| 2 | Client enters correct code in app | `confirmed_by_client = true`; `confirmed_at = now()` |
+| 3 | Job status | `jobs.status='completed'` |
+| 4 | Rating screen shown | Both client and provider prompted to rate |
+
+---
+
+#### JOB-007
+**Name:** Wrong confirmation code entry  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client enters wrong 6-digit code | Error: "الرمز غير صحيح. حاول مرة أخرى" |
+| 2 | Enter wrong code 5 times | Consider rate limiting / lockout |
+| 3 | Job status | Remains 'active'; no false completion |
+
+---
+
+#### JOB-008
+**Name:** Confirmation code expires after 24 hours  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider commits; code generated | `confirm_code_exp = now() + 24h` |
+| 2 | 25 hours pass; client enters code | Error: "انتهت صلاحية رمز التأكيد. اتصل بالدعم" |
+
+---
+
+#### JOB-009
+**Name:** Client rating submission — 5 stars  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Job completed; rate-job.tsx shown | 1–5 star picker + optional review text |
+| 2 | Select 5 stars, enter review | `jobs.client_rating=5`; `jobs.client_review` saved |
+| 3 | Provider score updated | `providers.score` recalculated (rolling average) |
+| 4 | Loyalty milestone check | If `lifetime_jobs` hits 10/25/50/100, tier upgraded |
+
+---
+
+#### JOB-010
+**Name:** Provider rating submission — provider rates client  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Job completed | Provider prompted to rate client |
+| 2 | Submit 4 stars | `jobs.provider_rating=4` saved |
+
+---
+
+#### JOB-011
+**Name:** Rating not submitted — job still marked complete  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client skips rating | Job remains 'completed'; `client_rating = null` |
+| 2 | Provider not penalized | Score unchanged |
+
+---
+
+#### JOB-012
+**Name:** Loyalty tier upgrade at 10 jobs  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider completes 10th job | `providers.reputation_tier` changes: 'new' → 'rising' |
+| 2 | 20% discount unlocked | `loyalty_events` row inserted (`event_type='credits_tier'`, `reward_value=20`) |
+| 3 | Applied at next subscription renewal | `providers.win_discount_pct` or loyalty discount tracked |
+
+---
+
+#### JOB-013
+**Name:** Loyalty tier upgrade at 25 jobs — verified badge  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider completes 25th job | `reputation_tier` = 'trusted'; `badge_verified = true` |
+| 2 | 30% discount added to loyalty_events | Verified badge shown on profile |
+
+---
+
+#### JOB-014
+**Name:** Job dispute — status set to 'disputed'  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client refuses to confirm or reports issue | Mechanism to open dispute available |
+| 2 | Admin reviews dispute | `jobs.status='disputed'` |
+| 3 | Admin resolves | Status → 'completed' or 'cancelled' with notes |
+
+---
+
+#### JOB-015
+**Name:** Concurrent confirmation code submission (two devices)  
+**Priority:** High | **Type:** Concurrency
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client logged in on two devices | — |
+| 2 | Both enter correct code simultaneously | Job marked complete once; no double-completion |
+
+---
+
+#### JOB-016
+**Name:** Provider commitment deadline — urgent (5 min) vs normal (15 min)  
+**Priority:** Critical | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Accept bid on urgent request | `provider_commit_deadline = grace_expires + 5min` |
+| 2 | Accept bid on normal request | `provider_commit_deadline = grace_expires + 15min` |
+
+---
+
+#### JOB-017 – JOB-030 (Additional Job Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| JOB-017 | `lifetime_jobs` increments correctly after completion | Critical | Functional |
+| JOB-018 | Job list shows only current user's jobs | Critical | Security |
+| JOB-019 | Completed job appears in client's history | High | Functional |
+| JOB-020 | Completed job appears in provider's job history | High | Functional |
+| JOB-021 | Cancel job with cancellation reason — logged in `cancellation_log` | High | Functional |
+| JOB-022 | Job chat becomes read-only after completion | Medium | Functional |
+| JOB-023 | Confirm code shown only after provider commits | High | Security |
+| JOB-024 | Client rating displayed on provider public profile | High | Functional |
+| JOB-025 | Provider 5-star rating triggers loyalty bonus credit event | High | Functional |
+| JOB-026 | Job with no rating after 7 days — auto-nudge notification | Medium | Functional |
+| JOB-027 | Win discount recalculated after each job (+3%, cap 15%) | High | Functional |
+| JOB-028 | Job detail shows both parties' names and contact info | Medium | Functional |
+| JOB-029 | Confirmation code cannot be reused after successful confirm | Critical | Security |
+| JOB-030 | Provider score does not go below 0 with bad ratings | Low | Boundary |
+
+---
+
+## 7. SUB — Subscriptions & Credits
+
+### High-Risk Areas
+- Paddle webhook atomic update (subscription_ends + credits)
+- Trial used flag preventing second trial
+- Credit reset on renewal
+- Manual CliQ activation by admin
+- Win discount application at renewal
+
+---
+
+#### SUB-001
+**Name:** Provider activates trial subscription  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Provider with `trial_used=false`; `is_subscribed=false`.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to subscribe.tsx | "تجربة مجانية" option shown (10 credits, free) |
+| 2 | Activate trial | `subscription_tier='trial'`; `subscription_credits=10`; `is_subscribed=true`; `trial_used=true` |
+| 3 | Verify trial period | Typically 30 days or until credits exhausted |
+
+**Automation Candidate:** Yes
+
+---
+
+#### SUB-002
+**Name:** Trial cannot be activated twice  
+**Priority:** Critical | **Type:** Business Rule
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider with `trial_used=true` opens subscribe screen | "تجربة مجانية" option disabled or hidden |
+| 2 | Attempt via API | Rejected: "تم استخدام الفترة التجريبية مسبقاً" |
+
+---
+
+#### SUB-003
+**Name:** Paddle webhook — basic tier activation  
+**Priority:** Critical | **Type:** API Integration
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider selects Basic (5 JOD) on subscribe.tsx | Redirected to Paddle payment |
+| 2 | Payment completes | `paddle-webhook` edge function fires |
+| 3 | Webhook payload processed | `subscriptions` row inserted; `providers.is_subscribed=true`; `subscription_tier='basic'`; `subscription_credits=20`; `subscription_ends` = now() + 30 days |
+| 4 | Provider can now bid | Credits available |
+
+**Expected Result:** Webhook idempotent — duplicate Paddle events don't double-apply credits.  
+**Automation Candidate:** Yes (webhook replay test)
+
+---
+
+#### SUB-004
+**Name:** Paddle webhook — duplicate event (idempotency)  
+**Priority:** Critical | **Type:** API Integration
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Same `paddle_txn_id` webhook arrives twice | Second event processed with no-op; credits NOT doubled |
+| 2 | Check `subscriptions` table | Single row per transaction |
+
+---
+
+#### SUB-005
+**Name:** Credit reset on subscription renewal  
+**Priority:** Critical | **Type:** Business Rule
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider (basic, 3 credits remaining) renews | Credits reset to 20 (basic allotment); old credits discarded |
+| 2 | Check `providers.subscription_credits` | = 20 |
+
+---
+
+#### SUB-006
+**Name:** Tier upgrade — Basic to Pro  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider upgrades from Basic to Pro mid-cycle | `subscription_tier='pro'`; `subscription_credits=50` |
+| 2 | Remaining basic credits | Discarded or prorated (verify business rule) |
+
+---
+
+#### SUB-007
+**Name:** Premium tier — unlimited bids enforced  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider on premium tier with `is_unlimited=true` | Bid button never shows credit warning |
+| 2 | Submit 100 bids | All accepted without credit check |
+
+---
+
+#### SUB-008
+**Name:** Subscription expiry — bids blocked  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | `subscription_ends` in the past | `is_subscribed` auto-set to false (via scheduler or check) |
+| 2 | Provider attempts to bid | Blocked: "اشتراكك انتهى. جدد للاستمرار" |
+
+---
+
+#### SUB-009
+**Name:** Subscription expiry notification — 3 days before  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | `subscription_ends = now() + 3 days` | `notify-subscription-expiry` fires |
+| 2 | Provider receives push | "اشتراكك ينتهي خلال 3 أيام. جدد الآن" |
+
+---
+
+#### SUB-010
+**Name:** Win discount applied at renewal  
+**Priority:** High | **Type:** Business Rule
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider completed 5 jobs — `win_discount_pct = 15%` (cap) | — |
+| 2 | Renewal payment | 15% discount applied to plan price in Paddle |
+| 3 | Post-renewal | `win_discount_pct` reset to 0 |
+
+---
+
+#### SUB-011
+**Name:** Admin manually activates subscription (CliQ payment)  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Admin portal access; valid provider ID.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Admin calls `activate_provider_subscription(provider_id, 'pro', 1)` | `providers.subscription_tier='pro'`; credits=50; `subscription_ends = now()+30days`; `subscriptions` row inserted |
+| 2 | Audit log | Admin action recorded in `audit` table |
+
+---
+
+#### SUB-012
+**Name:** Loyalty milestone — free month at 50 jobs  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider completes 50th job | `loyalty_events` row: `event_type='credits_milestone'` |
+| 2 | Next renewal | One month free applied |
+
+---
+
+#### SUB-013 – SUB-028 (Additional Subscription Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| SUB-013 | Bonus credits separate from subscription credits | High | Functional |
+| SUB-014 | Bonus credits not reset on renewal | High | Business Rule |
+| SUB-015 | Subscription tier shown correctly on provider dashboard | Medium | UI/UX |
+| SUB-016 | subscribe.tsx Paddle link opens in browser/webview | Medium | Functional |
+| SUB-017 | Paddle webhook signature verification | Critical | Security |
+| SUB-018 | Invalid Paddle webhook payload (no txn_id) | High | Negative |
+| SUB-019 | Subscription expiry check on each bid attempt | Critical | Functional |
+| SUB-020 | Trial provider shown upgrade CTA on credit exhaustion | Medium | UI/UX |
+| SUB-021 | Credits shown in real-time after bid submission | High | Realtime |
+| SUB-022 | Credits shown in real-time after subscription activation | High | Realtime |
+| SUB-023 | Downgrade from Premium to Basic — credits capped at 20 | High | Business Rule |
+| SUB-024 | Provider views subscription history | Low | Functional |
+| SUB-025 | Concurrent Paddle webhooks for same provider | High | Concurrency |
+| SUB-026 | Subscription plan prices displayed correctly (5/12/22 JOD) | Medium | UI/UX |
+| SUB-027 | Arabic localization of subscription screen | Medium | Localization |
+| SUB-028 | Provider with expired subscription cannot see active bid count | Medium | Functional |
+
+---
+
+## 8. MSG — Messaging & Chat
+
+### High-Risk Areas
+- Media upload (images, videos, audio) to Supabase Storage
+- Real-time delivery via Supabase Realtime subscriptions
+- Message read status sync across devices
+- Location sharing — coordinate accuracy
+- Profile card sharing within chat
+
+---
+
+#### MSG-001
+**Name:** Send text message in job chat  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Active job exists; both parties authenticated.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client opens chat.tsx for active job | Message thread loads |
+| 2 | Type "السلام عليكم" and send | `messages` row: `msg_type='text'`; `content='السلام عليكم'`; `is_read=false` |
+| 3 | Provider receives message in real-time | Message appears without refresh |
+
+**Automation Candidate:** Yes
+
+---
+
+#### MSG-002
+**Name:** Send image in chat  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Tap image icon → select JPEG < 5MB | Image uploaded to Supabase Storage |
+| 2 | Message sent | `msg_type='image'`; `image_url` set to Storage URL |
+| 3 | Recipient sees image in chat | Image rendered; tap to expand |
+
+---
+
+#### MSG-003
+**Name:** Send audio message  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Hold record button → speak → release | Audio captured; `duration_ms` measured |
+| 2 | Message sent | `msg_type='audio'`; `audio_url` set; `duration_ms` stored |
+| 3 | Recipient sees audio bubble with duration | Playback works |
+
+---
+
+#### MSG-004
+**Name:** Send location  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Tap location icon | GPS permission requested |
+| 2 | Share location | `msg_type='location'`; `latitude` & `longitude` & `label` stored |
+| 3 | Recipient sees map pin | Tap opens Maps |
+
+---
+
+#### MSG-005
+**Name:** Send profile card  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider shares their profile card in chat | `msg_type='profile_card'`; `shared_provider_id` set |
+| 2 | Client sees profile card | Tap opens `provider-profile.tsx` |
+
+---
+
+#### MSG-006
+**Name:** Message read status — `is_read` toggle  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider sends message; client hasn't opened chat | `is_read=false` |
+| 2 | Client opens chat | `is_read=true` for all received messages |
+| 3 | Provider sees read indicator | Double-tick or similar indicator |
+
+---
+
+#### MSG-007
+**Name:** Chat real-time delivery via Supabase Realtime  
+**Priority:** Critical | **Type:** Realtime
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Both parties have chat open | — |
+| 2 | Client sends message | Appears on provider's screen < 2 seconds (without refresh) |
+
+**Automation Candidate:** Yes (latency measurement)
+
+---
+
+#### MSG-008
+**Name:** Send empty text message  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Tap send with empty text field | Send button disabled or no message sent |
+
+---
+
+#### MSG-009
+**Name:** Send text with XSS content  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Send `<script>alert(1)</script>` in chat | Stored as plain text; not executed in recipient's view |
+
+---
+
+#### MSG-010
+**Name:** Chat not accessible without active job  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Attempt to open chat for `job_id` not belonging to current user | RLS policy denies; 403 or empty result |
+
+---
+
+#### MSG-011
+**Name:** Upload video file > 50MB  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Attempt to send video > 50MB | Error: "حجم الفيديو كبير جداً" |
+
+---
+
+#### MSG-012 – MSG-020 (Additional Message Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| MSG-012 | System message auto-sent on job status change | Medium | Functional |
+| MSG-013 | Chat history loads pagination (50+ messages) | Medium | Performance |
+| MSG-014 | Image thumbnail shown before full load | Low | UI/UX |
+| MSG-015 | Audio playback stops when another audio starts | Low | UI/UX |
+| MSG-016 | Provider sends location with GPS disabled — error shown | High | Negative |
+| MSG-017 | Network loss mid-send — message queued, retry on reconnect | High | Negative |
+| MSG-018 | Unread message badge on messages tab — count accurate | Medium | Functional |
+| MSG-019 | Deleted job — chat thread becomes inaccessible | High | Functional |
+| MSG-020 | Message with 2000+ characters (long Arabic text) | Medium | Boundary |
+
+---
+
+## 9. NTF — Notifications & Push
+
+### High-Risk Areas
+- Expo push token registration across devices
+- Quiet hours enforcement (10 PM – 8 AM default)
+- Max-per-week limit not exceeded
+- New bid notification delivered within 60 seconds
+- Notification open → deep link navigation
+
+---
+
+#### NTF-001
+**Name:** New bid notification delivered to client  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Client has valid Expo push token in `push_tokens`.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider submits bid on client's request | `notify-client-new-bid` edge function fires |
+| 2 | Client device receives push | Title: "عرض جديد على طلبك"; body: provider name + amount |
+| 3 | Client taps notification | Deep-links to request-detail.tsx |
+
+**Automation Candidate:** Yes
+
+---
+
+#### NTF-002
+**Name:** New request notification to relevant providers  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client posts request in "plumbing", city "Amman" | `notify-new-request` fires |
+| 2 | All subscribed providers in plumbing + Amman notified | Push delivered within 60s |
+| 3 | Providers in different city or category | NOT notified |
+
+---
+
+#### NTF-003
+**Name:** Quiet hours — push suppressed  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | User has quiet_hour_start=22 (10 PM), quiet_hour_end=8 (8 AM) | — |
+| 2 | New bid arrives at 11 PM local time | Push NOT sent to device |
+| 3 | At 8:01 AM next day | Queued or in-app notification shows |
+
+---
+
+#### NTF-004
+**Name:** Max-per-week limit enforced  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | User has max_per_week=5 | — |
+| 2 | 5 notifications already sent this week | 6th event → push suppressed |
+| 3 | New week starts | Counter resets; notifications resume |
+
+---
+
+#### NTF-005
+**Name:** User disables all notifications  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | `notification_preferences.enabled=false` | — |
+| 2 | Any event triggers | No push sent to device |
+| 3 | In-app notification log | Still recorded in `notifications` table |
+
+---
+
+#### NTF-006
+**Name:** Notification inbox — all unread marked read  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open notification-inbox.tsx with 5 unread | All shown with unread indicator |
+| 2 | Tap "تحديد الكل كمقروء" | All `notifications.is_read=true` |
+| 3 | Badge counter on tab | Resets to 0 |
+
+---
+
+#### NTF-007
+**Name:** Push token registration on new device  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | User logs in on new device | `push_tokens` row inserted with new token + device_id |
+| 2 | Both devices receive notifications | — |
+
+---
+
+#### NTF-008
+**Name:** Stale push token — Expo delivery failure  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Push token invalid (app uninstalled then reinstalled) | Expo returns DeviceNotRegistered error |
+| 2 | System response | Stale token removed from `push_tokens` |
+
+---
+
+#### NTF-009
+**Name:** Job confirmation notification with confirmation code  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider commits to job | `send-confirm-notification` fires |
+| 2 | Client receives push | Deep link to job confirmation screen |
+| 3 | Confirm code displayed in app | 6-digit code shown |
+
+---
+
+#### NTF-010
+**Name:** Subscription expiry warning — 3 days before  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | `notification-engine` scheduler runs | Checks all providers with `subscription_ends` within 3 days |
+| 2 | Each matching provider notified | Push: "اشتراكك ينتهي قريباً" |
+
+---
+
+#### NTF-011 – NTF-022 (Additional Notification Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| NTF-011 | Job rated notification to provider | High | Functional |
+| NTF-012 | No-bids notification to client after 24h | High | Functional |
+| NTF-013 | Urgent request notification priority (marked urgent in OS) | High | Functional |
+| NTF-014 | Notification preferences screen — UI reflects saved settings | Medium | UI/UX |
+| NTF-015 | A/B variant tracked in notification_log | Low | Functional |
+| NTF-016 | Notification opened_at tracked on tap | Medium | Functional |
+| NTF-017 | converted_at tracked on action after notification | Medium | Functional |
+| NTF-018 | Admin broadcasts notification to all users | High | Functional |
+| NTF-019 | Admin broadcasts to providers only segment | High | Functional |
+| NTF-020 | Notification body truncated at OS level (> 100 chars) | Low | UI/UX |
+| NTF-021 | Notification badge count accurate on iOS (App Badge) | Medium | Functional |
+| NTF-022 | Background notification wake — app in background receives | High | Functional |
+
+---
+
+## 10. PRO — Provider Profile & Portfolio
+
+### High-Risk Areas
+- Public profile link sharing (`p/[username]`) — unauthenticated access
+- Portfolio image before/after pair alignment
+- Verified badge display after 25 jobs
+- Profile view count (debounce to prevent inflation)
+- Portfolio video upload size and codec
+
+---
+
+#### PRO-001
+**Name:** Provider views own profile — all stats correct  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider opens `(provider)/profile.tsx` | `score`, `lifetime_jobs`, `subscription_tier`, `reputation_tier` displayed |
+| 2 | Verify tier badge | Correct tier label shown in Arabic |
+| 3 | Verify verified badge | Only if `badge_verified=true` (25+ jobs) |
+
+---
+
+#### PRO-002
+**Name:** Client views provider public profile  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client taps provider name in bid list | provider-profile.tsx opens |
+| 2 | Check fields shown | bio, categories, score, ratings count, portfolio, verified badge |
+| 3 | Client's own contact info | NOT shown to other clients (privacy) |
+
+---
+
+#### PRO-003
+**Name:** Public provider profile link (unauthenticated)  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider shares profile link: `/p/[username]` | Opens in browser without login |
+| 2 | Content shown | bio, categories, portfolio, ratings |
+| 3 | Sensitive data | NOT exposed (phone, email, exact location) |
+
+---
+
+#### PRO-004
+**Name:** Provider adds portfolio item — single image  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open portfolio-add.tsx | Type selector: single/before_after/video |
+| 2 | Select single; upload JPEG; add title_ar and description_ar; pick category | — |
+| 3 | Submit | `portfolio_items` row: `item_type='single'`; `media_urls[0]` = Storage URL |
+
+---
+
+#### PRO-005
+**Name:** Provider adds before/after portfolio item  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Select before_after type | Two upload slots shown |
+| 2 | Upload before image and after image | `media_urls` = [before_url, after_url] |
+| 3 | Submit | Side-by-side view in portfolio |
+
+---
+
+#### PRO-006
+**Name:** Portfolio item missing title — rejected  
+**Priority:** Medium | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Submit portfolio item without `title_ar` | Error: "أضف عنواناً للعمل" |
+
+---
+
+#### PRO-007
+**Name:** Portfolio video — valid MP4 upload  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Select video type; upload valid .mp4 < 50MB | `item_type='video'`; `video_url` set |
+| 2 | View in portfolio | Video playback works |
+
+---
+
+#### PRO-008
+**Name:** Portfolio video > 50MB — rejected  
+**Priority:** Medium | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Upload .mp4 > 50MB | Error: "حجم الفيديو يجب أن يكون أقل من 50MB" |
+
+---
+
+#### PRO-009
+**Name:** `show_public=false` — profile not accessible via link  
+**Priority:** High | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider sets `show_public=false` | — |
+| 2 | Access `/p/[username]` | 404 or "الملف الشخصي غير متاح" |
+
+---
+
+#### PRO-010
+**Name:** Provider saves client  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client taps "حفظ" on provider profile | `saved_providers` row: `client_id, provider_id, note?` |
+| 2 | View saved providers list | Provider appears in `(client)/saved-providers.tsx` |
+
+---
+
+#### PRO-011
+**Name:** Provider score calculation — weighted average  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider has 3 jobs: ratings 5, 4, 3 | `score = (5+4+3)/3 = 4.00` |
+| 2 | Complete 4th job: rating 2 | `score = (5+4+3+2)/4 = 3.50` |
+
+---
+
+#### PRO-012 – PRO-022 (Additional Profile Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| PRO-012 | Verified badge shown in bid list and provider search | High | UI/UX |
+| PRO-013 | Provider availability toggle (is_available) | Medium | Functional |
+| PRO-014 | Provider categories update — bids filtered by new categories | High | Functional |
+| PRO-015 | profile_views incremented each time public profile opened | Medium | Functional |
+| PRO-016 | Portfolio views_count incremented on item view | Low | Functional |
+| PRO-017 | Provider share profile — channel tracked in share_events | Low | Functional |
+| PRO-018 | Delete portfolio item | Medium | Functional |
+| PRO-019 | Portfolio limited to 20 items (verify business rule) | Medium | Boundary |
+| PRO-020 | Provider bio > 500 chars — truncated or rejected | Medium | Boundary |
+| PRO-021 | Provider profile photo custom crop (4:3 aspect) | Medium | Functional |
+| PRO-022 | Provider dashboard analytics — daily stats accuracy | Medium | Functional |
+
+---
+
+## 11. CNT — Recurring Contracts
+
+### High-Risk Areas
+- Visit scheduling logic (preferred_day + frequency calculation)
+- Contract bid credit cost (3 credits)
+- Pause/resume contract — visit rescheduling
+- Contract completion after all visits done
+- Contract bid multiple providers competing
+
+---
+
+#### CNT-001
+**Name:** Client creates weekly recurring contract  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open recurring-request.tsx | Form shown |
+| 2 | Select frequency=weekly, duration=3 months, preferred_day=Sunday, preferred_time_window=morning | — |
+| 3 | Submit | `recurring_contracts` row: `status='bidding'`; `total_visits = 4×3 = 12` (4/month × 3 months) |
+
+---
+
+#### CNT-002
+**Name:** Provider bids on contract — 3 credits deducted  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Subscribed provider views contract and bids 25 JOD/visit | `contract_bids` row; `credit_cost=3`; credits -3 |
+| 2 | Client notified | Push: "عرض جديد على عقدك الدوري" |
+
+---
+
+#### CNT-003
+**Name:** Client accepts contract bid — contract activated  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client selects provider bid | `recurring_contracts.status='active'`; `provider_id` set; `starts_at=now()` |
+| 2 | `contract_visits` auto-generated | 12 rows created for weekly contract (3 months × 4 visits) |
+| 3 | Provider notified | Push: "تم قبول عرضك على العقد الدوري" |
+
+---
+
+#### CNT-004
+**Name:** Visit completed and rated  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider completes visit | `contract_visits.status='completed'`; `completed_at=now()` |
+| 2 | Client rates visit 4 stars | `client_rating=4`; `client_note` optional |
+| 3 | `completed_visits` count | Incremented by 1 |
+
+---
+
+#### CNT-005
+**Name:** Visit postponed  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client postpones scheduled visit | `contract_visits.status='postponed'`; `postponed_to` date set |
+| 2 | New visit scheduled | New row in `contract_visits` with updated date |
+
+---
+
+#### CNT-006
+**Name:** Contract paused — visit scheduling halted  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client pauses contract | `status='paused'` |
+| 2 | No new visits scheduled | Upcoming visits remain in `scheduled` status until resume |
+
+---
+
+#### CNT-007
+**Name:** Contract resumed after pause  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client resumes paused contract | `status='active'` |
+| 2 | Visit schedule adjusted | Remaining visits rescheduled from resume date |
+
+---
+
+#### CNT-008
+**Name:** Contract cancelled mid-term  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client cancels active contract | `status='cancelled'`; `cancelled_log` updated |
+| 2 | Upcoming visits | Marked as missed or removed |
+| 3 | Provider notified | Push: "تم إلغاء العقد الدوري" |
+
+---
+
+#### CNT-009
+**Name:** Contract auto-completes after all visits done  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Last visit completed | `completed_visits = total_visits` |
+| 2 | System | `status='completed'`; `ends_at` set |
+
+---
+
+#### CNT-010
+**Name:** Biweekly contract — correct visit count  
+**Priority:** High | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Biweekly, 6-month duration | `total_visits = 2×6 = 12` |
+| 2 | Monthly, 12-month duration | `total_visits = 1×12 = 12` |
+| 3 | Weekly, 12-month duration | `total_visits = 4×12 = 48` |
+
+---
+
+#### CNT-011
+**Name:** Invalid duration_months value  
+**Priority:** High | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Attempt to submit with duration_months=5 | Error: "المدة يجب أن تكون 3 أو 6 أو 12 شهراً" |
+| 2 | Submit with duration_months=0 | Same error |
+
+---
+
+#### CNT-012
+**Name:** Preferred day — boundary values  
+**Priority:** Medium | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | preferred_day=0 (Sunday) | Valid |
+| 2 | preferred_day=6 (Saturday) | Valid |
+| 3 | preferred_day=7 | Rejected: "يوم غير صحيح" |
+| 4 | preferred_day=-1 | Rejected |
+
+---
+
+#### CNT-013 – CNT-028 (Additional Contract Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| CNT-013 | Multiple providers bid on same contract | Medium | Functional |
+| CNT-014 | Contract bid note max length | Low | Boundary |
+| CNT-015 | Unsubscribed provider bids on contract — blocked | Critical | Security |
+| CNT-016 | Client cannot accept bid after contract already active | High | Negative |
+| CNT-017 | Contract visit marked missed if not completed | High | Functional |
+| CNT-018 | Contract detail shows visit history and upcoming | Medium | Functional |
+| CNT-019 | Contract bid withdrawal before acceptance | Medium | Functional |
+| CNT-020 | Contract in bidding status for > 7 days — admin alert | Medium | Functional |
+| CNT-021 | visit status transitions: scheduled→completed, scheduled→postponed, scheduled→missed | High | Functional |
+| CNT-022 | Provider unavailable for a visit — reschedule flow | Medium | Functional |
+| CNT-023 | Contract with notes field — max 1000 chars | Low | Boundary |
+| CNT-024 | Contract chat linked to contract (not job) | Medium | Functional |
+| CNT-025 | Contract appears in both client and provider contract lists | High | Functional |
+| CNT-026 | Contract bid credit cost scales correctly per tier | Critical | Functional |
+| CNT-027 | Client rates individual visits — contract overall rating aggregated | Medium | Functional |
+| CNT-028 | Contract deleted when in bidding state with no bids for 30 days | Low | Functional |
+
+---
+
+## 12. SPT — Support & Help Center
+
+### High-Risk Areas
+- Attachment upload (PDF/image/video) to tickets
+- Ticket resolution rating
+- Admin assignment and response time
+- FAQ search relevance
+- Urgent vs normal priority routing
+
+---
+
+#### SPT-001
+**Name:** Client creates support ticket  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open support-new.tsx | Category picker + priority + subject + body |
+| 2 | Select category: payment, priority: urgent | — |
+| 3 | Enter subject and body | — |
+| 4 | Submit | `support_tickets` row: `status='open'`; `opened_at=now()` |
+
+---
+
+#### SPT-002
+**Name:** Ticket attachment — image upload  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Attach image to ticket message | `support_messages.attachment_url` set; `attachment_type='image'` |
+
+---
+
+#### SPT-003
+**Name:** Admin replies to ticket  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Admin opens ticket in admin portal | support/[id].tsx loaded |
+| 2 | Admin types reply and sends | `support_messages` row: `is_admin=true`; `sender_id=null` (or admin id) |
+| 3 | User notified | Push: "ردّ الدعم على طلبك" |
+
+---
+
+#### SPT-004
+**Name:** Ticket resolved — user rates resolution  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Admin marks ticket 'resolved' | `status='resolved'`; `resolved_at=now()` |
+| 2 | User sees rating prompt | 1–5 stars + note |
+| 3 | Submit rating | `support_tickets.rating=4`; `rating_note` saved |
+
+---
+
+#### SPT-005
+**Name:** Ticket category: all 6 valid values  
+**Priority:** Medium | **Type:** Boundary
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Submit ticket for each category: payment, order, provider, account, contract, other | All create valid tickets |
+| 2 | Submit with unknown category | Rejected by form or API |
+
+---
+
+#### SPT-006
+**Name:** FAQ search — relevant results  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open help-center.tsx | FAQ list shown |
+| 2 | Search "اشتراك" | FAQ items with matching question/answer shown |
+| 3 | Search with no matches | "لا توجد نتائج" message |
+
+---
+
+#### SPT-007
+**Name:** Create ticket without subject  
+**Priority:** Medium | **Type:** Negative
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Submit ticket with empty subject | Error: "الموضوع مطلوب" |
+
+---
+
+#### SPT-008
+**Name:** Ticket history visible to ticket owner only  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client A views Client B's ticket via API | RLS policy blocks; 0 results returned |
+
+---
+
+#### SPT-009 – SPT-018 (Additional Support Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| SPT-009 | Admin assigns ticket to specific admin | Medium | Functional |
+| SPT-010 | Admin uses canned response | Medium | Functional |
+| SPT-011 | Ticket status transitions: open→in_review→resolved→closed | High | Functional |
+| SPT-012 | Urgent ticket sorted to top of admin queue | High | Functional |
+| SPT-013 | Closed ticket cannot receive new messages | Medium | Negative |
+| SPT-014 | User receives notification on each admin reply | High | Functional |
+| SPT-015 | Attachment PDF download in admin portal | Medium | Functional |
+| SPT-016 | Admin views all tickets (admin_all_tickets RLS policy) | Critical | Security |
+| SPT-017 | FAQ inactive items not shown to users | Medium | Functional |
+| SPT-018 | Support ticket plan_tier recorded correctly | Low | Functional |
+
+---
+
+## 13. ADM — Admin Portal
+
+### High-Risk Areas
+- Admin authentication — no mobile OTP; separate auth flow
+- Provider suspension — cascading effects on active jobs/bids
+- Category min/max changes — affecting live bids
+- Audit log completeness
+- Notification broadcast to large segments
+
+---
+
+#### ADM-001
+**Name:** Admin login  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to admin/login | Login form shown |
+| 2 | Enter admin credentials | Authenticated; `users.role='admin'` verified |
+| 3 | Non-admin credentials | Access denied |
+
+---
+
+#### ADM-002
+**Name:** Admin dashboard — KPIs accurate  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open admin `/` | KPIs shown: total users, providers, requests, active jobs |
+| 2 | Compare with direct DB counts | Values match within 5-minute cache window |
+
+---
+
+#### ADM-003
+**Name:** Admin suspends provider  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Find provider in /providers list | — |
+| 2 | Tap Suspend | `users.role` or status flagged; `is_subscribed=false`? |
+| 3 | Provider attempts login | Blocked or shown suspension notice |
+| 4 | Active bids | Auto-withdrawn? (verify business rule) |
+| 5 | Audit log | `audit` table records admin_id, action, target, timestamp |
+
+---
+
+#### ADM-004
+**Name:** Admin manually activates subscription after CliQ payment  
+**Priority:** Critical | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Admin finds provider in /providers | — |
+| 2 | Select "تفعيل اشتراك" → choose Pro, 1 month | Calls `admin_activate_subscription()` RPC |
+| 3 | Provider credentials | `subscription_tier='pro'`; credits=50; `subscription_ends` set |
+| 4 | Audit log | Action logged |
+
+---
+
+#### ADM-005
+**Name:** Admin sets category bid limits  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to /category-limits | Category list with current min/max |
+| 2 | Update "electrical" min=15, max=500 JOD | POST to /api/category-limits |
+| 3 | Provider tries to bid 10 JOD on electrical | App rejects with min limit error |
+
+---
+
+#### ADM-006
+**Name:** Admin disables a service category  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to /categories | Category list |
+| 2 | Toggle "gardening" to inactive | `service_categories.is_active=false` |
+| 3 | Client opens category picker | "gardening" not shown |
+| 4 | Existing requests in gardening | Not affected |
+
+---
+
+#### ADM-007
+**Name:** Admin views and resolves abuse report  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to /abuse-reports | Pending reports listed |
+| 2 | Open report: type=fake_bid | Reporter, reported user, request details shown |
+| 3 | Set status=resolved, add admin_notes | `reports.status='resolved'`; `reviewed_at=now()` |
+| 4 | Audit log | Recorded |
+
+---
+
+#### ADM-008
+**Name:** Admin broadcasts notification to all users  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to /notifications → Create broadcast | Target: all, message body entered |
+| 2 | Send | Push sent to all `push_tokens`; `notification_log` entries created |
+| 3 | Admin cannot send to > 10,000 users without rate limit check | System queues in batches |
+
+---
+
+#### ADM-009
+**Name:** Admin cannot access another admin's audit actions  
+**Priority:** High | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Admin A views /audit | Only all admins' combined audit shown (full audit access) |
+
+---
+
+#### ADM-010
+**Name:** Non-admin cannot access admin portal routes  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Authenticated provider attempts to access /admin/providers | 403 or redirect to login |
+| 2 | Unauthenticated user | Redirected to /admin/login |
+
+---
+
+#### ADM-011
+**Name:** Admin views cancellation patterns  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to /cancellations | List of cancelled jobs: who_cancelled, reason_code, date |
+| 2 | Filter by provider or reason | Filtered results |
+
+---
+
+#### ADM-012
+**Name:** Admin manages recurring contract — pause  
+**Priority:** Medium | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to /contracts → find active contract | — |
+| 2 | Admin pauses contract | `status='paused'`; audit log updated |
+
+---
+
+#### ADM-013
+**Name:** Admin updates platform settings  
+**Priority:** High | **Type:** Functional
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Navigate to /settings | Configurable values: grace period, credit costs, etc. |
+| 2 | Update grace period from 60s to 90s | Setting saved; subsequent jobs use 90s grace |
+
+---
+
+#### ADM-014
+**Name:** Admin audit log — immutable entries  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Admin performs action | Audit entry created |
+| 2 | Attempt to delete audit entry via API | RLS denies; no DELETE policy on audit table |
+
+---
+
+#### ADM-015 – ADM-036 (Additional Admin Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| ADM-015 | Admin views provider subscription history | Medium | Functional |
+| ADM-016 | Admin search providers by name/phone | High | Functional |
+| ADM-017 | Admin filters requests by status, city, category | High | Functional |
+| ADM-018 | Admin views request detail + all bids | High | Functional |
+| ADM-019 | Admin re-triggers request matching | Medium | Functional |
+| ADM-020 | Admin adds FAQ item | Medium | Functional |
+| ADM-021 | Admin edits FAQ item | Medium | Functional |
+| ADM-022 | Admin deletes inactive FAQ | Medium | Functional |
+| ADM-023 | Admin views analytics/reports dashboard | Medium | Functional |
+| ADM-024 | Admin impersonates provider to debug issue | High | Security |
+| ADM-025 | Admin portal session timeout | High | Security |
+| ADM-026 | Admin rate limited on bulk actions (e.g., send 1000 notifications) | High | Performance |
+| ADM-027 | Admin creates new service category with icon | Medium | Functional |
+| ADM-028 | Admin changes category sort_order | Low | Functional |
+| ADM-029 | Admin verifies provider badge manually | High | Functional |
+| ADM-030 | Admin disputes: transition job to disputed and resolve | High | Functional |
+| ADM-031 | Admin portal — responsive on 1280px width | Medium | UI/UX |
+| ADM-032 | Admin portal — RTL layout for Arabic content | Medium | Localization |
+| ADM-033 | Admin exports data (if CSV export feature present) | Low | Functional |
+| ADM-034 | Admin login attempt from new IP — alert (if MFA present) | High | Security |
+| ADM-035 | Admin portal down for maintenance — graceful error page | Low | Functional |
+| ADM-036 | Admin portal API calls use service role key (not anon key) | Critical | Security |
+
+---
+
+## 14. SEC — Security Testing
+
+### Scope
+RLS (Row-Level Security), injection attacks, authorization bypass, token security, API rate limiting, data exposure.
+
+---
+
+#### SEC-001
+**Name:** Horizontal privilege escalation — client reads another client's requests  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client A authenticates; knows Client B's request_id | — |
+| 2 | GET `/rest/v1/requests?id=eq.[B's request_id]` with A's token | Returns 0 rows (RLS blocks) |
+
+---
+
+#### SEC-002
+**Name:** Provider reads client messages from unrelated job  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider X accesses messages for job_id where X is not provider | 0 rows returned; RLS enforcement |
+
+---
+
+#### SEC-003
+**Name:** Client self-escalation via profile update  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | PATCH `/rest/v1/users` setting `role='admin'` | RLS denies field update; role unchanged |
+
+---
+
+#### SEC-004
+**Name:** Provider modifies another provider's credits  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider A PATCHes `/rest/v1/providers?id=eq.[B's id]` setting credits=1000 | RLS: only own record updatable; denied |
+
+---
+
+#### SEC-005
+**Name:** SQL injection in request title  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Submit title: `'; DROP TABLE requests; --` | Parameterized queries used by Supabase SDK; SQL injected as literal string; no execution |
+
+---
+
+#### SEC-006
+**Name:** XSS in bid note rendered in admin portal  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Submit bid note: `<img src=x onerror=alert(1)>` | Admin portal (Next.js) renders as escaped text; no script execution |
+
+---
+
+#### SEC-007
+**Name:** JWT token tampering  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Modify JWT payload (e.g., change `sub` to another user's UUID) | Supabase rejects: signature invalid; 401 |
+
+---
+
+#### SEC-008
+**Name:** Expired JWT token still used  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Use expired access token | 401 Unauthorized; refresh token flow triggered |
+
+---
+
+#### SEC-009
+**Name:** API rate limiting on OTP send  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Send OTP request 10 times in 1 minute from same IP | Rate limit engaged after threshold; 429 Too Many Requests |
+
+---
+
+#### SEC-010
+**Name:** Paddle webhook without valid signature  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | POST to `/paddle-webhook` with forged payload | Signature verification fails; 401; subscription NOT activated |
+
+---
+
+#### SEC-011
+**Name:** Direct bid submission bypassing credit check  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | POST bid directly to `/rest/v1/bids` (bypassing `submit_bid_with_credits` RPC) | If INSERT policy exists without credit check, bid created without deduction — VULNERABILITY |
+| 2 | Verify | `bids` table INSERT policy must require `submit_bid_with_credits` RPC |
+
+---
+
+#### SEC-012
+**Name:** Public provider page exposes PII  
+**Priority:** High | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Unauthenticated user fetches `/provider-page` function | Returns: bio, categories, score, portfolio — NOT phone, email, location |
+
+---
+
+#### SEC-013
+**Name:** Supabase anon key exposed in mobile bundle  
+**Priority:** High | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Extract mobile app bundle; search for anon key | Key present (expected for Supabase) — verify RLS policies compensate; no service_role key embedded |
+
+---
+
+#### SEC-014
+**Name:** IDOR on job cancellation  
+**Priority:** Critical | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client A attempts to cancel Client B's job | RLS denies; only job participants can cancel |
+
+---
+
+#### SEC-015
+**Name:** Concurrent grace period undo + provider commit  
+**Priority:** High | **Type:** Concurrency/Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client undo and provider commit arrive simultaneously | Atomic transaction; one wins consistently; no half-state |
+
+---
+
+#### SEC-016
+**Name:** Mass enumeration of provider usernames  
+**Priority:** Medium | **Type:** Security
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Sequential requests to `/p/[username]` with guessed usernames | Rate limit after N requests; no enumeration without throttle |
+
+---
+
+#### SEC-017 – SEC-028 (Additional Security Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| SEC-017 | File upload — path traversal in filename | Critical | Security |
+| SEC-018 | Audio/video content moderation (malicious file disguised as media) | High | Security |
+| SEC-019 | Admin portal CSRF protection | High | Security |
+| SEC-020 | Supabase Storage bucket policies — private vs public | Critical | Security |
+| SEC-021 | OTP timing attack — response time reveals valid phone | Medium | Security |
+| SEC-022 | Provider bid amount injection (negative/float overflow) | High | Security |
+| SEC-023 | Phone number enumeration via OTP endpoint timing | Medium | Security |
+| SEC-024 | Admin session remains after logout | High | Security |
+| SEC-025 | Support ticket attachment — script file disguised as PDF | Critical | Security |
+| SEC-026 | User report IDOR — read another user's report | High | Security |
+| SEC-027 | Notification dispatch — send to arbitrary user IDs | Critical | Security |
+| SEC-028 | Contract bid injection — price = 0 or negative | High | Security |
+
+---
+
+## 15. PER — Performance & Load
+
+### Targets
+- Home feed load: < 2 seconds
+- Bid submission (credit deduction RPC): < 500ms p95
+- Push notification delivery: < 60 seconds
+- Admin dashboard KPIs: < 3 seconds
+- Chat message delivery (realtime): < 2 seconds
+
+---
+
+#### PER-001
+**Name:** Provider home feed — 100 concurrent users  
+**Priority:** Critical | **Type:** Performance
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Simulate 100 providers loading home feed simultaneously | P95 response < 2s; no 5xx errors |
+| 2 | Monitor Supabase connection pool | Not exhausted |
+
+---
+
+#### PER-002
+**Name:** Bid submission RPC under load — credit deduction race  
+**Priority:** Critical | **Type:** Performance/Concurrency
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | 50 providers simultaneously submit bids on 50 different requests | All RPCs complete < 500ms p95 |
+| 2 | Each provider has exactly 1 credit | Each loses exactly 1 credit; no negative balances |
+
+---
+
+#### PER-003
+**Name:** Client request list with 100+ requests  
+**Priority:** High | **Type:** Performance
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client with 100 historical requests opens requests.tsx | List renders < 2s with virtual scroll |
+| 2 | Scroll to bottom | No jank; pagination loads correctly |
+
+---
+
+#### PER-004
+**Name:** Chat with 500+ messages  
+**Priority:** High | **Type:** Performance
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open chat.tsx with 500 messages | Paginated load; oldest messages not loaded until scroll up |
+| 2 | Scroll to top | History loads in batches < 1s per batch |
+
+---
+
+#### PER-005
+**Name:** Push notification broadcast to 10,000 providers  
+**Priority:** High | **Type:** Performance
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Admin broadcasts notification to all providers | Processed in batches; Expo rate limits respected |
+| 2 | Delivery time | All delivered within 5 minutes |
+
+---
+
+#### PER-006
+**Name:** Supabase Realtime — 200 concurrent chat sessions  
+**Priority:** High | **Type:** Performance
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | 200 pairs of client+provider have open chat | Supabase Realtime channel capacity not exceeded |
+| 2 | Message delivery | < 2s for all sessions |
+
+---
+
+#### PER-007
+**Name:** Image upload performance — 3 images × 4MB each  
+**Priority:** High | **Type:** Performance
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Upload 3 × 4MB images on slow 4G connection (10Mbps) | Upload completes within 15s; progress bar shown |
+| 2 | Upload fails mid-way | Partial upload cleaned up; retry offered |
+
+---
+
+#### PER-008
+**Name:** Admin dashboard with 50,000 users  
+**Priority:** High | **Type:** Performance
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open admin `/` with 50k users in DB | KPIs computed < 3s (indexed count queries) |
+
+---
+
+#### PER-009
+**Name:** k6 load test — bid flow  
+**Priority:** Critical | **Type:** Performance
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Run k6 script: 100 VUs × 5 min, bid submission flow | Error rate < 1%; p99 < 1s; no DB connection exhaustion |
+
+**Reference:** Supabase Production Requirements memory (k6 results on file).
+
+---
+
+#### PER-010 – PER-018 (Additional Performance Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| PER-010 | Provider search — 1000 providers, filter by city + category | High | Performance |
+| PER-011 | Notification engine scheduler — handles 10k events/hour | High | Performance |
+| PER-012 | Contract visit auto-scheduling — 1000 contracts at midnight | High | Performance |
+| PER-013 | OTP send rate — 500 concurrent OTP requests | High | Performance |
+| PER-014 | App cold start time — < 3s on mid-range Android | Medium | Performance |
+| PER-015 | App memory usage — < 250MB after 30 min session | Medium | Performance |
+| PER-016 | Admin portal login response < 1s | Medium | Performance |
+| PER-017 | Supabase Edge Function cold start < 2s | Medium | Performance |
+| PER-018 | Database index verification — requests by (client_id, status) | High | Performance |
+
+---
+
+## 16. LOC — Localization & RTL
+
+### Scope
+Arabic (ar) primary language with RTL layout; English (en) optional. All text from `i18next` translation files. RTL enforced via React Native's `I18nManager`.
+
+---
+
+#### LOC-001
+**Name:** All screens render Arabic text correctly  
+**Priority:** Critical | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Set device language to Arabic | App uses `ar` translations |
+| 2 | Navigate through all major screens | No missing translation keys (no English fallback text visible) |
+| 3 | Check for truncated Arabic text | All UI elements accommodate longer Arabic strings |
+
+---
+
+#### LOC-002
+**Name:** RTL layout — all screens  
+**Priority:** Critical | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | App in Arabic mode | `I18nManager.isRTL = true` |
+| 2 | Check navigation arrows | Back arrows point right; forward arrows point left |
+| 3 | Check form fields | Aligned right; text flows right-to-left |
+| 4 | Check bid list | Provider names right-aligned; amounts left-aligned (numeric) |
+
+---
+
+#### LOC-003
+**Name:** Category names displayed in Arabic  
+**Priority:** High | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open category picker | `service_categories.name_ar` shown; not `name_en` |
+| 2 | Check group headers | `group_ar` shown |
+
+---
+
+#### LOC-004
+**Name:** Error messages in Arabic  
+**Priority:** High | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Trigger any validation error | Error message in Arabic; no English error |
+| 2 | Network error | "خطأ في الاتصال. تحقق من اتصالك بالإنترنت" (Arabic) |
+
+---
+
+#### LOC-005
+**Name:** Date and time formatting — Arabic locale  
+**Priority:** High | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | View job created_at in Arabic mode | Date formatted per Arabic convention (day/month/year or Hijri?) |
+| 2 | Check time in notification | 24h or 12h as per locale standard |
+
+---
+
+#### LOC-006
+**Name:** Currency display — JOD  
+**Priority:** High | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Bid amount displayed | "35 د.أ" (Arabic JOD abbreviation) or "35 JOD" |
+| 2 | Consistent across all screens | Same format everywhere |
+
+---
+
+#### LOC-007
+**Name:** Number formatting (Arabic-Indic numerals)  
+**Priority:** Medium | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | View bid amount, credit count, ratings in Arabic mode | Arabic-Indic numerals (٠١٢٣٤) if per locale requirement, or Western numerals (design decision) |
+
+---
+
+#### LOC-008
+**Name:** Portfolio title_ar and description_ar in RTL  
+**Priority:** Medium | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | View portfolio item | Arabic title flows RTL; no text collision with image |
+
+---
+
+#### LOC-009
+**Name:** Support ticket — Arabic body text  
+**Priority:** Medium | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Create ticket with Arabic body | Text direction correct; RTL enforced in textarea |
+| 2 | Admin portal shows Arabic text correctly | Next.js portal renders Arabic RTL in ticket thread |
+
+---
+
+#### LOC-010
+**Name:** Push notification body in Arabic  
+**Priority:** High | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | All push notification templates | Body text in Arabic |
+| 2 | OS notification shade | Arabic text displays without corruption |
+
+---
+
+#### LOC-011 – LOC-014 (Additional Localization Cases)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| LOC-011 | Onboarding slides — all text in Arabic; RTL layout | High | Localization |
+| LOC-012 | English fallback text not visible in production build | High | Localization |
+| LOC-013 | City names in Arabic (عمّان, الزرقاء, إربد...) | Medium | Localization |
+| LOC-014 | Admin portal — category group names in Arabic | Low | Localization |
+
+---
+
+## 17. Risk Assessment
+
+### Critical Risk Areas
+
+| Risk | Affected Area | Likelihood | Impact | Mitigation |
+|------|--------------|-----------|--------|-----------|
+| Credit deduction race condition | BID-015 | Medium | Critical | Row-level locking in `submit_bid_with_credits` RPC |
+| Paddle webhook replay attack | SUB-004 | Low | Critical | Idempotency check on `paddle_txn_id` |
+| JWT token misuse (provider accessing client data) | SEC-001–SEC-004 | Medium | Critical | RLS policies on all tables |
+| Grace period timer drift (client/server clock skew) | JOB-001 | Low | High | Server-side timer; do not trust client clock |
+| OTP brute-force | AUTH-004 | High | Critical | 3-attempt limit + lockout |
+| Provider commitment deadline race | JOB-005 | Medium | High | Server-side deadline check; auto-decline job |
+| Confirmation code replay | JOB-029 | Low | High | Single-use code; mark used after confirm |
+| Push token staleness | NTF-008 | Medium | Medium | Expo DeviceNotRegistered cleanup |
+| Image upload to wrong bucket | SEC-020 | Low | High | Supabase bucket policies: private for chat, public for portfolio |
+| Admin portal not enforcing RLS | ADM-036 | Low | Critical | Admin uses service_role key; audit log required |
+
+### High-Risk Areas by Module
+
+| Module | High-Risk Scenarios |
+|--------|-------------------|
+| AUTH | OTP brute-force, duplicate phone, session persistence |
+| BID | Credit race condition, unsubscribed bypass, 24h cooldown |
+| JOB | Grace/commitment timers, confirmation code security |
+| SUB | Paddle webhook integrity, trial re-use, credit reset |
+| SEC | RLS bypass, XSS in admin, JWT tampering |
+| ADM | Service role key security, audit immutability |
+| PER | DB connection pool under load, push broadcast scale |
+
+---
+
+## 18. Regression Suite
+
+### Critical Regression Pack (Run on every release)
+
+These 30 test cases must pass before any production deployment:
+
+| # | Test Case ID | Description |
+|---|-------------|-------------|
+| 1 | AUTH-001 | New client registration |
+| 2 | AUTH-002 | New provider registration |
+| 3 | AUTH-003 | OTP expiry |
+| 4 | AUTH-004 | OTP brute-force block |
+| 5 | REQ-001 | Create standard request |
+| 6 | REQ-008 | Create urgent request |
+| 7 | BID-001 | Bid submission + credit deduction |
+| 8 | BID-004 | Zero credits → bid blocked |
+| 9 | BID-006 | 24h rejection cooldown |
+| 10 | BID-011 | Client accepts bid → job created |
+| 11 | BID-015 | Concurrent bid credit race |
+| 12 | JOB-001 | Grace period undo |
+| 13 | JOB-003 | Provider commits in time |
+| 14 | JOB-005 | Provider missed deadline → auto-decline |
+| 15 | JOB-006 | Confirmation code → job complete |
+| 16 | JOB-007 | Wrong confirmation code rejected |
+| 17 | JOB-009 | Rating → provider score update |
+| 18 | JOB-012 | Loyalty tier upgrade at 10 jobs |
+| 19 | SUB-001 | Trial activation |
+| 20 | SUB-002 | Trial cannot be used twice |
+| 21 | SUB-003 | Paddle webhook → subscription active |
+| 22 | SUB-004 | Paddle webhook idempotency |
+| 23 | SUB-008 | Expired subscription → bids blocked |
+| 24 | SUB-011 | Admin manual subscription activation |
+| 25 | SEC-001 | RLS: client cannot read other clients' requests |
+| 26 | SEC-004 | RLS: provider cannot modify another's credits |
+| 27 | SEC-010 | Paddle webhook signature verification |
+| 28 | SEC-011 | Bid bypass credit check attempt |
+| 29 | MSG-007 | Realtime chat delivery |
+| 30 | NTF-001 | New bid notification delivered |
+
+### Smoke Test Pack (Run on every PR merge — 5 min target)
+
+| # | Test Case | Area |
+|---|----------|------|
+| 1 | AUTH-001 | Login/register |
+| 2 | REQ-001 | Create request |
+| 3 | BID-001 | Submit bid |
+| 4 | BID-011 | Accept bid |
+| 5 | JOB-003 | Provider commit |
+| 6 | SUB-003 | Paddle webhook |
+| 7 | SEC-001 | RLS baseline |
+
+---
+
+## 19. Automation Candidates
+
+### Tier 1 — Must Automate (High ROI, deterministic)
+
+| Test ID | Tool | Reason |
+|---------|------|--------|
+| AUTH-001–005 | Detox E2E | Login/register — runs on every build |
+| BID-001, BID-004, BID-015 | Jest + Supabase test client | Credit deduction is business-critical; race condition detectable |
+| SUB-003, SUB-004 | Jest + mock Paddle | Webhook replay + idempotency — catches edge cases |
+| JOB-001, JOB-005 | Jest + mock time | Timer logic — clock manipulation testable |
+| JOB-006, JOB-007 | Detox E2E | Confirmation code flow |
+| SEC-001–SEC-004 | Supabase RLS test suite (pgTAP or JS) | RLS is the security backbone; 100% coverage needed |
+| SEC-010, SEC-011 | Jest + supertest | Webhook security + bid bypass attempt |
+| PER-001, PER-009 | k6 | Load test bid flow on staging |
+| MSG-007 | Playwright + Supabase Realtime | Chat delivery latency assertion |
+
+### Tier 2 — Should Automate (Medium ROI)
+
+| Test ID | Tool | Reason |
+|---------|------|--------|
+| REQ-001–REQ-007 | Detox E2E | Request creation is the entry point to all flows |
+| NTF-001–NTF-003 | Jest + Expo push mock | Notification delivery chain |
+| CNT-001–CNT-004 | Jest integration | Contract creation + visit scheduling |
+| ADM-003, ADM-004, ADM-011 | Playwright (admin portal) | Admin operations affect provider status |
+| LOC-001, LOC-002 | Detox + screenshot diff | RTL layout regression |
+
+### Tier 3 — Manual Only (Low ROI or non-deterministic)
+
+| Test ID | Reason |
+|---------|--------|
+| UI/UX tests (visual alignment, Arabic fonts) | Requires visual inspection |
+| PER-007 (image upload on slow connection) | Environment-dependent |
+| SEC-021 (OTP timing attack) | Requires network analysis tools |
+| LOC-005 (date format cultural correctness) | Cultural judgment required |
+| JOB-014 (dispute resolution) | Workflow-based; admin judgment |
+
+### Suggested Test Infrastructure
+
+```
+Framework:       Jest (unit + integration)
+E2E Mobile:      Detox (React Native)
+E2E Web/Admin:   Playwright
+DB/RLS:          pgTAP or Supabase JS test client
+Load Testing:    k6 (scripts per k6 memory file)
+API Testing:     supertest (Edge Functions)
+Visual Regression: Percy or Chromatic
+CI Trigger:      GitHub Actions on PR + nightly
+Test DB:         Supabase staging project (isolated)
+```
+
+---
+
+## 20. UX — Inline Validation & Error Display
+
+### High-Risk Areas
+- أزرار النماذج الرئيسية تُقبل الضغط بدون بيانات وتُظهر خطأ مفهوم
+- رسائل الخطأ تختفي فور تصحيح البيانات (لا تبقى بعد الإدخال)
+- الأزرار لا تبقى معطّلة بشكل صامت — المستخدم يعرف دائماً ماذا ينقصه
+
+---
+
+#### UX-001
+**Name:** urgent-request — وصف أقل من 10 أحرف عند الضغط على مراجعة  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** المستخدم على شاشة الطلب العاجل، اختار تصنيفاً.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "مراجعة وتأكيد" بدون كتابة وصف | رسالة خطأ حمراء تظهر أسفل حقل الوصف، الشاشة لا تتقدم |
+| 2 | ابدأ الكتابة في حقل الوصف | تختفي رسالة الخطأ فوراً |
+| 3 | أكمل 10 أحرف أو أكثر ثم اضغط | يتقدم إلى شاشة التأكيد بشكل طبيعي |
+
+**Expected Result:** لا Alert popup، رسالة خطأ مضمّنة باللغة العربية، العداد يظهر "X / 10 أحرف كحد أدنى".  
+**Automation Candidate:** No
+
+---
+
+#### UX-002
+**Name:** new-request — ضغط "التالي" بدون عنوان  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** المستخدم اختار تصنيفاً، في الخطوة 2.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اترك حقل العنوان فارغاً واضغط "التالي" | رسالة خطأ حمراء تحت حقل العنوان، border أحمر على الحقل |
+| 2 | أدخل عنواناً | تختفي الرسالة والـ border الأحمر فوراً |
+| 3 | أكمل بقية الحقول واضغط "التالي" | ينتقل إلى الخطوة 3 |
+
+**Expected Result:** لا Alert، رسالة مضمّنة، border الحقل يتحول أحمر.  
+**Automation Candidate:** No
+
+---
+
+#### UX-003
+**Name:** new-request — وصف أقل من 20 حرفاً  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** المستخدم في الخطوة 2، أدخل عنواناً صحيحاً.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أدخل وصفاً أقل من 20 حرفاً واضغط "التالي" | رسالة خطأ تحت حقل الوصف، العداد يتحول "X / 20 أحرف كحد أدنى" |
+| 2 | أضف أحرفاً حتى تتجاوز 20 | تختفي الرسالة، العداد يعود "X/500" |
+
+**Expected Result:** العداد يوضح الحد الأدنى المطلوب وليس الحد الأقصى فقط.  
+**Automation Candidate:** No
+
+---
+
+#### UX-004
+**Name:** new-request — ضغط "التالي" بدون اختيار مدينة  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** الخطوة 2، العنوان والوصف صحيحان.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "التالي" بدون اختيار مدينة | رسالة خطأ أسفل قائمة المدن |
+| 2 | اختر مدينة | تختفي الرسالة فوراً |
+| 3 | اضغط "التالي" | ينتقل إلى الخطوة 3 |
+
+**Expected Result:** رسالة واضحة مضمّنة، لا Alert.  
+**Automation Candidate:** No
+
+---
+
+#### UX-005
+**Name:** support-new — إرسال بدون اختيار نوع المشكلة  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** شاشة تذكرة الدعم مفتوحة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "إرسال" بدون اختيار نوع المشكلة | رسالة خطأ أسفل شبكة الأنواع |
+| 2 | اختر نوعاً | تختفي الرسالة |
+| 3 | أكمل الموضوع والوصف ثم أرسل | يُرسل بنجاح |
+
+**Expected Result:** لا Alert، المستخدم يفهم ماذا ينقصه.  
+**Automation Candidate:** No
+
+---
+
+#### UX-006
+**Name:** support-new — موضوع أقل من 5 أحرف  
+**Priority:** Medium | **Type:** Functional / UX  
+**Preconditions:** اختار نوع المشكلة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أدخل موضوعاً من حرفين واضغط "إرسال" | رسالة خطأ تحت حقل الموضوع، العداد يظهر "X / 5 أحرف كحد أدنى" |
+| 2 | أضف أحرفاً تصل 5 | تختفي الرسالة |
+
+**Expected Result:** العداد يوضح الحد الأدنى، رسالة خطأ عربية مضمّنة.  
+**Automation Candidate:** No
+
+---
+
+#### UX-007
+**Name:** login — ضغط "إرسال الرمز" بدون رقم الهاتف  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** شاشة تسجيل الدخول.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "إرسال الرمز" بدون أي إدخال | رسالة خطأ حمراء تحت حقل الهاتف، لا طلب شبكة يُرسَل |
+| 2 | ابدأ الكتابة في الحقل | تختفي الرسالة فوراً |
+| 3 | أدخل رقماً غير أردني | Alert (هذا مقبول — التحقق من التنسيق) |
+
+**Expected Result:** الحقل الفارغ → رسالة مضمّنة. رقم خاطئ → Alert (مقبول).  
+**Automation Candidate:** No
+
+---
+
+#### UX-008
+**Name:** register — إنشاء حساب بدون اسم أو مدينة  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** المستخدم اجتاز OTP، في شاشة إكمال التسجيل.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "إنشاء حساب" بدون أي إدخال | رسالتا خطأ: إحداها تحت حقل الاسم، وأخرى تحت المدن |
+| 2 | أدخل الاسم فقط ثم اضغط | تختفي رسالة الاسم، تبقى رسالة المدينة |
+| 3 | اختر مدينة ثم اضغط | يُكمل التسجيل |
+
+**Expected Result:** كل حقل له رسالة خطأ مستقلة، تختفي حسب الإدخال.  
+**Automation Candidate:** No
+
+---
+
+#### UX-009
+**Name:** provider bid modal — إرسال عرض بدون مبلغ  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** مزوّد مشترك، فتح مودال البيد على طلب.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "إرسال العرض" بدون إدخال مبلغ | رسالة خطأ حمراء تحت حقل المبلغ، border أحمر على الحقل |
+| 2 | أدخل مبلغاً | تختفي الرسالة |
+| 3 | اضغط "إرسال العرض" | يُرسل العرض بنجاح |
+
+**Expected Result:** لا Alert، لا يُرسَل أي طلب شبكة عند المبلغ الفارغ.  
+**Automation Candidate:** No  
+**ملاحظة:** كرر الاختبار على مودال العقد (Contract Bid) ومودال الـ Demo Bid.
+
+---
+
+#### UX-010
+**Name:** portfolio-add — "التالي" في الخطوة 1 بدون اختيار نوع  
+**Priority:** Medium | **Type:** Functional / UX  
+**Preconditions:** شاشة إضافة عمل في المعرض، الخطوة 1.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "التالي" بدون اختيار نوع العمل | رسالة خطأ حمراء أسفل البطاقات، الشاشة تبقى في الخطوة 1 |
+| 2 | اختر نوعاً | تختفي الرسالة |
+| 3 | اضغط "التالي" | ينتقل إلى الخطوة 2 |
+
+**Expected Result:** لا disabled صامت، رسالة عربية واضحة.  
+**Automation Candidate:** No
+
+---
+
+#### UX-011
+**Name:** portfolio-add — "التالي" في الخطوة 2 بدون رفع صورة  
+**Priority:** Medium | **Type:** Functional / UX  
+**Preconditions:** اختار نوع "صورة واحدة"، في الخطوة 2.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "التالي" بدون رفع أي صورة | رسالة خطأ "يرجى رفع صورة للمتابعة" |
+| 2 | ارفع صورة | تختفي الرسالة |
+| 3 | اضغط "التالي" | ينتقل إلى الخطوة 3 |
+
+**Expected Result:** الرسالة تختفي فور تأكيد الصورة في مودال المعاينة.  
+**Automation Candidate:** No  
+**ملاحظة:** كرر مع "قبل وبعد" (يجب رفع الاثنتين) و"فيديو".
+
+---
+
+#### UX-012
+**Name:** rate-job — إرسال تقييم بدون اختيار نجمة  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** شاشة تقييم المزوّد، الوظيفة مكتملة ومؤكدة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "إرسال التقييم" بدون الضغط على أي نجمة | رسالة خطأ حمراء تحت النجوم |
+| 2 | اضغط على نجمة | تختفي الرسالة فوراً |
+| 3 | اضغط "إرسال التقييم" | يُرسَل التقييم |
+
+**Expected Result:** لا Alert، الزر يعمل دائماً، الخطأ يظهر مضمّناً.  
+**Automation Candidate:** No
+
+---
+
+#### UX-013
+**Name:** chat — إرسال بلاغ بدون اختيار السبب  
+**Priority:** Medium | **Type:** Functional / UX  
+**Preconditions:** شاشة المحادثة، فتح مودال البلاغ.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | في مودال البلاغ، اضغط "إرسال" بدون اختيار سبب | رسالة خطأ حمراء فوق أزرار الإرسال/الإلغاء |
+| 2 | اختر سبباً | تختفي الرسالة |
+| 3 | اضغط "إرسال" | يُرسَل البلاغ |
+
+**Expected Result:** لا disabled صامت، رسالة عربية مضمّنة داخل المودال.  
+**Automation Candidate:** No  
+**ملاحظة:** كرر نفس الاختبار في شاشة `request-detail.tsx`.
+
+---
+
+#### UX-014
+**Name:** provider profile — حفظ المدينة بدون اختيار  
+**Priority:** Medium | **Type:** Functional / UX  
+**Preconditions:** مزوّد مفتوح ملف شخصي، فتح مودال تغيير المدينة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "حفظ" في رأس المودال بدون اختيار مدينة | رسالة خطأ حمراء تظهر داخل المودال أسفل العنوان الفرعي |
+| 2 | اختر مدينة | تختفي الرسالة |
+| 3 | اضغط "حفظ" | يُحفظ ويُغلق المودال |
+
+**Expected Result:** زر "حفظ" يظل قابلاً للضغط، الرسالة تظهر مضمّنة.  
+**Automation Candidate:** No
+
+---
+
+#### UX-015
+**Name:** verify OTP — ضغط "تحقق" بأقل من 6 أرقام  
+**Priority:** High | **Type:** Functional / UX  
+**Preconditions:** شاشة إدخال OTP، أُرسل الرمز.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أدخل 3 أرقام فقط ثم اضغط "تحقق" | رسالة خطأ "يرجى إدخال الرمز المكون من 6 أرقام كاملاً" |
+| 2 | أكمل الأرقام الـ 6 | تختفي الرسالة |
+| 3 | اضغط "تحقق" | يتحقق من الرمز ويُكمل |
+
+**Expected Result:** الزر لا يُرسل أي طلب شبكة عند الرمز الناقص.  
+**Automation Candidate:** No
+
+---
+
+#### UX-016 — General Regression: سلوك الأزرار بعد الإصلاح
+**Name:** التحقق الشامل من اختفاء رسائل الخطأ عند الإدخال الصحيح  
+**Priority:** High | **Type:** Regression  
+**Preconditions:** ينطبق على جميع الشاشات في UX-001 → UX-015.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أحدث خطأ في أي شاشة (اضغط بدون بيانات) | رسالة خطأ تظهر مضمّنة |
+| 2 | أدخل البيانات الصحيحة | رسالة الخطأ تختفي فوراً دون الحاجة للضغط مجدداً |
+| 3 | أكمل وأرسل | العملية تنفَّذ بنجاح |
+| 4 | تحقق: لا توجد رسائل خطأ متبقية بعد النجاح | لا رسائل خطأ على الشاشة بعد الإرسال |
+
+**Expected Result:** كل رسائل الخطأ reactive — تظهر عند الحاجة وتختفي فور التصحيح.  
+**Automation Candidate:** No
+
+---
+
+---
+
+## 21. CAT — Categories & Service Data
+
+### High-Risk Areas
+- خدمات جديدة تظهر تحت المجموعة الصحيحة مع الأيقونة الصحيحة
+- النصوص التوضيحية (Placeholders) تُعرض باللغتين بشكل صحيح
+
+---
+
+#### CAT-001
+**Name:** تحقق من ظهور "دراي كلين" تحت مجموعة تنظيف ونقل  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** المستخدم على شاشة إنشاء طلب جديد، الخطوة 1 (اختيار التصنيف).
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح مجموعة "تنظيف ونقل" | تظهر الخدمات: تنظيف منزلي، نقل عفش، توصيل، دراي كلين، غسيل سجاد |
+| 2 | تحقق من بطاقة "دراي كلين" | تعرض الأيقونة 👔 والاسم العربي "دراي كلين" |
+| 3 | اختر "دراي كلين" | يُحدَّد التصنيف ويتقدم إلى الخطوة التالية |
+
+**Expected Result:** الخدمة مرتّبة بعد "توصيل طرود" وقبل "غسيل سجاد"، الأيقونة 👔 تظهر بوضوح.  
+**Automation Candidate:** No
+
+---
+
+#### CAT-002
+**Name:** تحقق من ظهور "غسيل سجاد" تحت مجموعة تنظيف ونقل  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** المستخدم على شاشة إنشاء طلب جديد، الخطوة 1 (اختيار التصنيف).
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح مجموعة "تنظيف ونقل" | تظهر الخدمات الخمس كاملة |
+| 2 | تحقق من بطاقة "غسيل سجاد" | تعرض الأيقونة 🧹 والاسم العربي "غسيل سجاد" |
+| 3 | اختر "غسيل سجاد" | يُحدَّد التصنيف ويتقدم إلى الخطوة التالية |
+
+**Expected Result:** "غسيل سجاد" هي آخر خدمة في مجموعة تنظيف ونقل، الأيقونة 🧹 تظهر بوضوح.  
+**Automation Candidate:** No
+
+---
+
+#### CAT-003
+**Name:** Placeholder نص "دراي كلين" في نموذج الطلب  
+**Priority:** Medium | **Type:** Functional / UX  
+**Preconditions:** المستخدم اختار تصنيف "دراي كلين"، وصل إلى حقلَي العنوان والوصف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افحص placeholder حقل العنوان | "مثال: تنظيف بدلة رسمية وعباءة" (عربي) |
+| 2 | بدّل اللغة إلى الإنجليزية | "e.g. Dry clean a formal suit and abaya" |
+| 3 | افحص placeholder حقل الوصف (عربي) | "حدد عدد القطع ونوع الملابس وهل تحتاج استلاماً وتوصيلاً" |
+
+**Expected Result:** النصوص التوضيحية مناسبة للخدمة وتتغير مع اللغة.  
+**Automation Candidate:** No
+
+---
+
+#### CAT-004
+**Name:** Placeholder نص "غسيل سجاد" في نموذج الطلب  
+**Priority:** Medium | **Type:** Functional / UX  
+**Preconditions:** المستخدم اختار تصنيف "غسيل سجاد"، وصل إلى حقلَي العنوان والوصف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افحص placeholder حقل العنوان | "مثال: غسيل سجادتين في غرفة المعيشة" (عربي) |
+| 2 | بدّل اللغة إلى الإنجليزية | "e.g. Wash 2 carpets from the living room" |
+| 3 | افحص placeholder حقل الوصف (عربي) | "أذكر عدد السجاد ومقاساتها التقريبية وهل تريد استلاماً وتوصيلاً" |
+
+**Expected Result:** النصوص التوضيحية مناسبة للخدمة وتتغير مع اللغة.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v1.1*  
+*Total Test Cases: 366 across 16 modules*  
+*Critical: 110 | High: 146 | Medium: 91 | Low: 28*
