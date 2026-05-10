@@ -120,9 +120,10 @@ export default function ContractDetailScreen() {
 
       if (contractData) {
         // Ownership check (BUG-011): only participants may view the contract
+        const contractProviderId = (contractData as { provider_id?: string | null }).provider_id;
         const isParticipant =
           authUser.id === contractData.client_id ||
-          authUser.id === (contractData as any).provider_id;
+          authUser.id === contractProviderId;
         if (!isParticipant) {
           router.back();
           return;

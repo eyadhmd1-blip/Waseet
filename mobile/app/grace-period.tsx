@@ -106,6 +106,7 @@ export default function GracePeriodScreen() {
         }
         if (payload.new?.provider_declined || payload.new?.status === 'cancelled') {
           clearInterval(intervalRef.current!);
+          supabase.removeChannel(channel);  // prevent duplicate subscriptions
           Alert.alert(
             t('gracePeriod.providerDeclinedTitle'),
             t('gracePeriod.providerDeclinedMsg'),

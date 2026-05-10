@@ -422,8 +422,10 @@ export default function ChatScreen() {
 
       // Reverse geocode for a human-readable label
       const [geo] = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const label = [geo?.street, geo?.district, geo?.city]
-        .filter(Boolean).join(lang === 'ar' ? '، ' : ', ') || t('chat.currentLocation');
+      const label = filterPhoneNumbers(
+        [geo?.street, geo?.district, geo?.city]
+          .filter(Boolean).join(lang === 'ar' ? '، ' : ', ') || t('chat.currentLocation'),
+      );
 
       const { data: inserted } = await supabase
         .from('messages')
@@ -627,9 +629,6 @@ export default function ChatScreen() {
     if (!reportType) { setReportTypeError(true); return; }
     if (!job) return;
     setReportTypeError(false);
-    const otherUserId = myId === job.client_id
-      ? job.provider?.user?.full_name  // we need the actual provider_id
-      : job.client_id;
 
     // Fetch the other user's ID from the job
     const { data: jobFull } = await supabase
@@ -827,9 +826,12 @@ export default function ChatScreen() {
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <LinearGradient
+        colors={isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8']}
+        style={styles.center}
+      >
         <ActivityIndicator color={colors.accent} size="large" />
-      </View>
+      </LinearGradient>
     );
   }
 

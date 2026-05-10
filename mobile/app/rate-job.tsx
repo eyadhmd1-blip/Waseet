@@ -48,6 +48,7 @@ export default function RateJobScreen() {
   const displayRating = hovered || rating;
 
   const handleSubmit = async () => {
+    if (submitting) return;  // prevent double-tap
     if (rating === 0) {
       setRatingError(true);
       return;
@@ -56,11 +57,16 @@ export default function RateJobScreen() {
 
     setSubmit(true);
 
-    // Verify job is completed and not already rated (BUG-029)
+    // Verify ownership + completion + not already rated
+    const { data: { session: _ses } } = await supabase.auth.getSession();
+    const user = _ses?.user;
+    if (!user) { setSubmit(false); return; }
+
     const { data: jobCheck } = await supabase
       .from('jobs')
       .select('status, confirmed_by_client, client_rating')
       .eq('id', job_id)
+      .eq('client_id', user.id)   // ownership check
       .single();
 
     if (!jobCheck || jobCheck.status !== 'completed' || !jobCheck.confirmed_by_client) {

@@ -72,7 +72,8 @@ export default function NewRequestScreen() {
       .select('category_slug, title, description, city, ai_suggested_price_min, ai_suggested_price_max')
       .eq('id', repostFromId)
       .single()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) { console.warn('[new-request] repost load error:', error.message); return; }
         if (!data) return;
         const cat = CATEGORY_GROUPS.flatMap(g => g.categories).find(c => c.slug === data.category_slug) ?? null;
         setSelectedCat(cat);
@@ -187,7 +188,11 @@ export default function NewRequestScreen() {
     setSubmitting(true);
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const user = _ses?.user;
-    if (!user) { setSubmitting(false); return; }
+    if (!user) {
+      setSubmitting(false);
+      Alert.alert(t('common.error'), t('auth.sessionExpired'));
+      return;
+    }
 
     // Check request limits before submission
     const { data: limitResult } = await supabase.rpc('check_request_limits', {

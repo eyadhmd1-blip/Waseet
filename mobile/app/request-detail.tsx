@@ -265,22 +265,24 @@ export default function RequestDetail() {
 
   // ── Render ──────────────────────────────────────────────────
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   if (loading) {
     return (
-      <View style={styles.center}>
+      <LinearGradient colors={gradColors} style={styles.center}>
         <ActivityIndicator color={colors.accent} size="large" />
-      </View>
+      </LinearGradient>
     );
   }
 
   if (!request) {
     return (
-      <View style={styles.center}>
+      <LinearGradient colors={gradColors} style={styles.center}>
         <Text style={styles.errorText}>{t('requests.notFound')}</Text>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Text style={styles.backBtnText}>{t('common.back')}</Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     );
   }
 

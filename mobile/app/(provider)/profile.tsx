@@ -204,17 +204,23 @@ export default function ProviderProfile() {
   }, [load]);
 
   const toggleAvailable = async (val: boolean) => {
+    const prev = isAvailable;
     setIsAvailable(val);
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const authUser = _ses?.user;
-    if (authUser) supabase.from('providers').update({ is_available: val }).eq('id', authUser.id).then(() => {});
+    if (!authUser) { setIsAvailable(prev); return; }
+    const { error } = await supabase.from('providers').update({ is_available: val }).eq('id', authUser.id);
+    if (error) { setIsAvailable(prev); Alert.alert(t('common.error'), error.message); }
   };
 
   const toggleUrgent = async (val: boolean) => {
+    const prev = urgentEnabled;
     setUrgentEnabled(val);
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const authUser = _ses?.user;
-    if (authUser) supabase.from('providers').update({ urgent_enabled: val }).eq('id', authUser.id).then(() => {});
+    if (!authUser) { setUrgentEnabled(prev); return; }
+    const { error } = await supabase.from('providers').update({ urgent_enabled: val }).eq('id', authUser.id);
+    if (error) { setUrgentEnabled(prev); Alert.alert(t('common.error'), error.message); }
   };
 
   const openCatModal = () => {
@@ -228,7 +234,7 @@ export default function ProviderProfile() {
     const authUser = _ses?.user;
     if (!authUser) return;
     const { error } = await supabase.from('providers').update({ categories: updated }).eq('id', authUser.id);
-    if (error) Alert.alert(t('common.error'), error.message);
+    if (error) { Alert.alert(t('common.error'), error.message); load(); }
     else load();
   };
 

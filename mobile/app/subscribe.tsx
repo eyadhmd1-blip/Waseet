@@ -272,12 +272,8 @@ export default function SubscribeScreen() {
   const handleCheckout = async () => {
     if (!provider) return;
 
-    // Trial: activate directly without payment
+    // Trial: activate directly without payment (server validates trial_used)
     if (selectedTier === 'trial') {
-      if (provider.trial_used) {
-        Alert.alert(t('common.attention'), t('subscribe.trialUsed'));
-        return;
-      }
       setProcessing(true);
       const { error: trialErr } = await supabase.rpc('activate_provider_subscription', {
         p_provider_id:   provider.id,
@@ -286,7 +282,13 @@ export default function SubscribeScreen() {
       });
       setProcessing(false);
       if (trialErr) {
-        Alert.alert(t('common.error'), t('subscribe.errUnexpected'));
+        const isAlreadyUsed = trialErr.message?.toLowerCase().includes('already') ||
+          trialErr.message?.toLowerCase().includes('trial') ||
+          trialErr.code === '23505';
+        Alert.alert(
+          t('common.error'),
+          isAlreadyUsed ? t('subscribe.trialUsed') : t('subscribe.errUnexpected'),
+        );
         return;
       }
       Alert.alert(t('common.success'), t('subscribe.trialActivated'));

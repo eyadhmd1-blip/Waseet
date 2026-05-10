@@ -53,7 +53,8 @@ async function uploadToStorage(
   const fileName = `${userId}/${Date.now()}_${suffix}.${ext}`;
 
   const { data: { session } } = await supabase.auth.getSession();
-  const token = session?.access_token ?? supabaseAnonKey;
+  if (!session?.access_token) throw new Error('Session expired — please log in again');
+  const token = session.access_token;
 
   const uploadResult = await uploadAsync(
     `${supabaseUrl}/storage/v1/object/portfolio-media/${fileName}`,
@@ -474,6 +475,14 @@ export default function PortfolioAddScreen() {
 
       if (error) throw error;
 
+      setItemType(null);
+      setSingleUri(null);
+      setBeforeUri(null);
+      setAfterUri(null);
+      setVideoUri(null);
+      setCatSlug(null);
+      setDescription('');
+      setStep(1);
       setShowSuccess(true);
     } catch (err) {
       console.error('[portfolio-add] submit error:', err);
