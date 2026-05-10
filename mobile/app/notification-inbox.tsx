@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { handleNotifTap } from '../src/lib/notifRouting';
@@ -118,10 +119,10 @@ const PAGE = 20;
 // ─── Screen ───────────────────────────────────────────────────
 
 export default function NotificationInboxScreen() {
-  const { colors }           = useTheme();
+  const { colors, isDark }   = useTheme();
   const { t, lang, isRTL }  = useLanguage();
   const router               = useRouter();
-  const st                   = useMemo(() => createSt(colors, isRTL), [colors, isRTL]);
+  const st                   = useMemo(() => createSt(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const locale               = lang === 'ar' ? 'ar' : 'en';
 
   const [items,       setItems]       = useState<NotifRow[]>([]);
@@ -361,6 +362,8 @@ export default function NotificationInboxScreen() {
     </View>
   );
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   return (
     <View style={st.container}>
       <AppHeader
@@ -374,7 +377,7 @@ export default function NotificationInboxScreen() {
           ? { actionIcon2: 'trash-outline', onAction2: clearAll }
           : {})}
       />
-
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       {loading ? (
         <View style={st.center}>
           <ActivityIndicator color={colors.accent} size="large" />
@@ -398,13 +401,14 @@ export default function NotificationInboxScreen() {
           }
         />
       )}
+      </LinearGradient>
     </View>
   );
 }
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function createSt(colors: AppColors, isRTL: boolean) {
+function createSt(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:      { flex: 1, backgroundColor: colors.bg },
@@ -428,12 +432,12 @@ function createSt(colors: AppColors, isRTL: boolean) {
     card: {
       flexDirection:   'row',
       alignItems:      'flex-start',
-      backgroundColor: colors.surface,
+      backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)',
       borderRadius:    16,
       padding:         14,
       marginBottom:    8,
-      borderWidth:     1,
-      borderColor:     colors.border,
+      borderWidth:     1.5,
+      borderColor:     isDark ? colors.border : 'rgba(201,168,76,0.20)',
       gap:             10,
       position:        'relative',
       overflow:        'hidden',

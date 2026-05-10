@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, TextInput,
   TouchableOpacity, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
@@ -15,9 +16,9 @@ export default function VerifyPhoneScreen() {
   const router   = useRouter();
   const { t, isRTL } = useLanguage();
   const ta = isRTL ? 'right' : 'left' as const;
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   const [phone, setPhone]       = useState('');
   const [otp, setOtp]           = useState(['', '', '', '', '', '']);
@@ -137,9 +138,12 @@ export default function VerifyPhoneScreen() {
     }
   };
 
+  const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
+
   return (
+    <LinearGradient colors={gradColors} style={styles.container}>
     <KeyboardAvoidingView
-      style={styles.container}
+      style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.content}>
@@ -229,10 +233,11 @@ export default function VerifyPhoneScreen() {
         )}
       </View>
     </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container:    { flex: 1, backgroundColor: colors.bg },
@@ -244,12 +249,12 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     inputRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: colors.surface,
+      backgroundColor: isDark ? colors.surface : 'rgba(255,255,255,0.92)',
       borderRadius: 12,
       paddingHorizontal: 16,
       marginBottom: 24,
-      borderWidth: 1,
-      borderColor: colors.border,
+      borderWidth: 1.5,
+      borderColor: isDark ? colors.border : 'rgba(201,168,76,0.30)',
       width: '100%',
     },
     countryCode:  { color: colors.textMuted, fontSize: 16, paddingRight: 12 },
