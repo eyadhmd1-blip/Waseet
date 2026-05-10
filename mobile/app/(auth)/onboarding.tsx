@@ -7,7 +7,9 @@ import { useState, useRef, useEffect, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ScrollView, Alert, Animated, Dimensions, KeyboardAvoidingView, Platform,
+  Image, useWindowDimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { notifyRoleUpdate } from '../../src/lib/authEvents';
@@ -451,6 +453,247 @@ function StepDone({
   );
 }
 
+// ── Step 1: Role Selection — Redesigned ──────────────────────
+
+const GOLD_COLOR = '#C9A84C';
+const BLUE_COLOR = '#3B82F6';
+
+// Sprite sheet constants (1536 × 1024 px, ratio 1.5)
+// Layout: 4 characters across top 57%, 5 icons middle, 3 avatars bottom
+// Char[0] seated client  → left offset 0
+// Char[2] provider tablet → left offset -2 * cardWidth
+const SPRITE_RATIO    = 1.5;   // width / height
+const SPRITE_CHAR_PCT = 0.57;  // characters occupy top 57% of sheet height
+
+function Step1RoleNew({
+  role, onSelect, onNext,
+}: { role: Role; onSelect: (r: Role) => void; onNext: () => void }) {
+  const { colors, isDark } = useTheme();
+  const { isRTL }          = useLanguage();
+  const { headerPad, contentPad } = useInsets();
+  const { width: screenW, height: screenH } = useWindowDimensions();
+
+  const isSmall  = screenH < 700;
+  const H_PAD    = 16;
+  const CARD_GAP = 10;
+  const cardW    = (screenW - H_PAD * 2 - CARD_GAP) / 2;
+
+  // Sprite display dimensions: show full sprite at 4× card width so each
+  // character occupies exactly cardW pixels of horizontal viewport.
+  const spriteDispW = cardW * 4;
+  const spriteDispH = spriteDispW / SPRITE_RATIO;
+  // Character viewport height: top 57% of displayed sheet, capped for small screens
+  const charH = Math.min(spriteDispH * SPRITE_CHAR_PCT, screenH * (isSmall ? 0.21 : 0.27));
+
+  const gradColors: [string, string] = isDark
+    ? [colors.bg, '#1A1407']
+    : ['#FDF6E3', '#FFFBF8'];
+
+  const CLIENT_CHIPS   = [
+    { icon: '🏷️', label: 'قارن الأسعار واختار الأفضل' },
+    { icon: '⚡',  label: 'طلب سريع في ثوانٍ' },
+    { icon: '🛡️', label: 'موثوق ومضمون' },
+  ];
+  const PROVIDER_CHIPS = [
+    { icon: '💰', label: 'دخل أعلى ونمو مستمر' },
+    { icon: '⭐', label: 'بني سمعتك وتقييمك' },
+    { icon: '👥', label: 'اعملاء أكثر فرص أكبر' },
+  ];
+
+  const renderCard = (isClient: boolean) => {
+    const isActive  = isClient ? role === 'client' : role === 'provider';
+    const accent    = isClient ? GOLD_COLOR : BLUE_COLOR;
+    const bgActive  = isClient
+      ? (isDark ? GOLD_COLOR + '22' : '#FFFBEF')
+      : (isDark ? BLUE_COLOR + '22' : '#EFF6FF');
+    const chips     = isClient ? CLIENT_CHIPS : PROVIDER_CHIPS;
+    const title     = isClient ? 'أنا طالب خدمة' : 'أنا مزود خدمة';
+    const subtitle  = isClient ? 'ابحث عن أفضل مزود\nضمن دقايق' : 'أبدأ باستقبال الطلبات\nوزيد دخلك';
+    // Provider = 3rd character in sprite (index 2), offset = 2 × cardW to the left
+    const imgLeft   = isClient ? 0 : -(cardW * 2);
+
+    return (
+      <TouchableOpacity
+        style={[{
+          flex: 1, borderRadius: 20, overflow: 'hidden',
+          borderWidth: 2,
+          borderColor: isActive ? accent : colors.border,
+          backgroundColor: isActive ? bgActive : colors.surface,
+        }, isActive && {
+          shadowColor: accent,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.28,
+          shadowRadius: 12,
+          elevation: 8,
+        }]}
+        onPress={() => onSelect(isClient ? 'client' : 'provider')}
+        activeOpacity={0.9}
+      >
+        {/* Character illustration — clipped from sprite sheet */}
+        <View style={{ width: cardW, height: charH, overflow: 'hidden', backgroundColor: isDark ? colors.surface : '#FAFAF8' }}>
+          <Image
+            source={require('../../assets/images/onboarding_assets.png')}
+            style={{ position: 'absolute', width: spriteDispW, height: spriteDispH, left: imgLeft, top: 0 }}
+            resizeMode="cover"
+          />
+        </View>
+
+        {/* Selection checkmark */}
+        <View style={{
+          position: 'absolute', top: 10,
+          right: isRTL ? undefined : 10,
+          left:  isRTL ? 10 : undefined,
+          width: 24, height: 24, borderRadius: 12,
+          backgroundColor: isActive ? accent : 'transparent',
+          borderWidth: 2, borderColor: isActive ? accent : (isDark ? colors.border : '#D1D5DB'),
+          alignItems: 'center', justifyContent: 'center',
+        }}>
+          {isActive && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✓</Text>}
+        </View>
+
+        {/* Card text content */}
+        <View style={{ padding: 12, paddingTop: 10 }}>
+          <Text style={{
+            fontSize: rs(14, 12, 16), fontWeight: '800',
+            color: isActive ? accent : colors.textPrimary,
+            textAlign: 'center', marginBottom: 4,
+          }}>{title}</Text>
+
+          <Text style={{
+            fontSize: rs(10, 9, 12), color: colors.textMuted,
+            textAlign: 'center', marginBottom: 8, lineHeight: 15,
+          }}>{subtitle}</Text>
+
+          {chips.map(chip => (
+            <View key={chip.label} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+              <View style={{
+                width: 22, height: 22, borderRadius: 11,
+                backgroundColor: isActive ? accent + '22' : (isDark ? colors.bg : '#F3F4F6'),
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Text style={{ fontSize: 11 }}>{chip.icon}</Text>
+              </View>
+              <Text style={{
+                fontSize: rs(10, 9, 11), flex: 1,
+                color: isActive ? accent : colors.textSecondary,
+              }} numberOfLines={1}>{chip.label}</Text>
+            </View>
+          ))}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <LinearGradient colors={gradColors} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ paddingTop: headerPad, paddingBottom: contentPad, paddingHorizontal: H_PAD }}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          {/* Logo */}
+          <View style={{ alignItems: 'center', marginBottom: 8 }}>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={{ width: 52, height: 52, borderRadius: 14 }}
+            />
+          </View>
+
+          {/* Title + subtitle */}
+          <Text style={{ fontSize: rs(24, 20, 28), fontWeight: '800', color: colors.textPrimary, textAlign: 'center', marginBottom: 4 }}>
+            👋 أهلاً بك في وسيط
+          </Text>
+          <Text style={{ fontSize: rs(13, 12, 15), color: colors.textMuted, textAlign: 'center', marginBottom: isSmall ? 10 : 14 }}>
+            اختر كيف تريد استخدام التطبيق
+          </Text>
+
+          {/* Social proof row */}
+          <View style={{
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+            alignItems: 'center', justifyContent: 'center',
+            gap: 8, marginBottom: isSmall ? 10 : 14,
+          }}>
+            {/* Overlapping avatar circles */}
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {(['#F59E0B', '#3B82F6', '#10B981'] as const).map((bg, i) => (
+                <View key={i} style={{
+                  width: 30, height: 30, borderRadius: 15,
+                  backgroundColor: bg,
+                  borderWidth: 2, borderColor: isDark ? colors.bg : '#FDF6E3',
+                  marginLeft: i > 0 ? -9 : 0,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Text style={{ fontSize: 13 }}>👤</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={{ color: '#F59E0B', fontSize: 13, letterSpacing: 1 }}>★★★★★</Text>
+            <Text style={{ fontSize: 12, color: colors.textMuted }}>
+              <Text style={{ color: GOLD_COLOR, fontWeight: '700' }}>+12,000</Text>
+              {' مستخدم يثقون بنا'}
+            </Text>
+          </View>
+
+          {/* Role cards */}
+          <View style={{ flexDirection: isRTL ? 'row-reverse' : 'row', gap: CARD_GAP, marginBottom: isSmall ? 10 : 14 }}>
+            {renderCard(true)}
+            {renderCard(false)}
+          </View>
+
+          {/* Trust badges — hidden on small screens */}
+          {!isSmall && (
+            <View style={{
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              justifyContent: 'space-around',
+              backgroundColor: isDark ? colors.surface + 'AA' : 'rgba(255,255,255,0.75)',
+              borderRadius: 16, paddingVertical: 12, paddingHorizontal: 8,
+              marginBottom: 14, borderWidth: 1,
+              borderColor: isDark ? colors.border : 'rgba(201,168,76,0.18)',
+            }}>
+              {[
+                { icon: '🔒', title: 'آمن وموثوق',  sub: 'بياناتك في أمان' },
+                { icon: '⚡', title: 'بدون تعقيد', sub: 'تجربة سهلة وسريعة' },
+                { icon: '🎧', title: 'دعم 24/7',   sub: 'نحن هنا لمساعدتك' },
+              ].map((badge, i, arr) => (
+                <View key={badge.title} style={{
+                  alignItems: 'center', flex: 1,
+                  borderRightWidth: !isRTL && i < arr.length - 1 ? 1 : 0,
+                  borderLeftWidth:   isRTL && i < arr.length - 1 ? 1 : 0,
+                  borderColor: isDark ? colors.border : 'rgba(201,168,76,0.20)',
+                }}>
+                  <Text style={{ fontSize: 20, marginBottom: 2 }}>{badge.icon}</Text>
+                  <Text style={{ fontSize: rs(10, 9, 11), fontWeight: '700', color: colors.textSecondary, textAlign: 'center' }}>{badge.title}</Text>
+                  <Text style={{ fontSize: rs(9, 8, 10), color: colors.textMuted, textAlign: 'center' }}>{badge.sub}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* CTA button */}
+          <TouchableOpacity
+            style={{
+              backgroundColor: GOLD_COLOR, borderRadius: 16, paddingVertical: 17,
+              flexDirection: isRTL ? 'row-reverse' : 'row',
+              alignItems: 'center', justifyContent: 'center', gap: 10,
+            }}
+            onPress={onNext}
+            activeOpacity={0.85}
+          >
+            <Text style={{ fontSize: rs(17, 15, 19), fontWeight: '800', color: '#fff' }}>🚀 ابدأ الآن</Text>
+            <Text style={{ fontSize: 20, color: '#fff' }}>{isRTL ? '←' : '→'}</Text>
+          </TouchableOpacity>
+
+          {/* Legal text */}
+          <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 10, lineHeight: 16 }}>
+            🔒 باستخدامك للتطبيق، فأنت توافق على الشروط والأحكام وسياسة الخصوصية
+          </Text>
+        </ScrollView>
+      </LinearGradient>
+    </View>
+  );
+}
+
 // ── Main Onboarding Screen ────────────────────────────────────
 
 export default function OnboardingScreen() {
@@ -623,6 +866,20 @@ export default function OnboardingScreen() {
       router.replace(role === 'provider' ? '/(provider)' : '/(client)');
     }
   };
+
+  // Step 1 — new full-screen design (no header/progress bar)
+  if (currentStep === 1) {
+    return (
+      <Step1RoleNew
+        role={role}
+        onSelect={r => {
+          setRole(r);
+          setPlanChoice(r === 'client' ? null : 'trial');
+        }}
+        onNext={goNext}
+      />
+    );
+  }
 
   // Done screen
   if (done) {
