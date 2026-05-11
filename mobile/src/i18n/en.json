@@ -1286,7 +1286,8 @@
     "water_services": "Water Services",
     "water_tank": "Drinking Water Tank",
     "sewage_tanker": "Sewage Tanker",
-    "tank_cleaning": "Water Tank Cleaning"
+    "tank_cleaning": "Water Tank Cleaning",
+    "car_accessories": "Car Accessories & Decor"
   },
   "tiers": {
     "new": "New",

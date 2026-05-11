@@ -141,8 +141,9 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
       { id: '', slug: 'car_electrical', name_ar: 'كهرباء السيارات',       name_en: 'Car Electrical',       group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'battery',   sort_order: 43, is_active: true },
       { id: '', slug: 'car_tires',      name_ar: 'إطارات وتغيير زيت',     name_en: 'Tires & Oil Change',   group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'gauge',     sort_order: 44, is_active: true },
       { id: '', slug: 'car_ac',         name_ar: 'تكييف السيارات',        name_en: 'Car AC & Cooling',     group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'snowflake', sort_order: 45, is_active: true },
-      { id: '', slug: 'car_bodywork',   name_ar: 'هيكل ودهان السيارات',   name_en: 'Bodywork & Paint',     group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'shield',    sort_order: 46, is_active: true },
-      { id: '', slug: 'car_cleaning',   name_ar: 'غسيل وتلميع السيارات',  name_en: 'Car Wash & Detailing', group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'droplet',   sort_order: 47, is_active: true },
+      { id: '', slug: 'car_bodywork',    name_ar: 'هيكل ودهان السيارات',         name_en: 'Bodywork & Paint',          group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'shield',      sort_order: 46, is_active: true },
+      { id: '', slug: 'car_cleaning',    name_ar: 'غسيل وتلميع السيارات',         name_en: 'Car Wash & Detailing',      group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'droplet',     sort_order: 47, is_active: true },
+      { id: '', slug: 'car_accessories', name_ar: 'إكسسوارات وزينة السيارات',    name_en: 'Car Accessories & Decor',   group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'car-mod',     sort_order: 51, is_active: true },
     ],
   },
 
@@ -224,6 +225,8 @@ export const ICON_MAP: Record<string, string> = {
   'water-tank':   '🚰',  // تنك مياه صالحة للشرب
   'sewage-truck': '🚛',  // صهريج مياه عادمة
   'tank-wash':    '🛢️',  // تنظيف وتعقيم الخزانات
+  // إكسسوارات السيارات
+  'car-mod':      '🏎️',  // إكسسوارات وزينة السيارات
   // صيانة السيارات
   car:            '🚗',  // إصلاح السيارات
   battery:        '🔋',  // كهرباء السيارات
@@ -285,12 +288,13 @@ export const CATEGORY_PLACEHOLDERS: Record<string, { title_ar: string; title_en:
   pet_grooming:        { title_ar: 'مثال: تجميل كلب جولدن ريتريفر',             title_en: 'e.g. Golden Retriever grooming',                    desc_ar: 'أذكر نوع الحيوان والخدمات المطلوبة (حمام، قص، تلميع)',           desc_en: 'Mention the animal type and required services (bath, trim, polish)' },
   pet_training:        { title_ar: 'مثال: تدريب كلب على الإطاعة',               title_en: 'e.g. Dog obedience training',                       desc_ar: 'حدد نوع الحيوان وعمره والسلوكيات المطلوب تعديلها',              desc_en: 'Specify animal type, age, and behaviors to be corrected' },
   vet_home:            { title_ar: 'مثال: كشف بيطري على قطة في المنزل',          title_en: 'e.g. Home vet checkup for a cat',                   desc_ar: 'أذكر نوع الحيوان والأعراض أو الحالة المطلوبة',                  desc_en: 'Mention the animal type and symptoms or required condition' },
-  car_repair:          { title_ar: 'مثال: صوت غريب من محرك السيارة',             title_en: 'e.g. Strange noise from car engine',                desc_ar: 'صف الصوت ومتى يظهر ونوع السيارة وسنة الصنع',                   desc_en: 'Describe the sound, when it occurs, car type, and year' },
+  car_repair:          { title_ar: 'مثال: صوت غريب من المحرك أو تغيير قطع غيار', title_en: 'e.g. Strange engine noise or spare parts supply & install', desc_ar: 'صف المشكلة ونوع السيارة وسنة الصنع. اذكر إن كنت تحتاج توريد قطع وتركيبها', desc_en: 'Describe the issue, car type and year. Mention if you need parts supplied and installed' },
   car_electrical:      { title_ar: 'مثال: بطارية سيارة لا تشحن',                title_en: 'e.g. Car battery not charging',                     desc_ar: 'أذكر نوع السيارة وعمر البطارية والأعراض الظاهرة',               desc_en: 'Mention car type, battery age, and visible symptoms' },
   car_tires:           { title_ar: 'مثال: تغيير إطار مثقوب وتوازن العجلات',     title_en: 'e.g. Replace flat tire and balance wheels',         desc_ar: 'أذكر نوع السيارة والإطارات وهل تحتاج فحص الضغط',               desc_en: 'Mention car type, tires, and whether pressure check is needed' },
   car_ac:              { title_ar: 'مثال: تكييف السيارة يعمل لكن لا يبرد',      title_en: 'e.g. Car AC runs but doesn\'t cool',               desc_ar: 'اذكر نوع السيارة ومتى ظهرت المشكلة',                           desc_en: 'Mention car type and when the issue appeared' },
   car_bodywork:        { title_ar: 'مثال: إصلاح خدش في باب السيارة الأيمن',     title_en: 'e.g. Fix scratch on right car door',                desc_ar: 'صف الضرر ومكانه وهل تريد دهاناً كاملاً أو جزئياً',             desc_en: 'Describe damage location and whether full or partial paint is needed' },
   car_cleaning:        { title_ar: 'مثال: غسيل وتلميع سيارة كاملة',             title_en: 'e.g. Full car wash and polish',                     desc_ar: 'حدد نوع الغسيل (خارجي، داخلي، أو شامل)',                        desc_en: 'Specify wash type (exterior, interior, or full detail)' },
+  car_accessories:     { title_ar: 'مثال: تركيب تلميح زجاجي وإضاءة LED داخلية', title_en: 'e.g. Window tinting and interior LED lighting installation', desc_ar: 'حدد الإكسسوار المطلوب تركيبه ونوع السيارة (تلميح، إضاءة، نظام صوتي، غطاء مقاعد…)', desc_en: 'Specify the accessory to install and car model (tinting, LED, audio system, seat covers…)' },
   water_tank:          { title_ar: 'مثال: تنك مياه 2 متر مكعب',                 title_en: 'e.g. 2 cubic meter drinking water tank',            desc_ar: 'حدد الكمية المطلوبة بالمتر المكعب والعنوان بدقة',                desc_en: 'Specify required volume in cubic meters and exact address' },
   sewage_tanker:       { title_ar: 'مثال: تفريغ صهريج صرف صحي',                 title_en: 'e.g. Sewage tank pumping and disposal',             desc_ar: 'حدد حجم الخزان التقريبي والعنوان وهل الوصول سهل',               desc_en: 'Specify approximate tank size, address, and accessibility' },
   tank_cleaning:       { title_ar: 'مثال: تنظيف وتعقيم خزان مياه سطح المنزل',  title_en: 'e.g. Rooftop water tank cleaning and sterilization', desc_ar: 'حدد حجم الخزان وآخر مرة تم تنظيفه والطابق',                    desc_en: 'Specify tank size, last cleaning date, and floor level' },
