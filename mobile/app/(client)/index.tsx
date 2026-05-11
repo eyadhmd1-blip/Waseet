@@ -30,48 +30,52 @@ const CARD_W_3 = Math.floor((W - H_PAD * 2 - CARD_GAP * 2) / 3);
 // ─── Maps ─────────────────────────────────────────────────────
 
 const GROUP_COLORS: Record<string, string> = {
-  maintenance:   '#3B82F6',
-  cleaning:      '#10B981',
-  technical:     '#06B6D4',
-  health_beauty: '#EC4899',
-  events:        '#F97316',
-  education:     '#8B5CF6',
-  freelance:     '#F59E0B',
-  handicrafts:   '#84CC16',
-  pets:          '#A78BFA',
-  car_services:  '#EF4444',
+  maintenance:    '#3B82F6',
+  cleaning:       '#10B981',
+  technical:      '#06B6D4',
+  health_beauty:  '#EC4899',
+  events:         '#F97316',
+  education:      '#8B5CF6',
+  freelance:      '#F59E0B',
+  handicrafts:    '#84CC16',
+  pets:           '#A78BFA',
+  car_services:   '#EF4444',
+  water_services: '#0EA5E9',
 };
 
 const GROUP_EMOJI: Record<string, string> = {
-  maintenance:   '🔧',
-  car_services:  '🚗',
-  cleaning:      '✨',
-  technical:     '💻',
-  events:        '🎉',
-  education:     '📚',
-  freelance:     '✏️',
-  health_beauty: '💆',
-  handicrafts:   '🧵',
-  pets:          '🐾',
+  maintenance:    '🔧',
+  car_services:   '🚗',
+  cleaning:       '✨',
+  technical:      '💻',
+  events:         '🎉',
+  education:      '📚',
+  freelance:      '✏️',
+  health_beauty:  '💆',
+  handicrafts:    '🧵',
+  pets:           '🐾',
+  water_services: '🚰',
 };
 
 const GROUP_SHORT_AR: Record<string, string> = {
-  maintenance:   'صيانة المنازل',
-  car_services:  'صيانة السيارات',
-  cleaning:      'تنظيف ونقل',
-  technical:     'الخدمات الفنية',
-  events:        'المناسبات',
-  education:     'تعليم',
-  freelance:     'تصميم وأعمال',
-  health_beauty: 'صحة وعناية',
-  handicrafts:   'الحِرَف',
-  pets:          'الحيوانات',
+  maintenance:    'صيانة المنازل',
+  car_services:   'صيانة السيارات',
+  cleaning:       'تنظيف ونقل',
+  technical:      'الخدمات الفنية',
+  events:         'المناسبات',
+  education:      'تعليم',
+  freelance:      'تصميم وأعمال',
+  health_beauty:  'صحة وعناية',
+  handicrafts:    'الحِرَف',
+  pets:           'الحيوانات',
+  water_services: 'خدمات المياه',
 };
 
 // ترتيب العرض حسب الأكثر طلباً
 const DISPLAY_ORDER = [
   'maintenance', 'car_services', 'cleaning', 'technical',
   'events', 'education', 'freelance', 'health_beauty', 'handicrafts', 'pets',
+  'water_services',
 ];
 const SORTED_GROUPS = DISPLAY_ORDER
   .map(slug => CATEGORY_GROUPS.find(g => g.slug === slug))
