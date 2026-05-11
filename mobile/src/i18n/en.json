@@ -1279,7 +1279,11 @@
     "car_ac": "Car AC & Cooling",
     "car_bodywork": "Bodywork & Paint",
     "car_cleaning": "Car Wash & Detailing",
-    "gardening": "Landscaping & Gardening"
+    "gardening": "Landscaping & Gardening",
+    "water_services": "Water Services",
+    "water_tank": "Drinking Water Tank",
+    "sewage_tanker": "Sewage Tanker",
+    "tank_cleaning": "Water Tank Cleaning"
   },
   "tiers": {
     "new": "New",

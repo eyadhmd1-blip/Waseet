@@ -145,6 +145,18 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
       { id: '', slug: 'car_cleaning',   name_ar: 'غسيل وتلميع السيارات',  name_en: 'Car Wash & Detailing', group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'droplet',   sort_order: 47, is_active: true },
     ],
   },
+
+  // ── 11. خدمات المياه ─────────────────────────────────────
+  {
+    slug: 'water_services',
+    name_ar: 'خدمات المياه',
+    name_en: 'Water Services',
+    categories: [
+      { id: '', slug: 'water_tank',    name_ar: 'تنك مياه صالحة للشرب',  name_en: 'Drinking Water Tank',  group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'water-tank',   sort_order: 48, is_active: true },
+      { id: '', slug: 'sewage_tanker', name_ar: 'صهريج مياه عادمة',       name_en: 'Sewage Tanker',        group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'sewage-truck', sort_order: 49, is_active: true },
+      { id: '', slug: 'tank_cleaning', name_ar: 'تنظيف وتعقيم الخزانات', name_en: 'Water Tank Cleaning',  group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'tank-wash',    sort_order: 50, is_active: true },
+    ],
+  },
 ];
 
 // Flat list for quick lookup
@@ -208,6 +220,10 @@ export const ICON_MAP: Record<string, string> = {
   paw:            '🐾',  // تجميل ورعاية الحيوانات
   'dog-lead':     '🦮',  // تدريب الحيوانات
   stethoscope:    '🩺',  // بيطري منزلي
+  // خدمات المياه
+  'water-tank':   '🚰',  // تنك مياه صالحة للشرب
+  'sewage-truck': '🚛',  // صهريج مياه عادمة
+  'tank-wash':    '🛢️',  // تنظيف وتعقيم الخزانات
   // صيانة السيارات
   car:            '🚗',  // إصلاح السيارات
   battery:        '🔋',  // كهرباء السيارات
@@ -275,6 +291,9 @@ export const CATEGORY_PLACEHOLDERS: Record<string, { title_ar: string; title_en:
   car_ac:              { title_ar: 'مثال: تكييف السيارة يعمل لكن لا يبرد',      title_en: 'e.g. Car AC runs but doesn\'t cool',               desc_ar: 'اذكر نوع السيارة ومتى ظهرت المشكلة',                           desc_en: 'Mention car type and when the issue appeared' },
   car_bodywork:        { title_ar: 'مثال: إصلاح خدش في باب السيارة الأيمن',     title_en: 'e.g. Fix scratch on right car door',                desc_ar: 'صف الضرر ومكانه وهل تريد دهاناً كاملاً أو جزئياً',             desc_en: 'Describe damage location and whether full or partial paint is needed' },
   car_cleaning:        { title_ar: 'مثال: غسيل وتلميع سيارة كاملة',             title_en: 'e.g. Full car wash and polish',                     desc_ar: 'حدد نوع الغسيل (خارجي، داخلي، أو شامل)',                        desc_en: 'Specify wash type (exterior, interior, or full detail)' },
+  water_tank:          { title_ar: 'مثال: تنك مياه 2 متر مكعب',                 title_en: 'e.g. 2 cubic meter drinking water tank',            desc_ar: 'حدد الكمية المطلوبة بالمتر المكعب والعنوان بدقة',                desc_en: 'Specify required volume in cubic meters and exact address' },
+  sewage_tanker:       { title_ar: 'مثال: تفريغ صهريج صرف صحي',                 title_en: 'e.g. Sewage tank pumping and disposal',             desc_ar: 'حدد حجم الخزان التقريبي والعنوان وهل الوصول سهل',               desc_en: 'Specify approximate tank size, address, and accessibility' },
+  tank_cleaning:       { title_ar: 'مثال: تنظيف وتعقيم خزان مياه سطح المنزل',  title_en: 'e.g. Rooftop water tank cleaning and sterilization', desc_ar: 'حدد حجم الخزان وآخر مرة تم تنظيفه والطابق',                    desc_en: 'Specify tank size, last cleaning date, and floor level' },
 };
 
 // ─── Subscription Plans ──────────────────────────────────────
