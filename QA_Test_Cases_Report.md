@@ -78,12 +78,12 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | LOC | 14 | 2 | 6 | 4 | 2 |
 | UX | 16 | 0 | 8 | 8 | 0 |
 | CAT | 6 | 1 | 3 | 2 | 0 |
-| NCAT | 12 | 1 | 7 | 4 | 0 |
+| NCAT | 13 | 1 | 8 | 4 | 0 |
 | OBD | 8 | 0 | 4 | 4 | 0 |
 | VFY | 6 | 0 | 3 | 3 | 0 |
 | REG | 6 | 0 | 3 | 3 | 0 |
 | DEMO | 8 | 0 | 5 | 3 | 0 |
-| **TOTAL** | **408** | **112** | **169** | **108** | **28** |
+| **TOTAL** | **409** | **112** | **170** | **108** | **28** |
 
 ---
 
@@ -3246,18 +3246,19 @@ ORDER BY group_slug, sort_order;
 | 50 | تكييف السيارات | `car_ac` | |
 | 51 | هيكل ودهان السيارات | `car_bodywork` | |
 | 52 | غسيل وتلميع السيارات | `car_cleaning` | |
+| 53 | إكسسوارات وزينة السيارات | `car_accessories` | |
 
 **خدمات المياه (3 خدمات)**
 
 | # | الخدمة | Slug | ✓/✗ |
 |---|--------|------|-----|
-| 53 | تنك مياه صالحة للشرب | `water_tank` | |
-| 54 | صهريج مياه عادمة | `sewage_tanker` | |
-| 55 | تنظيف وتعقيم الخزانات | `tank_cleaning` | |
+| 54 | تنك مياه صالحة للشرب | `water_tank` | |
+| 55 | صهريج مياه عادمة | `sewage_tanker` | |
+| 56 | تنظيف وتعقيم الخزانات | `tank_cleaning` | |
 
 ---
 
-**Expected Result:** جميع الـ 55 خدمة ظاهرة في التطبيق ومطابقة للـ DB. أي خدمة مفقودة تُسجَّل Bug فوراً مع تحديد موقع المشكلة: DB أم i18n أم categories.ts.  
+**Expected Result:** جميع الـ 56 خدمة ظاهرة في التطبيق ومطابقة للـ DB. أي خدمة مفقودة تُسجَّل Bug فوراً مع تحديد موقع المشكلة: DB أم i18n أم categories.ts.  
 **Automation Candidate:** Yes (الخطوة 1 — DB query) / No (الخطوة 2 — UI)
 
 ---
@@ -4054,6 +4055,25 @@ ORDER BY group_slug, sort_order;
 
 ---
 
+#### NCAT-013
+**Name:** إكسسوارات وزينة السيارات — ظهور التصنيف ونشر طلب  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** مستخدم مسجّل كـ client.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحقق في DB: `SELECT slug FROM service_categories WHERE slug = 'car_accessories'` | صف واحد مرجَع |
+| 2 | افتح "طلب جديد" — تصنيف "صيانة السيارات" | "إكسسوارات وزينة السيارات" ظاهرة في القائمة مع أيقونة 🏎️ |
+| 3 | اختر التصنيف وأكمل الطلب | Placeholder يظهر: "مثال: تركيب تلميح زجاجي وإضاءة LED داخلية" |
+| 4 | انشر الطلب | الطلب يُنشر بنجاح بتصنيف `car_accessories` |
+| 5 | افتح شاشة البحث/الرئيسية — مزود تخصصه `car_accessories` | يرى الطلب في الفيد |
+| 6 | تحقق من الاسم العربي في كل شاشة (الرئيسية، تفاصيل الطلب، البطاقة) | "إكسسوارات وزينة السيارات" — لا يوجد slug خام |
+
+**Expected Result:** الخدمة ظاهرة ومشغّلة في الـ 3 مصادر (DB + i18n + categories.ts).  
+**Automation Candidate:** No
+
+---
+
 ---
 
 ## 27. DEMO — Provider Demo Request Card
@@ -4198,9 +4218,9 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v1.8*  
-*Total Test Cases: 420 across 27 modules*  
-*Critical: 112 | High: 169 | Medium: 108 | Low: 28*  
+*End of Waseet QA Test Cases Report v1.9*  
+*Total Test Cases: 421 across 27 modules*  
+*Critical: 112 | High: 170 | Medium: 108 | Low: 28*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
