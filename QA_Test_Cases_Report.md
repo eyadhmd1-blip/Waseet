@@ -76,12 +76,12 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | PER | 18 | 6 | 8 | 4 | 0 |
 | LOC | 14 | 2 | 6 | 4 | 2 |
 | UX | 16 | 0 | 8 | 8 | 0 |
-| CAT | 5 | 1 | 2 | 2 | 0 |
+| CAT | 6 | 1 | 3 | 2 | 0 |
 | NCAT | 12 | 1 | 7 | 4 | 0 |
 | OBD | 8 | 0 | 4 | 4 | 0 |
 | VFY | 6 | 0 | 3 | 3 | 0 |
 | REG | 6 | 0 | 3 | 3 | 0 |
-| **TOTAL** | **399** | **112** | **163** | **105** | **28** |
+| **TOTAL** | **400** | **112** | **164** | **105** | **28** |
 
 ---
 
@@ -3260,6 +3260,41 @@ ORDER BY group_slug, sort_order;
 
 ---
 
+#### CAT-006
+**Name:** Home Screen — التحقق من ظهور جميع مجموعات الخدمات الـ 11 في الشاشة الرئيسية  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** client مسجّل دخول، الشاشة الرئيسية محمّلة.
+
+> **⚠️ قاعدة ثابتة:** عند إضافة مجموعة خدمات جديدة، يجب تحديث 4 قوائم في `(client)/index.tsx`: `GROUP_COLORS` + `GROUP_EMOJI` + `GROUP_SHORT_AR` + `DISPLAY_ORDER`. بدون هذا التحديث لن تظهر المجموعة في الشاشة الرئيسية حتى لو كانت في DB و categories.ts.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح الشاشة الرئيسية | شريط التصنيفات الأفقي ظاهر |
+| 2 | تصفّح شريط المجموعات كاملاً | تظهر 11 مجموعة بالترتيب أدناه |
+| 3 | اضغط على كل مجموعة | تتغير قائمة الخدمات تحتها بشكل صحيح |
+| 4 | تحقق من الأيقونة والاسم لكل مجموعة | مطابقة للجدول أدناه |
+
+**قائمة المجموعات المطلوبة في الشاشة الرئيسية:**
+
+| # | المجموعة | الـ Slug | الأيقونة | اللون | ظاهرة ✓/✗ |
+|---|----------|---------|---------|------|-----------|
+| 1 | صيانة المنازل | `maintenance` | 🔧 | أزرق | |
+| 2 | صيانة السيارات | `car_services` | 🚗 | أحمر | |
+| 3 | تنظيف ونقل | `cleaning` | ✨ | أخضر | |
+| 4 | الخدمات الفنية | `technical` | 💻 | سماوي | |
+| 5 | المناسبات | `events` | 🎉 | برتقالي | |
+| 6 | تعليم | `education` | 📚 | بنفسجي | |
+| 7 | تصميم وأعمال | `freelance` | ✏️ | ذهبي | |
+| 8 | صحة وعناية | `health_beauty` | 💆 | وردي | |
+| 9 | الحِرَف | `handicrafts` | 🧵 | أخضر فاتح | |
+| 10 | الحيوانات | `pets` | 🐾 | بنفسجي فاتح | |
+| 11 | خدمات المياه | `water_services` | 🚰 | أزرق سماوي | |
+
+**Expected Result:** جميع الـ 11 مجموعة ظاهرة مع أيقوناتها وألوانها الصحيحة. الضغط على أي مجموعة يعرض خدماتها في الشبكة أدناه.  
+**Automation Candidate:** No
+
+---
+
 ## 22. OBD — Onboarding Screen Redesign
 
 ### High-Risk Areas
@@ -4017,7 +4052,8 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v1.6*  
-*Total Test Cases: 411 across 26 modules*  
-*Critical: 112 | High: 163 | Medium: 105 | Low: 28*  
-*⚠️ عند إضافة خدمة جديدة: أضف سطراً في CAT-005 الخطوة 2 + حالة اختبار في قسم NCAT + حدّث العدد الكلي*
+*End of Waseet QA Test Cases Report v1.7*  
+*Total Test Cases: 412 across 26 modules*  
+*Critical: 112 | High: 164 | Medium: 105 | Low: 28*  
+*⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
+*⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*
