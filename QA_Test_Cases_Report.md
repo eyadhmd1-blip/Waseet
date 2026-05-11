@@ -37,6 +37,7 @@
 24. [REG — Register Screen Redesign](#24-reg--register-screen-redesign)
 25. [THME — App-Wide Theme & Visual Redesign](#25-thme--app-wide-theme--visual-redesign)
 26. [NCAT — New Service Categories (Water, Cleaning, Gardening)](#26-ncat--new-service-categories-water-cleaning-gardening)
+27. [DEMO — Provider Demo Request Card](#27-demo--provider-demo-request-card)
 
 ---
 
@@ -81,7 +82,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | OBD | 8 | 0 | 4 | 4 | 0 |
 | VFY | 6 | 0 | 3 | 3 | 0 |
 | REG | 6 | 0 | 3 | 3 | 0 |
-| **TOTAL** | **400** | **112** | **164** | **105** | **28** |
+| DEMO | 8 | 0 | 5 | 3 | 0 |
+| **TOTAL** | **408** | **112** | **169** | **108** | **28** |
 
 ---
 
@@ -4052,8 +4054,153 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v1.7*  
-*Total Test Cases: 412 across 26 modules*  
-*Critical: 112 | High: 164 | Medium: 105 | Low: 28*  
+---
+
+## 27. DEMO — Provider Demo Request Card
+
+> شاشة المزود الجديد — بطاقة الطلب التجريبي (onboarding demo request card)
+
+---
+
+#### DEMO-001
+**Name:** عرض اسم التصنيف بالعربية بدلاً من الـ slug الخام  
+**Priority:** High | **Type:** Functional / Regression  
+**Preconditions:** مزود جديد سجّل للتو ودخل شاشة الرئيسية. بطاقة الطلب التجريبي ظاهرة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | انظر إلى قسم معلومات التصنيف في بطاقة الطلب التجريبي | يظهر اسم عربي مثل "سباكة" أو "كهرباء" أو "تنظيف" |
+| 2 | تحقق من عدم ظهور slug خام مثل `plumbing` أو `electrical` | لا يوجد slug خام |
+| 3 | كرر على أجهزة مختلفة (iOS/Android) | النتيجة مطابقة |
+
+**Expected Result:** اسم التصنيف يظهر دائماً بالعربية من `name_ar`، وليس الـ slug.  
+**Automation Candidate:** No  
+**Regression Trigger:** أي تعديل على `DemoRequestCard` أو `getCategoryBySlug`.
+
+---
+
+#### DEMO-002
+**Name:** أيقونة التصنيف تظهر صحيحاً في بطاقة الطلب التجريبي  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** بطاقة الطلب التجريبي ظاهرة مع تصنيف محدد.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | لاحظ الأيقونة بجانب اسم التصنيف | تظهر أيقونة ذات صلة (مثل 🚿 لسباكة، ⚡ لكهرباء) |
+| 2 | تحقق أن الأيقونة ليست 🔧 (fallback) لتصنيف معروف | لا يظهر 🔧 إلا إذا كان التصنيف غير موجود في ICON_MAP |
+| 3 | افحص تصنيفات متعددة بإعادة تسجيل مزودين جدد | كل تصنيف يُظهر أيقونته الصحيحة |
+
+**Expected Result:** الأيقونة مطابقة لـ `ICON_MAP[category.icon]`.  
+**Automation Candidate:** No
+
+---
+
+#### DEMO-003
+**Name:** خلفية بطاقة الطلب التجريبي تتبع ثيم التطبيق (light/dark)  
+**Priority:** High | **Type:** Visual / Regression  
+**Preconditions:** مزود جديد، بطاقة الطلب التجريبي ظاهرة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | شغّل التطبيق في الوضع الفاتح (Light Mode) | بطاقة الطلب التجريبي بخلفية فاتحة دافئة (`colors.surface`) |
+| 2 | شغّل التطبيق في الوضع الداكن (Dark Mode) | بطاقة الطلب التجريبي بخلفية داكنة تنسجم مع الخلفية العامة |
+| 3 | تحقق من غياب الخلفية البحرية الداكنة `#1E1B4B` في أي وضع | لا يوجد |
+| 4 | تحقق أن الحدود (border) بلون indigo `#6366F1` يميز البطاقة بوضوح | Border ظاهر وواضح |
+
+**Expected Result:** البطاقة تتكيف مع ثيم التطبيق في الوضعين.  
+**Automation Candidate:** No  
+**Regression Trigger:** أي تعديل على `createDemoStyles` أو `DEMO_DIM/DEMO_BORDER`.
+
+---
+
+#### DEMO-004
+**Name:** نص "فهمت، إخفاء نهائياً" مقروء في الوضعين  
+**Priority:** Medium | **Type:** Accessibility / Visual  
+**Preconditions:** بطاقة الطلب التجريبي ظاهرة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | في Light Mode — انظر إلى زر التجاهل (skip) | النص مقروء بتباين كافٍ على الخلفية الفاتحة |
+| 2 | في Dark Mode — انظر إلى نفس الزر | النص مقروء بتباين كافٍ على الخلفية الداكنة |
+| 3 | تحقق أن اللون ليس `#475569` ثابتاً (hardcoded) | اللون يتبع `colors.textSecondary` |
+
+**Expected Result:** نص التجاهل مقروء في كلا الوضعين بدون hardcoded color.  
+**Automation Candidate:** No
+
+---
+
+#### DEMO-005
+**Name:** الطلب التجريبي يطابق تخصص المزود المسجّل  
+**Priority:** High | **Type:** Onboarding Quality / Functional  
+**Preconditions:** مزود جديد تخصصه "كهرباء" (`electrical`).
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أكمل تسجيل المزود بتصنيف "كهرباء" | يُنشأ demo request تلقائياً |
+| 2 | انتظر ساعة واحدة ثم افتح التطبيق | بطاقة الطلب التجريبي تظهر بطلب من تصنيف "كهرباء" |
+| 3 | كرر بتسجيل مزود تخصصه "سباكة" | الطلب التجريبي عن "سباكة" |
+| 4 | كرر بتسجيل مزود تخصصه "تكييف" | الطلب التجريبي عن "تكييف" |
+| 5 | كرر بمزود تخصصه تصنيف نادر غير موجود في قاعدة demo_requests | يظهر طلب تجريبي عشوائي (fallback) بدون عطل |
+
+**Expected Result:** الطلب التجريبي يطابق تخصص المزود في ≥ 90% من الحالات. تصنيفات ليس لها template → fallback عشوائي.  
+**Automation Candidate:** No  
+**Regression Trigger:** أي تعديل على `init_provider_demo` في migration 081.
+
+---
+
+#### DEMO-006
+**Name:** نص صندوق المعلومات (info box) مقروء في Light Mode  
+**Priority:** High | **Type:** Accessibility / Visual  
+**Preconditions:** Light Mode مفعّل، بطاقة الطلب التجريبي ظاهرة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | انظر إلى صندوق المعلومات "ℹ️" | خلفية `colors.surfaceAlt` (فاتحة دافئة) |
+| 2 | اقرأ النص داخل الصندوق | النص بلون indigo `DEMO_BORDER #4338CA` — مقروء على خلفية فاتحة |
+| 3 | اقرأ سطر "✓ مجاني بالكامل" | لون أخضر داكن `#16A34A` — مقروء |
+
+**Expected Result:** كل النصوص داخل صندوق المعلومات مقروءة في Light Mode.  
+**Automation Candidate:** No
+
+---
+
+#### DEMO-007
+**Name:** نص صندوق المعلومات (info box) مقروء في Dark Mode  
+**Priority:** High | **Type:** Accessibility / Visual  
+**Preconditions:** Dark Mode مفعّل، بطاقة الطلب التجريبي ظاهرة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | انظر إلى صندوق المعلومات "ℹ️" | خلفية `colors.surfaceAlt` (داكنة) |
+| 2 | اقرأ النص داخل الصندوق | النص بلون lavender `#A5B4FC` — مقروء على خلفية داكنة |
+| 3 | اقرأ سطر "✓ مجاني بالكامل" | لون أخضر فاتح `#6EE7B7` — مقروء |
+
+**Expected Result:** كل النصوص داخل صندوق المعلومات مقروءة في Dark Mode.  
+**Automation Candidate:** No
+
+---
+
+#### DEMO-008
+**Name:** حالة "تم تقديم العرض" تظهر صحيحاً بعد الإرسال  
+**Priority:** Medium | **Type:** Functional / Visual  
+**Preconditions:** مزود جديد، بطاقة الطلب التجريبي ظاهرة.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "قدّم عرض تجريبي" | يفتح modal إدخال السعر |
+| 2 | أدخل مبلغاً واضغط إرسال | تظهر بطاقة "حالة مكتملة" (completed state) |
+| 3 | تحقق من ألوان البطاقة المكتملة في Light Mode | خلفية `colors.surface`، نص بلون أخضر داكن `#16A34A` |
+| 4 | تحقق من ألوان البطاقة المكتملة في Dark Mode | خلفية `colors.surface`، نص بلون أخضر فاتح `#6EE7B7` |
+| 5 | تحقق أن النص ليس مختفياً (لون على خلفية مشابهة) | كل النصوص مرئية |
+
+**Expected Result:** حالة "مكتملة" مقروءة وجميلة في كلا الوضعين.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v1.8*  
+*Total Test Cases: 420 across 27 modules*  
+*Critical: 112 | High: 169 | Medium: 108 | Low: 28*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
-*⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*
+*⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
+*⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
