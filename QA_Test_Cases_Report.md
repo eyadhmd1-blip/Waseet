@@ -36,13 +36,14 @@
 23. [VFY — Verify Screen Redesign](#23-vfy--verify-screen-redesign)
 24. [REG — Register Screen Redesign](#24-reg--register-screen-redesign)
 25. [THME — App-Wide Theme & Visual Redesign](#25-thme--app-wide-theme--visual-redesign)
+26. [NCAT — New Service Categories (Water, Cleaning, Gardening)](#26-ncat--new-service-categories-water-cleaning-gardening)
 
 ---
 
 ## 1. Executive Summary
 
 ### Application Overview
-Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **clients (طالب الخدمة)** who post service requests with **providers (مزود الخدمة)** who bid on those requests. The platform covers 50+ service categories across 10 groups (maintenance, cleaning, technical, health & beauty, events, education, freelance, handicrafts, pets, car services). An **Admin Portal** (Next.js) provides full operational control.
+Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **clients (طالب الخدمة)** who post service requests with **providers (مزود الخدمة)** who bid on those requests. The platform covers 55+ service categories across 11 groups (maintenance, cleaning, technical, health & beauty, events, education, freelance, handicrafts, pets, car services, water services). An **Admin Portal** (Next.js) provides full operational control.
 
 ### Key Business Flows
 | Flow | Risk Level | Critical |
@@ -76,10 +77,11 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | LOC | 14 | 2 | 6 | 4 | 2 |
 | UX | 16 | 0 | 8 | 8 | 0 |
 | CAT | 4 | 0 | 2 | 2 | 0 |
+| NCAT | 12 | 1 | 7 | 4 | 0 |
 | OBD | 8 | 0 | 4 | 4 | 0 |
 | VFY | 6 | 0 | 3 | 3 | 0 |
 | REG | 6 | 0 | 3 | 3 | 0 |
-| **TOTAL** | **386** | **110** | **156** | **101** | **28** |
+| **TOTAL** | **398** | **111** | **163** | **105** | **28** |
 
 ---
 
@@ -3665,6 +3667,217 @@ Test DB:         Supabase staging project (isolated)
 
 ---
 
-*End of Waseet QA Test Cases Report v1.4*  
-*Total Test Cases: 398 across 25 modules*  
-*Critical: 110 | High: 156 | Medium: 101 | Low: 28*
+---
+
+## 26. NCAT — New Service Categories (Water, Cleaning, Gardening)
+
+### Scope
+التحقق من أن الخدمات الجديدة المضافة (خدمات المياه × 3، دراي كلين، غسيل سجاد، تنسيق الحدائق) ظاهرة وقابلة للاستخدام الكامل في التطبيق بعد إضافتها للـ DB وملفات الترجمة.
+
+### High-Risk Areas
+- slugs موجودة في DB (`service_categories`) وليس فقط في الـ fallback المحلي
+- مجموعة `water_services` تظهر كمجموعة مستقلة في قائمة التصنيفات
+- placeholder توجيهي صحيح عند إنشاء الطلب لكل خدمة
+- Provider يستطيع تسجيل نفسه تحت الخدمات الجديدة
+
+---
+
+#### NCAT-001
+**Name:** DB consistency — جميع الـ slugs الجديدة موجودة ونشطة في قاعدة البيانات  
+**Priority:** Critical | **Type:** Functional/Data Integrity  
+**Preconditions:** الاتصال بـ Supabase متاح.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | استعلم `SELECT slug, is_active FROM service_categories WHERE slug IN ('water_tank','sewage_tanker','tank_cleaning','dry_cleaning','carpet_washing','gardening')` | 6 صفوف مُرجَعة |
+| 2 | تحقق من `is_active` لكل صف | جميعها `true` |
+| 3 | تحقق من `group_slug` لكل صف | water_tank/sewage_tanker/tank_cleaning → `water_services`؛ dry_cleaning/carpet_washing → `cleaning`؛ gardening → `maintenance` |
+
+**Expected Result:** 6 slugs موجودة ونشطة بـ group_slug صحيح.  
+**Automation Candidate:** Yes
+
+---
+
+#### NCAT-002
+**Name:** مجموعة "خدمات المياه" ظاهرة في قائمة التصنيفات  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** client أو provider مسجّل دخول.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح شاشة "طلب جديد" أو قائمة التصنيفات | قائمة المجموعات تظهر |
+| 2 | تصفّح المجموعات | مجموعة "خدمات المياه" موجودة كمجموعة مستقلة |
+| 3 | اضغط على المجموعة | تظهر 3 خدمات: تنك مياه صالحة للشرب، صهريج مياه عادمة، تنظيف وتعقيم الخزانات |
+| 4 | تحقق من الأيقونات | 🚰 لتنك المياه، 🚛 للصهريج، 🛢️ لتنظيف الخزانات |
+
+**Expected Result:** المجموعة وخدماتها الثلاث ظاهرة بأيقونات صحيحة.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-003
+**Name:** إنشاء طلب "تنك مياه صالحة للشرب" بنجاح  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** client مسجّل دخول؛ لا يوجد طلب مفتوح في نفس التصنيف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح "طلب جديد" | شاشة الطلب تفتح |
+| 2 | اختر تصنيف "تنك مياه صالحة للشرب" | الـ placeholder يظهر: "مثال: تنك مياه 2 متر مكعب" |
+| 3 | أدخل عنواناً ووصفاً واختر المدينة | الحقول تقبل الإدخال |
+| 4 | اضغط "إرسال الطلب" | الطلب يُحفظ بـ `category_slug = 'water_tank'` |
+| 5 | تحقق من قائمة الطلبات | الطلب ظاهر بالتصنيف الصحيح |
+
+**Expected Result:** الطلب يُنشأ بـ slug صحيح ويظهر في القائمة.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-004
+**Name:** إنشاء طلب "صهريج مياه عادمة" بنجاح  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** client مسجّل دخول؛ لا يوجد طلب مفتوح في نفس التصنيف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختر تصنيف "صهريج مياه عادمة" | الـ placeholder يظهر: "مثال: تفريغ صهريج صرف صحي" |
+| 2 | أكمل الطلب وأرسله | الطلب يُحفظ بـ `category_slug = 'sewage_tanker'` |
+| 3 | تحقق من DB | صف في `requests` بـ slug صحيح |
+
+**Expected Result:** الطلب يُنشأ بشكل صحيح.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-005
+**Name:** إنشاء طلب "تنظيف وتعقيم الخزانات" بنجاح  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** client مسجّل دخول؛ لا يوجد طلب مفتوح في نفس التصنيف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختر تصنيف "تنظيف وتعقيم الخزانات" | الـ placeholder يظهر: "مثال: تنظيف وتعقيم خزان مياه سطح المنزل" |
+| 2 | أكمل الطلب وأرسله | الطلب يُحفظ بـ `category_slug = 'tank_cleaning'` |
+
+**Expected Result:** الطلب يُنشأ بشكل صحيح.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-006
+**Name:** إنشاء طلب "دراي كلين" بنجاح  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** client مسجّل دخول؛ لا يوجد طلب مفتوح في نفس التصنيف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختر مجموعة "تنظيف ونقل" | الخدمات تظهر بما فيها "دراي كلين" |
+| 2 | اختر "دراي كلين" | الـ placeholder يظهر: "مثال: تنظيف بدلة رسمية وعباءة" |
+| 3 | أكمل الطلب وأرسله | الطلب يُحفظ بـ `category_slug = 'dry_cleaning'` |
+
+**Expected Result:** الطلب يُنشأ بشكل صحيح تحت مجموعة تنظيف ونقل.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-007
+**Name:** إنشاء طلب "غسيل سجاد" بنجاح  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** client مسجّل دخول؛ لا يوجد طلب مفتوح في نفس التصنيف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختر "غسيل سجاد" من مجموعة تنظيف ونقل | الـ placeholder: "مثال: غسيل سجادتين في غرفة المعيشة" |
+| 2 | أكمل الطلب وأرسله | الطلب يُحفظ بـ `category_slug = 'carpet_washing'` |
+
+**Expected Result:** الطلب يُنشأ بشكل صحيح.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-008
+**Name:** إنشاء طلب "تنسيق الحدائق والبستنة" بنجاح  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** client مسجّل دخول؛ لا يوجد طلب مفتوح في نفس التصنيف.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختر "تنسيق الحدائق والبستنة" من مجموعة صيانة المنازل | الـ placeholder: "مثال: تنسيق حديقة منزلية وزراعة نباتات" |
+| 2 | أكمل الطلب وأرسله | الطلب يُحفظ بـ `category_slug = 'gardening'` |
+
+**Expected Result:** الطلب يُنشأ بشكل صحيح تحت مجموعة صيانة المنازل.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-009
+**Name:** Provider — تسجيل تخصص في خدمات المياه  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** provider مسجّل دخول؛ لديه اشتراك نشط.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح ملف المزود > إدارة التخصصات | قائمة التصنيفات تظهر |
+| 2 | ابحث عن "خدمات المياه" أو "تنك مياه" | التصنيفات الثلاثة ظاهرة |
+| 3 | اضف "تنك مياه صالحة للشرب" كتخصص | يُحفظ في `provider_categories` |
+| 4 | أرسل طلب عميل بتصنيف `water_tank` | Provider يتلقى إشعار الطلب الجديد |
+
+**Expected Result:** Provider يستطيع التخصص في خدمات المياه ويتلقى الطلبات.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-010
+**Name:** Placeholder توجيهي — التحقق من ظهوره لكل خدمة جديدة  
+**Priority:** Medium | **Type:** UX  
+**Preconditions:** client في شاشة "طلب جديد".
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختر `water_tank` | حقل العنوان placeholder: "مثال: تنك مياه 2 متر مكعب" |
+| 2 | اختر `sewage_tanker` | "مثال: تفريغ صهريج صرف صحي" |
+| 3 | اختر `tank_cleaning` | "مثال: تنظيف وتعقيم خزان مياه سطح المنزل" |
+| 4 | اختر `dry_cleaning` | "مثال: تنظيف بدلة رسمية وعباءة" |
+| 5 | اختر `carpet_washing` | "مثال: غسيل سجادتين في غرفة المعيشة" |
+| 6 | اختر `gardening` | "مثال: تنسيق حديقة منزلية وزراعة نباتات" |
+
+**Expected Result:** كل خدمة تُظهر placeholder مخصصاً وليس النص الافتراضي العام.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-011
+**Name:** تعدد اللغات — أسماء الخدمات الجديدة باللغتين  
+**Priority:** Medium | **Type:** Localization  
+**Preconditions:** التطبيق مُثبَّت بالعربية ثم يُغيَّر للإنجليزية.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اللغة عربية — افتح قائمة التصنيفات | "خدمات المياه"، "تنك مياه صالحة للشرب"، "صهريج مياه عادمة"، "تنظيف وتعقيم الخزانات"، "دراي كلين"، "غسيل سجاد"، "تنسيق الحدائق والبستنة" |
+| 2 | غيّر اللغة للإنجليزية | "Water Services"، "Drinking Water Tank"، "Sewage Tanker"، "Water Tank Cleaning"، "Dry Cleaning"، "Carpet Washing"، "Landscaping & Gardening" |
+| 3 | تحقق من عدم ظهور أي slug خام (مثل `water_tank`) | لا يوجد |
+
+**Expected Result:** الترجمة صحيحة بالكاملة باللغتين بدون slugs خام.  
+**Automation Candidate:** No
+
+---
+
+#### NCAT-012
+**Name:** حد الطلب الواحد — category limit لا ينطبق عبر الخدمات الجديدة  
+**Priority:** Medium | **Type:** Boundary  
+**Preconditions:** client لديه طلب مفتوح في `water_tank`.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | حاول فتح طلب ثانٍ بنفس التصنيف `water_tank` | رسالة خطأ: "لديك طلب مفتوح في هذا التصنيف" |
+| 2 | حاول فتح طلب في `sewage_tanker` (تصنيف مختلف) | الطلب يُقبل بدون خطأ |
+| 3 | حاول فتح طلب في `dry_cleaning` | الطلب يُقبل بدون خطأ |
+
+**Expected Result:** الحد يُطبَّق على مستوى التصنيف وليس المجموعة.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v1.5*  
+*Total Test Cases: 410 across 26 modules*  
+*Critical: 111 | High: 163 | Medium: 105 | Low: 28*
