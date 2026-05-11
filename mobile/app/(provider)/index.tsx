@@ -17,7 +17,7 @@ const Dimensions_height = Dimensions.get('window').height;
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
-import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST, ICON_MAP } from '../../src/constants/categories';
+import { ALL_CATEGORIES, JORDAN_CITIES, TIER_META, CREDIT_COST, ICON_MAP, getCategoryBySlug } from '../../src/constants/categories';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import type { ServiceRequest, Provider, User, RecurringContract } from '../../src/types';
 import { FREQ_VISITS_PER_MONTH } from '../../src/types';
@@ -609,9 +609,9 @@ function DemoRequestCard({
   onBidPress: () => void;
   onSkip: () => void;
 }) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t, ta, isRTL } = useLanguage();
-  const demoStyles = useMemo(() => createDemoStyles(colors, isRTL), [colors, isRTL]);
+  const demoStyles = useMemo(() => createDemoStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   if (demo.status === 'submitted') {
     return (
@@ -631,6 +631,8 @@ function DemoRequestCard({
   }
 
   const req = demo.request!;
+  const reqCat  = getCategoryBySlug(req.category_slug);
+  const reqIcon = ICON_MAP[reqCat?.icon ?? ''] ?? '🔧';
 
   return (
     <View style={demoStyles.card}>
@@ -651,7 +653,7 @@ function DemoRequestCard({
       <View style={demoStyles.metaRow}>
         <Text style={demoStyles.metaText}>📍 {req.city}{req.district ? ` — ${req.district}` : ''}</Text>
         <Text style={demoStyles.metaText}>
-          {ICON_MAP[ALL_CATEGORIES.find(c => c.slug === req.category_slug)?.icon ?? ''] ?? '🔧'} {req.category_slug}
+          {reqIcon} {reqCat?.name_ar ?? req.category_slug}
         </Text>
       </View>
 
@@ -671,41 +673,41 @@ function DemoRequestCard({
   );
 }
 
-function createDemoStyles(colors: AppColors, isRTL: boolean) {
+function createDemoStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
   card: {
-    backgroundColor: DEMO_DIM, borderRadius: 16, margin: 16, marginBottom: 0,
-    padding: 16, borderWidth: 1.5, borderColor: DEMO_BORDER,
+    backgroundColor: colors.surface, borderRadius: 16, margin: 16, marginBottom: 0,
+    padding: 16, borderWidth: 1.5, borderColor: DEMO_COLOR,
   },
   topRow:      { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   badge:       { backgroundColor: DEMO_COLOR, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   badgeText:   { fontSize: 11, fontWeight: '800', color: '#fff' },
-  skipText:    { fontSize: 12, color: '#475569' },
-  title:       { fontSize: 18, fontWeight: '700', color: '#F1F5F9', marginBottom: 6, textAlign: ta },
+  skipText:    { fontSize: 12, color: colors.textSecondary },
+  title:       { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, textAlign: ta },
   desc:        { fontSize: 13, color: colors.textSecondary, lineHeight: 20, marginBottom: 10, textAlign: ta },
   metaRow:     { flexDirection: 'row', gap: 14, marginBottom: 12 },
   metaText:    { fontSize: 12, color: colors.textMuted },
   infoBox: {
-    backgroundColor: DEMO_SOFT, borderRadius: 10, padding: 12,
-    marginBottom: 14, borderWidth: 1, borderColor: DEMO_BORDER,
+    backgroundColor: colors.surfaceAlt, borderRadius: 10, padding: 12,
+    marginBottom: 14, borderWidth: 1, borderColor: DEMO_COLOR,
   },
-  infoText:    { fontSize: 12, color: DEMO_TEXT, lineHeight: 18, marginBottom: 4, textAlign: ta },
-  freeNote:    { fontSize: 12, color: '#6EE7B7', fontWeight: '700' },
+  infoText:    { fontSize: 12, color: isDark ? DEMO_TEXT : DEMO_BORDER, lineHeight: 18, marginBottom: 4, textAlign: ta },
+  freeNote:    { fontSize: 12, color: isDark ? '#6EE7B7' : '#16A34A', fontWeight: '700' },
   bidBtn:      { backgroundColor: DEMO_COLOR, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   bidBtnText:  { fontSize: 15, fontWeight: '700', color: '#fff' },
 
   // Completed state
   cardCompleted: {
-    backgroundColor: '#052E16', borderRadius: 16, margin: 16, marginBottom: 0,
+    backgroundColor: colors.surface, borderRadius: 16, margin: 16, marginBottom: 0,
     padding: 14, borderWidth: 1, borderColor: '#16A34A', opacity: 0.85,
   },
   completedRow:   { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  completedBadge: { fontSize: 11, color: '#6EE7B7', fontWeight: '700' },
-  completedBadgeDot: { fontSize: 11, color: '#475569' },
-  completedBid:   { fontSize: 13, color: '#6EE7B7', marginBottom: 10, textAlign: ta },
-  realCTABtn:     { borderWidth: 1, borderColor: DEMO_BORDER, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
-  realCTAText:    { fontSize: 13, color: DEMO_TEXT, fontWeight: '600' },
+  completedBadge: { fontSize: 11, color: isDark ? '#6EE7B7' : '#16A34A', fontWeight: '700' },
+  completedBadgeDot: { fontSize: 11, color: colors.textMuted },
+  completedBid:   { fontSize: 13, color: isDark ? '#6EE7B7' : '#16A34A', marginBottom: 10, textAlign: ta },
+  realCTABtn:     { borderWidth: 1, borderColor: DEMO_COLOR, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  realCTAText:    { fontSize: 13, color: DEMO_COLOR, fontWeight: '600' },
   });
 }
 
