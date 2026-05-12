@@ -42,6 +42,7 @@
 29. [ADMUIX — Admin Portal Visual Redesign](#29-admuix--admin-portal-visual-redesign)
 30. [RT — Real-Time Features](#30-rt--real-time-features)
 31. [ANTF — Admin Notifications (Email + SMS)](#31-antf--admin-notifications-email--sms)
+32. [LIFECYCLE — Automated Lifecycle Notifications](#32-lifecycle--automated-lifecycle-notifications)
 
 ---
 
@@ -91,7 +92,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | ADMUIX | 9 | 0 | 5 | 4 | 0 |
 | RT | 5 | 1 | 4 | 0 | 0 |
 | ANTF | 10 | 2 | 6 | 2 | 0 |
-| **TOTAL** | **461** | **124** | **192** | **118** | **28** |
+| LIFECYCLE | 12 | 2 | 6 | 4 | 0 |
+| **TOTAL** | **473** | **126** | **198** | **122** | **28** |
 
 ---
 
@@ -4880,9 +4882,216 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v2.2*  
-*Total Test Cases: 461 across 31 modules*  
-*Critical: 124 | High: 192 | Medium: 118 | Low: 28*  
+---
+
+## 32. LIFECYCLE — Automated Lifecycle Notifications
+
+### High-Risk Areas
+- Tracking columns must prevent duplicate sends (at-most-once delivery)
+- `update_last_seen()` must be called by the app on launch to power the reengagement query
+- Bilingual copy (AR/EN) must match the user's `lang` preference
+
+---
+
+#### LIFECYCLE-001
+**Name:** مزود جديد لم يقدّم أي عرض — تنبيه بعد 48 ساعة  
+**Priority:** Critical | **Type:** Functional / Automation  
+**Preconditions:** مزود جديد مسجّل منذ 50 ساعة، لم يقدّم أي عرض حتى الآن، `bid_reminder_sent_at IS NULL`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle في 06:00 UTC | `_lc_bid_reminder_targets()` تُرجع المزود |
+| 2 | `bid_reminder_sent_at` يُحدَّث قبل الإرسال | لا تكرار حتى لو فشل الإرسال |
+| 3 | Expo push يُرسَل إلى token المزود | العنوان: "💼 قدّم عرضك الأول!" (أو EN بحسب lang) |
+| 4 | إشعار in-app يُضاف إلى notifications | screen = `providerFeed` |
+
+**Expected Result:** المزود يتلقى تنبيهاً واحداً بالضبط بعد 48–72 ساعة من التسجيل.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-002
+**Name:** مزود قدّم عرضاً خلال الـ 48 ساعة — لا تنبيه  
+**Priority:** High | **Type:** Negative  
+**Preconditions:** مزود مسجّل منذ 50 ساعة، لديه عرض واحد على الأقل في جدول `bids`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle | `_lc_bid_reminder_targets()` تستثني المزود (NOT EXISTS bids) |
+| 2 | لا push، لا in-app، لا تحديث للعمود | المزود لا يتلقى أي شيء |
+
+**Expected Result:** المزودون النشطون لا يُزعجون بتنبيهات غير ضرورية.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-003
+**Name:** عميل جديد لم ينشر طلباً — تنبيه بعد 24 ساعة  
+**Priority:** Critical | **Type:** Functional / Automation  
+**Preconditions:** عميل مسجّل منذ 30 ساعة، لا طلبات له، `client_onboarding_sent_at IS NULL`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle | `_lc_client_onboarding_targets()` تُرجع العميل |
+| 2 | `client_onboarding_sent_at` يُحدَّث | حماية من التكرار |
+| 3 | Expo push يُرسَل | "🔧 أنشئ طلبك الأول!" |
+| 4 | in-app في notifications | screen = `newRequest` |
+
+**Expected Result:** العميل يتلقى تذكيراً لطيفاً بعد أول 24 ساعة بدون نشاط.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-004
+**Name:** عميل نشر طلباً — لا تنبيه  
+**Priority:** High | **Type:** Negative  
+**Preconditions:** عميل مسجّل منذ 30 ساعة، لديه طلب واحد في `requests`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle | العميل مستثنى من `_lc_client_onboarding_targets()` |
+| 2 | لا شيء يُرسَل | |
+
+**Expected Result:** العملاء النشطون لا يتلقون تنبيه الـ onboarding.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-005
+**Name:** مهمة مكتملة بدون تقييم — تذكير للعميل بعد 24 ساعة  
+**Priority:** High | **Type:** Functional / Automation  
+**Preconditions:** مهمة `status='completed'`، `confirmed_at` منذ 30 ساعة، `client_rating IS NULL`، `rating_reminder_sent_at IS NULL`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle | `_lc_rating_reminder_targets()` تُرجع المهمة |
+| 2 | `rating_reminder_sent_at` يُحدَّث على jobs | |
+| 3 | push للعميل | "⭐ قيّم مزوّد الخدمة" |
+| 4 | in-app يحتوي metadata: { job_id } | screen = `jobDetail` |
+
+**Expected Result:** العميل يُذكَّر بالتقييم مرة واحدة فقط.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-006
+**Name:** مهمة مقيّمة — لا تذكير بالتقييم  
+**Priority:** High | **Type:** Negative  
+**Preconditions:** مهمة مكتملة منذ 30 ساعة، `client_rating IS NOT NULL`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle | المهمة مستثناة من `_lc_rating_reminder_targets()` |
+| 2 | لا شيء يُرسَل | |
+
+**Expected Result:** لا تنبيهات مكررة للمهام المقيّمة.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-007
+**Name:** مزود جديد بدون بورتفوليو — تذكير بعد 7 أيام  
+**Priority:** High | **Type:** Functional / Automation  
+**Preconditions:** مزود مسجّل منذ 9 أيام، لا صفوف في `portfolio_items`، `portfolio_reminder_sent_at IS NULL`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle | `_lc_portfolio_reminder_targets()` تُرجع المزود |
+| 2 | `portfolio_reminder_sent_at` يُحدَّث | |
+| 3 | push للمزود | "📸 أضف نماذج من أعمالك" |
+| 4 | in-app | screen = `providerProfile` |
+
+**Expected Result:** المزود يُحفَّز على بناء بورتفوليو بعد أسبوع واحد.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-008
+**Name:** مستخدم خامل 21 يوماً — رسالة إعادة تفعيل  
+**Priority:** High | **Type:** Functional / Automation  
+**Preconditions:** مستخدم (عميل أو مزود)، `COALESCE(last_seen_at, created_at) < NOW() - 21 days`، `reengagement_sent_at IS NULL`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle | `_lc_reengagement_targets()` تُرجع المستخدم |
+| 2 | `reengagement_sent_at` يُحدَّث | |
+| 3 | push مخصص بحسب الدور | مزود: "👋 طلبات جديدة بانتظارك!" — عميل: "👋 تحتاج خدمة؟ نحن هنا!" |
+| 4 | in-app | screen = `home` |
+
+**Expected Result:** رسائل إعادة التفعيل مناسبة لدور المستخدم ولغته.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-009
+**Name:** update_last_seen() تُحدّث العمود عند فتح التطبيق  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** مستخدم مصادق، التطبيق مفتوح حديثاً
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | التطبيق يستدعي `update_last_seen()` عند التهيئة | `users.last_seen_at = NOW()` للمستخدم الحالي |
+| 2 | استدعاء ثاني بعد ساعة | القيمة تُحدَّث مجدداً |
+| 3 | محاولة تحديث مستخدم آخر | SECURITY DEFINER يمنعه — يؤثر على `auth.uid()` فقط |
+
+**Expected Result:** `last_seen_at` يعكس آخر نشاط حقيقي للمستخدم.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-010
+**Name:** tracking columns تمنع التكرار  
+**Priority:** High | **Type:** Resilience  
+**Preconditions:** جميع الـ tracking columns مُعيّنة لمستخدم ما
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle ثانية | كل query تستثني المستخدمين الذين لديهم tracking column مُعيّن |
+| 2 | لا إرسال مكرر لأي من الـ 5 أحداث | |
+| 3 | الأعمدة لا تُعاد إلى NULL تلقائياً | لا خطر من إعادة الإرسال بسبب reset |
+
+**Expected Result:** كل مستخدم يتلقى كل نوع من الإشعارات مرة واحدة بالضبط.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-011
+**Name:** مستخدم بدون push token — in-app فقط  
+**Priority:** Medium | **Type:** Edge Case  
+**Preconditions:** مستخدم مؤهل للتنبيه، لا سجل له في `push_tokens`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | cron يُطلق notify-lifecycle | token = NULL في نتيجة query |
+| 2 | لا push يُرسَل (filter على `r.token`) | |
+| 3 | in-app يُدرج بشكل طبيعي | المستخدم يراه عند عودته للتطبيق |
+| 4 | tracking column يُحدَّث | لا تكرار |
+
+**Expected Result:** الغياب عن push لا يمنع الإشعار in-app.  
+**Automation Candidate:** No
+
+---
+
+#### LIFECYCLE-012
+**Name:** cron يومي 06:00 UTC — جدولة صحيحة  
+**Priority:** Medium | **Type:** Infrastructure  
+**Preconditions:** pg_cron مُفعَّل، `app.settings.supabase_url` مضبوط
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحقق من `cron.job` في Supabase Dashboard | يظهر `notify-lifecycle-daily` بجدول `0 6 * * *` |
+| 2 | `app.settings.supabase_url` غير مضبوط | `_invoke_notify_lifecycle()` تُطلق RAISE WARNING وتعود بهدوء |
+| 3 | Edge Function تُرجع 200 | response: `{ ok: true, results: [...] }` |
+| 4 | فحص logs في Supabase Dashboard | كل handler يظهر مع عدد الصفوف المُرسَلة |
+
+**Expected Result:** الـ cron يعمل يومياً بدون تدخل يدوي، ويُسجّل نتائج كل handler.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v2.3*  
+*Total Test Cases: 473 across 32 modules*  
+*Critical: 126 | High: 198 | Medium: 122 | Low: 28*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
