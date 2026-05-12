@@ -321,7 +321,7 @@ export default function ClientProfile() {
                 placeholderTextColor={colors.textMuted}
                 maxLength={60}
                 textAlign={isRTL ? 'right' : 'left'}
-                writingDirection={isRTL ? 'rtl' : 'ltr'}
+                {...{ writingDirection: isRTL ? 'rtl' : 'ltr' }}
               />
               <Text style={[styles.fieldLabel, { marginTop: 18 }]}>{t('auth.city')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 0 }}>
