@@ -1746,6 +1746,20 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 
 ---
 
+#### PRO-023 – PRO-029 (Avatar Tier Ring — Category Icon Design)
+
+| ID | Name | Priority | Type |
+|----|------|---------|------|
+| PRO-023 | Trial provider → header avatar shows dashed gray ring + category emoji | High | UI/UX |
+| PRO-024 | Basic subscription → avatar ring is solid blue (2px) | High | UI/UX |
+| PRO-025 | Pro subscription → avatar ring is solid amber (2.5px) | High | UI/UX |
+| PRO-026 | Premium subscription → avatar ring is solid purple (3px) + continuous pulse glow | High | UI/UX |
+| PRO-027 | Provider with no categories set → avatar shows fallback emoji 🛠️ | Medium | Edge Case |
+| PRO-028 | Client header avatar shows initials circle (unchanged, no tier ring) | High | Regression |
+| PRO-029 | Ripple pulse animation fires once on mount for both provider and client header | Low | UI/UX |
+
+---
+
 ## 11. CNT — Recurring Contracts
 
 ### High-Risk Areas
