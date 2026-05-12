@@ -13,7 +13,7 @@ function fmtDate(iso: string) {
 const CAT_META: Record<string, { label: string; icon: string }> = {
   payment:  { label: 'مدفوعات',   icon: '💳' },
   order:    { label: 'طلبات',     icon: '📋' },
-  provider: { label: 'مزود خدمة', icon: '🔧' },
+  provider: { label: 'مقدم خدمة', icon: '🔧' },
   account:  { label: 'حساب',      icon: '👤' },
   contract: { label: 'عقد دوري',  icon: '📄' },
   other:    { label: 'أخرى',      icon: '💬' },
@@ -92,7 +92,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           </div>
           <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 text-right text-sm min-w-[180px]">
             <div className="text-slate-200 font-semibold">{user.full_name ?? '—'}</div>
-            <div className="text-slate-500 text-xs mt-1">{user.role === 'provider' ? '🔧 مزود' : '👤 عميل'} · {user.city ?? '—'}</div>
+            <div className="text-slate-500 text-xs mt-1">{user.role === 'provider' ? '🔧 مقدم' : '👤 عميل'} · {user.city ?? '—'}</div>
             {user.phone && <div className="text-slate-600 text-xs mt-0.5 dir-ltr text-right">{user.phone}</div>}
           </div>
         </div>

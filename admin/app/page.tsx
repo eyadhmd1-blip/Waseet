@@ -256,7 +256,7 @@ const REQ_STATUS: Record<string, { label: string; variant: 'info' | 'warning' | 
 
 const ROLE_META: Record<string, { label: string; variant: 'info' | 'violet' | 'danger' }> = {
   client:   { label: 'عميل',  variant: 'info' },
-  provider: { label: 'مزود',  variant: 'violet' },
+  provider: { label: 'مقدم',  variant: 'violet' },
   admin:    { label: 'مدير',  variant: 'danger' },
 };
 
@@ -306,7 +306,7 @@ export default async function DashboardPage() {
 
   // Warning (amber)
   if (d.unreviewedFlags > 0)
-    alerts.push({ icon: '🏴', text: `${d.unreviewedFlags} علم مزود بانتظار قرار`, color: 'text-amber-400', bg: 'rgba(245,158,11,0.07)', href: '/provider-flags' });
+    alerts.push({ icon: '🏴', text: `${d.unreviewedFlags} علم مقدم بانتظار قرار`, color: 'text-amber-400', bg: 'rgba(245,158,11,0.07)', href: '/provider-flags' });
   if (d.alertStalled.length > 0)
     alerts.push({ icon: '⏳', text: `${d.alertStalled.length} طلب مفتوح 48+ ساعة بلا عروض`, color: 'text-amber-300', bg: 'rgba(245,158,11,0.07)', href: '/requests' });
   if (d.expiringSubscriptions > 0)
@@ -364,7 +364,7 @@ export default async function DashboardPage() {
               <a href="/providers"
                 className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 transition-all hover:text-white"
                 style={{ background: 'rgba(109,40,217,0.12)', border: '1px solid rgba(109,40,217,0.25)' }}>
-                إضافة مزود
+                إضافة مقدم
               </a>
               <a href="/reports"
                 className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 transition-all hover:text-white"
@@ -445,7 +445,7 @@ export default async function DashboardPage() {
         />
         <StatCard
           icon="🔧" iconBg="bg-amber-500/15 text-amber-400"
-          label="المزودون"  value={d.totalProviders}
+          label="المقدمون"  value={d.totalProviders}
           sub={`${d.subscribedProviders} مشترك نشط`}
           trend={d.subscribedProviders > 0 ? `${d.subscribedProviders} مشترك` : undefined} trendUp
           sparkData={SP_PROVS} sparkColor="#F59E0B"
@@ -467,7 +467,7 @@ export default async function DashboardPage() {
         <StatCard
           icon="🔓" iconBg="bg-sky-500/15 text-sky-400"
           label="طلبات مفتوحة"  value={d.openRequests}
-          sub="بانتظار عروض من مزودين"
+          sub="بانتظار عروض من مقدمين"
           sparkData={SP_OPEN} sparkColor="#0EA5E9"
         />
         <StatCard

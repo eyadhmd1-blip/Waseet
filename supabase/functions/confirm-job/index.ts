@@ -125,13 +125,13 @@ Deno.serve(async (req) => {
         ]);
 
         const lang         = clientRes.data?.lang ?? "ar";
-        const providerName = providerRes.data?.full_name ?? (lang === "ar" ? "المزود" : "Provider");
+        const providerName = providerRes.data?.full_name ?? (lang === "ar" ? "المقدم" : "Provider");
 
         const title = lang === "ar"
           ? `✅ اكتمل العمل مع ${providerName}`
           : `✅ Job completed with ${providerName}`;
         const body = lang === "ar"
-          ? "شاركنا رأيك — تقييمك يساعد المجتمع ويكافئ المزودين المتميزين ⭐"
+          ? "شاركنا رأيك — تقييمك يساعد المجتمع ويكافئ المقدمين المتميزين ⭐"
           : "Share your experience — your rating helps the community and rewards top providers ⭐";
 
         // In-app notification (shows in notification inbox)

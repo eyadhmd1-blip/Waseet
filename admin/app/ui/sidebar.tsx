@@ -63,7 +63,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'المستخدمون',
     items: [
       { href: '/users',     label: 'العملاء',    icon: '👤', iconBg: 'bg-sky-500/20 text-sky-300'     },
-      { href: '/providers', label: 'المزودون',   icon: '🔧', iconBg: 'bg-amber-500/20 text-amber-300' },
+      { href: '/providers', label: 'المقدمون',   icon: '🔧', iconBg: 'bg-amber-500/20 text-amber-300' },
     ],
   },
   {
@@ -77,7 +77,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'الحماية والسلامة',
     items: [
-      { href: '/provider-flags',  label: 'مراقبة المزودين',   icon: '🚨', iconBg: 'bg-rose-500/20 text-rose-300',     badge: 'flags' },
+      { href: '/provider-flags',  label: 'مراقبة المقدمين',   icon: '🚨', iconBg: 'bg-rose-500/20 text-rose-300',     badge: 'flags' },
       { href: '/abuse-reports',   label: 'البلاغات',           icon: '🚩', iconBg: 'bg-red-500/20 text-red-300'        },
       { href: '/cancellations',   label: 'تنبيهات الإلغاء',    icon: '⚠️', iconBg: 'bg-orange-500/20 text-orange-300'  },
       { href: '/category-limits', label: 'حدود الأسعار',       icon: '💰', iconBg: 'bg-lime-500/20 text-lime-300'      },

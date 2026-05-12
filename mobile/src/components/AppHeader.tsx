@@ -346,7 +346,7 @@ function RootHeader({
           <View style={[s.rolePill, isProvider ? s.rolePillPro : s.rolePillCli]}>
             <Text style={[s.roleText, isProvider ? s.roleTextPro : s.roleTextCli]}>
               {isProvider
-                ? (isRTL ? 'مزود الخدمة' : 'Service Provider')
+                ? (isRTL ? 'مقدم الخدمة' : 'Service Provider')
                 : (isRTL ? 'طالب الخدمة' : 'Client')}
             </Text>
           </View>

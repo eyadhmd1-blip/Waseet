@@ -16,7 +16,7 @@ function fmtDate(iso: string) {
 const CAT_META: Record<string, { label: string; icon: string }> = {
   payment:  { label: 'مدفوعات',   icon: '💳' },
   order:    { label: 'طلبات',     icon: '📋' },
-  provider: { label: 'مزود خدمة', icon: '🔧' },
+  provider: { label: 'مقدم خدمة', icon: '🔧' },
   account:  { label: 'حساب',      icon: '👤' },
   contract: { label: 'عقد دوري',  icon: '📄' },
   other:    { label: 'أخرى',      icon: '💬' },
@@ -197,7 +197,7 @@ export default async function SupportPage({
                     </td>
                     <td className="px-5 py-3">
                       <div className="text-slate-200 font-medium text-sm">{t.user?.full_name ?? '—'}</div>
-                      <div className="text-slate-500 text-xs">{t.user?.role === 'provider' ? 'مزود' : 'عميل'}</div>
+                      <div className="text-slate-500 text-xs">{t.user?.role === 'provider' ? 'مقدم' : 'عميل'}</div>
                     </td>
                     <td className="px-5 py-3 max-w-[200px]">
                       <p className="text-slate-200 font-medium truncate">{t.subject}</p>

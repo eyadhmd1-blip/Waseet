@@ -67,7 +67,7 @@ function buildMessage(
       body  = `"${requestTitle}" — اختار العميل من بين ${totalBids} عروض. ملف شخصي قوي يُضاعف فرصك.${newReqStr}`;
     } else {
       title = "🌟 الفرصة القادمة في طريقها إليك";
-      body  = `"${requestTitle}" — كنت 1 من ${totalBids} مزودين هذه المرة. كل محاولة تبني سمعتك.${newReqStr}`;
+      body  = `"${requestTitle}" — كنت 1 من ${totalBids} مقدمين هذه المرة. كل محاولة تبني سمعتك.${newReqStr}`;
     }
   }
 

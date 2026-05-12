@@ -98,16 +98,16 @@ export function NotificationForm() {
           <optgroup label="عام">
             <option value="all">الجميع</option>
             <option value="clients">العملاء فقط</option>
-            <option value="providers">المزودون فقط</option>
+            <option value="providers">المقدمون فقط</option>
           </optgroup>
           <optgroup label="الاشتراكات">
-            <option value="subscribed_providers">المزودون المشتركون</option>
+            <option value="subscribed_providers">المقدمون المشتركون</option>
             <option value="lapsed_providers">منتهو الاشتراك — أقل من 30 يوم</option>
             <option value="dormant_providers">خاملون — 31 إلى 90 يوم</option>
             <option value="no_portfolio_providers">مشتركون بلا بورتفوليو</option>
           </optgroup>
           <optgroup label="جدد">
-            <option value="new_providers">مزودون جدد — آخر 7 أيام</option>
+            <option value="new_providers">مقدمون جدد — آخر 7 أيام</option>
             <option value="new_clients">عملاء جدد — آخر 7 أيام</option>
           </optgroup>
           <optgroup label="النشاط">

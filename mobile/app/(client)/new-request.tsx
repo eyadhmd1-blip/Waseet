@@ -410,7 +410,7 @@ export default function NewRequestScreen() {
               : `${description.length}/500`}
           </Text>
           {descError && (
-            <Text style={styles.errorHint}>⚠️ يرجى وصف طلبك بـ 20 حرفاً على الأقل حتى يتمكن المزود من فهم احتياجك</Text>
+            <Text style={styles.errorHint}>⚠️ يرجى وصف طلبك بـ 20 حرفاً على الأقل حتى يتمكن المقدم من فهم احتياجك</Text>
           )}
 
           <Text style={styles.label}>{t('newRequest.city')}</Text>

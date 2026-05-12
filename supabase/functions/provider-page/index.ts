@@ -57,7 +57,7 @@ serve(async (req) => {
   const { data: prov } = await query.single();
 
   if (!prov) {
-    return new Response('<h1>المزود غير موجود</h1>', {
+    return new Response('<h1>المقدم غير موجود</h1>', {
       status: 404,
       headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
@@ -105,7 +105,7 @@ serve(async (req) => {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>${safeFullName} — وسيط</title>
-  <meta name="description" content="مزود خدمة موثّق على تطبيق وسيط · ${safeCity} · ${safeLifetime} عمل منجز" />
+  <meta name="description" content="مقدم خدمة موثّق على تطبيق وسيط · ${safeCity} · ${safeLifetime} عمل منجز" />
   <meta property="og:title"       content="${safeFullName} — وسيط" />
   <meta property="og:description" content="تقييم ${safeScore} ⭐ · ${safeLifetime} عمل · ${tierLabel}" />
   <meta property="og:type"        content="profile" />
@@ -250,7 +250,7 @@ serve(async (req) => {
     <div class="cta-card">
       <div class="cta-title">حمّل تطبيق وسيط</div>
       <div class="cta-sub">
-        للتواصل مع ${safeFullName} وآلاف المزودين الموثّقين في الأردن
+        للتواصل مع ${safeFullName} وآلاف المقدمين الموثّقين في الأردن
       </div>
       <div class="store-btns">
         <a class="store-btn" href="${appStoreUrl}">App Store 🍎</a>

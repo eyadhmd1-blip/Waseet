@@ -5,12 +5,12 @@ import { usePathname } from 'next/navigation';
 const PAGE_META: Record<string, { label: string; icon: string }> = {
   '/':                { label: 'لوحة التحكم',          icon: '📊' },
   '/users':           { label: 'إدارة العملاء',         icon: '👤' },
-  '/providers':       { label: 'إدارة المزودين',        icon: '🔧' },
+  '/providers':       { label: 'إدارة المقدمين',        icon: '🔧' },
   '/requests':        { label: 'إدارة الطلبات',         icon: '📋' },
   '/contracts':       { label: 'العقود الدورية',        icon: '🔄' },
   '/reports':         { label: 'التقارير والإحصائيات',  icon: '📈' },
   '/support':         { label: 'الدعم والمدفوعات',      icon: '💳' },
-  '/provider-flags':  { label: 'مراقبة المزودين',       icon: '🚨' },
+  '/provider-flags':  { label: 'مراقبة المقدمين',       icon: '🚨' },
   '/abuse-reports':   { label: 'البلاغات والمخالفات',   icon: '🚩' },
   '/cancellations':   { label: 'تنبيهات الإلغاء',       icon: '⚠️' },
   '/category-limits': { label: 'حدود أسعار الخدمات',    icon: '💰' },
@@ -49,7 +49,7 @@ export function TopBar() {
           <div className="absolute right-3 text-slate-600 text-sm pointer-events-none">🔍</div>
           <input
             readOnly
-            placeholder="ابحث عن طلب، مستخدم، مزود..."
+            placeholder="ابحث عن طلب، مستخدم، مقدم..."
             className="w-64 h-9 rounded-xl pr-9 pl-4 text-sm text-slate-400
               placeholder:text-slate-600 outline-none cursor-default"
             style={{

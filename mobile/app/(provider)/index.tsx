@@ -858,7 +858,7 @@ function EmptyFeedState({
         <View style={s.noReqCard}>
           <Text style={s.noReqCardTitle}>💡 حسّن ظهورك</Text>
           <Text style={s.noReqCardText}>
-            المزودون الذين يضيفون صور أعمالهم ونبذة عنهم يحصلون على ضعف عدد الطلبات
+            المقدمون الذين يضيفون صور أعمالهم ونبذة عنهم يحصلون على ضعف عدد الطلبات
           </Text>
           <TouchableOpacity style={s.noReqCardBtn} onPress={onProfile} activeOpacity={0.85}>
             <Text style={s.noReqCardBtnText}>تحديث الملف الشخصي</Text>
@@ -936,7 +936,7 @@ function EmptyFeedState({
           <Text style={s.tipTitle}>نصيحة من وسيط</Text>
         </View>
         <Text style={s.tipText}>
-          المزودون الذين يردون على الطلبات خلال 5 دقائق يحصلون على{' '}
+          المقدمون الذين يردون على الطلبات خلال 5 دقائق يحصلون على{' '}
           <Text style={s.tipHighlight}>3× طلبات أكثر</Text>
           {'. '}فعّل الإشعارات وابقَ على اطلاع دائم.
         </Text>

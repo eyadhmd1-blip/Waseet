@@ -40,7 +40,7 @@ export default function ProviderDeepLink() {
   if (notFound) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <Text style={{ color: colors.textSecondary, fontSize: 16 }}>لم يتم العثور على هذا المزود</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 16 }}>لم يتم العثور على هذا المقدم</Text>
       </View>
     );
   }

@@ -497,8 +497,8 @@ function Step1RoleNew({
       ? (isDark ? GOLD_COLOR + '22' : '#FFFBEF')
       : (isDark ? BLUE_COLOR + '22' : '#EFF6FF');
     const chips     = isClient ? CLIENT_CHIPS : PROVIDER_CHIPS;
-    const title     = isClient ? 'أنا طالب خدمة' : 'أنا مزود خدمة';
-    const subtitle  = isClient ? 'ابحث عن أفضل مزود\nضمن دقايق' : 'أبدأ باستقبال الطلبات\nوزيد دخلك';
+    const title     = isClient ? 'أنا طالب خدمة' : 'أنا مقدم خدمة';
+    const subtitle  = isClient ? 'ابحث عن أفضل مقدم\nضمن دقايق' : 'أبدأ باستقبال الطلبات\nوزيد دخلك';
     return (
       <TouchableOpacity
         style={[{

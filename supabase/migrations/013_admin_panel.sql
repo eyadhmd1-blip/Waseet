@@ -55,7 +55,7 @@ ALTER TABLE platform_settings ENABLE ROW LEVEL SECURITY;
 -- Seed default settings
 INSERT INTO platform_settings (key, value, label, description) VALUES
   ('urgent_premium_percent',   '25',    'نسبة رسوم الطلب الطارئ (%)', 'النسبة المضافة على سعر الطلب الطارئ'),
-  ('urgent_window_minutes',    '60',    'نافذة الطلب الطارئ (دقيقة)', 'المدة الزمنية لاستجابة مزود الطلب الطارئ'),
+  ('urgent_window_minutes',    '60',    'نافذة الطلب الطارئ (دقيقة)', 'المدة الزمنية لاستجابة مقدم الطلب الطارئ'),
   ('max_bids_per_request',     '15',    'الحد الأقصى للعروض لكل طلب', 'عدد العروض المسموح به على كل طلب'),
   ('request_auto_close_days',  '14',    'إغلاق الطلبات تلقائياً بعد (يوم)', 'إغلاق الطلبات المفتوحة بعد هذه المدة بدون عروض'),
   ('min_bid_jod',              '3',     'الحد الأدنى للعرض (دينار)', 'أقل مبلغ مسموح به في أي عرض'),

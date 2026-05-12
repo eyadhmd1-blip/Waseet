@@ -13,10 +13,10 @@ function fmtDate(iso: string) {
 const ACTION_META: Record<string, { label: string; variant: 'danger' | 'success' | 'warning' | 'info' | 'muted' | 'violet' }> = {
   disable_user:           { label: 'تعطيل مستخدم',       variant: 'danger' },
   enable_user:            { label: 'تفعيل مستخدم',        variant: 'success' },
-  suspend_provider:       { label: 'إيقاف مزود',          variant: 'danger' },
-  unsuspend_provider:     { label: 'رفع إيقاف مزود',      variant: 'success' },
-  verify_provider:        { label: 'توثيق مزود',          variant: 'info' },
-  unverify_provider:      { label: 'إلغاء توثيق مزود',    variant: 'muted' },
+  suspend_provider:       { label: 'إيقاف مقدم',          variant: 'danger' },
+  unsuspend_provider:     { label: 'رفع إيقاف مقدم',      variant: 'success' },
+  verify_provider:        { label: 'توثيق مقدم',          variant: 'info' },
+  unverify_provider:      { label: 'إلغاء توثيق مقدم',    variant: 'muted' },
   override_tier:          { label: 'تغيير رتبة',           variant: 'warning' },
   close_request:          { label: 'إغلاق طلب',           variant: 'warning' },
   delete_request:         { label: 'حذف طلب',             variant: 'danger' },
@@ -100,7 +100,7 @@ export default async function AuditPage({
         >
           <option value="">كل الأنواع</option>
           <option value="user">مستخدم</option>
-          <option value="provider">مزود</option>
+          <option value="provider">مقدم</option>
           <option value="request">طلب</option>
           <option value="contract">عقد</option>
           <option value="system">نظام</option>

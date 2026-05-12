@@ -117,7 +117,7 @@ export default async function ProviderFlagsPage({
     <div className="p-6 space-y-6" dir="rtl">
       <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">مراقبة المزودين</h1>
+          <h1 className="text-2xl font-bold text-slate-100">مراقبة المقدمين</h1>
           <p className="text-slate-500 text-sm mt-0.5">
             {showAll ? `${total} بلاغ إجمالاً` : `${stats.unreviewed} بلاغ قيد المراجعة`}
           </p>

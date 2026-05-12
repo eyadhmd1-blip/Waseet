@@ -194,7 +194,7 @@ export default function SavedProvidersScreen() {
         <View style={styles.headerCenter}>
           <Text style={styles.topTitle}>{t('saved.title')}</Text>
           <Text style={styles.topSub}>
-            {saved.length > 0 ? `${saved.length} مزود محفوظ` : ''}
+            {saved.length > 0 ? `${saved.length} مقدم محفوظ` : ''}
           </Text>
         </View>
 

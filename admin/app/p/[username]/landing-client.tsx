@@ -78,7 +78,7 @@ export function LandingPageClient({ provider }: { provider: Provider }) {
           </div>
           <h2 className="text-xl font-bold text-white text-center">{provider.full_name}</h2>
           {provider.badge_verified && (
-            <span className="text-blue-400 text-sm mt-1">✓ مزود معتمد</span>
+            <span className="text-blue-400 text-sm mt-1">✓ مقدم معتمد</span>
           )}
           <div className="flex items-center gap-3 mt-2 flex-wrap justify-center">
             {provider.city && (

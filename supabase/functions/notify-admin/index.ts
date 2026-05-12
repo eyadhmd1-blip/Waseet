@@ -170,7 +170,7 @@ async function handleCliqPayment(data: any, db: ReturnType<typeof makeAdmin>) {
     sendEmail(
       `💳 طلب دفع CliQ جديد — ${plan} (${amount} د.أ)`,
       buildHtml("💳", `طلب دفع CliQ — ${plan}`, [
-        { label: "المزود",    value: name },
+        { label: "المقدم",    value: name },
         { label: "الهاتف",   value: phone },
         { label: "الباقة",   value: plan },
         { label: "المبلغ",   value: `${amount} دينار أردني` },
@@ -188,7 +188,7 @@ async function handleUrgentTicket(data: any, db: ReturnType<typeof makeAdmin>) {
 
   const name    = user?.full_name ?? "—";
   const phone   = user?.phone     ?? "—";
-  const role    = user?.role === "provider" ? "مزود" : "عميل";
+  const role    = user?.role === "provider" ? "مقدم" : "عميل";
   const link    = `${PORTAL_URL}/support/${data.ticket_id}`;
 
   await Promise.all([
@@ -219,7 +219,7 @@ async function handleAbuseReportCritical(data: any, db: ReturnType<typeof makeAd
     `🚩 بلاغ ${typeLabel} جديد — ${reported?.full_name ?? "—"}`,
     buildHtml("🚩", `بلاغ جديد: ${typeLabel}`, [
       { label: "المُبلَّغ عنه", value: `${reported?.full_name ?? "—"} (${reported?.phone ?? "—"})` },
-      { label: "دور المُبلَّغ عنه", value: reported?.role === "provider" ? "مزود" : "عميل" },
+      { label: "دور المُبلَّغ عنه", value: reported?.role === "provider" ? "مقدم" : "عميل" },
       { label: "مقدم البلاغ",  value: reporter?.full_name ?? "—" },
       { label: "الوصف",        value: data.description ?? "—" },
     ], link, { text: typeLabel, color: "#b91c1c" }),
@@ -249,9 +249,9 @@ async function handleProviderFlagNew(data: any, db: ReturnType<typeof makeAdmin>
   const detailRows = Object.entries(details).map(([k, v]) => ({ label: k, value: String(v) }));
 
   await sendEmail(
-    `⚠️ علم جديد على مزود — ${reasonLabel[data.reason] ?? data.reason}`,
+    `⚠️ علم جديد على مقدم — ${reasonLabel[data.reason] ?? data.reason}`,
     buildHtml("⚠️", `علم جديد: ${reasonLabel[data.reason] ?? data.reason}`, [
-      { label: "المزود",  value: name },
+      { label: "المقدم",  value: name },
       { label: "الهاتف", value: phone },
       { label: "السبب",  value: reasonLabel[data.reason] ?? data.reason },
       ...detailRows,
@@ -375,7 +375,7 @@ async function handleNormalTickets(db: ReturnType<typeof makeAdmin>) {
   const userMap = Object.fromEntries((users ?? []).map((u: any) => [u.id, u.full_name]));
 
   const catLabel: Record<string, string> = {
-    order: "طلبات", provider: "مزود خدمة",
+    order: "طلبات", provider: "مقدم خدمة",
     account: "حساب", contract: "عقد دوري", other: "أخرى",
   };
 
@@ -573,7 +573,7 @@ async function handleDailyDigest(db: ReturnType<typeof makeAdmin>) {
          letter-spacing:.08em;margin-bottom:8px">النشاط — آخر 24 ساعة</div>
     <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
       ${statRow("👤", "عملاء جدد",          newClients   ?? 0)}
-      ${statRow("🔧", "مزودون جدد",         newProviders ?? 0)}
+      ${statRow("🔧", "مقدمون جدد",         newProviders ?? 0)}
       ${statRow("📋", "طلبات جديدة",        newRequests  ?? 0)}
       ${statRow("✅", "مهام مكتملة",        completedJobs ?? 0)}
     </table>
@@ -582,7 +582,7 @@ async function handleDailyDigest(db: ReturnType<typeof makeAdmin>) {
          letter-spacing:.08em;margin-bottom:8px">يحتاج انتباهاً</div>
     <table style="width:100%;border-collapse:collapse">
       ${statRow("💳", "تذاكر دعم مفتوحة",   openTickets       ?? 0, true)}
-      ${statRow("⚠️", "أعلام مزودين معلقة", unreviewedFlags   ?? 0, true)}
+      ${statRow("⚠️", "أعلام مقدمين معلقة", unreviewedFlags   ?? 0, true)}
       ${statRow("🚩", "بلاغات معلقة",       pendingReports    ?? 0, true)}
       ${statRow("💡", "اقتراحات معلقة",     pendingSuggestions ?? 0)}
       ${statRow("🚨", "طلبات طارئة نشطة",   urgentNoBids      ?? 0, true)}

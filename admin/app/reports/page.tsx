@@ -184,7 +184,7 @@ export default async function ReportsPage() {
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-slate-500 text-xs">{fmtMoney(rev)}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-slate-400 text-xs">{count} مزود</span>
+                      <span className="text-slate-400 text-xs">{count} مقدم</span>
                       <span className="text-slate-200 text-sm font-medium">{SUB_LABEL[tier]}</span>
                     </div>
                   </div>
@@ -218,7 +218,7 @@ export default async function ReportsPage() {
             <div className="flex items-center justify-between p-3 bg-slate-800/50 rounded-xl">
               <span className="text-emerald-400 font-bold text-xl">{newProviders}</span>
               <div className="text-right">
-                <div className="text-slate-200 text-sm">مزودون جدد</div>
+                <div className="text-slate-200 text-sm">مقدمون جدد</div>
                 <div className="text-slate-500 text-xs">يقدمون خدمات</div>
               </div>
             </div>
@@ -238,7 +238,7 @@ export default async function ReportsPage() {
         <div className="flex items-start justify-between mb-5">
           <div>
             <h2 className="text-slate-200 font-semibold">الإيراد الشهري — آخر 6 أشهر</h2>
-            <p className="text-slate-500 text-xs mt-0.5">مبني على اشتراكات المزودين المنضمين هذه الفترة</p>
+            <p className="text-slate-500 text-xs mt-0.5">مبني على اشتراكات المقدمين المنضمين هذه الفترة</p>
           </div>
           <div className="text-right">
             <div className="text-amber-400 font-bold text-xl">{fmtMoney(monthlyRevenue)}</div>

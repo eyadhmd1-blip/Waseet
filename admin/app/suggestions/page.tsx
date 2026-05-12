@@ -148,7 +148,7 @@ export default async function SuggestionsPage({
                   <tr key={row.id} className="hover:bg-slate-800/40 transition-colors text-right">
                     <td className="px-5 py-3">
                       <p className="text-slate-200 font-medium">{user?.full_name ?? '—'}</p>
-                      <p className="text-slate-600 text-xs">{user?.role === 'provider' ? 'مزود' : 'عميل'}</p>
+                      <p className="text-slate-600 text-xs">{user?.role === 'provider' ? 'مقدم' : 'عميل'}</p>
                     </td>
                     <td className="px-5 py-3">
                       <p className="text-slate-200 font-medium">{row.service_name}</p>

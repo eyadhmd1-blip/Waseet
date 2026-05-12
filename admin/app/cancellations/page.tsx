@@ -183,7 +183,7 @@ export default async function CancellationsPage({
                             ? 'bg-sky-500/15 text-sky-400'
                             : 'bg-amber-500/15 text-amber-400'
                         }`}>
-                          {log.cancelled_party === 'client' ? 'عميل' : 'مزود'}
+                          {log.cancelled_party === 'client' ? 'عميل' : 'مقدم'}
                         </span>
                       </div>
                       <span className="text-slate-600 text-xs">

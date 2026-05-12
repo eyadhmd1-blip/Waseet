@@ -152,8 +152,8 @@ export default async function ProvidersPage({
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">إدارة المزودين</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{total} مزود مسجّل</p>
+          <h1 className="text-2xl font-bold text-slate-100">إدارة المقدمين</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{total} مقدم مسجّل</p>
         </div>
         <div className="flex gap-3 flex-wrap">
           {[
@@ -179,7 +179,7 @@ export default async function ProvidersPage({
           <table className="w-full text-sm min-w-[900px]">
             <thead>
               <tr className="border-b border-slate-800 text-right bg-slate-900/80">
-                <th className="px-5 py-3 text-slate-500 font-medium">المزود</th>
+                <th className="px-5 py-3 text-slate-500 font-medium">المقدم</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">الرتبة</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">التقييم</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">الأعمال</th>

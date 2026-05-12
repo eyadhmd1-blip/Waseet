@@ -31,7 +31,7 @@ function buildCopy(lang: string, reqTitle: string) {
   }
   return {
     title: "طلبك لم يصله أي عرض بعد",
-    body:  `${reqTitle} — قد يساعد تعديل الميزانية على جذب المزودين`,
+    body:  `${reqTitle} — قد يساعد تعديل الميزانية على جذب المقدمين`,
   };
 }
 

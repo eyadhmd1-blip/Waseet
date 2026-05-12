@@ -146,7 +146,7 @@ export default async function ContractsPage({
               <tr className="border-b border-slate-800 text-right bg-slate-900/80">
                 <th className="px-5 py-3 text-slate-500 font-medium">العقد</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">العميل</th>
-                <th className="px-5 py-3 text-slate-500 font-medium">المزود</th>
+                <th className="px-5 py-3 text-slate-500 font-medium">المقدم</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">المدينة</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">التكرار</th>
                 <th className="px-5 py-3 text-slate-500 font-medium">المدة</th>

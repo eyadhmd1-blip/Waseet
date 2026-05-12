@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!provider) return { title: 'وسيط' };
 
   const name = provider.full_name as string;
-  const desc = (provider.bio as string | null) ?? `${name} — مزود خدمة معتمد على منصة وسيط`;
+  const desc = (provider.bio as string | null) ?? `${name} — مقدم خدمة معتمد على منصة وسيط`;
   const url  = `https://waseet.app/p/${username}`;
 
   return {

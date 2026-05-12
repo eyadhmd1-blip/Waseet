@@ -42,12 +42,12 @@ export default async function NotificationsPage() {
   const SEGMENT_LABEL: Record<string, string> = {
     all:                    'الجميع',
     clients:                'العملاء',
-    providers:              'المزودون',
+    providers:              'المقدمون',
     subscribed_providers:   'المشتركون',
     lapsed_providers:       'منتهو الاشتراك (≤30 يوم)',
     dormant_providers:      'خاملون (31–90 يوم)',
     no_portfolio_providers: 'مشتركون بلا بورتفوليو',
-    new_providers:          'مزودون جدد (≤7 أيام)',
+    new_providers:          'مقدمون جدد (≤7 أيام)',
     new_clients:            'عملاء جدد (≤7 أيام)',
     inactive_users:         'غير نشطين (21+ يوم)',
   };

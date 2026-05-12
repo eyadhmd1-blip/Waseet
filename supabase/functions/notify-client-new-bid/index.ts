@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
     if (!tokenRow?.token) return json({ sent: false, reason: "no_push_token" });
 
     const lang         = clientUser?.lang ?? "ar";
-    const providerName = providerUser?.full_name ?? (lang === "en" ? "Provider" : "مزود");
+    const providerName = providerUser?.full_name ?? (lang === "en" ? "Provider" : "مقدم");
     const count        = bidCount ?? 1;
 
     const { title, body } = buildCopy(lang, count, request.title, providerName);

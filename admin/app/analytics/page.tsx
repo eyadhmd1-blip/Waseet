@@ -95,14 +95,14 @@ export default async function AnalyticsPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-100">تحليلات العرض والطلب</h1>
         <p className="text-slate-500 text-sm mt-0.5">
-          مقارنة المزودين المتاحين (العرض) مع الطلبات المفتوحة (الطلب) — لحظي
+          مقارنة المقدمين المتاحين (العرض) مع الطلبات المفتوحة (الطلب) — لحظي
         </p>
       </div>
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {([
-          { icon: '🔧', label: 'إجمالي المزودين',      value: providers.length,    color: 'text-blue-400'    },
+          { icon: '🔧', label: 'إجمالي المقدمين',      value: providers.length,    color: 'text-blue-400'    },
           { icon: '📋', label: 'طلبات مفتوحة',         value: openRequests.length, color: 'text-amber-400'   },
           { icon: '🏙️', label: 'مدن نشطة',              value: allCities.length,    color: 'text-emerald-400' },
           { icon: '⚖️', label: 'نسبة الطلب / العرض',   value: `${demandRatio}x`,   color: ratioHigh ? 'text-red-400' : 'text-emerald-400' },
@@ -121,7 +121,7 @@ export default async function AnalyticsPage() {
         <div className="flex items-center gap-4 mb-5">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm" style={{ background: '#3B82F6' }} />
-            <span className="text-slate-500 text-xs">مزودون (العرض)</span>
+            <span className="text-slate-500 text-xs">مقدمون (العرض)</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm" style={{ background: '#F59E0B' }} />
@@ -168,7 +168,7 @@ export default async function AnalyticsPage() {
         <div className="flex items-center gap-4 mb-5">
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm" style={{ background: '#3B82F6' }} />
-            <span className="text-slate-500 text-xs">مزودون في الفئة</span>
+            <span className="text-slate-500 text-xs">مقدمون في الفئة</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-3 h-3 rounded-sm" style={{ background: '#F59E0B' }} />
@@ -215,7 +215,7 @@ export default async function AnalyticsPage() {
         {/* Shortage cities */}
         <div className="bg-slate-900 rounded-2xl p-5"
           style={{ border: '1px solid rgba(239,68,68,0.20)' }}>
-          <h2 className="text-red-400 font-semibold mb-3">⚠️ مدن بها نقص مزودين</h2>
+          <h2 className="text-red-400 font-semibold mb-3">⚠️ مدن بها نقص مقدمين</h2>
           {cityData.filter(c => c.demand > c.supply * 1.5).length === 0 ? (
             <p className="text-slate-600 text-sm text-center py-3">لا توجد مدن بنقص حالياً ✅</p>
           ) : (

@@ -56,7 +56,7 @@ async function seed() {
   console.log('① Creating auth users…');
 
   const clientId    = await createAuthUser('+96279000001', 'أحمد العميل');
-  const provider1Id = await createAuthUser('+96279000002', 'محمد المزود');
+  const provider1Id = await createAuthUser('+96279000002', 'محمد المقدم');
   const provider2Id = await createAuthUser('+96279000003', 'خالد الكهربائي');
 
   if (!clientId || !provider1Id || !provider2Id) {

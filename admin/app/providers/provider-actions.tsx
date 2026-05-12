@@ -163,7 +163,7 @@ export function ProviderActions({
       {modal === 'suspend' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm mx-4 text-right shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-100 mb-1">إيقاف مزود مؤقتاً</h3>
+            <h3 className="text-lg font-bold text-slate-100 mb-1">إيقاف مقدم مؤقتاً</h3>
             <p className="text-sm text-slate-400 mb-4">{name}</p>
             <textarea
               className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 resize-none outline-none focus:border-amber-400/50 mb-4"
@@ -188,7 +188,7 @@ export function ProviderActions({
       {modal === 'tier' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl p-6 w-full max-w-sm mx-4 text-right shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-100 mb-1">تعديل رتبة المزود</h3>
+            <h3 className="text-lg font-bold text-slate-100 mb-1">تعديل رتبة المقدم</h3>
             <p className="text-sm text-slate-400 mb-4">{name}</p>
             <div className="flex flex-wrap gap-2 mb-6">
               {TIERS.map(t => (
@@ -416,8 +416,8 @@ export function ProviderActions({
 
       <ConfirmModal
         open={modal === 'unsuspend'}
-        title="رفع إيقاف المزود"
-        description={`هل تريد إعادة تفعيل مزود الخدمة "${name}"؟`}
+        title="رفع إيقاف المقدم"
+        description={`هل تريد إعادة تفعيل مقدم الخدمة "${name}"؟`}
         confirmLabel="رفع الإيقاف"
         loading={loading}
         onConfirm={run}
@@ -426,7 +426,7 @@ export function ProviderActions({
       <ConfirmModal
         open={modal === 'verify'}
         title="منح شارة التوثيق"
-        description={`سيظهر "${name}" كمزود موثّق لجميع العملاء.`}
+        description={`سيظهر "${name}" كمقدم موثّق لجميع العملاء.`}
         confirmLabel="منح التوثيق"
         loading={loading}
         onConfirm={run}

@@ -403,7 +403,7 @@ export default function UrgentRequestScreen() {
                 : `${description.length}/200`}
             </Text>
             {descError && description.trim().length < 10 && (
-              <Text style={styles.errorHint}>⚠️ يرجى وصف المشكلة بـ 10 أحرف على الأقل حتى يتمكن المزود من فهم طلبك</Text>
+              <Text style={styles.errorHint}>⚠️ يرجى وصف المشكلة بـ 10 أحرف على الأقل حتى يتمكن المقدم من فهم طلبك</Text>
             )}
 
             {(aiMin || aiLoading) && (

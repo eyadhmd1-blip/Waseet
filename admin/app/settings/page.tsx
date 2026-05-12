@@ -19,7 +19,7 @@ const DEFAULTS: Record<string, { label: string; description: string; type: 'numb
   },
   max_bids_per_request: {
     label:       'الحد الأقصى للعروض لكل طلب',
-    description: 'أقصى عدد من المزودين يمكنهم تقديم عروض على طلب واحد',
+    description: 'أقصى عدد من المقدمين يمكنهم تقديم عروض على طلب واحد',
     type:        'number',
     default:     '10',
   },
@@ -48,8 +48,8 @@ const DEFAULTS: Record<string, { label: string; description: string; type: 'numb
     default:     'true',
   },
   provider_verification_required: {
-    label:       'التحقق الإلزامي للمزودين',
-    description: 'عند التفعيل، لا يمكن للمزودين تقديم عروض قبل اجتياز التحقق',
+    label:       'التحقق الإلزامي للمقدمين',
+    description: 'عند التفعيل، لا يمكن للمقدمين تقديم عروض قبل اجتياز التحقق',
     type:        'boolean',
     default:     'false',
   },
