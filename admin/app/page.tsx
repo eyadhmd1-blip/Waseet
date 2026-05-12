@@ -356,15 +356,10 @@ export default async function DashboardPage() {
 
             {/* Quick actions */}
             <div className="flex flex-wrap gap-2.5 mt-5">
-              <a href="/requests"
+              <a href="/providers?sub=none"
                 className="px-5 py-2 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
                 style={{ background: 'linear-gradient(135deg,#7C3AED,#6D28D9)' }}>
-                + إنشاء طلب
-              </a>
-              <a href="/providers"
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 transition-all hover:text-white"
-                style={{ background: 'rgba(109,40,217,0.12)', border: '1px solid rgba(109,40,217,0.25)' }}>
-                إضافة مقدم
+                💳 تفعيل اشتراك
               </a>
               <a href="/reports"
                 className="px-4 py-2 rounded-xl text-sm font-medium text-slate-300 transition-all hover:text-white"
