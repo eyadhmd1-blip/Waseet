@@ -1529,6 +1529,12 @@ export default function ProviderFeed() {
         providerBonusCredits={provider?.bonus_credits ?? 0}
         providerSubscriptionTier={provider?.subscription_tier}
         providerIsAvailable={provider?.is_available}
+        primaryCategoryIcon={(() => {
+          const slug = provider?.categories?.[0];
+          if (!slug) return undefined;
+          const cat = getCategoryBySlug(slug);
+          return cat ? (ICON_MAP[cat.icon] ?? '🛠️') : undefined;
+        })()}
         notifCount={notifCount}
         onNotifPress={() => router.push('/notification-inbox' as any)}
         onAvatarPress={() => router.push('/(provider)/profile' as any)}

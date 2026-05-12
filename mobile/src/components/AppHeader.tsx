@@ -35,6 +35,13 @@ const REP_COLOR: Record<string, string> = {
   elite:   '#10B981',
 };
 
+// ─── Subscription tier ring config ────────────────────────────
+const TIER_RING_CFG: Record<string, { color: string; width: number; dashed: boolean; innerBg: string }> = {
+  trial:   { color: '#9CA3AF', width: 1.5, dashed: true,  innerBg: 'rgba(156,163,175,0.15)' },
+  basic:   { color: '#3B82F6', width: 2,   dashed: false, innerBg: 'rgba(59,130,246,0.15)'  },
+  pro:     { color: '#F59E0B', width: 2.5, dashed: false, innerBg: 'rgba(245,158,11,0.15)'  },
+  premium: { color: '#8B5CF6', width: 3,   dashed: false, innerBg: 'rgba(139,92,246,0.15)'  },
+};
 
 function timeGreeting(lang: string): string {
   const h = new Date().getHours();
@@ -73,6 +80,7 @@ export interface AppHeaderProps {
   providerBonusCredits?:     number;
   providerSubscriptionTier?: string;
   providerIsAvailable?:      boolean;
+  primaryCategoryIcon?:      string;
 
   // ── stack ──────────────────────────────────────────────────
   title?:       string;
@@ -129,6 +137,11 @@ function RootHeader({
   const isPremium    = props.providerSubscriptionTier === 'premium';
   const isOnline     = props.providerIsAvailable !== false;
 
+  // Tier ring + category icon
+  const subTier      = props.providerSubscriptionTier ?? 'trial';
+  const categoryIcon = props.primaryCategoryIcon ?? '🛠️';
+  const ringCfg      = TIER_RING_CFG[subTier] ?? TIER_RING_CFG.trial;
+
   // ── Animation values ────────────────────────────────────────
   // Row 1 — spring entrance
   const avatarScale = useRef(new Animated.Value(0.3)).current;
@@ -143,9 +156,10 @@ function RootHeader({
   const glintX      = useRef(new Animated.Value(-80)).current;
   // Persistent effects
   const waveAnim    = useRef(new Animated.Value(0)).current;
-  const pulseScale  = useRef(new Animated.Value(1)).current;
-  const pulseOp     = useRef(new Animated.Value(0)).current;
-  const bellBounce  = useRef(new Animated.Value(0)).current;
+  const pulseScale     = useRef(new Animated.Value(1)).current;
+  const pulseOp        = useRef(new Animated.Value(0)).current;
+  const bellBounce     = useRef(new Animated.Value(0)).current;
+  const premiumGlowOp  = useRef(new Animated.Value(0.5)).current;
 
   // ── Entrance animation — fires once on mount ─────────────────
   useEffect(() => {
@@ -203,6 +217,16 @@ function RootHeader({
       setTimeout(() => {
         Animated.timing(bellBounce, { toValue: 1, duration: 540, useNativeDriver: true }).start();
       }, 480);
+    }
+
+    // 9. Premium tier ring glow — loops continuously
+    if (isPremium) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(premiumGlowOp, { toValue: 1,   duration: 900, useNativeDriver: true }),
+          Animated.timing(premiumGlowOp, { toValue: 0.3, duration: 900, useNativeDriver: true }),
+        ])
+      ).start();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -267,7 +291,7 @@ function RootHeader({
       {/* ── Row 1: Avatar | Greeting + Name | Bell ──────────── */}
       <View style={[s.row1, { flexDirection: rowDir(isRTL) }]}>
 
-        {/* Avatar with ripple ring */}
+        {/* Avatar */}
         <Animated.View style={[s.avatarBtn, avatarStyle]}>
           {/* Ripple pulse ring — emits outward once on mount */}
           <Animated.View
@@ -277,17 +301,36 @@ function RootHeader({
               { transform: [{ scale: pulseScale }], opacity: pulseOp, backgroundColor: rippleColor },
             ]}
           />
+          {/* Premium continuous glow ring */}
+          {isProvider && isPremium && (
+            <Animated.View pointerEvents="none" style={[s.premiumGlow, { opacity: premiumGlowOp }]} />
+          )}
           <TouchableOpacity onPress={props.onAvatarPress} activeOpacity={0.75}>
-            <View style={[s.avatar, { backgroundColor: avatarColor }]}>
-              <Text style={s.avatarInitials}>{initials}</Text>
-            </View>
-            {/* Role + availability badge */}
-            <View style={[
-              s.roleBadge,
-              { borderColor: isProvider ? (isOnline ? '#22C55E' : '#9CA3AF') : '#3B82F6' },
-            ]}>
-              <Text style={s.roleBadgeText}>{isProvider ? '🔧' : '👤'}</Text>
-            </View>
+            {isProvider ? (
+              /* Provider: tier ring + category icon */
+              <View style={[
+                s.tierRingView,
+                {
+                  borderColor: ringCfg.color,
+                  borderWidth: ringCfg.width,
+                  borderStyle: ringCfg.dashed ? 'dashed' : 'solid',
+                },
+              ]}>
+                <View style={[s.avatarInner, { backgroundColor: ringCfg.innerBg }]}>
+                  <Text style={s.categoryEmoji}>{categoryIcon}</Text>
+                </View>
+              </View>
+            ) : (
+              /* Client: initials circle */
+              <>
+                <View style={[s.avatar, { backgroundColor: avatarColor }]}>
+                  <Text style={s.avatarInitials}>{initials}</Text>
+                </View>
+                <View style={[s.roleBadge, { borderColor: '#3B82F6' }]}>
+                  <Text style={s.roleBadgeText}>👤</Text>
+                </View>
+              </>
+            )}
           </TouchableOpacity>
         </Animated.View>
 
@@ -590,17 +633,51 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
 
     // Avatar + ripple
     avatarBtn: {
-      position: 'relative',
-      width: 44,
-      height: 44,
+      position:       'relative',
+      width:          54,
+      height:         54,
+      alignItems:     'center',
+      justifyContent: 'center',
     },
     ripple: {
       position:     'absolute',
-      width:        44,
-      height:       44,
-      borderRadius: 22,
-      // scale expands from center; opacity fades out
+      width:        54,
+      height:       54,
+      borderRadius: 27,
     },
+
+    // Provider: tier ring + category icon
+    tierRingView: {
+      width:          54,
+      height:         54,
+      borderRadius:   27,
+      alignItems:     'center',
+      justifyContent: 'center',
+    },
+    avatarInner: {
+      width:          46,
+      height:         46,
+      borderRadius:   23,
+      alignItems:     'center',
+      justifyContent: 'center',
+    },
+    categoryEmoji: {
+      fontSize:           24,
+      lineHeight:         28,
+      includeFontPadding: false,
+    },
+    premiumGlow: {
+      position:     'absolute',
+      width:        60,
+      height:       60,
+      borderRadius: 30,
+      top:          -3,
+      left:         -3,
+      borderWidth:  2.5,
+      borderColor:  '#8B5CF6',
+    },
+
+    // Client: initials circle
     avatar: {
       width:          44,
       height:         44,
