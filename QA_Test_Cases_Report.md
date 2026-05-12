@@ -1271,6 +1271,11 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | SUB-026 | Subscription plan prices displayed correctly (5/12/22 JOD) | Medium | UI/UX |
 | SUB-027 | Arabic localization of subscription screen | Medium | Localization |
 | SUB-028 | Provider with expired subscription cannot see active bid count | Medium | Functional |
+| SUB-029 | New provider registration routes to subscribe screen (trial pre-selected) | Critical | Functional |
+| SUB-030 | New provider backs out of subscribe screen — limited mode, no crash | High | Negative |
+| SUB-031 | New provider selects trial on subscribe screen — activates successfully | Critical | Functional |
+| SUB-032 | New provider selects paid plan on subscribe screen — support ticket created | Critical | Functional |
+| SUB-033 | subscribe.tsx back button from registration context returns to login | Low | UI/UX |
 
 ---
 
