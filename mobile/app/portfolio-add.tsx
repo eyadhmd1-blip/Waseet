@@ -769,7 +769,7 @@ function createSt(colors: AppColors, isRTL: boolean, bottomInset: number, isDark
   catScroll:   { gap: 8, paddingVertical: 4 },
   catChip:     { borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1.5 },
   catChipText: { fontSize: 13, fontWeight: '600' },
-  descInput:   { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 14, lineHeight: 22, minHeight: 120, textAlignVertical: 'top' },
+  descInput:   { backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 14, lineHeight: 22, minHeight: 120, textAlignVertical: 'top', writingDirection: isRTL ? 'rtl' : 'ltr' },
   charCount:   { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginTop: 6 },
 
   nextBtn:         { backgroundColor: colors.accent, borderRadius: 18, paddingVertical: 16, alignItems: 'center' },

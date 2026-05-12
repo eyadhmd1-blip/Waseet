@@ -480,7 +480,7 @@ function createStyles(colors: AppColors, isRTL = false, isDark = false) {
   reportHandle:   { width: 40, height: 4, backgroundColor: colors.border, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
   reportTitle:    { fontSize: 18, fontWeight: '700', color: colors.textPrimary, marginBottom: 6, alignSelf: 'stretch', textAlign: ta },
   reportSub:      { fontSize: 13, color: colors.textMuted, marginBottom: 16, lineHeight: 20, alignSelf: 'stretch', textAlign: ta },
-  reportInput:    { backgroundColor: colors.bg, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 14, fontSize: 14, color: colors.textPrimary, minHeight: 110, textAlignVertical: 'top', textAlign: ta },
+  reportInput:    { backgroundColor: colors.bg, borderRadius: 12, borderWidth: 1, borderColor: colors.border, padding: 14, fontSize: 14, color: colors.textPrimary, minHeight: 110, textAlignVertical: 'top', textAlign: ta, writingDirection: isRTL ? 'rtl' : 'ltr' },
   reportCounter:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 16, textAlign: ta },
   reportBtns:     { flexDirection: 'row', gap: 10 },
   reportCancelBtn:  { flex: 1, backgroundColor: colors.bg, borderRadius: 12, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: colors.border },

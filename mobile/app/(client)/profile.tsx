@@ -321,7 +321,6 @@ export default function ClientProfile() {
                 placeholderTextColor={colors.textMuted}
                 maxLength={60}
                 textAlign={isRTL ? 'right' : 'left'}
-                {...{ writingDirection: isRTL ? 'rtl' : 'ltr' }}
               />
               <Text style={[styles.fieldLabel, { marginTop: 18 }]}>{t('auth.city')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 0 }}>
@@ -557,6 +556,7 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
       borderWidth: 1.5,
       borderColor: isDark ? colors.border : 'rgba(201,168,76,0.35)',
       marginBottom: 4,
+      writingDirection: isRTL ? 'rtl' : 'ltr',
     },
     cityChip: {
       backgroundColor: isDark ? colors.bg : 'rgba(255,255,255,0.85)',

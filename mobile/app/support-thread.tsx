@@ -452,7 +452,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     starsRow:      { flexDirection: 'row', gap: 8, marginBottom: 12 },
     star:          { fontSize: 28, opacity: 0.3 },
     starActive:    { opacity: 1 },
-    ratingInput:   { backgroundColor: colors.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, color: colors.textPrimary, fontSize: 13, borderWidth: 1, borderColor: colors.border, width: '100%', marginBottom: 10 },
+    ratingInput:   { backgroundColor: colors.bg, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, color: colors.textPrimary, fontSize: 13, borderWidth: 1, borderColor: colors.border, width: '100%', marginBottom: 10, writingDirection: isRTL ? 'rtl' : 'ltr' },
     ratingBtn:     { backgroundColor: colors.accent, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 24 },
     ratingBtnText: { fontSize: 14, fontWeight: '700', color: colors.bg },
 
@@ -461,7 +461,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     ratedNote: { fontSize: 13, color: colors.textMuted, marginTop: 4, textAlign: 'center' },
 
     inputBar:        { flexDirection: isRTL ? 'row' : 'row-reverse', alignItems: 'flex-end', padding: 12, borderTopWidth: 1, borderTopColor: colors.border, gap: 8 },
-    inputField:      { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: colors.textPrimary, fontSize: 14, maxHeight: 100, borderWidth: 1, borderColor: colors.border },
+    inputField:      { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: colors.textPrimary, fontSize: 14, maxHeight: 100, borderWidth: 1, borderColor: colors.border, writingDirection: isRTL ? 'rtl' : 'ltr' },
     sendBtn:         { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 16 },
     sendBtnDisabled: { backgroundColor: colors.border },
     sendBtnText:     { fontSize: 14, fontWeight: '700', color: colors.bg },

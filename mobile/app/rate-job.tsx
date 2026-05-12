@@ -245,7 +245,7 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     tagText:   { fontSize: 13, color: colors.textMuted, fontWeight: '600' },
     tagTextActive: { color: colors.accent },
 
-    reviewInput:    { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 90, textAlignVertical: 'top', marginBottom: 4 },
+    reviewInput:    { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, minHeight: 90, textAlignVertical: 'top', marginBottom: 4, writingDirection: isRTL ? 'rtl' : 'ltr' },
     charCount:      { fontSize: 12, color: colors.textMuted, textAlign: isRTL ? 'left' : 'right', marginBottom: 20 },
     errorHint:      { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 8, textAlign: 'center' },
 

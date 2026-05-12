@@ -2344,7 +2344,7 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   modalSubtitle:{ fontSize: 14, color: colors.textMuted, textAlign: ta, marginBottom: 16 },
   modalAiHint:  { fontSize: 13, color: colors.accent, textAlign: ta, marginBottom: 16, fontWeight: '600' },
   modalLabel:   { fontSize: 13, color: colors.textSecondary, textAlign: ta, marginBottom: 8, marginTop: 12 },
-  modalInput:   { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
+  modalInput:   { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border, writingDirection: isRTL ? 'rtl' : 'ltr' },
   inputError:   { borderColor: '#EF4444' },
   errorHint:    { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 4, textAlign: isRTL ? 'right' : 'left' as const },
   modalBtns:    { flexDirection: 'row', gap: 12, marginTop: 20 },

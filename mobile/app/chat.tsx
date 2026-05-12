@@ -1299,6 +1299,7 @@ function createStyles(colors: AppColors, ta: 'left' | 'right', isDark: boolean =
     maxHeight: 120,
     borderWidth: 1,
     borderColor: colors.border,
+    writingDirection: ta === 'right' ? 'rtl' : 'ltr',
   },
   sendBtn:         { backgroundColor: colors.accent, borderRadius: 22, paddingHorizontal: 14, paddingVertical: 10, minWidth: 60, alignItems: 'center', justifyContent: 'center' },
   sendBtnDisabled: { backgroundColor: colors.border },

@@ -177,7 +177,6 @@ export default function RegisterScreen() {
               value={fullName}
               onChangeText={v => { setFullName(v); if (nameError) setNameError(false); }}
               textAlign={isRTL ? 'right' : 'left'}
-              {...{ writingDirection: isRTL ? 'rtl' : 'ltr' }}
             />
           </View>
           {nameError && (
@@ -418,10 +417,11 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
       textAlign:    ta,
     },
     nameInput: {
-      color:         colors.textPrimary,
-      fontSize:      16,
-      fontWeight:    '500',
+      color:           colors.textPrimary,
+      fontSize:        16,
+      fontWeight:      '500',
       paddingVertical: 4,
+      writingDirection: isRTL ? 'rtl' : 'ltr',
     },
 
     errorHint: {

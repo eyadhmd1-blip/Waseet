@@ -651,7 +651,7 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   visitSummaryValue: { fontSize: 15, fontWeight: '700', color: colors.textPrimary },
   visitSummaryLabel: { fontSize: 13, color: colors.textMuted },
 
-  input:          { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, marginBottom: 16 },
+  input:          { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, marginBottom: 16, writingDirection: isRTL ? 'rtl' : 'ltr' },
   inputMulti:     { height: 100, textAlignVertical: 'top', paddingTop: 12 },
 
   heroCard:       { marginHorizontal: 16, marginBottom: 16, backgroundColor: CONTRACT_DIM, borderRadius: 20, padding: 20, borderWidth: 2, borderColor: CONTRACT_COLOR, alignItems: 'center' },

@@ -1026,12 +1026,13 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   input: {
     backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16,
     paddingVertical: 14, color: colors.textPrimary, fontSize: rs(16, 14, 18),
-    borderWidth: 1, borderColor: colors.border,
+    borderWidth: 1, borderColor: colors.border, writingDirection: isRTL ? 'rtl' : 'ltr',
   },
   inputMulti: {
     backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16,
     paddingVertical: 14, color: colors.textPrimary, fontSize: rs(15, 13, 17),
     borderWidth: 1, borderColor: colors.border, minHeight: 100, textAlignVertical: 'top',
+    writingDirection: isRTL ? 'rtl' : 'ltr',
   },
   charCount:   { fontSize: 11, color: colors.textMuted, textAlign: 'auto', marginTop: 4 },
 

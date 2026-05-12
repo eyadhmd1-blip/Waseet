@@ -238,7 +238,7 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     priorityBtnUrgent: { borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.08)' },
     priorityBtnText:   { fontSize: 14, fontWeight: '700', color: colors.textMuted },
 
-    input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border },
+    input:     { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border, writingDirection: isRTL ? 'rtl' : 'ltr' },
     inputError: { borderColor: '#EF4444' },
     textarea:  { minHeight: 120, textAlignVertical: 'top', paddingTop: 12 },
     charCount: { fontSize: 11, color: colors.textMuted, marginTop: 4, alignSelf: 'stretch', textAlign: ta },

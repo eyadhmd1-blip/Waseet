@@ -501,7 +501,7 @@ function createStyles(colors: AppColors, isRTL: boolean = false, isDark: boolean
   locationText:{ fontSize: 14, color: colors.textSecondary, flex: 1, alignSelf: 'stretch', textAlign: ta },
 
   fieldLabel: { fontSize: 13, color: colors.textSecondary, marginBottom: 8, alignSelf: 'stretch', textAlign: ta },
-  descInput:  { backgroundColor: colors.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: '#7F1D1D', textAlignVertical: 'top', height: 120, textAlign: ta },
+  descInput:  { backgroundColor: colors.surface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: '#7F1D1D', textAlignVertical: 'top', height: 120, textAlign: ta, writingDirection: isRTL ? 'rtl' : 'ltr' },
   charCount:  { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 4, alignSelf: 'stretch', textAlign: ta },
   errorHint:  { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },
 
