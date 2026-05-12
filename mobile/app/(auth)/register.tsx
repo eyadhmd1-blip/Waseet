@@ -177,6 +177,7 @@ export default function RegisterScreen() {
               value={fullName}
               onChangeText={v => { setFullName(v); if (nameError) setNameError(false); }}
               textAlign={isRTL ? 'right' : 'left'}
+              writingDirection={isRTL ? 'rtl' : 'ltr'}
             />
           </View>
           {nameError && (
