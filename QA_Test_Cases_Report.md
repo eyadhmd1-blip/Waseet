@@ -1,11 +1,11 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 2.5  
+**Document Version:** 2.6  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
 **Backend:** Supabase (PostgreSQL + Edge Functions + Realtime)  
-**Date:** 2026-05-07  
+**Date:** 2026-05-12  
 
 ---
 
@@ -48,6 +48,7 @@
 35. [REVT — Revenue Timeline Chart](#35-revt--revenue-timeline-chart)
 36. [SDLY — Supply/Demand Analytics Page](#36-sdly--supplydemand-analytics-page)
 37. [SYSH — System Health Page](#37-sysh--system-health-page)
+38. [BUGFIX — Bug-Fix Regression Suite (v2.6)](#38-bugfix--bug-fix-regression-suite-v26)
 
 ---
 
@@ -103,7 +104,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | REVT | 6 | 1 | 2 | 2 | 1 |
 | SDLY | 8 | 2 | 4 | 2 | 0 |
 | SYSH | 8 | 2 | 4 | 2 | 0 |
-| **TOTAL** | **515** | **135** | **216** | **135** | **29** |
+| BUGFIX | 8 | 5 | 3 | 0 | 0 |
+| **TOTAL** | **523** | **140** | **219** | **135** | **29** |
 
 ---
 
@@ -5810,9 +5812,162 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v2.5*  
-*Total Test Cases: 515 across 37 modules*  
-*Critical: 135 | High: 216 | Medium: 135 | Low: 29*  
+---
+
+## 38. BUGFIX — Bug-Fix Regression Suite (v2.6)
+
+> حالات اختبار الانحدار لجميع الإصلاحات المُطبَّقة في جلسة 2026-05-12.  
+> كل حالة تتحقق من أن الإصلاح يعمل **وأنه لم يُحدث تأثيرات جانبية**.
+
+### High-Risk Areas
+- التحقق من هوية الخدمات الداخلية (BUG-C01/C02)
+- منع الشرط التنافسي في قبول العروض (BUG-C04)
+- تشغيل دورة انتهاء الالتزام (BUG-C05)
+- تتبع الخسائر المتتالية بعد إصلاح bid_credits (BUG-C06)
+- مقارنة كود التأكيد بطريقة آمنة (BUG-C10)
+- الكشف الصحيح عن أخطاء Expo (BUG-H04)
+
+---
+
+#### BUGFIX-001
+**Name:** notify-lifecycle يرفض الطلبات غير المصرّح بها  
+**Fixes:** BUG-C01 | **Priority:** Critical | **Type:** Security  
+**Preconditions:** Edge Function مُنشَّرة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | استدعاء `notify-lifecycle` بدون `Authorization` header | HTTP 401 `{"error":"unauthorized"}` |
+| 2 | استدعاء بـ `Authorization: Bearer wrong_key` | HTTP 401 |
+| 3 | استدعاء بـ `Authorization: Bearer <service_role_key>` | HTTP 200 `{"ok":true,...}` |
+| 4 | pg_cron يستدعي الدالة يومياً بالمفتاح الصحيح | الإشعارات تُرسَل بشكل طبيعي |
+
+**Regression:** لا يجب أن يتأثر إرسال إشعارات lifecycle الاعتيادية.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX-002
+**Name:** notify-admin يرفض الطلبات غير المصرّح بها  
+**Fixes:** BUG-C02 | **Priority:** Critical | **Type:** Security  
+**Preconditions:** Edge Function مُنشَّرة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | POST بدون header | HTTP 401 |
+| 2 | POST بمفتاح خاطئ | HTTP 401 |
+| 3 | trigger قاعدة البيانات يُطلق `cliq_payment` بمفتاح service_role | الإيميل والSMS يُرسَلان |
+| 4 | pg_cron يُطلق `daily_digest` بالمفتاح الصحيح | الملخص اليومي يُرسَل |
+
+**Regression:** جميع أحداث notify-admin الـ 9 لا تزال تعمل عبر الـ triggers.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX-003
+**Name:** accept_bid لا يقبل نفس الطلب مرتين بشكل متزامن  
+**Fixes:** BUG-C04 | **Priority:** Critical | **Type:** Concurrency  
+**Preconditions:** طلب مفتوح بعرضَين على الأقل
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | عميلان يستدعيان `accept_bid` لنفس الطلب في نفس اللحظة | عملية واحدة فقط تنجح، الأخرى تُرجع `not_authorized_or_request_closed` |
+| 2 | التحقق من جدول `jobs` | صف واحد فقط لهذا الطلب |
+| 3 | حالة الطلب | `in_progress` لا `open` |
+| 4 | قبول عرض آخر على نفس الطلب | `not_authorized_or_request_closed` |
+
+**Regression:** قبول العروض الاعتيادي (غير متزامن) يعمل كالمعتاد.  
+**Automation Candidate:** Yes (concurrent test with pgbench)
+
+---
+
+#### BUGFIX-004
+**Name:** sweep_expired_job_commitments يُشغَّل كل دقيقة  
+**Fixes:** BUG-C05 | **Priority:** Critical | **Type:** Cron  
+**Preconditions:** migration 087 مُطبَّق
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | التحقق من جدول `cron.job` | مهمة `sweep-commitment-expiry` موجودة بجدول `* * * * *` |
+| 2 | إنشاء job نشط تجاوز `provider_commit_deadline` | بعد دقيقة: حالة الـ job = `cancelled` |
+| 3 | عروض الطلب المرتبط | تعود إلى `pending` |
+| 4 | حالة الطلب | تعود إلى `open` |
+
+**Regression:** Jobs التي التزم بها المقدم خلال المهلة لا تتأثر.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX-005
+**Name:** تتبع الخسائر المتتالية يعمل بعد إصلاح bid_credits  
+**Fixes:** BUG-C06 | **Priority:** Critical | **Type:** Functional  
+**Preconditions:** مقدم non-premium لديه عروض مقبولة سابقة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | رفض عرض المقدم (تحديث status = rejected) | `consecutive_losses` يزيد بمقدار 1 |
+| 2 | `bid_rejection_rate` | تُحسَب وتُحدَّث صحيحاً |
+| 3 | رفض 7 عروض متتالية | `bonus_credits` يزيد بمقدار 1 (مكافأة المثابرة) |
+| 4 | قبول عرض بعد السلسلة | `consecutive_losses` يُعاد إلى 0 |
+
+**Regression:** لا تُضاف رصيد مزدوج ولا يختفي.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX-006
+**Name:** استرداد الرصيد عند إلغاء الطلب يُوزَّع بين المحفظتين صحيحاً  
+**Fixes:** BUG-H01 | **Priority:** High | **Type:** Functional  
+**Preconditions:** مقدم قدّم عرضاً باستخدام subscription_credits وbonus_credits معاً
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | العرض يكلف 3 رصيد (2 subscription + 1 bonus) `bonus_credits_used=1` | يُسجَّل صحيحاً في bids |
+| 2 | العميل يُلغي الطلب | trigger `refund_bids_on_cancel` يُطلَق |
+| 3 | subscription_credits المقدم | يزيد بمقدار 2 (وليس 3) |
+| 4 | bonus_credits المقدم | يزيد بمقدار 1 |
+
+**Regression:** إلغاء طلب بعروض من مقدمين premium لا يغير أرصدتهم.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX-007
+**Name:** مقارنة كود تأكيد الوظيفة مقاومة للـ timing attack  
+**Fixes:** BUG-C10 | **Priority:** Critical | **Type:** Security  
+**Preconditions:** job نشط بـ confirm_code مُولَّد
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | إرسال كود صحيح | `{"success": true}`, حالة الـ job = `completed` |
+| 2 | إرسال كود خاطئ بنفس الطول | `{"error":"wrong_code"}`, `confirm_attempts` يزيد |
+| 3 | إرسال كود أقصر أو أطول | `{"error":"wrong_code"}` (no short-circuit leak) |
+| 4 | قياس وقت الاستجابة للكودين الصحيح والخاطئ | الفرق < 5ms (زمن متساوٍ) |
+
+**Regression:** الـ lockout بعد 5 محاولات خاطئة لا يزال يعمل.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX-008
+**Name:** أخطاء Expo على مستوى الـ ticket تُسجَّل في الـ logs  
+**Fixes:** BUG-H04 | **Priority:** High | **Type:** Error Handling  
+**Preconditions:** رمز push منتهي الصلاحية في قاعدة البيانات
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Expo يُرجع `{"status":"error","details":{"error":"DeviceNotRegistered"}}` | Edge Function log يحتوي `[bid-rejected] Expo ticket error:` |
+| 2 | `sent` counter | لا يُحتسَب الـ ticket الفاشل ضمن العداد |
+| 3 | HTTP 200 من Expo مع أخطاء في الـ body | يُعالَج بشكل صحيح (لا يُحتسَب كنجاح كامل) |
+| 4 | HTTP 4xx من Expo | يُسجَّل في log ويستمر البـ batch التالي |
+
+**Regression:** الإشعارات الناجحة (status=ok) تُحتسَب كالمعتاد.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v2.6*  
+*Total Test Cases: 523 across 38 modules*  
+*Critical: 140 | High: 220 | Medium: 135 | Low: 29* (8 حالات جديدة: 5 Critical + 3 High — من BUGFIX-001 إلى BUGFIX-008 مع اعتبار BUGFIX-006 High)  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*

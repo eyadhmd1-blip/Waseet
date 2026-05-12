@@ -609,6 +609,13 @@ async function handleDailyDigest(db: ReturnType<typeof makeAdmin>) {
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
 
+  // Only DB triggers / pg_cron (via service_role key) may invoke this function
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!authHeader || authHeader !== `Bearer ${serviceKey}`) {
+    return json({ error: "unauthorized" }, 401);
+  }
+
   try {
     const { event, data } = await req.json();
     const db = makeAdmin();

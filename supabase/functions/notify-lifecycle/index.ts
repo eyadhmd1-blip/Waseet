@@ -45,11 +45,28 @@ type DB = ReturnType<typeof makeAdmin>;
 
 async function sendPushBatch(messages: object[]): Promise<void> {
   for (let i = 0; i < messages.length; i += BATCH_SIZE) {
-    await fetch(EXPO_PUSH_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
-      body: JSON.stringify(messages.slice(i, i + BATCH_SIZE)),
-    }).catch(() => {});
+    try {
+      const res = await fetch(EXPO_PUSH_URL, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body:    JSON.stringify(messages.slice(i, i + BATCH_SIZE)),
+      });
+      if (!res.ok) {
+        console.error("[notify-lifecycle] Expo HTTP error:", res.status, await res.text());
+        continue;
+      }
+      // Expo returns 200 even for per-ticket errors — inspect the body
+      const payload = await res.json().catch(() => null);
+      if (payload?.data) {
+        for (const ticket of payload.data as Array<{ status: string; message?: string; details?: { error?: string } }>) {
+          if (ticket.status === "error") {
+            console.error("[notify-lifecycle] Expo ticket error:", ticket.message, ticket.details?.error);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("[notify-lifecycle] sendPushBatch fetch error:", err);
+    }
   }
 }
 
@@ -292,6 +309,13 @@ async function handleReengagement(db: DB): Promise<number> {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
+
+  // Only pg_cron (via service_role key) may invoke this function
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  if (!authHeader || authHeader !== `Bearer ${serviceKey}`) {
+    return json({ error: "unauthorized" }, 401);
+  }
 
   try {
     const db = makeAdmin();

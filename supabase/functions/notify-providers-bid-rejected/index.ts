@@ -159,12 +159,32 @@ Deno.serve(async (req) => {
     let sent = 0;
     for (let i = 0; i < messages.length; i += BATCH_SIZE) {
       const batch = messages.slice(i, i + BATCH_SIZE);
-      const res   = await fetch(EXPO_PUSH_URL, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body:    JSON.stringify(batch),
-      });
-      if (res.ok) sent += batch.length;
+      try {
+        const res = await fetch(EXPO_PUSH_URL, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+          body:    JSON.stringify(batch),
+        });
+        if (!res.ok) {
+          console.error("[bid-rejected] Expo HTTP error:", res.status, await res.text());
+          continue;
+        }
+        // Expo returns 200 even for per-ticket errors — inspect the body
+        const payload = await res.json().catch(() => null);
+        if (payload?.data) {
+          for (const ticket of payload.data as Array<{ status: string; message?: string; details?: { error?: string } }>) {
+            if (ticket.status === "error") {
+              console.error("[bid-rejected] Expo ticket error:", ticket.message, ticket.details?.error);
+            } else {
+              sent++;
+            }
+          }
+        } else {
+          sent += batch.length;
+        }
+      } catch (err) {
+        console.error("[bid-rejected] sendPushBatch error:", err);
+      }
     }
 
     // In-app notifications for ALL rejected providers

@@ -79,11 +79,22 @@ Deno.serve(async (req) => {
       return json({ error: "code_expired" }, 400);
     }
 
-    // ── Validate code (constant-time comparison) ──────────────
+    // ── Validate code (constant-time comparison, BUG-C10) ────────
+    // XOR every character pair so execution time is identical for
+    // correct and incorrect codes of the same length.
     const expected = job.confirm_code as string;
     const provided = String(code).trim();
 
-    if (expected.length !== provided.length || expected !== provided) {
+    function timingSafeEqual(a: string, b: string): boolean {
+      if (a.length !== b.length) return false;
+      let diff = 0;
+      for (let i = 0; i < a.length; i++) {
+        diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      }
+      return diff === 0;
+    }
+
+    if (!timingSafeEqual(expected, provided)) {
       // Increment attempt counter before returning error
       await supabaseAdmin
         .from("jobs")
