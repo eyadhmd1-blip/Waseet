@@ -23,11 +23,13 @@ export type AuditAction =
   | 'add_category'
   | 'update_report_status'
   | 'unlock_tier'
-  | 'manual_activate_subscription';
+  | 'manual_activate_subscription'
+  | 'resolve_provider_flag'
+  | 'warn_provider';
 
 export async function logAudit(params: {
   action:        AuditAction;
-  target_type:   'user' | 'provider' | 'request' | 'contract' | 'system' | 'ticket' | 'category' | 'report';
+  target_type:   'user' | 'provider' | 'request' | 'contract' | 'system' | 'ticket' | 'category' | 'report' | 'flag';
   target_id?:    string;
   target_label?: string;
   reason?:       string;

@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 1.0  
+**Document Version:** 2.0  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -38,6 +38,7 @@
 25. [THME — App-Wide Theme & Visual Redesign](#25-thme--app-wide-theme--visual-redesign)
 26. [NCAT — New Service Categories (Water, Cleaning, Gardening)](#26-ncat--new-service-categories-water-cleaning-gardening)
 27. [DEMO — Provider Demo Request Card](#27-demo--provider-demo-request-card)
+28. [FLAG — Provider Automatic Flagging & Admin Portal](#28-flag--provider-automatic-flagging--admin-portal)
 
 ---
 
@@ -4218,9 +4219,217 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v1.9*  
-*Total Test Cases: 421 across 27 modules*  
-*Critical: 112 | High: 170 | Medium: 108 | Low: 28*  
+## 28. FLAG — Provider Automatic Flagging & Admin Portal
+
+### Overview
+نظام المراقبة التلقائية للمزودين: DB triggers + cron + admin portal page.
+
+---
+
+#### FLAG-001
+**Name:** DB trigger — تحديث التقييم يُطلق الفحص  
+**Priority:** Critical | **Type:** Backend / Integration  
+**Preconditions:** مزود لديه وظيفتان مكتملتان بتقييم < 2.5
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضبط `client_rating = 1` على وظيفة مكتملة | تُطلق trigger `trg_flag_on_rating` |
+| 2 | تحقق من `provider_flags` | سجل جديد بـ `reason = 'low_rating'` و `reviewed = false` |
+| 3 | تحقق من `providers.is_flagged` | = `true` |
+| 4 | تحقق من `providers.flag_count` | زاد بمقدار 1 |
+
+**Expected Result:** بلاغ `low_rating` يُنشأ تلقائياً عند استيفاء الشرط.  
+**Automation Candidate:** Yes
+
+---
+
+#### FLAG-002
+**Name:** DB trigger — رفض العرض يُطلق الفحص  
+**Priority:** Critical | **Type:** Backend / Integration  
+**Preconditions:** مزود لديه 5+ عروض، نسبة رفض > 60%
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | غيّر حالة العرض إلى `rejected` | تُطلق trigger `trg_flag_on_bid_rejected` |
+| 2 | تحقق من `provider_flags` | سجل `high_rejection` إذا استوفى الشرط |
+| 3 | لا يتجاوز 60% | لا يُنشأ بلاغ |
+
+**Expected Result:** بلاغ `high_rejection` يُنشأ فقط عند تجاوز الحد.  
+**Automation Candidate:** Yes
+
+---
+
+#### FLAG-003
+**Name:** DB trigger — تقديم شكوى يُطلق الفحص  
+**Priority:** Critical | **Type:** Backend / Integration  
+**Preconditions:** 3 مستخدمون مختلفون قدّموا شكوى ضد مزود
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أدرج صف في `reports` يستهدف المزود | تُطلق trigger `trg_flag_on_report` |
+| 2 | عدد الشاكين = 3 | سجل `complaints` يُنشأ |
+| 3 | عدد الشاكين < 3 | لا بلاغ |
+| 4 | المُبلَّغ عنه عميل وليس مزوداً | لا بلاغ |
+
+**Expected Result:** بلاغ `complaints` يُنشأ عند 3 شاكين مختلفين فقط.  
+**Automation Candidate:** Yes
+
+---
+
+#### FLAG-004
+**Name:** pg_cron — فحص التخلي عن الوظيفة كل ساعة  
+**Priority:** High | **Type:** Backend / Scheduled  
+**Preconditions:** وظيفة بحالة `active` منذ 72+ ساعة بدون `confirmed_at`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | شغّل `SELECT check_job_abandonment()` | يمسح الوظائف المتروكة |
+| 2 | تحقق من `provider_flags` | سجل `job_abandonment` يُنشأ |
+| 3 | شغّل الدالة مرة ثانية | لا يُنشأ سجل مكرر (per-job dedup) |
+| 4 | تحقق من `details->>'job_id'` | يطابق الوظيفة الصحيحة |
+
+**Expected Result:** كل وظيفة متروكة تُنشئ بلاغاً واحداً فقط.  
+**Automation Candidate:** Yes
+
+---
+
+#### FLAG-005
+**Name:** flag_provider — عدم تكرار البلاغ غير المراجع  
+**Priority:** High | **Type:** Backend / Logic  
+**Preconditions:** بلاغ `low_rating` غير مراجع موجود مسبقاً
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | استدعِ `flag_provider(provider_id, 'low_rating', ...)` | لا يُنشأ سجل جديد |
+| 2 | راجع البلاغ الأول وامسحه | يُنشأ بلاغ جديد عند الاستدعاء التالي |
+
+**Expected Result:** لا يتراكم نفس نوع البلاغ ما لم يُراجَع السابق.  
+**Automation Candidate:** Yes
+
+---
+
+#### FLAG-006
+**Name:** Admin portal — صفحة /provider-flags تُحمّل البلاغات  
+**Priority:** Critical | **Type:** Admin UI / Functional  
+**Preconditions:** مزود واحد على الأقل لديه بلاغ غير مراجع
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح `/provider-flags` في المتصفح | الصفحة تُحمّل |
+| 2 | تحقق من Stats | 4 بطاقات إحصاء: قيد المراجعة / تحذير / إيقاف / تبرئة |
+| 3 | تحقق من قائمة البلاغات | اسم المزود + نوع البلاغ + التفاصيل ظاهرة |
+| 4 | فلترة "الكل" | تظهر البلاغات المراجعة أيضاً |
+
+**Expected Result:** الصفحة تعرض البلاغات بشكل صحيح مع الفلاتر.  
+**Automation Candidate:** No
+
+---
+
+#### FLAG-007
+**Name:** Admin modal — اتخاذ قرار (تحذير)  
+**Priority:** Critical | **Type:** Admin UI / Functional  
+**Preconditions:** بلاغ غير مراجع ظاهر في الصفحة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "اتخاذ قرار" | يفتح modal |
+| 2 | اختر "تحذير" | يتحدد بالون أصفر/برتقالي |
+| 3 | اضغط "تأكيد" بدون ملاحظة | رسالة خطأ "ملاحظة الإدارة مطلوبة" |
+| 4 | أدخل ملاحظة واضغط "تأكيد" | modal يُغلق، البلاغ يختفي من قائمة المراجعة |
+| 5 | تحقق من `provider_flags` | `reviewed = true`, `action_taken = 'warned'` |
+| 6 | تحقق من `providers.is_flagged` | إذا لا يوجد بلاغ آخر = `false` |
+
+**Expected Result:** قرار "تحذير" يُسجَّل ويُنشئ إشعاراً للمزود.  
+**Automation Candidate:** No
+
+---
+
+#### FLAG-008
+**Name:** Admin modal — اتخاذ قرار (إيقاف مؤقت)  
+**Priority:** Critical | **Type:** Admin UI / Functional  
+**Preconditions:** بلاغ غير مراجع + مزود نشط
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح modal + اختر "إيقاف مؤقت" + أدخل ملاحظة | زر تأكيد يظهر باللون الأحمر |
+| 2 | اضغط "تأكيد: إيقاف مؤقت" | يُنفَّذ القرار |
+| 3 | تحقق من `providers.is_active` | = `false` |
+| 4 | تحقق من `providers.suspended_at` | قيمة timestamp مضبوطة |
+| 5 | تحقق من `provider_flags.action_taken` | = `'suspended'` |
+
+**Expected Result:** الإيقاف يُطبَّق فورياً على المزود.  
+**Automation Candidate:** No
+
+---
+
+#### FLAG-009
+**Name:** Admin modal — اتخاذ قرار (تبرئة)  
+**Priority:** High | **Type:** Admin UI / Functional  
+**Preconditions:** بلاغ غير مراجع
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح modal + اختر "تبرئة" + أدخل ملاحظة | زر تأكيد أخضر |
+| 2 | اضغط "تأكيد" | البلاغ يُوسَم مراجَع |
+| 3 | تحقق من `action_taken` | = `'cleared'` |
+| 4 | لا يُرسَل push notification للمزود عند التبرئة | صحيح — لا إشعار |
+
+**Expected Result:** تبرئة هادئة بدون إشعار للمزود.  
+**Automation Candidate:** No
+
+---
+
+#### FLAG-010
+**Name:** Sidebar badge — يظهر العدد الصحيح  
+**Priority:** High | **Type:** Admin UI / Visual  
+**Preconditions:** بلاغات غير مراجعة موجودة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح أي صفحة في الأدمن | badge أحمر يظهر بجانب "مراقبة المزودين" في الـ sidebar |
+| 2 | العدد = عدد البلاغات غير المراجعة | صحيح |
+| 3 | راجِع جميع البلاغات | badge يختفي |
+| 4 | تحقق بعد 30 ثانية بدون reload | badge يتحدث تلقائياً (polling كل 30s) |
+
+**Expected Result:** Badge يعكس الحالة الحية في الوقت الفعلي.  
+**Automation Candidate:** No
+
+---
+
+#### FLAG-011
+**Name:** resolve_provider_flag — recalculates is_flagged  
+**Priority:** High | **Type:** Backend / Logic  
+**Preconditions:** مزود لديه بلاغان غير مراجعَين
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | راجِع البلاغ الأول | `providers.is_flagged` لا يزال `true` |
+| 2 | راجِع البلاغ الثاني | `providers.is_flagged` = `false` |
+
+**Expected Result:** `is_flagged` يتحدث بدقة بناءً على البلاغات المتبقية.  
+**Automation Candidate:** Yes
+
+---
+
+#### FLAG-012
+**Name:** get_unreviewed_flags_count — يعيد العدد الصحيح  
+**Priority:** Medium | **Type:** Backend / API  
+**Preconditions:** عدد محدد من البلاغات غير المراجعة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | استدعِ `SELECT get_unreviewed_flags_count()` | يطابق COUNT الفعلي |
+| 2 | استدعِ `GET /api/flags/count` من المتصفح بدون session | 401 Unauthorized |
+| 3 | استدعِ `GET /api/flags/count` مع session صالحة | `{ "count": N }` |
+
+**Expected Result:** API يعيد العدد الصحيح ويحمي بالجلسة.  
+**Automation Candidate:** Yes
+
+---
+
+*End of Waseet QA Test Cases Report v2.0*  
+*Total Test Cases: 433 across 28 modules*  
+*Critical: 117 | High: 177 | Medium: 112 | Low: 28*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*

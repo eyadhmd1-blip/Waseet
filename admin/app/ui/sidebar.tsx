@@ -2,7 +2,37 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { logoutAction } from '../login/actions';
+
+function FlagsBadge() {
+  const [count, setCount] = useState<number>(0);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const poll = async () => {
+      try {
+        const res = await fetch('/api/flags/count');
+        if (!res.ok || !mounted) return;
+        const { count: c } = await res.json();
+        setCount(c ?? 0);
+      } catch { /* ignore */ }
+    };
+
+    poll();
+    const id = setInterval(poll, 30_000);
+    return () => { mounted = false; clearInterval(id); };
+  }, []);
+
+  if (count === 0) return null;
+
+  return (
+    <span className="mr-auto min-w-[1.25rem] h-5 px-1.5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
 
 const NAV_GROUPS = [
   {
@@ -30,9 +60,10 @@ const NAV_GROUPS = [
   {
     label: 'الحماية والسلامة',
     items: [
-      { href: '/abuse-reports',    label: 'البلاغات',         icon: '🚩' },
-      { href: '/cancellations',    label: 'تنبيهات الإلغاء',  icon: '⚠️' },
-      { href: '/category-limits',  label: 'حدود الأسعار',     icon: '💰' },
+      { href: '/provider-flags', label: 'مراقبة المزودين', icon: '🚨', badge: 'flags' },
+      { href: '/abuse-reports',  label: 'البلاغات',         icon: '🚩' },
+      { href: '/cancellations',  label: 'تنبيهات الإلغاء',  icon: '⚠️' },
+      { href: '/category-limits', label: 'حدود الأسعار',    icon: '💰' },
     ],
   },
   {
@@ -76,7 +107,7 @@ export function Sidebar() {
               {label}
             </p>
             <div className="flex flex-col gap-0.5">
-              {items.map(({ href, label: itemLabel, icon }) => {
+              {items.map(({ href, label: itemLabel, icon, badge }) => {
                 const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
                 return (
                   <Link
@@ -90,7 +121,8 @@ export function Sidebar() {
                   >
                     <span className="text-base w-5 text-center">{icon}</span>
                     <span>{itemLabel}</span>
-                    {active && (
+                    {badge === 'flags' && <FlagsBadge />}
+                    {active && badge !== 'flags' && (
                       <span className="mr-auto w-1.5 h-1.5 rounded-full bg-amber-400" />
                     )}
                   </Link>
