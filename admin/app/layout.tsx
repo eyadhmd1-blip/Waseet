@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ar" dir="rtl" className="h-full">
-      <body className="h-full text-slate-100 antialiased bg-slate-950">
+      <body className="h-full text-slate-100 antialiased">
         <AdminShell>{children}</AdminShell>
       </body>
     </html>

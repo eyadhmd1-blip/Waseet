@@ -4,13 +4,13 @@ interface BadgeProps {
 }
 
 const VARIANTS: Record<string, string> = {
-  default: 'bg-slate-800 text-slate-300',
-  success: 'bg-emerald-900/60 text-emerald-400',
-  warning: 'bg-amber-900/60 text-amber-300',
-  danger:  'bg-red-900/60 text-red-400',
-  info:    'bg-sky-900/60 text-sky-300',
-  violet:  'bg-violet-900/60 text-violet-300',
-  muted:   'bg-slate-900 text-slate-600',
+  default: 'bg-slate-800/80 text-slate-300 border border-slate-700/60',
+  success: 'bg-emerald-500/12 text-emerald-400 border border-emerald-500/25',
+  warning: 'bg-amber-500/12 text-amber-300 border border-amber-500/25',
+  danger:  'bg-red-500/12 text-red-400 border border-red-500/25',
+  info:    'bg-sky-500/12 text-sky-300 border border-sky-500/25',
+  violet:  'bg-violet-500/12 text-violet-300 border border-violet-500/25',
+  muted:   'bg-slate-800/40 text-slate-600 border border-slate-800',
 };
 
 export function Badge({ children, variant = 'default' }: BadgeProps) {

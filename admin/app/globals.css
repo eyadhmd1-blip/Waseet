@@ -2,8 +2,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --background: #020617;
-  --foreground: #f1f5f9;
+  --background: #06040F;
+  --foreground: #EDE9FF;
+  --card:             #0C091D;
+  --card-hover:       #130E29;
+  --card-border:      rgba(109, 40, 217, 0.16);
+  --card-border-hover:rgba(139, 92, 246, 0.32);
+  --sidebar-bg:       #080616;
+  --sidebar-border:   rgba(109, 40, 217, 0.20);
+  --accent:           #7C3AED;
+  --accent-glow:      rgba(124, 58, 237, 0.14);
 }
 
 * { box-sizing: border-box; }
@@ -14,11 +22,28 @@ body {
   font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar        { width: 5px; height: 5px; }
-::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: #334155; border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: #475569; }
+/* ── Scrollbar ─────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(109,40,217,0.35); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.60); }
 
-/* Table row hover */
-tr.row-hover:hover { background: rgba(255,255,255,0.03); }
+/* ── Table row hover ──────────────────────────────────────── */
+tr.row-hover:hover { background: rgba(109,40,217,0.05); }
+
+/* ── Shared card utility (used by dashboard + inner pages) ── */
+.pk-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.pk-card-hover:hover {
+  background: var(--card-hover);
+  border-color: var(--card-border-hover);
+}
+
+/* ── Subtle glow ring on violet focus ─────────────────────── */
+.pk-glow {
+  box-shadow: 0 0 0 1px rgba(124,58,237,0.25), 0 8px 32px rgba(124,58,237,0.10);
+}
