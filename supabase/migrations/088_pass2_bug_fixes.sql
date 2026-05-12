@@ -326,7 +326,7 @@ CREATE OR REPLACE FUNCTION send_otp(p_phone TEXT)
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public
+SET search_path = public, extensions
 AS $$
 DECLARE
   v_code        VARCHAR(6);
@@ -365,9 +365,9 @@ BEGIN
   --        (tiny modular bias of ~0.005% — acceptable for OTP purposes).
   v_rnd_buf := gen_random_bytes(3);
   v_code := LPAD(
-    ((get_byte(v_rnd_buf, 0)::INT << 16) |
-     (get_byte(v_rnd_buf, 1)::INT << 8)  |
-      get_byte(v_rnd_buf, 2)::INT       ) % 1000000,
+    (((get_byte(v_rnd_buf, 0)::INT << 16) |
+      (get_byte(v_rnd_buf, 1)::INT << 8)  |
+       get_byte(v_rnd_buf, 2)::INT) % 1000000)::TEXT,
     6, '0'
   );
 
