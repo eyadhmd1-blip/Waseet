@@ -40,6 +40,7 @@ GoogleService-Info.plist
 google-service-account.json
 
 # ── Build outputs ─────────────────────────────────────────────────────────────
+dist/
 build/
 *.apk
 *.aab
