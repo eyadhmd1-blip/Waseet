@@ -1647,7 +1647,7 @@ export default function ProviderFeed() {
             isRTL={isRTL}
             ta={ta}
             onSubscribe={() => router.push('/subscribe' as any)}
-            onProfile={() => router.push('/portfolio' as any)}
+            onProfile={() => router.push({ pathname: '/(provider)/profile', params: { tab: 'portfolio' } } as any)}
           />
         }
         renderItem={({ item, index }) => {

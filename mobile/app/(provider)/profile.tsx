@@ -5,7 +5,7 @@ import {
   Modal, Alert,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import {
   TIER_META, SUBSCRIPTION_PLANS, ALL_CATEGORIES,
@@ -137,6 +137,7 @@ export default function ProviderProfile() {
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const { contentPad } = useInsets();
   const router = useRouter();
+  const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
 
   const [provider, setProvider]               = useState<(Provider & { user: User }) | null>(null);
   const [loading, setLoading]                 = useState(true);
@@ -147,7 +148,7 @@ export default function ProviderProfile() {
   const [catModalVisible,  setCatModalVisible]  = useState(false);
   const [selectedCats,     setSelectedCats]     = useState<string[]>([]);
   const [savingCats,       setSavingCats]        = useState(false);
-  const [activeTab,        setActiveTab]         = useState<'specialties' | 'portfolio'>('specialties');
+  const [activeTab,        setActiveTab]         = useState<'specialties' | 'portfolio'>(tabParam === 'portfolio' ? 'portfolio' : 'specialties');
   const [cityModalVisible, setCityModalVisible] = useState(false);
   const [selectedCity,     setSelectedCity]     = useState('');
   const [savingCity,       setSavingCity]       = useState(false);
