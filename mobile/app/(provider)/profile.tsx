@@ -362,7 +362,7 @@ export default function ProviderProfile() {
               ]}>
                 {provider.user?.city
                   ? provider.user.city
-                  : (isRTL ? 'أضف مدينتك' : 'Add city')}
+                  : t('profile.addCity')}
               </Text>
               <Text style={{ fontSize: 10, color: provider.user?.city ? tierColor : colors.textMuted, opacity: 0.7 }}>✏️</Text>
             </TouchableOpacity>
@@ -385,7 +385,7 @@ export default function ProviderProfile() {
             }]}>
               <View style={[styles.heroPillDot, { backgroundColor: isAvailable ? '#22C55E' : '#6B7280' }]} />
               <Text style={[styles.heroPillText, { color: isAvailable ? '#22C55E' : colors.textMuted }]}>
-                {isAvailable ? (isRTL ? 'مباشر' : 'Online') : (isRTL ? 'غير متاح' : 'Away')}
+                {isAvailable ? t('profile.statusOnline') : t('profile.statusAway')}
               </Text>
             </View>
           </View>
@@ -441,13 +441,13 @@ export default function ProviderProfile() {
                   <>
                     <Text style={[styles.subCreditsNum, { color: creditColor }]}>{subCredits}</Text>
                     <Text style={styles.subCreditsCaption}>
-                      {isRTL ? 'رصيد متبقٍ هذا الشهر' : 'credits remaining'}
+                      {t('profile.creditsRemainingCaption')}
                     </Text>
                   </>
                 )}
                 {bonusCredits > 0 && (
                   <View style={styles.bonusPill}>
-                    <Text style={styles.bonusPillText}>🏆 +{bonusCredits} {isRTL ? 'رصيد مكافأة' : 'bonus'}</Text>
+                    <Text style={styles.bonusPillText}>🏆 +{bonusCredits} {t('profile.bonusLabel')}</Text>
                   </View>
                 )}
               </View>
@@ -457,7 +457,7 @@ export default function ProviderProfile() {
                 <View style={styles.subChipsRow}>
                   {(provider.win_discount_pct ?? 0) > 0 && (
                     <View style={styles.discChipGreen}>
-                      <Text style={styles.discChipGreenText}>🏆 {provider.win_discount_pct}% {isRTL ? 'خصم تجديد' : 'renewal off'}</Text>
+                      <Text style={styles.discChipGreenText}>🏆 {provider.win_discount_pct}% {t('profile.renewalOff')}</Text>
                     </View>
                   )}
                   {provider.reputation_tier !== 'elite' && (
@@ -495,7 +495,7 @@ export default function ProviderProfile() {
               >
                 <Text style={[styles.subCTAText, { color: noCredits || lowCredits ? colors.bg : tierColor }]}>
                   {noCredits
-                    ? (isRTL ? '⚡ جدّد اشتراكك الآن' : '⚡ Renew Now')
+                    ? `⚡ ${t('profile.renewNow')}`
                     : plan.tier === 'premium'
                       ? t('profile.renewBtn')
                       : t('profile.upgradeBtn')}
@@ -505,7 +505,7 @@ export default function ProviderProfile() {
           ) : (
             <View style={[styles.noSubCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <Text style={{ fontSize: 36, marginBottom: 8 }}>💎</Text>
-              <Text style={styles.noSubTitle}>{isRTL ? 'لا يوجد اشتراك نشط' : 'No active subscription'}</Text>
+              <Text style={styles.noSubTitle}>{t('profile.noActiveSub')}</Text>
               <Text style={styles.noSubSub}>{t('subscribe.noSubscription')}</Text>
               <TouchableOpacity
                 style={[styles.subCTA, { backgroundColor: colors.accent, width: '100%', marginTop: 14 }]}
@@ -554,7 +554,7 @@ export default function ProviderProfile() {
                   <Text style={{ fontSize: 34 }}>🛠</Text>
                   <Text style={[styles.emptyPaneTitle, { color: colors.textPrimary }]}>{t('profile.noSpecialties')}</Text>
                   <Text style={[styles.emptyPaneSub, { color: colors.textMuted }]}>
-                    {isRTL ? 'اضغط لإضافة تخصصاتك' : 'Tap to add specialties'}
+                    {t('profile.noSpecialties')}
                   </Text>
                 </TouchableOpacity>
               ) : (
@@ -735,7 +735,7 @@ export default function ProviderProfile() {
                 {nextMilestone === 10  ? t('subscribe.discount', { pct: 20 }) + ' 🎁' :
                  nextMilestone === 25  ? t('subscribe.discount', { pct: 30 }) + ' 🏅' :
                  nextMilestone === 50  ? '🎉 ' + t('subscribe.loyalty') :
-                                         '👑 Elite'}
+                                         t('profile.loyaltyElite')}
               </Text>
               <Text style={[styles.loyaltyHint, { color: colors.textMuted }]}>
                 {t('profile.jobsToNextReward', { count: nextMilestone - provider.lifetime_jobs })}
@@ -799,7 +799,7 @@ export default function ProviderProfile() {
             ZONE 6 — SETTINGS GROUPS (iOS-style)
         ══════════════════════════════════════════════════════ */}
 
-        <SettingsGroup title={isRTL ? 'الحساب' : 'Account'} colors={colors}>
+        <SettingsGroup title={t('profile.settingsAccount')} colors={colors}>
           <SettingsRow
             icon="🌐"
             label={t('profile.language')}
@@ -844,7 +844,7 @@ export default function ProviderProfile() {
           />
         </SettingsGroup>
 
-        <SettingsGroup title={isRTL ? 'ملفي العام' : 'My Profile'} colors={colors}>
+        <SettingsGroup title={t('profile.settingsPublicProfile')} colors={colors}>
           <SettingsRow
             icon="⬆️"
             label={t('profile.sharePublicProfile')}
@@ -854,7 +854,7 @@ export default function ProviderProfile() {
           />
         </SettingsGroup>
 
-        <SettingsGroup title={isRTL ? 'المساعدة' : 'Help'} colors={colors}>
+        <SettingsGroup title={t('profile.settingsHelp')} colors={colors}>
           <SettingsRow
             icon="🎧"
             label={t('profile.support')}

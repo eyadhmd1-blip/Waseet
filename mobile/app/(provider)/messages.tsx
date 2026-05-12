@@ -224,7 +224,7 @@ export default function ProviderMessages() {
       <View style={[styles.header, { paddingTop: headerPad }]}>
         <Text style={styles.headerTitle}>💬 {t('chat.title')}</Text>
         {totalUnread > 0 && (
-          <Text style={styles.headerSub}>{totalUnread} رسالة غير مقروءة</Text>
+          <Text style={styles.headerSub}>{t('chat.unreadMessages', { count: totalUnread })}</Text>
         )}
       </View>
 

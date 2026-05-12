@@ -166,7 +166,19 @@ export default function ProviderDashboard() {
     );
   }
 
-  if (!provider) return null;
+  if (!provider) return (
+    <View style={styles.center}>
+      <Text style={{ color: colors.textSecondary, fontSize: 15, marginBottom: 16 }}>
+        {t('common.error')}
+      </Text>
+      <TouchableOpacity
+        onPress={load}
+        style={{ backgroundColor: colors.accent, paddingHorizontal: 24, paddingVertical: 10, borderRadius: 12 }}
+      >
+        <Text style={{ color: '#fff', fontWeight: '700' }}>{t('common.retry')}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   const tier = TIER_META[provider.reputation_tier];
   const locale = lang === 'ar' ? 'ar-JO' : 'en-GB';

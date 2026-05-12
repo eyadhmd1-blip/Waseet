@@ -37,7 +37,7 @@ const CONTRACT_DIM   = '#10B98122';
 
 
 type RequestWithMeta = ServiceRequest & {
-  category?: { name_ar: string; icon: string };
+  category?: { name_ar: string; name_en?: string; icon: string };
   client?: { full_name: string };
   bids_count?: { count: number }[];
 };
@@ -515,7 +515,10 @@ function RequestCard({
             </Text>
           </View>
           <Text style={styles.cardCat}>
-            {ICON_MAP[item.category?.icon ?? ''] ?? '🔧'} {item.category?.name_ar ?? item.category_slug}
+            {ICON_MAP[item.category?.icon ?? ''] ?? '🔧'}{' '}
+            {lang === 'ar'
+              ? (item.category?.name_ar ?? item.category_slug)
+              : (item.category?.name_en ?? item.category?.name_ar ?? item.category_slug)}
           </Text>
         </View>
 
@@ -610,7 +613,7 @@ function DemoRequestCard({
   onSkip: () => void;
 }) {
   const { colors, isDark } = useTheme();
-  const { t, ta, isRTL } = useLanguage();
+  const { t, ta, isRTL, lang } = useLanguage();
   const demoStyles = useMemo(() => createDemoStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   if (demo.status === 'submitted') {
@@ -624,7 +627,7 @@ function DemoRequestCard({
           {t('providerFeed.demoCompletedBid', { amount: demo.bid_amount })}
         </Text>
         <TouchableOpacity style={demoStyles.realCTABtn} onPress={onSkip}>
-          <Text style={demoStyles.realCTAText}>{t('providerFeed.demoRealCTA')} ←</Text>
+          <Text style={demoStyles.realCTAText}>{t('providerFeed.demoRealCTA')} {isRTL ? '←' : '→'}</Text>
         </TouchableOpacity>
       </View>
     );
@@ -653,7 +656,7 @@ function DemoRequestCard({
       <View style={demoStyles.metaRow}>
         <Text style={demoStyles.metaText}>📍 {req.city}{req.district ? ` — ${req.district}` : ''}</Text>
         <Text style={demoStyles.metaText}>
-          {reqIcon} {reqCat?.name_ar ?? req.category_slug}
+          {reqIcon} {(lang === 'ar' ? reqCat?.name_ar : reqCat?.name_en) ?? reqCat?.name_ar ?? req.category_slug}
         </Text>
       </View>
 
@@ -667,7 +670,7 @@ function DemoRequestCard({
 
       {/* CTA */}
       <TouchableOpacity style={demoStyles.bidBtn} onPress={onBidPress} activeOpacity={0.85}>
-        <Text style={demoStyles.bidBtnText}>{t('providerFeed.demoBidBtn')} ←</Text>
+        <Text style={demoStyles.bidBtnText}>{t('providerFeed.demoBidBtn')} {isRTL ? '←' : '→'}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -1087,7 +1090,7 @@ export default function ProviderFeed() {
         supabase.from('providers').select('*, user:users(*)').eq('id', authUser.id).single(),
         supabase
           .from('requests')
-          .select('*, category:service_categories(name_ar, icon), bids_count:bids(count)')
+          .select('*, category:service_categories(name_ar, name_en, icon), bids_count:bids(count)')
           .eq('status', 'open')
           .order('is_urgent',  { ascending: false })
           .order('created_at', { ascending: false })
@@ -1698,7 +1701,7 @@ export default function ProviderFeed() {
               textAlign={ta}
             />
             {bidAmountError && (
-              <Text style={styles.errorHint}>⚠️ يرجى إدخال مبلغ العرض</Text>
+              <Text style={styles.errorHint}>{t('providerFeed.errRequiredAmount')}</Text>
             )}
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
@@ -1759,7 +1762,7 @@ export default function ProviderFeed() {
               textAlign={ta}
             />
             {contractAmountError && (
-              <Text style={styles.errorHint}>⚠️ يرجى إدخال السعر لكل زيارة</Text>
+              <Text style={styles.errorHint}>{t('providerFeed.errRequiredPrice')}</Text>
             )}
             {contractModal.amount && contractModal.target && !isNaN(parseFloat(contractModal.amount)) && (
               <View style={cBidStyles.totalBox}>
@@ -1815,7 +1818,7 @@ export default function ProviderFeed() {
               {provider?.subscription_tier !== 'premium' && (
                 <Text style={styles.boostCostValue}>
                   {t('providerFeed.boostSheetCreditsAfter', {
-                    count: Math.max(0, (provider?.subscription_credits ?? 0) - 1),
+                    count: Math.max(0, (provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0) - 1),
                   })}
                 </Text>
               )}
@@ -1965,7 +1968,7 @@ export default function ProviderFeed() {
               textAlign={ta}
             />
             {demoAmountError && (
-              <Text style={styles.errorHint}>⚠️ يرجى إدخال مبلغ العرض</Text>
+              <Text style={styles.errorHint}>{t('providerFeed.errRequiredAmount')}</Text>
             )}
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
