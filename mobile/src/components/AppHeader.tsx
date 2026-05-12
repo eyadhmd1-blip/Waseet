@@ -120,7 +120,7 @@ function RootHeader({
   const s = makeStyles(colors, headerPad, isDark);
 
   const isProvider  = props.userRole === 'provider';
-  const firstName   = props.userName?.trim().split(' ')[0] ?? '';
+  const firstName   = props.userName?.trim().split(/\s+/).slice(0, 2).join(' ') ?? '';
   const initials    = getInitials(props.userName ?? '');
   const avatarColor = nameToAvatarColor(props.userName ?? (firstName || 'وسيط'));
   const greeting    = timeGreeting(lang);
