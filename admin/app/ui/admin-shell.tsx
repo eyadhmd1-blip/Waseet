@@ -6,7 +6,7 @@ import { TopBar } from './topbar';
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isPublic = pathname.startsWith('/p/') || pathname.startsWith('/.well-known/');
+  const isPublic = pathname === '/login' || pathname.startsWith('/p/') || pathname.startsWith('/.well-known/');
 
   if (isPublic) return <>{children}</>;
 
