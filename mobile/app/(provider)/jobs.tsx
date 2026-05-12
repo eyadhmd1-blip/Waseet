@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useRef, useMemo} from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   RefreshControl, ActivityIndicator, Modal, TextInput,
-  Alert,
+  Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
@@ -357,6 +357,7 @@ export default function ProviderJobs() {
 
       {/* ── Confirm Code Modal ── */}
       <Modal visible={!!confirmJob && codeSent} transparent animationType="slide">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>{t('profile.confirmModal.title')}</Text>
@@ -399,6 +400,7 @@ export default function ProviderJobs() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

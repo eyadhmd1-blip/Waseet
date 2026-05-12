@@ -115,35 +115,35 @@ export default function ProviderLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'الطلبات',
+            title: t('providerFeed.tabTitle'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🔍</Text>,
           }}
         />
         <Tabs.Screen
           name="jobs"
           options={{
-            title: 'أعمالي',
+            title: t('providerJobs.title'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🛠️</Text>,
           }}
         />
         <Tabs.Screen
           name="messages"
           options={{
-            title: 'الرسائل',
+            title: t('chat.title'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>💬</Text>,
           }}
         />
         <Tabs.Screen
           name="dashboard"
           options={{
-            title: 'إحصائياتي',
+            title: t('profile.stats'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📊</Text>,
           }}
         />
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'ملفي',
+            title: t('profile.tabTitle'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>👤</Text>,
           }}
         />

@@ -838,6 +838,7 @@ function EmptyFeedState({
   onProfile: () => void;
 }) {
   const { colors } = useTheme();
+  const { t }      = useLanguage();
   const s = useMemo(() => createEmptyStyles(colors, isRTL), [colors, isRTL]);
 
   const isNew        = (provider?.lifetime_jobs ?? 0) === 0;
@@ -851,48 +852,45 @@ function EmptyFeedState({
     return (
       <View style={s.noReqWrap}>
         <Text style={s.noReqIcon}>🔭</Text>
-        <Text style={s.noReqTitle}>لا توجد طلبات الآن</Text>
-        <Text style={s.noReqSub}>
-          سنرسل لك إشعاراً فور وصول طلب جديد في محافظتك وتخصصاتك
-        </Text>
+        <Text style={s.noReqTitle}>{t('providerFeed.emptyTitle')}</Text>
+        <Text style={s.noReqSub}>{t('providerFeed.emptyDesc')}</Text>
         <View style={s.noReqCard}>
-          <Text style={s.noReqCardTitle}>💡 حسّن ظهورك</Text>
-          <Text style={s.noReqCardText}>
-            المقدمون الذين يضيفون صور أعمالهم ونبذة عنهم يحصلون على ضعف عدد الطلبات
-          </Text>
+          <Text style={s.noReqCardTitle}>{t('providerFeed.emptyTipTitle')}</Text>
+          <Text style={s.noReqCardText}>{t('providerFeed.emptyTipText')}</Text>
           <TouchableOpacity style={s.noReqCardBtn} onPress={onProfile} activeOpacity={0.85}>
-            <Text style={s.noReqCardBtnText}>تحديث الملف الشخصي</Text>
+            <Text style={s.noReqCardBtnText}>{t('providerFeed.emptyTipBtn')}</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
+  const creditsCount = (provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0);
   const steps: { label: string; sub: string; done: boolean; action: (() => void) | null; actionLabel: string }[] = [
     {
-      label:       'إنشاء حسابك',
-      sub:         'مكتمل',
+      label:       t('providerFeed.step1Label'),
+      sub:         t('providerFeed.step1Sub'),
       done:        true,
       action:      null,
       actionLabel: '',
     },
     {
-      label:       'اشترك واحصل على رصيد',
-      sub:         hasCredits ? `${(provider?.subscription_credits ?? 0) + (provider?.bonus_credits ?? 0)} رصيد متاح` : 'جرّب مجاناً أو ابدأ بـ 5 دنانير',
+      label:       t('providerFeed.step2Label'),
+      sub:         hasCredits ? t('providerFeed.step2SubDone', { count: creditsCount }) : t('providerFeed.step2Sub'),
       done:        hasCredits,
       action:      hasCredits ? null : onSubscribe,
-      actionLabel: 'اشترك',
+      actionLabel: t('providerFeed.step2Action'),
     },
     {
-      label:       'أكمل ملفك الشخصي',
-      sub:         profileOk ? 'ملفك مكتمل' : 'أضف نبذة وصور أعمالك',
+      label:       t('providerFeed.step3Label'),
+      sub:         profileOk ? t('providerFeed.step3SubDone') : t('providerFeed.step3Sub'),
       done:        profileOk,
       action:      profileOk ? null : onProfile,
-      actionLabel: 'أكمل',
+      actionLabel: t('providerFeed.step3Action'),
     },
     {
-      label:       'أرسل أول عرض سعر',
-      sub:         'انتظر طلباً في منطقتك وتخصصك',
+      label:       t('providerFeed.step4Label'),
+      sub:         t('providerFeed.step4Sub'),
       done:        false,
       action:      null,
       actionLabel: '',
@@ -903,8 +901,8 @@ function EmptyFeedState({
     <View style={s.wrap}>
       <View style={s.hero}>
         <Text style={s.heroEmoji}>🚀</Text>
-        <Text style={s.heroTitle}>مرحباً في وسيط!</Text>
-        <Text style={s.heroSub}>اتبع هذه الخطوات للحصول على أول طلب</Text>
+        <Text style={s.heroTitle}>{t('providerFeed.heroTitle')}</Text>
+        <Text style={s.heroSub}>{t('providerFeed.heroSub')}</Text>
       </View>
 
       <View style={s.stepsCard}>
@@ -933,12 +931,12 @@ function EmptyFeedState({
       <View style={s.tipCard}>
         <View style={s.tipHeader}>
           <Text style={{ fontSize: 18 }}>💡</Text>
-          <Text style={s.tipTitle}>نصيحة من وسيط</Text>
+          <Text style={s.tipTitle}>{t('providerFeed.tipTitle')}</Text>
         </View>
         <Text style={s.tipText}>
-          المقدمون الذين يردون على الطلبات خلال 5 دقائق يحصلون على{' '}
-          <Text style={s.tipHighlight}>3× طلبات أكثر</Text>
-          {'. '}فعّل الإشعارات وابقَ على اطلاع دائم.
+          {t('providerFeed.tipTextPre')}{' '}
+          <Text style={s.tipHighlight}>{t('providerFeed.tipHighlight')}</Text>
+          {'. '}{t('providerFeed.tipTextSuffix')}
         </Text>
       </View>
     </View>
@@ -1705,7 +1703,7 @@ export default function ProviderFeed() {
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
-              style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
+              style={[styles.modalInput, styles.modalInputText, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={bidModal.note}
@@ -1773,7 +1771,7 @@ export default function ProviderFeed() {
             )}
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
-              style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
+              style={[styles.modalInput, styles.modalInputText, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.contractNotePlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={contractModal.note}
@@ -1972,7 +1970,7 @@ export default function ProviderFeed() {
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
-              style={[styles.modalInput, { height: 80, textAlignVertical: 'top' }]}
+              style={[styles.modalInput, styles.modalInputText, { height: 80, textAlignVertical: 'top' }]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={demoModal.note}
@@ -2344,7 +2342,8 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   modalSubtitle:{ fontSize: 14, color: colors.textMuted, textAlign: ta, marginBottom: 16 },
   modalAiHint:  { fontSize: 13, color: colors.accent, textAlign: ta, marginBottom: 16, fontWeight: '600' },
   modalLabel:   { fontSize: 13, color: colors.textSecondary, textAlign: ta, marginBottom: 8, marginTop: 12 },
-  modalInput:   { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border, writingDirection: isRTL ? 'rtl' : 'ltr' },
+  modalInput:   { backgroundColor: colors.bg, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border },
+  modalInputText: { writingDirection: isRTL ? 'rtl' : 'ltr' },
   inputError:   { borderColor: '#EF4444' },
   errorHint:    { fontSize: 13, color: '#EF4444', marginTop: 4, marginBottom: 4, textAlign: isRTL ? 'right' : 'left' as const },
   modalBtns:    { flexDirection: 'row', gap: 12, marginTop: 20 },

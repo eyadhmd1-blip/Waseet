@@ -371,7 +371,7 @@ export default function SubscribeScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader variant="stack" title={t('subscribe.headerTitle')} onBack={() => router.back()} />
+      <AppHeader variant="stack" title={t('subscribe.headerTitle')} onBack={() => router.canGoBack() ? router.back() : router.replace('/(provider)' as any)} />
       <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView
         showsVerticalScrollIndicator={false}

@@ -22,7 +22,8 @@ export function handleNotifTap(data: NotifRouteData, router: Router) {
       break;
 
     // Client: new request / bids feed
-    case 'new-request': {
+    case 'new-request':
+    case 'newRequest': {
       const href = data.notif_id
         ? `/(client)/new-request?notif_id=${data.notif_id}`
         : '/(client)/new-request';
@@ -30,15 +31,18 @@ export function handleNotifTap(data: NotifRouteData, router: Router) {
       break;
     }
 
-    // Provider: feed / urgent / bid rejection
+    // Provider: feed / urgent / bid rejection / lifecycle reminders
     case 'urgent':
     case 'provider_feed':
+    case 'providerFeed':
       router.push('/(provider)' as any);
       break;
 
-    // Provider: specific profile page (for sharing / admin links)
+    // Provider: specific profile page (for sharing / admin links / lifecycle reminders)
     case 'provider-profile':
+    case 'providerProfile':
       if (provider_id) router.push({ pathname: '/provider-profile', params: { provider_id } } as any);
+      else             router.push('/(provider)/profile' as any);
       break;
 
     // Client: home tab
@@ -74,6 +78,12 @@ export function handleNotifTap(data: NotifRouteData, router: Router) {
     // Provider: contract feed
     case 'contract_feed':
       router.push('/(provider)' as any);
+      break;
+
+    // Client: job detail / rating reminder
+    case 'jobDetail':
+      if (job_id) router.push({ pathname: '/rate-job', params: { job_id, provider_name: data.provider_name ?? '' } } as any);
+      else        router.push('/(client)/requests' as any);
       break;
 
     // Client: rate provider after job completion
