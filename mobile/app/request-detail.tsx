@@ -161,6 +161,42 @@ export default function RequestDetail() {
     return () => { supabase.removeChannel(channel); };
   }, [activeJobId]);
 
+  // Live bids — new bids appear instantly without pull-to-refresh
+  useEffect(() => {
+    if (!id) return;
+    if (request?.status !== 'open' && request?.status !== 'reviewing') return;
+
+    const channel = supabase
+      .channel(`bids:${id}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'bids',
+        filter: `request_id=eq.${id}`,
+      }, async (payload) => {
+        const { data } = await supabase
+          .from('bids')
+          .select(`
+            *,
+            provider:providers(
+              id, score, reputation_tier, badge_verified, lifetime_jobs, is_available,
+              user:users(full_name, city)
+            )
+          `)
+          .eq('id', (payload.new as any).id)
+          .single();
+
+        if (data) {
+          setBids(prev =>
+            prev.some(b => b.id === (data as BidWithProvider).id)
+              ? prev
+              : [...prev, data as BidWithProvider]
+          );
+        }
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [id, request?.status]);
+
   // ── Accept bid ──────────────────────────────────────────────
 
   const handleAccept = async (bid: BidWithProvider) => {
