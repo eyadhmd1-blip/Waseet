@@ -224,7 +224,34 @@ export default function SupportThreadScreen() {
       body:      body.trim(),
     });
     setSending(false);
-    if (!error) setBody('');
+    if (!error) {
+      setBody('');
+      // Push notification to provider when admin replies
+      if (isAdmin && ticket) notifyProviderSupportReply(ticket.user_id);
+    }
+  };
+
+  // ── Notify provider of admin reply ───────────────────────────
+  const notifyProviderSupportReply = async (providerId: string) => {
+    try {
+      const [{ data: userData }, { data: tokenData }] = await Promise.all([
+        supabase.from('users').select('lang').eq('id', providerId).single(),
+        supabase.from('push_tokens').select('token').eq('user_id', providerId).maybeSingle(),
+      ]);
+      if (!tokenData?.token) return;
+      const isAr = (userData?.lang ?? 'ar') === 'ar';
+      fetch('https://exp.host/--/api/v2/push/send', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          to:        tokenData.token,
+          title:     isAr ? '📨 رد جديد من الدعم' : '📨 New reply from support',
+          body:      isAr ? 'فريق وسيط أرسل لك رسالة — اضغط للاطلاع' : 'Waseet team sent you a message — tap to view',
+          sound:     'default',
+          data:      { screen: 'support_thread', job_id: id },
+        }),
+      }).catch(() => {});
+    } catch { /* non-blocking */ }
   };
 
   // ── Submit rating ─────────────────────────────────────────────

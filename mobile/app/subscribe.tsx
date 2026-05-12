@@ -336,7 +336,20 @@ export default function SubscribeScreen() {
         body: `مرحباً! 👋 تلقّينا طلبك لتفعيل باقة "${planName}" بقيمة ${amountFixed} دينار أردني.\n\nسيرسل لك أحد أعضاء فريقنا رقم حساب CliQ لإتمام التحويل. عادةً ما يستغرق ذلك أقل من ساعة.`,
       });
 
-      router.push({ pathname: '/support-thread', params: { id: ticket.id } } as any);
+      if (!provider.is_subscribed) {
+        // New/unsubscribed provider: give 10 bridge credits so they can use
+        // the app immediately while waiting for payment confirmation.
+        // admin_activate_subscription will later override this with the paid plan.
+        await supabase.rpc('activate_provider_subscription', {
+          p_provider_id:   provider.id,
+          p_tier:          'trial',
+          p_period_months: 1,
+        }); // errors ignored — bridge credits are best-effort
+        router.replace('/(provider)' as any);
+      } else {
+        // Existing subscriber upgrading — stay in support thread to track progress.
+        router.push({ pathname: '/support-thread', params: { id: ticket.id } } as any);
+      }
     } catch {
       Alert.alert(t('common.error'), t('subscribe.errUnexpected'));
     } finally {

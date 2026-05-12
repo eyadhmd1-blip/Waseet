@@ -14,12 +14,13 @@ import { OnboardingCarousel } from '../tutorial/carousel';
 // Shown at most once per app session
 let _alertShownThisSession = false;
 
-type AlertKind = 'expiringSoon' | 'creditsLow' | 'trialEnded';
+type AlertKind = 'expiringSoon' | 'creditsLow' | 'trialEnded' | 'pendingPayment';
 
 interface AlertState {
-  kind:  AlertKind;
-  days?: number;
-  count?: number;
+  kind:      AlertKind;
+  days?:     number;
+  count?:    number;
+  ticketId?: string;
 }
 
 export default function ProviderLayout() {
@@ -45,11 +46,20 @@ export default function ProviderLayout() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    const { data: p } = await supabase
-      .from('providers')
-      .select('is_subscribed, subscription_tier, subscription_ends, subscription_credits, bonus_credits, trial_used')
-      .eq('id', session.user.id)
-      .single();
+    const [{ data: p }, { data: pendingTicket }] = await Promise.all([
+      supabase
+        .from('providers')
+        .select('is_subscribed, subscription_tier, subscription_ends, subscription_credits, bonus_credits, trial_used')
+        .eq('id', session.user.id)
+        .single(),
+      supabase
+        .from('support_tickets')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .eq('category', 'payment')
+        .not('status', 'in', '("resolved","closed")')
+        .maybeSingle(),
+    ]);
 
     if (!p) return;
 
@@ -60,9 +70,16 @@ export default function ProviderLayout() {
       return;
     }
 
+    // 2. Pending payment ticket — remind provider to check support thread
+    if (pendingTicket) {
+      _alertShownThisSession = true;
+      setAlert({ kind: 'pendingPayment', ticketId: pendingTicket.id });
+      return;
+    }
+
     if (!p.is_subscribed) return;
 
-    // 2. Subscription expiring in ≤ 5 days
+    // 3. Subscription expiring in ≤ 5 days
     if (p.subscription_ends) {
       const daysLeft = Math.ceil(
         (new Date(p.subscription_ends).getTime() - Date.now()) / 86_400_000
@@ -74,7 +91,7 @@ export default function ProviderLayout() {
       }
     }
 
-    // 3. Subscription credits ≤ 3 (skip premium — unlimited)
+    // 4. Subscription credits ≤ 3 (skip premium — unlimited)
     if (p.subscription_tier !== 'premium' && (p.subscription_credits ?? 0) <= 3) {
       _alertShownThisSession = true;
       setAlert({ kind: 'creditsLow', count: p.subscription_credits ?? 0 });
@@ -86,24 +103,36 @@ export default function ProviderLayout() {
   // ── Alert content ───────────────────────────────────────────
   const dismiss = () => setAlert(null);
 
-  const handleRenew = () => {
+  const handleAction = () => {
     dismiss();
-    router.push('/subscribe' as any);
+    if (alert?.kind === 'pendingPayment' && alert.ticketId) {
+      router.push({ pathname: '/support-thread', params: { id: alert.ticketId } } as any);
+    } else {
+      router.push('/subscribe' as any);
+    }
   };
 
-  let title = '';
-  let sub   = '';
+  let title      = '';
+  let sub        = '';
+  let actionLabel = '';
 
   if (alert) {
     if (alert.kind === 'trialEnded') {
-      title = t('profile.trialEndedTitle');
-      sub   = t('profile.trialEndedSub');
+      title       = t('profile.trialEndedTitle');
+      sub         = t('profile.trialEndedSub');
+      actionLabel = t('profile.renewNow');
+    } else if (alert.kind === 'pendingPayment') {
+      title       = t('profile.pendingPaymentTitle');
+      sub         = t('profile.pendingPaymentSub');
+      actionLabel = t('profile.viewSupportThread');
     } else if (alert.kind === 'expiringSoon') {
-      title = t('profile.expiringSoonTitle');
-      sub   = t('profile.expiringSoonSub', { days: alert.days ?? 0 });
+      title       = t('profile.expiringSoonTitle');
+      sub         = t('profile.expiringSoonSub', { days: alert.days ?? 0 });
+      actionLabel = t('profile.renewNow');
     } else {
-      title = t('profile.creditsLowTitle');
-      sub   = t('profile.creditsLowSub', { count: alert.count ?? 0 });
+      title       = t('profile.creditsLowTitle');
+      sub         = t('profile.creditsLowSub', { count: alert.count ?? 0 });
+      actionLabel = t('profile.renewNow');
     }
   }
 
@@ -164,8 +193,8 @@ export default function ProviderLayout() {
             <Text style={st.title}>{title}</Text>
             <Text style={st.sub}>{sub}</Text>
 
-            <TouchableOpacity style={st.renewBtn} onPress={handleRenew}>
-              <Text style={st.renewBtnText}>{t('profile.renewNow')}</Text>
+            <TouchableOpacity style={st.renewBtn} onPress={handleAction}>
+              <Text style={st.renewBtnText}>{actionLabel}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={st.laterBtn} onPress={dismiss}>
