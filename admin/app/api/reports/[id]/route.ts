@@ -6,9 +6,10 @@ import { NextRequest } from 'next/server';
 /** UTF-8 BOM + CSV — Arabic shows correctly in Excel without import wizard */
 function toCsv(headers: string[], rows: (string | number | null | undefined)[][]): string {
   const esc = (v: unknown): string => {
-    const s = v == null ? '' : String(v);
-    return s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')
-      ? `"${s.replace(/"/g, '""')}"` : s;
+    if (v == null) return '';
+    // Always quote strings so Excel never misinterprets phone numbers (00962...) as numeric
+    if (typeof v === 'number') return String(v);
+    return `"${String(v).replace(/"/g, '""')}"`;
   };
   const lines = [headers, ...rows].map(r => r.map(esc).join(','));
   return '﻿' + lines.join('\r\n');
