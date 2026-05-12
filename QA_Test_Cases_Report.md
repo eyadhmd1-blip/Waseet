@@ -1278,6 +1278,14 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | SUB-031 | New provider selects trial on subscribe screen — activates successfully | Critical | Functional |
 | SUB-032 | New provider selects paid plan on subscribe screen — support ticket created | Critical | Functional |
 | SUB-033 | subscribe.tsx back button from registration context returns to login | Low | UI/UX |
+| SUB-034 | New provider selects paid plan → gets 10 bridge credits → lands in /(provider) | Critical | Functional |
+| SUB-035 | Existing subscribed provider upgrades → still routed to support-thread (no bridge credits) | High | Functional |
+| SUB-036 | Provider opens app after paid plan request → sees pending payment modal once per session | High | UI/UX |
+| SUB-037 | Pending payment modal "عرض المحادثة" button navigates to correct support thread | High | Functional |
+| SUB-038 | Admin sends reply in support thread → provider receives push notification | Critical | Functional |
+| SUB-039 | Admin sends reply → in-app notification row created in notifications table | High | Functional |
+| SUB-040 | Auto-welcome bot message on ticket creation does NOT trigger push/in-app notification | High | Regression |
+| SUB-041 | Admin activates paid plan → bridge trial overridden → credits updated to plan amount | Critical | Functional |
 
 ---
 
