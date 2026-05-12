@@ -291,8 +291,9 @@ export default function SubscribeScreen() {
         );
         return;
       }
-      Alert.alert(t('common.success'), t('subscribe.trialActivated'));
-      router.back();
+      Alert.alert(t('common.success'), t('subscribe.trialActivated'), [
+        { text: t('common.ok'), onPress: () => router.replace('/(provider)') },
+      ]);
       return;
     }
 
