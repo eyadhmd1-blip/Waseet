@@ -689,7 +689,7 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
       fontSize:      14,
       fontWeight:    '700',
       color:         '#fff',
-      letterSpacing: 0.5,
+      letterSpacing: 3,
     },
     roleBadge: {
       position:        'absolute',
