@@ -239,6 +239,7 @@ export interface SubscriptionPlan {
 export interface TierMeta {
   tier: ReputationTier;
   label_ar: string;
+  label_en: string;
   min_jobs: number;
   max_jobs: number | null;
   search_boost: number;

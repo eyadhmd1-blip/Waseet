@@ -28,7 +28,9 @@
     "noData": "لا توجد بيانات",
     "unknown": "غير معروف",
     "unexpectedError": "حدث خطأ غير متوقع",
-    "noInternet": "لا يوجد اتصال بالإنترنت"
+    "noInternet": "لا يوجد اتصال بالإنترنت",
+    "ok": "حسناً",
+    "processing": "جارٍ المعالجة..."
   },
   "welcome": {
     "tagline": "منصة الخدمات المحلية الموثوقة",
@@ -63,6 +65,7 @@
     "createAccount": "إنشاء الحساب",
     "registering": "جارٍ التسجيل...",
     "fillAllFields": "يرجى تعبئة جميع الحقول",
+    "registrationFailed": "فشل التسجيل. يرجى المحاولة مجدداً.",
     "phoneAlreadyRegistered": "هذا الرقم مسجّل بالفعل",
     "phoneAlreadyRegisteredMsg": "يبدو أن هذا الرقم مرتبط بحساب موجود. هل تريد تسجيل الدخول؟",
     "goToLogin": "تسجيل الدخول",
@@ -214,7 +217,15 @@
     "freqBiweekly": "كل أسبوعين",
     "freqMonthly": "شهري",
     "months": "أشهر",
-    "bidsLimitNote": "يتم عرض آخر ٢٠ عرضاً فقط"
+    "bidsLimitNote": "يتم عرض آخر ٢٠ عرضاً فقط",
+    "greetMorning": "صباح الخير",
+    "greetAfternoon": "مساء الخير",
+    "greetEvening": "مساء النور",
+    "greetDefault": "أهلاً",
+    "greetSubOpen": "{{count}} طلب مفتوح بانتظار العروض",
+    "greetSubInProgress": "{{count}} طلب جارٍ",
+    "greetSubNoRequests": "لا توجد طلبات حتى الآن",
+    "greetSubTotal": "إجمالي {{count}} طلب"
   },
   "newRequest": {
     "title": "طلب جديد",
@@ -270,7 +281,17 @@
     "successTitle": "تم نشر طلبك",
     "successMsg": "ستصلك إشعارات عند تلقّي العروض",
     "exitWarning": "أدخلتَ بعض البيانات. هل تريد الخروج وفقدانها؟",
-    "exitConfirm": "خروج"
+    "exitConfirm": "خروج",
+    "errTitle": "⚠️ يرجى إدخال عنوان للطلب",
+    "errDesc": "⚠️ يرجى وصف طلبك بـ 20 حرفاً على الأقل",
+    "errCity": "⚠️ يرجى اختيار مدينتك من القائمة",
+    "errPickup": "⚠️ يرجى إدخال عنوان الاستلام",
+    "errDropoff": "⚠️ يرجى إدخال عنوان التوصيل",
+    "errSize": "⚠️ يرجى اختيار حجم الطرد",
+    "charCountMin": "{{count}} / {{min}} أحرف كحد أدنى",
+    "successSubtitle": "سيبدأ مقدمو الخدمة بإرسال عروضهم قريباً",
+    "successHint": "سنقوم بإشعارك عند وصول أي عرض",
+    "successViewRequests": "عرض طلباتي"
   },
   "requestDetail": {
     "title": "تفاصيل الطلب",
@@ -993,7 +1014,11 @@
     "descTooShort": "اكتب وصفاً مختصراً للمشكلة (10 أحرف على الأقل)",
     "successTitle": "🚨 تم إرسال طلبك الطارئ!",
     "successMsg": "سيتصل بك مقدم خلال {{mins}} دقيقة. ستصلك إشعار فور القبول.",
-    "errSubmit": "لم يُرسل الطلب، حاول مجدداً"
+    "errSubmit": "لم يُرسل الطلب، حاول مجدداً",
+    "charCountMin": "{{count}} / {{min}} أحرف كحد أدنى",
+    "errDesc": "⚠️ يرجى وصف المشكلة بـ 10 أحرف على الأقل",
+    "successHint": "سنقوم بإشعارك عند وصول أي عرض",
+    "successViewRequests": "عرض طلباتي"
   },
   "recurringRequest": {
     "title": "طلب دوري",
@@ -1145,7 +1170,8 @@
     "noSaved": "لا توجد مقدمون محفوظون",
     "noSavedDesc": "احفظ المقدمين المميزين للرجوع إليهم لاحقاً",
     "remove": "إزالة",
-    "limitNote": "يتم عرض آخر ٥٠ مقدماً محفوظاً"
+    "limitNote": "يتم عرض آخر ٥٠ مقدماً محفوظاً",
+    "savedCount": "{{count}} مقدم محفوظ"
   },
   "notifSettings": {
     "headerTitle": "إعدادات الإشعارات",
@@ -1226,7 +1252,11 @@
     "successMsg": "سيرد عليك فريق الدعم خلال ٢–٤ ساعات.",
     "viewTicket": "عرض التذكرة",
     "errSubmit": "تعذّر إرسال التذكرة. حاول مجدداً.",
-    "charCount": "{{count}}/{{max}}"
+    "charCount": "{{count}}/{{max}}",
+    "errCategory": "⚠️ يرجى اختيار نوع المشكلة",
+    "errSubject": "⚠️ يرجى كتابة موضوع المشكلة بـ 5 أحرف على الأقل",
+    "errDesc": "⚠️ يرجى شرح مشكلتك بـ 10 أحرف على الأقل",
+    "charCountMin": "{{count}} / {{min}} أحرف كحد أدنى"
   },
   "supportTickets": {
     "headerTitle": "تذاكري",
@@ -1301,7 +1331,19 @@
     "errSubmit": "تعذّرت إضافة العمل. يرجى المحاولة مجدداً",
     "permissionTitle": "إذن مطلوب",
     "permissionPhoto": "يرجى السماح للتطبيق بالوصول إلى الصور",
-    "permissionVideo": "يرجى السماح للتطبيق بالوصول إلى الفيديو"
+    "permissionVideo": "يرجى السماح للتطبيق بالوصول إلى الفيديو",
+    "repick": "↩  إعادة الاختيار",
+    "previewTitle": "معاينة الصورة",
+    "cropHint": "✂️ سيتم اقتصاص الصورة تلقائياً بنسبة 4:3",
+    "processing": "جارٍ المعالجة...",
+    "confirmUse": "✓  تأكيد واستخدام الصورة",
+    "sourceTitle": "اختر مصدر الصورة",
+    "sourceCamera": "📷  الكاميرا",
+    "sourceGallery": "🖼️  معرض الصور",
+    "errStep1": "⚠️ يرجى اختيار نوع العمل أولاً للمتابعة",
+    "errStep2BeforeAfter": "⚠️ يرجى رفع صورة قبل وصورة بعد للمتابعة",
+    "errStep2Video": "⚠️ يرجى اختيار فيديو للمتابعة",
+    "errStep2Single": "⚠️ يرجى رفع صورة للمتابعة"
   },
   "categories": {
     "maintenance": "صيانة المنازل",

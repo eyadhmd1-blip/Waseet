@@ -133,7 +133,7 @@ function SettingsGroup({
 
 export default function ProviderProfile() {
   const { colors, theme, setTheme, isDark } = useTheme();
-  const { t, isRTL, toggleLanguage } = useLanguage();
+  const { t, isRTL, lang, toggleLanguage } = useLanguage();
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const { contentPad } = useInsets();
   const router = useRouter();
@@ -377,7 +377,7 @@ export default function ProviderProfile() {
           <View style={styles.heroTagsRow}>
             <View style={[styles.heroPill, { backgroundColor: tierColor + '20', borderColor: tierColor + '55' }]}>
               <View style={[styles.heroPillDot, { backgroundColor: tierColor }]} />
-              <Text style={[styles.heroPillText, { color: tierColor }]}>{tierMeta.label_ar}</Text>
+              <Text style={[styles.heroPillText, { color: tierColor }]}>{lang === 'ar' ? tierMeta.label_ar : tierMeta.label_en}</Text>
             </View>
             <View style={[styles.heroPill, {
               backgroundColor: isAvailable ? '#22C55E15' : colors.surfaceAlt,

@@ -75,7 +75,7 @@ export default function RegisterScreen() {
     }
 
     if (role === 'provider') {
-      await supabase.from('providers').insert({
+      const { error: provErr } = await supabase.from('providers').insert({
         id: user.id,
         is_subscribed:        true,
         subscription_tier:    'trial',
@@ -83,6 +83,13 @@ export default function RegisterScreen() {
         trial_used:           true,
         subscription_ends:    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
+      if (provErr) {
+        // Rollback the users insert so the user can retry cleanly
+        await supabase.from('users').delete().eq('id', user.id);
+        setLoading(false);
+        Alert.alert(t('common.error'), t('auth.registrationFailed'));
+        return;
+      }
     }
 
     setLoading(false);

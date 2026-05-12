@@ -320,11 +320,11 @@ export const TIER_UPGRADE_CREDITS: Record<string, number> = {
 // ─── Reputation Tier Meta ────────────────────────────────────
 
 export const TIER_META: Record<string, TierMeta> = {
-  new:     { tier: 'new',     label_ar: 'جديد',   min_jobs: 0,   max_jobs: 9,    search_boost: 0,  color: '#9CA3AF' },
-  rising:  { tier: 'rising',  label_ar: 'صاعد',   min_jobs: 10,  max_jobs: 24,   search_boost: 10, color: '#F59E0B' },
-  trusted: { tier: 'trusted', label_ar: 'موثّق',  min_jobs: 25,  max_jobs: 49,   search_boost: 20, color: '#3B82F6' },
-  expert:  { tier: 'expert',  label_ar: 'خبير',   min_jobs: 50,  max_jobs: 99,   search_boost: 30, color: '#F97316' },
-  elite:   { tier: 'elite',   label_ar: 'نخبة',   min_jobs: 100, max_jobs: null, search_boost: 50, color: '#8B5CF6' },
+  new:     { tier: 'new',     label_ar: 'جديد',   label_en: 'New',     min_jobs: 0,   max_jobs: 9,    search_boost: 0,  color: '#9CA3AF' },
+  rising:  { tier: 'rising',  label_ar: 'صاعد',   label_en: 'Rising',  min_jobs: 10,  max_jobs: 24,   search_boost: 10, color: '#F59E0B' },
+  trusted: { tier: 'trusted', label_ar: 'موثّق',  label_en: 'Trusted', min_jobs: 25,  max_jobs: 49,   search_boost: 20, color: '#3B82F6' },
+  expert:  { tier: 'expert',  label_ar: 'خبير',   label_en: 'Expert',  min_jobs: 50,  max_jobs: 99,   search_boost: 30, color: '#F97316' },
+  elite:   { tier: 'elite',   label_ar: 'نخبة',   label_en: 'Elite',   min_jobs: 100, max_jobs: null, search_boost: 50, color: '#8B5CF6' },
 };
 
 // ─── Cities (Jordan) ─────────────────────────────────────────

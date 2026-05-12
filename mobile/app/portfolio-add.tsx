@@ -99,7 +99,7 @@ function ImagePreviewModal({
   onRepick:  () => void;
 }) {
   const { colors }        = useTheme();
-  const { isRTL }         = useLanguage();
+  const { t, isRTL }      = useLanguage();
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
@@ -119,14 +119,10 @@ function ImagePreviewModal({
             disabled={loading}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Text style={pm.repickText}>
-              {isRTL ? '↩  إعادة الاختيار' : '↩  Re-pick'}
-            </Text>
+            <Text style={pm.repickText}>{t('portfolioAdd.repick')}</Text>
           </TouchableOpacity>
 
-          <Text style={pm.headerTitle}>
-            {isRTL ? 'معاينة الصورة' : 'Preview'}
-          </Text>
+          <Text style={pm.headerTitle}>{t('portfolioAdd.previewTitle')}</Text>
 
           {/* Spacer to balance header */}
           <View style={{ width: 120 }} />
@@ -150,11 +146,7 @@ function ImagePreviewModal({
 
         {/* ── Footer ── */}
         <View style={[pm.footer, { backgroundColor: '#111' }]}>
-          <Text style={pm.cropHint}>
-            {isRTL
-              ? '✂️ سيتم اقتصاص الصورة تلقائياً بنسبة 4:3'
-              : '✂️ Image will be auto-cropped to 4:3'}
-          </Text>
+          <Text style={pm.cropHint}>{t('portfolioAdd.cropHint')}</Text>
 
           <TouchableOpacity
             style={[pm.confirmBtn, { backgroundColor: '#22C55E' }, loading && pm.confirmBtnLoading]}
@@ -165,14 +157,10 @@ function ImagePreviewModal({
             {loading ? (
               <View style={pm.confirmInner}>
                 <ActivityIndicator color="#fff" size="small" />
-                <Text style={pm.confirmText}>
-                  {isRTL ? 'جارٍ المعالجة...' : 'Processing...'}
-                </Text>
+                <Text style={pm.confirmText}>{t('portfolioAdd.processing')}</Text>
               </View>
             ) : (
-              <Text style={pm.confirmText}>
-                {isRTL ? '✓  تأكيد واستخدام الصورة' : '✓  Confirm & Use Photo'}
-              </Text>
+              <Text style={pm.confirmText}>{t('portfolioAdd.confirmUse')}</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -343,18 +331,18 @@ export default function PortfolioAddScreen() {
 
   const pickImage = (onPick: (uri: string) => void) => {
     Alert.alert(
-      isRTL ? 'اختر مصدر الصورة' : 'Choose Image Source',
+      t('portfolioAdd.sourceTitle'),
       '',
       [
         {
-          text: isRTL ? '📷  الكاميرا' : '📷  Camera',
+          text: t('portfolioAdd.sourceCamera'),
           onPress: () => launchPicker('camera', onPick),
         },
         {
-          text: isRTL ? '🖼️  معرض الصور' : '🖼️  Photo Library',
+          text: t('portfolioAdd.sourceGallery'),
           onPress: () => launchPicker('gallery', onPick),
         },
-        { text: isRTL ? 'إلغاء' : 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
       ],
     );
   };
@@ -523,7 +511,7 @@ export default function PortfolioAddScreen() {
         })}
       </View>
       {step1Error && !itemType && (
-        <Text style={st.errorHint}>⚠️ يرجى اختيار نوع العمل أولاً للمتابعة</Text>
+        <Text style={st.errorHint}>{t('portfolioAdd.errStep1')}</Text>
       )}
     </>
   );
@@ -603,10 +591,10 @@ export default function PortfolioAddScreen() {
       {step2Error && !canAdvanceStep2 && (
         <Text style={st.errorHint}>
           {itemType === 'before_after'
-            ? '⚠️ يرجى رفع صورة "قبل" وصورة "بعد" للمتابعة'
+            ? t('portfolioAdd.errStep2BeforeAfter')
             : itemType === 'video'
-            ? '⚠️ يرجى اختيار فيديو للمتابعة'
-            : '⚠️ يرجى رفع صورة للمتابعة'}
+            ? t('portfolioAdd.errStep2Video')
+            : t('portfolioAdd.errStep2Single')}
         </Text>
       )}
       </>

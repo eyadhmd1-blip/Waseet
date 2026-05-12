@@ -48,6 +48,12 @@ function formatTime(iso: string, locale: string) {
   return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
+// Replaces Jordanian phone numbers with [رقم محجوب] — used by ChatScreen and ProfileCardBubble
+function filterPhoneNumbers(raw: string): string {
+  const phoneRegex = /(\+962|00962|0)?(7[789]\d{7})/g;
+  return raw.replace(phoneRegex, '[رقم محجوب]');
+}
+
 // ─── Component ────────────────────────────────────────────────
 
 export default function ChatScreen() {
@@ -206,16 +212,6 @@ export default function ChatScreen() {
   }, []);
 
   // ── Send text ─────────────────────────────────────────────────
-
-  // ── Phone number filter ───────────────────────────────────────
-  // Replaces Jordanian phone numbers in outgoing messages with [رقم محجوب]
-
-  const filterPhoneNumbers = (raw: string): string => {
-    // Match common Jordanian phone patterns:
-    // 00962XXXXXXXXX | +962XXXXXXXXX | 07XXXXXXXX | 7XXXXXXXX (9 digits starting with 7)
-    const phoneRegex = /(\+962|00962|0)?(7[789]\d{7})/g;
-    return raw.replace(phoneRegex, '[رقم محجوب]');
-  };
 
   const sendText = async () => {
     const rawContent = text.trim();
@@ -1131,8 +1127,8 @@ function ProfileCardBubble({
         <View style={pcStyles.info}>
           {prov ? (
             <>
-              <Text style={pcStyles.name}>{prov.user.full_name}</Text>
-              <Text style={pcStyles.city}>📍 {prov.user.city}</Text>
+              <Text style={pcStyles.name}>{filterPhoneNumbers(prov.user.full_name)}</Text>
+              <Text style={pcStyles.city}>📍 {filterPhoneNumbers(prov.user.city)}</Text>
               <View style={pcStyles.badgeRow}>
                 <View style={[pcStyles.tier, { backgroundColor: tierColor + '22' }]}>
                   <Text style={[pcStyles.tierText, { color: tierColor }]}>

@@ -1,11 +1,11 @@
 // Supabase Edge Function — send-confirm-notification
 // Deno runtime
 //
-// Called after provider presses "أنجزت العمل" to notify the client
-// with the 6-digit confirmation code. Notification language matches
-// the client's preferred language (users.lang).
+// Called after provider presses "أنجزت العمل".
+// Generates the 6-digit confirmation code server-side (never client-side),
+// stores it in jobs, then notifies the client.
 //
-// Body: { job_id: string, client_id: string, code: string }
+// Body: { job_id: string, client_id: string }
 // Response: { sent: boolean, inbox: boolean }
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -52,13 +52,12 @@ Deno.serve(async (req) => {
     const { data: { user }, error: authErr } = await supabaseAnon.auth.getUser();
     if (authErr || !user) return json({ error: "unauthorized" }, 401);
 
-    const { job_id, client_id, code } = await req.json() as {
+    const { job_id, client_id } = await req.json() as {
       job_id: string;
       client_id: string;
-      code: string;
     };
-    if (!job_id || !client_id || !code) {
-      return json({ error: "job_id, client_id and code are required" }, 400);
+    if (!job_id || !client_id) {
+      return json({ error: "job_id and client_id are required" }, 400);
     }
 
     const supabaseAdmin = createClient(
@@ -66,6 +65,29 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
       { auth: { persistSession: false } }
     );
+
+    // Verify caller is the provider for this job
+    const { data: job, error: jobErr } = await supabaseAdmin
+      .from("jobs")
+      .select("id, provider_id, status")
+      .eq("id", job_id)
+      .single();
+
+    if (jobErr || !job) return json({ error: "job_not_found" }, 404);
+    if (job.provider_id !== user.id) return json({ error: "unauthorized" }, 403);
+    if (job.status !== "active") return json({ error: "job_not_active" }, 400);
+
+    // Generate code server-side — never trust client-provided values
+    const code = (100000 + Math.floor(Math.random() * 900000)).toString();
+    const exp  = new Date(Date.now() + 30 * 60 * 1000).toISOString(); // 30 minutes
+
+    // Store in DB via service role
+    const { error: updateErr } = await supabaseAdmin
+      .from("jobs")
+      .update({ confirm_code: code, confirm_code_exp: exp, confirm_attempts: 0 })
+      .eq("id", job_id);
+
+    if (updateErr) return json({ error: "db_update_failed" }, 500);
 
     // Fetch client's language preference
     const { data: clientUser } = await supabaseAdmin

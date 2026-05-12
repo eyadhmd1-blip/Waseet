@@ -24,7 +24,7 @@ function SavedCard({
   onView: () => void; onUnsave: () => void;
   colors: AppColors; isDark: boolean;
 }) {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, lang } = useLanguage();
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const prov = item.provider;
   if (!prov) return null;
@@ -55,7 +55,7 @@ function SavedCard({
               </View>
             )}
             <View style={[styles.tierChip, { backgroundColor: tier.color + '22' }]}>
-              <Text style={[styles.tierChipText, { color: tier.color }]}>{tier.label_ar}</Text>
+              <Text style={[styles.tierChipText, { color: tier.color }]}>{lang === 'ar' ? tier.label_ar : tier.label_en}</Text>
             </View>
           </View>
 
@@ -194,7 +194,7 @@ export default function SavedProvidersScreen() {
         <View style={styles.headerCenter}>
           <Text style={styles.topTitle}>{t('saved.title')}</Text>
           <Text style={styles.topSub}>
-            {saved.length > 0 ? `${saved.length} مقدم محفوظ` : ''}
+            {saved.length > 0 ? t('saved.savedCount', { count: saved.length }) : ''}
           </Text>
         </View>
 

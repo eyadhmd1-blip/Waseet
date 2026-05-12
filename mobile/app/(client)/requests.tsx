@@ -124,16 +124,10 @@ export default function ClientRequests() {
 
   const greeting = useMemo(() => {
     const h = new Date().getHours();
-    if (lang === 'ar') {
-      if (h >= 5  && h < 12) return 'صباح الخير';
-      if (h >= 12 && h < 17) return 'مساء الخير';
-      if (h >= 17 && h < 21) return 'مساء النور';
-      return 'أهلاً';
-    }
-    if (h >= 5  && h < 12) return 'Good morning';
-    if (h >= 12 && h < 17) return 'Good afternoon';
-    if (h >= 17 && h < 21) return 'Good evening';
-    return 'Hello';
+    if (h >= 5  && h < 12) return t('requests.greetMorning');
+    if (h >= 12 && h < 17) return t('requests.greetAfternoon');
+    if (h >= 17 && h < 21) return t('requests.greetEvening');
+    return t('requests.greetDefault');
   }, [lang]);
 
   const greetingEmoji = useMemo(() => {
@@ -252,19 +246,10 @@ export default function ClientRequests() {
 
   const greetSub = useMemo(() => {
     if (tab !== 'requests' || loading) return null;
-    if (counts.open > 0)
-      return lang === 'ar'
-        ? `${counts.open} طلب مفتوح بانتظار العروض`
-        : `${counts.open} open request${counts.open !== 1 ? 's' : ''} awaiting bids`;
-    if (counts.in_progress > 0)
-      return lang === 'ar'
-        ? `${counts.in_progress} طلب جارٍ`
-        : `${counts.in_progress} request${counts.in_progress !== 1 ? 's' : ''} in progress`;
-    if (allRequests.length === 0)
-      return lang === 'ar' ? 'لا توجد طلبات حتى الآن' : 'No requests yet';
-    return lang === 'ar'
-      ? `إجمالي ${allRequests.length} طلب`
-      : `${allRequests.length} request${allRequests.length !== 1 ? 's' : ''} total`;
+    if (counts.open > 0)        return t('requests.greetSubOpen', { count: counts.open });
+    if (counts.in_progress > 0) return t('requests.greetSubInProgress', { count: counts.in_progress });
+    if (allRequests.length === 0) return t('requests.greetSubNoRequests');
+    return t('requests.greetSubTotal', { count: allRequests.length });
   }, [counts, allRequests.length, tab, loading, lang]);
 
   // ── Request Card ─────────────────────────────────────────────

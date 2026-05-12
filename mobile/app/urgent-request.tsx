@@ -399,11 +399,11 @@ export default function UrgentRequestScreen() {
             />
             <Text style={styles.charCount}>
               {description.trim().length < 10
-                ? `${description.length} / 10 أحرف كحد أدنى`
+                ? t('urgentRequest.charCountMin', { count: description.length, min: 10 })
                 : `${description.length}/200`}
             </Text>
             {descError && description.trim().length < 10 && (
-              <Text style={styles.errorHint}>⚠️ يرجى وصف المشكلة بـ 10 أحرف على الأقل حتى يتمكن المقدم من فهم طلبك</Text>
+              <Text style={styles.errorHint}>{t('urgentRequest.errDesc')}</Text>
             )}
 
             {(aiMin || aiLoading) && (
@@ -454,9 +454,9 @@ export default function UrgentRequestScreen() {
         visible={showSuccess}
         title={t('urgentRequest.successTitle')}
         subtitle={t('urgentRequest.successMsg', { mins: URGENT_MINUTES })}
-        hint="سنقوم بإشعارك عند وصول أي عرض"
-        primaryLabel="عرض طلباتي"
-        secondaryLabel="حسناً"
+        hint={t('urgentRequest.successHint')}
+        primaryLabel={t('urgentRequest.successViewRequests')}
+        secondaryLabel={t('common.ok')}
         onPrimary={() => { setShowSuccess(false); router.replace('/(client)/requests'); }}
         onSecondary={() => { setShowSuccess(false); router.replace('/(client)'); }}
       />

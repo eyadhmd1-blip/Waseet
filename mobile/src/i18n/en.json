@@ -28,7 +28,9 @@
     "noData": "No data available",
     "unknown": "Unknown",
     "unexpectedError": "An unexpected error occurred",
-    "noInternet": "No internet connection"
+    "noInternet": "No internet connection",
+    "ok": "OK",
+    "processing": "Processing..."
   },
   "welcome": {
     "tagline": "Your trusted local services platform",
@@ -63,6 +65,7 @@
     "createAccount": "Create Account",
     "registering": "Creating account...",
     "fillAllFields": "Please fill in all fields",
+    "registrationFailed": "Registration failed. Please try again.",
     "phoneAlreadyRegistered": "Phone number already registered",
     "phoneAlreadyRegisteredMsg": "This number is linked to an existing account. Would you like to log in instead?",
     "goToLogin": "Log In",
@@ -206,7 +209,15 @@
     "freqBiweekly": "Every 2 weeks",
     "freqMonthly": "Monthly",
     "months": "months",
-    "bidsLimitNote": "Showing the latest 20 bids only"
+    "bidsLimitNote": "Showing the latest 20 bids only",
+    "greetMorning": "Good morning",
+    "greetAfternoon": "Good afternoon",
+    "greetEvening": "Good evening",
+    "greetDefault": "Hello",
+    "greetSubOpen": "{{count}} open requests awaiting bids",
+    "greetSubInProgress": "{{count}} requests in progress",
+    "greetSubNoRequests": "No requests yet",
+    "greetSubTotal": "{{count}} requests total"
   },
   "newRequest": {
     "title": "New Request",
@@ -262,7 +273,17 @@
     "successTitle": "Request Posted",
     "successMsg": "You'll be notified when bids arrive",
     "exitWarning": "You've entered some data. Exit and discard changes?",
-    "exitConfirm": "Discard"
+    "exitConfirm": "Discard",
+    "errTitle": "⚠️ Please enter a request title",
+    "errDesc": "⚠️ Please describe your request with at least 20 characters",
+    "errCity": "⚠️ Please select your city from the list",
+    "errPickup": "⚠️ Please enter the pickup address",
+    "errDropoff": "⚠️ Please enter the dropoff address",
+    "errSize": "⚠️ Please select the package size",
+    "charCountMin": "{{count}} / {{min}} characters minimum",
+    "successSubtitle": "Providers will start sending offers soon",
+    "successHint": "We'll notify you when any offer arrives",
+    "successViewRequests": "View My Requests"
   },
   "requestDetail": {
     "title": "Request Details",
@@ -985,7 +1006,11 @@
     "descTooShort": "Please write a brief description of the problem (at least 10 characters)",
     "successTitle": "🚨 Your urgent request was sent!",
     "successMsg": "A provider will contact you within {{mins}} minutes. You'll receive a notification when accepted.",
-    "errSubmit": "Failed to send the request. Please try again."
+    "errSubmit": "Failed to send the request. Please try again.",
+    "charCountMin": "{{count}} / {{min}} characters minimum",
+    "errDesc": "⚠️ Please describe the problem with at least 10 characters",
+    "successHint": "We'll notify you when any offer arrives",
+    "successViewRequests": "View My Requests"
   },
   "recurringRequest": {
     "title": "Recurring Request",
@@ -1137,7 +1162,8 @@
     "noSaved": "No saved providers",
     "noSavedDesc": "Save your favourite providers to easily find them later",
     "remove": "Remove",
-    "limitNote": "Showing the last 50 saved providers"
+    "limitNote": "Showing the last 50 saved providers",
+    "savedCount": "{{count}} saved providers"
   },
   "notifSettings": {
     "headerTitle": "Notification Settings",
@@ -1218,7 +1244,11 @@
     "successMsg": "Our support team will respond within 2–4 hours.",
     "viewTicket": "View Ticket",
     "errSubmit": "Could not send the ticket. Please try again.",
-    "charCount": "{{count}}/{{max}}"
+    "charCount": "{{count}}/{{max}}",
+    "errCategory": "⚠️ Please select a problem type",
+    "errSubject": "⚠️ Please write the problem title with at least 5 characters",
+    "errDesc": "⚠️ Please describe your problem with at least 10 characters",
+    "charCountMin": "{{count}} / {{min}} characters minimum"
   },
   "supportTickets": {
     "headerTitle": "My Tickets",
@@ -1293,7 +1323,19 @@
     "errSubmit": "Could not add the work. Please try again.",
     "permissionTitle": "Permission Required",
     "permissionPhoto": "Please allow the app to access photos",
-    "permissionVideo": "Please allow the app to access video"
+    "permissionVideo": "Please allow the app to access video",
+    "repick": "↩  Re-pick",
+    "previewTitle": "Preview",
+    "cropHint": "✂️ Image will be auto-cropped to 4:3",
+    "processing": "Processing...",
+    "confirmUse": "✓  Confirm & Use Photo",
+    "sourceTitle": "Choose Image Source",
+    "sourceCamera": "📷  Camera",
+    "sourceGallery": "🖼️  Photo Library",
+    "errStep1": "⚠️ Please select a work type to continue",
+    "errStep2BeforeAfter": "⚠️ Please upload a 'before' and 'after' photo to continue",
+    "errStep2Video": "⚠️ Please select a video to continue",
+    "errStep2Single": "⚠️ Please upload a photo to continue"
   },
   "categories": {
     "maintenance": "Home Maintenance",

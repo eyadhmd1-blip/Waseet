@@ -126,7 +126,7 @@ export default function SupportNewScreen() {
           ))}
         </View>
         {catError && (
-          <Text style={styles.errorHint}>⚠️ يرجى اختيار نوع المشكلة</Text>
+          <Text style={styles.errorHint}>{t('supportNew.errCategory')}</Text>
         )}
 
         {/* Priority */}
@@ -163,11 +163,11 @@ export default function SupportNewScreen() {
         />
         <Text style={styles.charCount}>
           {subject.length < 5
-            ? `${subject.length} / 5 أحرف كحد أدنى`
+            ? t('supportNew.charCountMin', { count: subject.length, min: 5 })
             : t('supportNew.charCount', { count: subject.length, max: 120 })}
         </Text>
         {subjectError && (
-          <Text style={styles.errorHint}>⚠️ يرجى كتابة موضوع المشكلة بـ 5 أحرف على الأقل</Text>
+          <Text style={styles.errorHint}>{t('supportNew.errSubject')}</Text>
         )}
 
         {/* Description */}
@@ -185,11 +185,11 @@ export default function SupportNewScreen() {
         />
         <Text style={styles.charCount}>
           {desc.length < 10
-            ? `${desc.length} / 10 أحرف كحد أدنى`
+            ? t('supportNew.charCountMin', { count: desc.length, min: 10 })
             : t('supportNew.charCount', { count: desc.length, max: 1000 })}
         </Text>
         {descError && (
-          <Text style={styles.errorHint}>⚠️ يرجى شرح مشكلتك بـ 10 أحرف على الأقل لنتمكن من مساعدتك</Text>
+          <Text style={styles.errorHint}>{t('supportNew.errDesc')}</Text>
         )}
 
         {/* Submit */}

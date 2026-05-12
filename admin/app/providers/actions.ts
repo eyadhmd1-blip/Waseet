@@ -66,20 +66,11 @@ export async function unsuspendProvider(providerId: string, name: string) {
     target_label: name,
   });
 
-  // providers.id = users.id — use it directly as the push target
-  const { data: prov } = await supabaseAdmin
-    .from('providers')
-    .select('id')
-    .eq('id', providerId)
-    .maybeSingle();
-
-  if ((prov as any)?.id) {
-    const unsuspendBody = 'مرحباً بعودتك — يمكنك الآن الاستمرار في استقبال الطلبات';
-    await Promise.all([
-      sendPushToUser((prov as any).id, '✅ تم رفع التعليق عن حسابك', unsuspendBody, { screen: 'home' }),
-      insertNotification((prov as any).id, '✅ تم رفع التعليق عن حسابك', unsuspendBody, 'account_unsuspended'),
-    ]);
-  }
+  const unsuspendBody = 'مرحباً بعودتك — يمكنك الآن الاستمرار في استقبال الطلبات';
+  await Promise.all([
+    sendPushToUser(providerId, '✅ تم رفع التعليق عن حسابك', unsuspendBody, { screen: 'home' }),
+    insertNotification(providerId, '✅ تم رفع التعليق عن حسابك', unsuspendBody, 'account_unsuspended'),
+  ]);
 
   revalidatePath('/providers');
 }

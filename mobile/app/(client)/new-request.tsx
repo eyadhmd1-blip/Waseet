@@ -259,6 +259,10 @@ export default function NewRequestScreen() {
     setSubmitting(false);
 
     if (error) {
+      // Clean up any images uploaded before the request insert failed
+      if (uploadedPaths.length > 0) {
+        supabase.storage.from('request-images').remove(uploadedPaths).catch(() => {});
+      }
       Alert.alert(t('common.error'), error.message);
       return;
     }
@@ -385,7 +389,7 @@ export default function NewRequestScreen() {
             maxLength={80}
           />
           {titleError && (
-            <Text style={styles.errorHint}>⚠️ يرجى إدخال عنوان للطلب</Text>
+            <Text style={styles.errorHint}>{t('newRequest.errTitle')}</Text>
           )}
 
           <Text style={styles.label}>{t('newRequest.description')}</Text>
@@ -406,11 +410,11 @@ export default function NewRequestScreen() {
           />
           <Text style={styles.charCount}>
             {description.length < 20
-              ? `${description.length} / 20 أحرف كحد أدنى`
+              ? t('newRequest.charCountMin', { count: description.length, min: 20 })
               : `${description.length}/500`}
           </Text>
           {descError && (
-            <Text style={styles.errorHint}>⚠️ يرجى وصف طلبك بـ 20 حرفاً على الأقل حتى يتمكن المقدم من فهم احتياجك</Text>
+            <Text style={styles.errorHint}>{t('newRequest.errDesc')}</Text>
           )}
 
           <Text style={styles.label}>{t('newRequest.city')}</Text>
@@ -428,7 +432,7 @@ export default function NewRequestScreen() {
             ))}
           </ScrollView>
           {cityError && (
-            <Text style={styles.errorHint}>⚠️ يرجى اختيار مدينتك من القائمة</Text>
+            <Text style={styles.errorHint}>{t('newRequest.errCity')}</Text>
           )}
 
           {/* ── Courier fields ── */}
@@ -445,7 +449,7 @@ export default function NewRequestScreen() {
                 textAlign={ta}
               />
               {pickupError && (
-                <Text style={styles.errorHint}>⚠️ يرجى إدخال عنوان الاستلام</Text>
+                <Text style={styles.errorHint}>{t('newRequest.errPickup')}</Text>
               )}
 
               <Text style={styles.label}>{t('newRequest.dropoffAddress')}</Text>
@@ -459,7 +463,7 @@ export default function NewRequestScreen() {
                 textAlign={ta}
               />
               {dropoffError && (
-                <Text style={styles.errorHint}>⚠️ يرجى إدخال عنوان التوصيل</Text>
+                <Text style={styles.errorHint}>{t('newRequest.errDropoff')}</Text>
               )}
 
               <Text style={styles.label}>{t('newRequest.packageSize')}</Text>
@@ -480,7 +484,7 @@ export default function NewRequestScreen() {
                 ))}
               </View>
               {sizeError && (
-                <Text style={styles.errorHint}>⚠️ يرجى اختيار حجم الطرد</Text>
+                <Text style={styles.errorHint}>{t('newRequest.errSize')}</Text>
               )}
             </>
           )}
@@ -571,10 +575,10 @@ export default function NewRequestScreen() {
       <SuccessModal
         visible={showSuccess}
         title={t('newRequest.successTitle')}
-        subtitle="سيبدأ مقدمو الخدمة بإرسال عروضهم قريباً"
-        hint="سنقوم بإشعارك عند وصول أي عرض"
-        primaryLabel="عرض طلباتي"
-        secondaryLabel="حسناً"
+        subtitle={t('newRequest.successSubtitle')}
+        hint={t('newRequest.successHint')}
+        primaryLabel={t('newRequest.successViewRequests')}
+        secondaryLabel={t('common.ok')}
         onPrimary={() => { setShowSuccess(false); router.replace('/(client)/requests'); }}
         onSecondary={() => { setShowSuccess(false); router.replace('/(client)'); }}
       />

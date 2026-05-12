@@ -111,7 +111,7 @@ export default function RequestDetail() {
           : { data: null };
         if (roleRow?.role === 'client' && reqData.client_id !== user?.id) {
           router.back();
-          return;
+          return; // early exit — do not set state on unauthorized access
         }
         setRequest(reqData);
       }

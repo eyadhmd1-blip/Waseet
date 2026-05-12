@@ -41,7 +41,7 @@ export default function ProviderJobs() {
   const [codeInput, setCodeInput]         = useState(['', '', '', '', '', '']);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [codeSent, setCodeSent]           = useState(false);
-  const [sendingCode, setSendingCode]     = useState(false);
+  const [sendingCode, setSendingCode]     = useState<Record<string, boolean>>({});
   const inputRefs = useRef<TextInput[]>([]);
 
   const load = useCallback(async (isTabSwitch = false) => {
@@ -122,32 +122,25 @@ export default function ProviderJobs() {
   }, [load]);
 
   const handleTaskDone = async (job: JobWithMeta) => {
-    setSendingCode(true);
-    const code = (100000 + Math.floor(Math.random() * 900000)).toString();
-    const exp  = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 h — field jobs take time
+    setSendingCode(prev => ({ ...prev, [job.id]: true }));
 
-    const { error } = await supabase
-      .from('jobs')
-      .update({ confirm_code: code, confirm_code_exp: exp })
-      .eq('id', job.id);
+    // Code is generated server-side inside send-confirm-notification.
+    // The client never sees or stores the actual code value.
+    const { data: notifResult, error: fnError } = await supabase.functions.invoke('send-confirm-notification', {
+      body: { job_id: job.id, client_id: job.client_id },
+    });
 
-    if (error) {
-      Alert.alert(t('common.error'), error.message);
-      setSendingCode(false);
+    setSendingCode(prev => ({ ...prev, [job.id]: false }));
+
+    if (fnError || notifResult?.error) {
+      Alert.alert(t('common.error'), t('profile.confirmModal.sendFailedMsg'));
       return;
     }
 
-    const { data: notifResult } = await supabase.functions.invoke('send-confirm-notification', {
-      body: { job_id: job.id, client_id: job.client_id, code },
-    });
-
-    setSendingCode(false);
     setCodeSent(true);
     setConfirmJob(job);
-    // Mark confirm_code as set in local state so the "Mark done" button hides
-    // immediately — prevents re-pressing from generating a new code before the
-    // client has a chance to share the first one (would cause wrong_code error).
-    setJobs(prev => prev.map(j => j.id === job.id ? { ...j, confirm_code: code } : j));
+    // Use a sentinel to hide the "Mark done" button without exposing the code in state.
+    setJobs(prev => prev.map(j => j.id === job.id ? { ...j, confirm_code: '__SENT__' } : j));
 
     // If push notification failed but inbox delivery succeeded — inform provider
     if (notifResult && !notifResult.sent && notifResult.inbox) {
@@ -205,22 +198,24 @@ export default function ProviderJobs() {
         }
       })();
 
-      // When the code expires: clear it from DB + local state so the
-      // "Mark done" button reappears and the provider can generate a new code.
+      // When the code expires: restore "Mark done" button immediately, then clean DB
       if (errCode === 'code_expired' && confirmJob) {
-        supabase.from('jobs')
-          .update({ confirm_code: null, confirm_code_exp: null })
-          .eq('id', confirmJob.id)
-          .then(() => {
-            setJobs(prev => prev.map(j =>
-              j.id === confirmJob.id
-                ? { ...j, confirm_code: undefined, confirm_code_exp: undefined }
-                : j
-            ));
-          });
+        const expiredJobId = confirmJob.id;
+        // Close modal and restore button optimistically
+        setJobs(prev => prev.map(j =>
+          j.id === expiredJobId
+            ? { ...j, confirm_code: undefined, confirm_code_exp: undefined }
+            : j
+        ));
         setConfirmJob(null);
         setCodeSent(false);
         setCodeInput(['', '', '', '', '', '']);
+        // DB cleanup — fire-and-forget after UI is already reset
+        void (async () => {
+          await supabase.from('jobs')
+            .update({ confirm_code: null, confirm_code_exp: null })
+            .eq('id', expiredJobId);
+        })();
       }
 
       Alert.alert(t('common.error'), msg);
@@ -257,11 +252,11 @@ export default function ProviderJobs() {
         </View>
       ) : (
         <TouchableOpacity
-          style={[styles.doneBtn, sendingCode && styles.btnDisabled]}
+          style={[styles.doneBtn, sendingCode[item.id] && styles.btnDisabled]}
           onPress={() => handleTaskDone(item)}
-          disabled={sendingCode}
+          disabled={!!sendingCode[item.id]}
         >
-          {sendingCode
+          {sendingCode[item.id]
             ? <ActivityIndicator color={colors.bg} size="small" />
             : <Text style={styles.doneBtnText}>{t('profile.jobsDoneConfirm')}</Text>
           }
