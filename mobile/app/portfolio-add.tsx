@@ -8,7 +8,7 @@ import {
 import { useRouter } from 'expo-router';
 import * as ImagePicker    from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import { uploadAsync, FileSystemUploadType } from 'expo-file-system/legacy';
+import { uploadAsync, FileSystemUploadType, getInfoAsync } from 'expo-file-system/legacy';
 import { supabase, supabaseUrl, supabaseAnonKey } from '../src/lib/supabase';
 import { CATEGORY_GROUPS }  from '../src/constants/categories';
 import type { PortfolioItemType } from '../src/types';
@@ -20,6 +20,8 @@ import type { AppColors }   from '../src/constants/colors';
 import { LinearGradient }   from 'expo-linear-gradient';
 
 const { width: W } = Dimensions.get('window');
+
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50 MB — Supabase Storage default limit
 
 // ─── Constants ────────────────────────────────────────────────
 
@@ -428,6 +430,15 @@ export default function PortfolioAddScreen() {
     if (itemType === 'before_after' && (!beforeUri || !afterUri)) return;
     if (itemType === 'single' && !singleUri) return;
     if (itemType === 'video'  && !videoUri)  return;
+
+    // Pre-upload size check for videos
+    if (itemType === 'video' && videoUri) {
+      const info = await getInfoAsync(videoUri);
+      if (info.exists && (info as any).size > MAX_VIDEO_BYTES) {
+        Alert.alert(t('common.error'), t('portfolioAdd.errVideoTooLarge'));
+        return;
+      }
+    }
 
     setSubmitting(true);
 

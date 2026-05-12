@@ -1324,6 +1324,7 @@
     "successMsg": "The work has been added to your portfolio",
     "successOk": "OK",
     "errSubmit": "Could not add the work. Please try again.",
+    "errVideoTooLarge": "Video size exceeds the maximum allowed limit (50 MB). Please choose a smaller video.",
     "permissionTitle": "Permission Required",
     "permissionPhoto": "Please allow the app to access photos",
     "permissionVideo": "Please allow the app to access video",
