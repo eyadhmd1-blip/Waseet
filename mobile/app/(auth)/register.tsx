@@ -77,11 +77,6 @@ export default function RegisterScreen() {
     if (role === 'provider') {
       const { error: provErr } = await supabase.from('providers').insert({
         id: user.id,
-        is_subscribed:        true,
-        subscription_tier:    'trial',
-        subscription_credits: 10,
-        trial_used:           true,
-        subscription_ends:    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
       });
       if (provErr) {
         // Rollback the users insert so the user can retry cleanly
@@ -93,7 +88,11 @@ export default function RegisterScreen() {
     }
 
     setLoading(false);
-    router.replace(role === 'provider' ? '/(provider)' : '/(client)');
+    if (role === 'provider') {
+      router.replace({ pathname: '/subscribe', params: { tier: 'trial' } } as any);
+    } else {
+      router.replace('/(client)');
+    }
   };
 
   const gradColors: [string, string] = isDark
