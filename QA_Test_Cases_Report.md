@@ -50,6 +50,7 @@
 37. [SYSH — System Health Page](#37-sysh--system-health-page)
 38. [BUGFIX — Bug-Fix Regression Suite (v2.6)](#38-bugfix--bug-fix-regression-suite-v26)
 39. [BUGFIX2 — Bug-Fix Regression Suite v3.0 (Pass-2)](#39-bugfix2--bug-fix-regression-suite-v30-pass-2)
+40. [RPTS — Reports Export Hub (25 Reports)](#40-rpts--reports-export-hub-25-reports)
 
 ---
 
@@ -107,7 +108,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | SYSH | 8 | 2 | 4 | 2 | 0 |
 | BUGFIX | 8 | 5 | 3 | 0 | 0 |
 | BUGFIX2 | 13 | 5 | 5 | 3 | 0 |
-| **TOTAL** | **536** | **145** | **224** | **138** | **29** |
+| RPTS | 22 | 4 | 10 | 6 | 2 |
+| **TOTAL** | **558** | **149** | **234** | **144** | **31** |
 
 ---
 
@@ -6197,9 +6199,388 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v3.0*  
-*Total Test Cases: 536 across 39 modules*  
-*Critical: 145 | High: 224 | Medium: 138 | Low: 29*  
+---
+
+## 40. RPTS — Reports Export Hub (25 Reports)
+
+**Feature:** Admin portal reports page (`/reports`) with 25 CSV export endpoints (`/api/reports/[id]`).  
+**Groups:** A (Financial), B (Operations), C (Providers), D (Users/Growth), E (Quality/Safety), F (System/Audit)
+
+---
+
+#### RPTS-001
+**Name:** صفحة التقارير تُحمَّل مع كل البطاقات الـ 25  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** الأدمن مسجّل دخول
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | الذهاب إلى `/reports` | الصفحة تُحمَّل بدون خطأ |
+| 2 | التحقق من عدد البطاقات | 25 بطاقة موزّعة على 6 مجموعات (A→F) |
+| 3 | كل بطاقة تحتوي | كود المجموعة (مثلاً A-01)، عنوان، وصف، زر تصدير |
+| 4 | مجموعة A | 5 تقارير: اشتراكات نشطة، منتهية، تنتهي قريباً، سجل دفعات، الإيرادات الشهرية |
+| 5 | مجموعة F-02 (حجم DB) | رابط يفتح Supabase Dashboard (ليس زر تصدير CSV) |
+
+**Regression:** لا تظهر بطاقات بدون كود أو بعنوان فارغ.  
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-002
+**Name:** أعداد العدادات الحية (Live Counts) تعكس البيانات الفعلية  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** بيانات تجريبية في قاعدة البيانات
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح `/reports` | كل بطاقة تُظهر عداداً رقمياً |
+| 2 | مقارنة عداد A-01 (اشتراكات نشطة) | يساوي عدد الصفوف في `providers WHERE is_subscribed=true` |
+| 3 | مقارنة عداد E-02 (بلاغات معلّقة) | يساوي `reports WHERE status='pending'` |
+| 4 | عداد يُظهر 0 | لا يُعرض "undefined" أو "-" |
+| 5 | خطأ في الاستعلام | العداد يُعرض 0 بدون تعطّل الصفحة |
+
+**Regression:** العدادات تُحمَّل بالتوازي (Promise.allSettled) — فشل استعلام واحد لا يوقف الباقية.  
+**Automation Candidate:** No
+
+---
+
+#### RPTS-003
+**Name:** المؤشر العاجل (Rose Border) يظهر على البطاقات الصحيحة فقط  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** بيانات: اشتراك ينتهي خلال 3 أيام، بلاغ معلّق، مزوّد موقوف
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | A-03 (تنتهي قريباً) عدادها > 0 | حد وردي (rose border) حول البطاقة |
+| 2 | A-03 عدادها = 0 | لا حد وردي |
+| 3 | E-02 (بلاغات معلّقة) عدادها > 0 | حد وردي |
+| 4 | بطاقة غير عاجلة (مثل B-02) | لا حد وردي بغض النظر عن العداد |
+
+**Automation Candidate:** No
+
+---
+
+#### RPTS-004
+**Name:** تصدير A-01 — اشتراكات نشطة  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** مزوّد واحد على الأقل مشترك (`is_subscribed=true`)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | الضغط على "تصدير CSV" في بطاقة A-01 | يبدأ تحميل ملف `subscriptions-active-<date>.csv` |
+| 2 | فتح الملف في Excel | يُفتح بشكل صحيح مع ترميز UTF-8 (BOM موجود) |
+| 3 | التحقق من الأعمدة | الاسم، الهاتف، المدينة، خطة الاشتراك، تاريخ الانتهاء، عدد الوظائف |
+| 4 | المحتوى | يشمل فقط المزودين الذين `is_subscribed=true` |
+| 5 | الأسماء العربية | تظهر بشكل صحيح بدون أحرف مكسّرة |
+
+**Regression:** لا صفوف بـ `is_subscribed=false` في هذا التصدير.  
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-005
+**Name:** تصدير A-04 — سجل المدفوعات  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** دفعة يدوية واحدة على الأقل مسجّلة في `manual_payments`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير A-04 | ملف `payments-history-<date>.csv` |
+| 2 | التحقق من الأعمدة | رقم الدفعة، الاسم، الهاتف، المبلغ (JOD)، الحالة، التاريخ، ملاحظات |
+| 3 | المبلغ | رقم عشري دقيق (مثلاً 25.000) |
+| 4 | الحالة | بالعربية (مثلاً "مؤكدة") |
+| 5 | فلتر FK | join صحيح عبر `manual_payments_provider_id_fkey` بدون تكرار صفوف |
+
+**Automation Candidate:** No
+
+---
+
+#### RPTS-006
+**Name:** تصدير B-01 — الطلبات حسب الحالة (آخر 30 يوم)  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** طلبات بحالات مختلفة في آخر 30 يوم
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير B-01 | ملف `requests-by-status-<date>.csv` |
+| 2 | نطاق التاريخ | طلبات منذ 30 يوماً فقط — لا طلبات أقدم |
+| 3 | join العميل | اسم العميل وهاتفه موجودان (عبر `requests_client_id_fkey`) |
+| 4 | حقل الحالة | بالعربية (مفتوح، قيد التنفيذ، مكتمل، ملغي) |
+| 5 | المدينة والفئة | موجودتان ومطابقتان لبيانات الطلب |
+
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-007
+**Name:** تصدير B-03 — طلبات مفتوحة +24 ساعة بلا عروض  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** طلب مفتوح منذ أكثر من 24 ساعة بلا أي عرض
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير B-03 | ملف `requests-no-bids-<date>.csv` |
+| 2 | منطق الفلترة (خطوتان) | الخطوة 1: طلبات مفتوحة >24h؛ الخطوة 2: حذف من وصلها عروض |
+| 3 | طلب عمره 23 ساعة بلا عروض | لا يظهر في التصدير |
+| 4 | طلب عمره 25 ساعة بعرض واحد | لا يظهر في التصدير |
+| 5 | طلب عمره 25 ساعة بلا عروض | يظهر في التصدير |
+
+**Regression:** لا طلبات بحالة `cancelled` أو `completed` في هذا التصدير.  
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-008
+**Name:** تصدير C-01 — أداء المزودين  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** مزودون لديهم عروض مقبولة ومرفوضة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير C-01 | ملف `providers-performance-<date>.csv` |
+| 2 | أعمدة الأداء | نسبة القبول، عدد الوظائف، متوسط التقييم، درجة السمعة |
+| 3 | نسبة القبول | محسوبة بدقة: (عروض مقبولة / إجمالي العروض) × 100 |
+| 4 | عداد العروض | يستعلم بـ limit(100,000) لتجنّب اقتطاع Supabase |
+| 5 | مزوّد بلا عروض | نسبة القبول = 0% بدون قسمة على صفر |
+
+**Automation Candidate:** No
+
+---
+
+#### RPTS-009
+**Name:** تصدير C-03 — المزودون المُبلَّغ عنهم  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** إشارة (`provider_flag`) بحالة `reviewed=false`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير C-03 | ملف `providers-flagged-<date>.csv` |
+| 2 | محتوى | مزودون ذوو إشارات غير مراجعة فقط |
+| 3 | حقل سبب الإشارة | موجود ومقروء |
+| 4 | إشارة مراجعة (`reviewed=true`) | لا تظهر في التصدير |
+| 5 | join المزوّد | اسمه وهاتفه ومدينته موجودة |
+
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-010
+**Name:** تصدير E-02 — بلاغات الإساءة المعلّقة  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** بلاغ بحالة `status='pending'`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير E-02 | ملف `abuse-reports-pending-<date>.csv` |
+| 2 | join مزدوج | اسم المُبلِّغ (reporter) واسم المُبلَّغ عنه (reported) كلاهما موجودان |
+| 3 | FK hint صحيح | `reports_reporter_id_fkey` و `reports_reported_user_id_fkey` |
+| 4 | بلاغ بحالة `resolved` | لا يظهر في التصدير |
+| 5 | نوع البلاغ | بالعربية (احتيال، محتوى مسيء، إلخ) |
+
+**Regression:** أعمدة المُبلِّغ والمُبلَّغ عنه لا تتشابك (لا يوجد خلط بين الاثنين).  
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-011
+**Name:** تصدير D-03 — العملاء غير النشطين (تحقق إصلاح Bug CRITICAL)  
+**Priority:** High | **Type:** Regression  
+**Preconditions:** عميل لم يُنشئ طلباً منذ 90 يوماً + عميل نشط (طلب خلال 90 يوم)  
+**Fixes:** BUG D-03 — `id` كان مفقوداً من select
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير D-03 | ملف `clients-idle-<date>.csv` |
+| 2 | عميل نشط (طلب منذ 30 يوم) | **لا يظهر** في التصدير |
+| 3 | عميل غير نشط (آخر طلب منذ 100 يوم) | يظهر في التصدير |
+| 4 | قبل الإصلاح | كل العملاء يظهرون (لأن `u.id === undefined` دائماً) |
+| 5 | بعد الإصلاح | `id` موجود في select، المقارنة `activeIds.has(u.id)` تعمل بشكل صحيح |
+
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-012
+**Name:** تصدير B-04 — قمع التحويل: تسمية "غادر مرحلة مفتوح" وعمود الملاحظة  
+**Priority:** High | **Type:** Regression  
+**Fixes:** BUG B-04 — التسمية السابقة "وصلت عروضاً" مضلّلة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير B-04 | ملف `requests-funnel-<date>.csv` |
+| 2 | الصف الثاني | التسمية "غادر مرحلة مفتوح" وليس "وصلت عروضاً" |
+| 3 | عمود الملاحظة | يحتوي "تقريبي — يشمل ملغيات قبل أي عرض" |
+| 4 | النسبة | محسوبة من إجمالي الطلبات في آخر 30 يوم |
+
+**Automation Candidate:** No
+
+---
+
+#### RPTS-013
+**Name:** تصدير F-03 — الملخص الأسبوعي: توافق نطاق التاريخ مع الأيام السبعة  
+**Priority:** Medium | **Type:** Regression  
+**Fixes:** BUG F-03 — كان `ago7d` يُسبّب فجوة ~24 ساعة في أول يوم
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير F-03 | ملف `weekly-summary-<date>.csv` |
+| 2 | عدد الأيام | 7 أيام بالضبط (اليوم الأول = منتصف ليل 6 أيام مضت) |
+| 3 | أول صف | تاريخه يساوي `days[0]` (منتصف ليل اليوم الأول) |
+| 4 | بيانات اليوم الأول | تشمل **كل** الإجراءات من منتصف ليل ذلك اليوم |
+| 5 | قبل الإصلاح | البيانات من أول ~24 ساعة كانت تُستعلَم لكن لا تُحتسَب في أي bucket |
+
+**Automation Candidate:** No
+
+---
+
+#### RPTS-014
+**Name:** ملفات CSV تُفتح بشكل صحيح في Excel مع دعم العربية  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** تصدير أي تقرير يحتوي بيانات عربية
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحميل أي CSV وفتحه في Excel | لا أحرف مكسّرة (no mojibake) |
+| 2 | التحقق من وجود BOM | أول 3 بايتات في الملف: `EF BB BF` (UTF-8 BOM) |
+| 3 | أسماء عربية في الملف | تظهر من اليمين لليسار بشكل صحيح |
+| 4 | حقل يحتوي فاصلة | محاط بعلامتي اقتباس في CSV |
+| 5 | حقل يحتوي علامة اقتباس | تُهرَّب مضاعفة (`""`) |
+
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-015
+**Name:** تقرير بلا بيانات يُعيد CSV بترويسات فقط  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** قاعدة بيانات فارغة من الحالات المعنية (مثلاً لا مزودين موقوفين)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير C-04 (مزودون موقوفون) مع عدم وجود أي | يُعاد ملف CSV |
+| 2 | محتوى الملف | سطر الترويسات فقط — لا صفوف بيانات |
+| 3 | لا يُعاد | رسالة خطأ أو ملف فارغ تماماً (بدون ترويسات) |
+| 4 | حجم الملف | صغير جداً لكن ملف صالح |
+
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-016
+**Name:** حماية Middleware — /api/reports/* محمي بدون جلسة  
+**Priority:** Critical | **Type:** Security  
+**Preconditions:** مستخدم غير مسجّل (لا cookie جلسة)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | طلب مباشر لـ `/api/reports/a-01` بدون جلسة | استجابة 302 redirect إلى `/login` |
+| 2 | طلب بـ cookie مزوّر | رفض — redirect إلى `/login` |
+| 3 | طلب بجلسة صالحة | CSV يُعاد بشكل طبيعي |
+| 4 | فحص Middleware | `proxy.ts` (أو `middleware.ts`) يشمل `/api/reports` في نطاق الحماية |
+
+**Regression:** الصفحة `/reports` نفسها أيضاً محمية.  
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-017
+**Name:** F-02 — حجم قاعدة البيانات: رسالة إرشادية بدلاً من CSV  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** أدمن مسجّل
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | بطاقة F-02 في الصفحة | تُظهر رابطاً لـ Supabase Dashboard (ليس زر تصدير) |
+| 2 | طلب GET على `/api/reports/f-02` مباشرة | يُعيد ملف CSV يحتوي رسالة "يُرجى الاطلاع على Supabase Dashboard" |
+| 3 | لا يُعاد | بيانات حجم DB الفعلية (يتطلب صلاحيات pg_catalog) |
+
+**Automation Candidate:** No
+
+---
+
+#### RPTS-018
+**Name:** A-05 — الإيرادات الشهرية: دقة التجميع بحلقة واحدة  
+**Priority:** Medium | **Type:** Regression  
+**Fixes:** BUG A-05 — كانت حلقتان منفصلتان تعالجان نفس البيانات  
+**Preconditions:** دفعات في أشهر متعددة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير A-05 | ملف `revenue-monthly-<date>.csv` |
+| 2 | دفعتان في نفس الشهر | يظهران كصف واحد (مجموع صحيح) |
+| 3 | المبلغ الإجمالي | sum للمبالغ لا يتضاعف بسبب حلقة مزدوجة |
+| 4 | عدد الدفعات في العمود | يعكس العدد الحقيقي (لا ضعفه) |
+
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-019
+**Name:** تصدير B-02 — الطلبات حسب المدينة والفئة  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** طلبات في مدن وفئات مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير B-02 | ملف `requests-by-city-category-<date>.csv` |
+| 2 | التجميع | صف لكل مجموعة (مدينة + فئة) |
+| 3 | طلبان في نفس المدينة والفئة | يظهران في صف واحد مع count=2 |
+| 4 | فرز | حسب العدد تنازلياً |
+
+**Automation Candidate:** Yes
+
+---
+
+#### RPTS-020
+**Name:** تصدير C-06 — أفضل 20 مزوداً  
+**Priority:** Low | **Type:** Functional  
+**Preconditions:** أكثر من 20 مزوداً مسجلاً
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير C-06 | ملف `providers-top20-<date>.csv` |
+| 2 | عدد الصفوف | 20 صفاً كحد أقصى |
+| 3 | الترتيب | حسب `lifetime_jobs DESC` ثم `score DESC` |
+| 4 | أقل من 20 مزوداً في DB | يُعاد العدد الموجود فعلاً |
+
+**Automation Candidate:** No
+
+---
+
+#### RPTS-021
+**Name:** D-04 — توزيع المستخدمين: لا خطأ متغير غير مستخدم  
+**Priority:** Low | **Type:** Regression  
+**Fixes:** BUG D-04 — `roleMap` كان معرّفاً لكن غير مستخدم
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تصدير D-04 | ملف `users-distribution-<date>.csv` |
+| 2 | محتوى | توزيع حسب المدينة والدور |
+| 3 | `tsc --noEmit` على الكود | صفر أخطاء أو تحذيرات متعلقة بـ `roleMap` |
+
+**Automation Candidate:** No
+
+---
+
+#### RPTS-022
+**Name:** صفحة /reports تُعيد redirect لغير المسجّلين  
+**Priority:** High | **Type:** Security  
+**Preconditions:** مستخدم غير مسجّل
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | الذهاب إلى `/reports` بدون جلسة | redirect تلقائي إلى `/login` |
+| 2 | بعد تسجيل الدخول | redirect تلقائي إلى `/reports` |
+| 3 | الـ Sidebar | **لا يظهر** في صفحة `/login` (إصلاح AdminShell) |
+
+**Regression:** صفحة `/login` لا تُظهر أي محتوى من الأدمن.  
+**Automation Candidate:** Yes
+
+---
+
+*End of Waseet QA Test Cases Report v3.1*  
+*Total Test Cases: 558 across 40 modules*  
+*Critical: 149 | High: 234 | Medium: 144 | Low: 31*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
