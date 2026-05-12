@@ -43,6 +43,7 @@
 30. [RT — Real-Time Features](#30-rt--real-time-features)
 31. [ANTF — Admin Notifications (Email + SMS)](#31-antf--admin-notifications-email--sms)
 32. [LIFECYCLE — Automated Lifecycle Notifications](#32-lifecycle--automated-lifecycle-notifications)
+33. [NTGTG — Manual Targeted Broadcast (Enhanced Segments)](#33-ntgtg--manual-targeted-broadcast-enhanced-segments)
 
 ---
 
@@ -93,7 +94,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | RT | 5 | 1 | 4 | 0 | 0 |
 | ANTF | 10 | 2 | 6 | 2 | 0 |
 | LIFECYCLE | 12 | 2 | 6 | 4 | 0 |
-| **TOTAL** | **473** | **126** | **198** | **122** | **28** |
+| NTGTG | 10 | 2 | 5 | 3 | 0 |
+| **TOTAL** | **483** | **128** | **203** | **125** | **28** |
 
 ---
 
@@ -5089,9 +5091,186 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v2.3*  
-*Total Test Cases: 473 across 32 modules*  
-*Critical: 126 | High: 198 | Medium: 122 | Low: 28*  
+---
+
+## 33. NTGTG — Manual Targeted Broadcast (Enhanced Segments)
+
+### High-Risk Areas
+- `estimateAudience` must match the actual IDs sent in `sendBroadcast` (same `resolveSegmentIds`)
+- Zero-audience guard: الإرسال مُعطَّل عند العدد = 0
+- تصفية المدينة: مُفعَّلة فقط للقطاعات التي تدعمها
+
+---
+
+#### NTGTG-001
+**Name:** تقدير الجمهور — يتحدث تلقائياً عند تغيير القطاع  
+**Priority:** High | **Type:** Functional / UI  
+**Preconditions:** صفحة الإشعارات مفتوحة في لوحة الأدمن
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | الأدمن يختار "منتهو الاشتراك — أقل من 30 يوم" | بعد 400ms يظهر العدد: "X مستخدم" |
+| 2 | يغيّر إلى "مشتركون بلا بورتفوليو" | العدد يتحدث |
+| 3 | يغيّر المدينة | العدد يتحدث مجدداً |
+| 4 | لا مستخدمون في القطاع | العدد يظهر بالأحمر: "0 مستخدم" |
+
+**Expected Result:** الأدمن يعرف حجم الجمهور قبل الإرسال.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-002
+**Name:** حماية الإرسال الفارغ — زر معطَّل عند 0 مستخدمين  
+**Priority:** Critical | **Type:** Negative  
+**Preconditions:** قطاع يُرجع 0 مستخدمين (مثلاً مدينة بلا مزودين جدد)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | estimate = 0 | زر "إرسال الإشعار" يصبح معطَّلاً (opacity-40) |
+| 2 | محاولة النقر على الزر | لا شيء يحدث (disabled) |
+| 3 | إدخال عنوان ونص ثم الضغط على Enter | رسالة: "لا يوجد مستخدمون في هذا القطاع" |
+
+**Expected Result:** لا يمكن إرسال إشعار فارغ الجمهور.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-003
+**Name:** قطاع "منتهو الاشتراك" — المدى الزمني صحيح  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** مزودون بـ `subscription_ends` في نطاقات مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | قطاع "منتهو الاشتراك — أقل من 30 يوم" | يشمل فقط من `subscription_ends` بين اليوم - 30 يوم واليوم |
+| 2 | قطاع "خاملون 31-90 يوم" | يشمل فقط من `subscription_ends` بين اليوم - 90 يوم واليوم - 30 يوم |
+| 3 | مزود بـ `subscription_ends = NULL` | لا يظهر في أي من القطاعين |
+| 4 | مزود `is_subscribed = true` | لا يظهر في قطاعي الانتهاء |
+
+**Expected Result:** الفصل الزمني بين القطاعين دقيق ولا تداخل.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-004
+**Name:** قطاع "مشتركون بلا بورتفوليو" — الفلتر صحيح  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** مزودون مشتركون — بعضهم لديه portfolio_items والبعض لا
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختيار "مشتركون بلا بورتفوليو" | يظهر فقط من `is_subscribed=true` ولا سجلات في `portfolio_items` |
+| 2 | مزود أضاف عنصراً واحداً في البورتفوليو | لا يظهر في القطاع |
+| 3 | مزود غير مشترك بلا بورتفوليو | لا يظهر (القطاع للمشتركين فقط) |
+
+**Expected Result:** الجمهور المستهدف هم المشتركون الذين يحتاجون تحفيزاً لإضافة بورتفوليو.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-005
+**Name:** قطاع "غير نشطين" — يعتمد على last_seen_at مع fallback لـ created_at  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** مستخدمون بحالات مختلفة لـ last_seen_at
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مستخدم بـ `last_seen_at = NULL` و `created_at` قبل 22 يوماً | يظهر في القطاع |
+| 2 | مستخدم بـ `last_seen_at` قبل 22 يوماً | يظهر في القطاع |
+| 3 | مستخدم بـ `last_seen_at` قبل 10 أيام | لا يظهر |
+| 4 | مستخدم بدور `admin` | لا يظهر (القطاع لـ client/provider فقط) |
+
+**Expected Result:** الفلترة الثنائية (NULL + تاريخ قديم) تعمل بدون تكرار في النتائج.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-006
+**Name:** تصفية المدينة — مُفعَّلة فقط للقطاعات الداعمة  
+**Priority:** High | **Type:** UI / Functional  
+**Preconditions:** صفحة الإشعارات مفتوحة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اختيار "مشتركون بلا بورتفوليو" | dropdown المدينة يصبح معطَّلاً (opacity-40) |
+| 2 | اختيار "مزودون جدد" | dropdown المدينة يصبح مفعَّلاً |
+| 3 | اختيار مدينة "إربد" مع "مزودون جدد" | estimateAudience يُرسَل بـ city="إربد" |
+| 4 | التبديل لقطاع لا يدعم المدينة | city تُصفَّر تلقائياً |
+
+**Expected Result:** فلتر المدينة لا يظهر في الـ payload للقطاعات غير الداعمة.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-007
+**Name:** إرسال ناجح — in-app + push لكل المستهدفين  
+**Priority:** High | **Type:** Integration  
+**Preconditions:** قطاع يملك مستخدمين، بعضهم لديهم push_tokens
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | الأدمن يملأ العنوان والنص ويضغط "إرسال" | `sendBroadcast` يستدعي `resolveSegmentIds` |
+| 2 | rows تُدرج في `notifications` | كل مستخدم في القطاع يحصل على سجل in-app |
+| 3 | Expo push يُرسَل | فقط للمستخدمين الذين لديهم push_token |
+| 4 | النتيجة تظهر في الـ form | "تم الإرسال — X مستخدم مستهدف" + عدد الـ tokens |
+| 5 | سجل في `admin_audit_log` | action=broadcast_notification، metadata يحتوي segment + sent |
+
+**Expected Result:** الإرسال يصل لجميع المستهدفين، السجل يحتفظ بالتفاصيل للمراجعة.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-008
+**Name:** سجل البث — يعرض الفئات الجديدة بأسمائها العربية  
+**Priority:** Medium | **Type:** UI  
+**Preconditions:** إرسال سابق بكل قطاع جديد
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | إرسال بقطاع "منتهو الاشتراك" | السجل يظهر "منتهو الاشتراك (≤30 يوم)" |
+| 2 | إرسال قديم بقطاع "subscribed_providers" | يظهر "المشتركون" |
+| 3 | سجل قديم بـ `meta.users` بدلاً من `meta.sent` | العدد يظهر بشكل صحيح (fallback يعمل) |
+
+**Expected Result:** كل القطاعات تُعرض بأسماء مقروءة في سجل البث.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-009
+**Name:** الأمان — requireAdminSession في كلا الـ server actions  
+**Priority:** Medium | **Type:** Security  
+**Preconditions:** طلب مباشر لـ server action بدون session
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | استدعاء `estimateAudience` بدون session | يُرجع خطأ 401 أو يُعيد redirect |
+| 2 | استدعاء `sendBroadcast` بدون session | نفس الحماية |
+| 3 | session صالحة | الاستدعاء يمر بشكل طبيعي |
+
+**Expected Result:** لا يمكن لأي مستخدم غير مصادق الوصول لهذه الوظائف.  
+**Automation Candidate:** No
+
+---
+
+#### NTGTG-010
+**Name:** debounce — لا طلبات مكثفة عند التغيير السريع  
+**Priority:** Medium | **Type:** Performance / UX  
+**Preconditions:** الأدمن يتنقل بسرعة بين القطاعات
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تغيير القطاع 5 مرات في أقل من 400ms | طلب واحد فقط يُرسَل (الأخير) |
+| 2 | تغيير نهائي والانتظار 500ms | العدد يظهر بعد 400ms من آخر تغيير |
+| 3 | تغيير القطاع أثناء طلب جارٍ | الطلب القديم يُلغى ولا يُحدِّث الحالة |
+
+**Expected Result:** UI مستجيب بدون ضغط غير ضروري على الـ server actions.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v2.4*  
+*Total Test Cases: 483 across 33 modules*  
+*Critical: 128 | High: 203 | Medium: 125 | Low: 28*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*

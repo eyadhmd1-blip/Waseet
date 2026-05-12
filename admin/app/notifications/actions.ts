@@ -62,49 +62,163 @@ async function sendExpoPush(
   return { tokenCount: tokens.length, expoErrors };
 }
 
+// ── Segment types ──────────────────────────────────────────────
+
+export type Segment =
+  | 'all'
+  | 'clients'
+  | 'providers'
+  | 'subscribed_providers'
+  | 'lapsed_providers'
+  | 'dormant_providers'
+  | 'no_portfolio_providers'
+  | 'new_providers'
+  | 'new_clients'
+  | 'inactive_users';
+
+// ── Segment resolver ───────────────────────────────────────────
+
+async function resolveSegmentIds(segment: Segment, city?: string): Promise<string[]> {
+  const now = new Date();
+  const daysAgo = (d: number) => new Date(now.getTime() - d * 86_400_000).toISOString();
+
+  // Apply optional city filter to a list of provider IDs via the users table
+  async function applyCity(ids: string[]): Promise<string[]> {
+    if (!ids.length || !city) return ids;
+    const { data: u } = await supabaseAdmin
+      .from('users').select('id').in('id', ids).eq('city', city);
+    return (u ?? []).map((u: any) => u.id as string);
+  }
+
+  switch (segment) {
+
+    case 'subscribed_providers': {
+      const { data } = await supabaseAdmin.from('providers').select('id').eq('is_subscribed', true);
+      return applyCity((data ?? []).map((p: any) => p.id as string));
+    }
+
+    case 'lapsed_providers': {
+      // Subscription ended within the last 30 days — prime re-subscribe window
+      const { data } = await supabaseAdmin.from('providers').select('id')
+        .eq('is_subscribed', false)
+        .gte('subscription_ends', daysAgo(30))
+        .lt('subscription_ends', now.toISOString());
+      return applyCity((data ?? []).map((p: any) => p.id as string));
+    }
+
+    case 'dormant_providers': {
+      // Subscription ended 31–90 days ago — needs stronger incentive
+      const { data } = await supabaseAdmin.from('providers').select('id')
+        .eq('is_subscribed', false)
+        .gte('subscription_ends', daysAgo(90))
+        .lt('subscription_ends', daysAgo(30));
+      return applyCity((data ?? []).map((p: any) => p.id as string));
+    }
+
+    case 'no_portfolio_providers': {
+      // Active subscribers who have never uploaded portfolio work
+      const { data: subProvs } = await supabaseAdmin
+        .from('providers').select('id').eq('is_subscribed', true);
+      const baseIds = await applyCity((subProvs ?? []).map((p: any) => p.id as string));
+      if (!baseIds.length) return [];
+      const { data: hasPortfolio } = await supabaseAdmin
+        .from('portfolio_items')
+        .select('provider_id')
+        .in('provider_id', baseIds);
+      const withSet = new Set((hasPortfolio ?? []).map((p: any) => p.provider_id as string));
+      return baseIds.filter((id: string) => !withSet.has(id));
+    }
+
+    case 'new_providers': {
+      let q = supabaseAdmin.from('users').select('id')
+        .eq('role', 'provider')
+        .gte('created_at', daysAgo(7));
+      if (city) q = q.eq('city', city);
+      const { data } = await q;
+      return (data ?? []).map((u: any) => u.id as string);
+    }
+
+    case 'new_clients': {
+      let q = supabaseAdmin.from('users').select('id')
+        .eq('role', 'client')
+        .gte('created_at', daysAgo(7));
+      if (city) q = q.eq('city', city);
+      const { data } = await q;
+      return (data ?? []).map((u: any) => u.id as string);
+    }
+
+    case 'inactive_users': {
+      // Users inactive for 21+ days (last_seen_at or created_at as fallback)
+      const cutoff = daysAgo(21);
+
+      let q1 = supabaseAdmin.from('users').select('id')
+        .in('role', ['client', 'provider'] as any)
+        .is('last_seen_at', null)
+        .lt('created_at', cutoff);
+      if (city) q1 = q1.eq('city', city);
+
+      let q2 = supabaseAdmin.from('users').select('id')
+        .in('role', ['client', 'provider'] as any)
+        .not('last_seen_at', 'is', null)
+        .lt('last_seen_at', cutoff);
+      if (city) q2 = q2.eq('city', city);
+
+      const [r1, r2] = await Promise.all([q1, q2]);
+      return [
+        ...(r1.data ?? []).map((u: any) => u.id as string),
+        ...(r2.data ?? []).map((u: any) => u.id as string),
+      ];
+    }
+
+    default: {
+      // 'all' | 'clients' | 'providers'
+      let q = supabaseAdmin.from('users').select('id');
+      if (segment === 'clients')   q = q.eq('role', 'client');
+      if (segment === 'providers') q = q.eq('role', 'provider');
+      if (city)                    q = q.eq('city', city);
+      const { data } = await q;
+      return (data ?? []).map((u: any) => u.id as string);
+    }
+  }
+}
+
+// ── estimateAudience ───────────────────────────────────────────
+
+export async function estimateAudience(params: {
+  segment: Segment;
+  city?: string;
+}): Promise<{ count: number }> {
+  await requireAdminSession();
+  const ids = await resolveSegmentIds(params.segment, params.city);
+  return { count: ids.length };
+}
+
+// ── sendBroadcast ──────────────────────────────────────────────
+
 export async function sendBroadcast(params: {
-  title:    string;
-  body:     string;
-  segment:  'all' | 'clients' | 'providers' | 'subscribed_providers';
-  city?:    string;
+  title:   string;
+  body:    string;
+  segment: Segment;
+  city?:   string;
 }) {
   await requireAdminSession();
 
   const { title, body, segment, city } = params;
+  const ids = await resolveSegmentIds(segment, city);
 
-  let ids: string[] = [];
-
-  if (segment === 'subscribed_providers') {
-    const { data: subProviders } = await supabaseAdmin
-      .from('providers')
-      .select('user_id')
-      .eq('is_subscribed', true)
-      .eq('is_active', true);
-    ids = (subProviders ?? []).map((p: any) => p.user_id);
-  } else {
-    let query = supabaseAdmin.from('users').select('id');
-    if (segment === 'clients')   query = query.eq('role', 'client');
-    if (segment === 'providers') query = query.eq('role', 'provider');
-    if (city)                    query = query.eq('city', city);
-    const { data: users } = await query;
-    ids = (users ?? []).map((u: any) => u.id);
-  }
-
-  console.log(`[broadcast] segment=${segment} users=${ids.length}`);
+  console.log(`[broadcast] segment=${segment} city=${city ?? 'all'} users=${ids.length}`);
   if (ids.length === 0) return { sent: 0, tokens: 0, errors: [] };
 
-  // 1. Insert in-app notifications
-  const rows = ids.map((uid: string) => ({ user_id: uid, title, body, type: 'admin_broadcast' }));
+  const rows = ids.map(uid => ({ user_id: uid, title, body, type: 'admin_broadcast' }));
   await supabaseAdmin.from('notifications').insert(rows);
 
-  // 2. Send device push notifications
   const { tokenCount, expoErrors } = await sendExpoPush(title, body, ids);
 
   await logAudit({
     action:       'broadcast_notification',
     target_type:  'system',
     target_label: title,
-    metadata:     { segment, city: city ?? null, users: ids.length, tokens: tokenCount, errors: expoErrors.length },
+    metadata:     { segment, city: city ?? null, sent: ids.length, tokens: tokenCount, errors: expoErrors.length },
   });
 
   revalidatePath('/notifications');
