@@ -39,6 +39,8 @@
 26. [NCAT — New Service Categories (Water, Cleaning, Gardening)](#26-ncat--new-service-categories-water-cleaning-gardening)
 27. [DEMO — Provider Demo Request Card](#27-demo--provider-demo-request-card)
 28. [FLAG — Provider Automatic Flagging & Admin Portal](#28-flag--provider-automatic-flagging--admin-portal)
+29. [ADMUIX — Admin Portal Visual Redesign](#29-admuix--admin-portal-visual-redesign)
+30. [RT — Real-Time Features](#30-rt--real-time-features)
 
 ---
 
@@ -84,7 +86,10 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | VFY | 6 | 0 | 3 | 3 | 0 |
 | REG | 6 | 0 | 3 | 3 | 0 |
 | DEMO | 8 | 0 | 5 | 3 | 0 |
-| **TOTAL** | **409** | **112** | **170** | **108** | **28** |
+| FLAG | 12 | 2 | 6 | 4 | 0 |
+| ADMUIX | 9 | 0 | 5 | 4 | 0 |
+| RT | 5 | 1 | 4 | 0 | 0 |
+| **TOTAL** | **451** | **122** | **186** | **116** | **28** |
 
 ---
 
@@ -4427,9 +4432,271 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v2.0*  
-*Total Test Cases: 433 across 28 modules*  
-*Critical: 117 | High: 177 | Medium: 112 | Low: 28*  
+---
+
+## 29. ADMUIX — Admin Portal Visual Redesign
+
+### Overview
+التصميم الجديد للبوابة: نظام ألوان بنفسجي، Sidebar محسّن، TopBar كامل، Dashboard بمكونات SVG.
+
+---
+
+#### ADMUIX-001
+**Name:** نظام الألوان البنفسجي يُطبَّق على كل الصفحات  
+**Priority:** High | **Type:** Visual / UI  
+**Preconditions:** تسجيل دخول للبوابة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح البوابة في المتصفح | الخلفية `#06040F` (بنفسجي عميق) |
+| 2 | تحقق من لون الـ cards | `#0C091D` مع border بنفسجي خفيف |
+| 3 | تنقل بين الصفحات المختلفة | نفس نظام الألوان في كل الصفحات |
+| 4 | تحقق من الـ scrollbar | لون بنفسجي بدلاً من الرمادي |
+
+**Expected Result:** نظام ألوان متسق في جميع الصفحات.  
+**Automation Candidate:** No
+
+---
+
+#### ADMUIX-002
+**Name:** Sidebar — icon pills ملوّنة + active state بنفسجي  
+**Priority:** High | **Type:** Visual / UI  
+**Preconditions:** تسجيل دخول
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحقق من كل عنصر في الـ Sidebar | أيقونة في حلقة ملوّنة (كل عنصر بلون مختلف) |
+| 2 | اضغط على "لوحة التحكم" | الـ active state بنفسجي مع border وdot |
+| 3 | اضغط على "المزودون" | active state بنفسجي — inactive items رمادية |
+| 4 | تحقق من بلوك المستخدم في footer | صورة + اسم + زر الخروج ظاهر |
+| 5 | تحقق من الـ pulse dot بجانب اللوغو | نقطة خضراء متحركة ظاهرة |
+
+**Expected Result:** Sidebar بصري احترافي مع تمييز واضح للصفحة النشطة.  
+**Automation Candidate:** No
+
+---
+
+#### ADMUIX-003
+**Name:** TopBar — بحث + عنوان الصفحة + معلومات المستخدم  
+**Priority:** Medium | **Type:** Visual / UI  
+**Preconditions:** تسجيل دخول
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحقق من TopBar في الصفحة الرئيسية | أيقونة الصفحة + "لوحة التحكم" + التاريخ |
+| 2 | انتقل لصفحة "المزودون" | العنوان يتغير إلى "إدارة المزودين" |
+| 3 | تحقق من search bar | placeholder + اختصار ⌘K ظاهر |
+| 4 | تحقق من avatar المستخدم | دائرة amber + "Eyad Admin" |
+
+**Expected Result:** TopBar يعرض المعلومات الصحيحة لكل صفحة.  
+**Automation Candidate:** No
+
+---
+
+#### ADMUIX-004
+**Name:** Hero Section — ترحيب شخصي + AI Insight + أزرار سريعة  
+**Priority:** High | **Type:** Visual / Functional  
+**Preconditions:** تسجيل دخول، الوصول للصفحة الرئيسية
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح الصفحة الرئيسية | "مرحباً بك، إياد" مع gradient بنفسجي |
+| 2 | تحقق من بطاقة AI Insight | نص ديناميكي يعكس عدد المستخدمين الجدد الفعلي |
+| 3 | تحقق من الـ mini sparkline في AI card | خط بياني ذهبي ظاهر |
+| 4 | اضغط "+ إنشاء طلب" | ينتقل لصفحة الطلبات `/requests` |
+| 5 | اضغط "إضافة مزود" | ينتقل لصفحة المزودين `/providers` |
+| 6 | اضغط "عرض التقارير" | ينتقل لصفحة التقارير `/reports` |
+
+**Expected Result:** Hero section جذاب وظيفي مع تنقل صحيح.  
+**Automation Candidate:** No
+
+---
+
+#### ADMUIX-005
+**Name:** بطاقات KPI — أيقونات ملوّنة + trend badges + sparklines  
+**Priority:** High | **Type:** Visual / Data  
+**Preconditions:** بيانات موجودة في DB
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحقق من 8 بطاقات KPI | كل بطاقة بأيقونة ملوّنة مختلفة |
+| 2 | تحقق من الأرقام | تطابق البيانات الفعلية من Supabase |
+| 3 | تحقق من trend badge | سهم ↑ أخضر عند وجود نمو |
+| 4 | تحقق من sparkline SVG | خط بياني خفيف أسفل كل بطاقة |
+| 5 | hover على بطاقة | border يتوهج بنفسجياً |
+
+**Expected Result:** 8 بطاقات تعرض بيانات حقيقية بتصميم احترافي.  
+**Automation Candidate:** No
+
+---
+
+#### ADMUIX-006
+**Name:** Donut Chart — يعرض توزيع الطلبات ببيانات حقيقية  
+**Priority:** High | **Type:** Visual / Data  
+**Preconditions:** طلبات بحالات مختلفة موجودة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحقق من Donut Chart | أقواس ملوّنة تمثل: مفتوح/نشط/مكتمل/أخرى |
+| 2 | تحقق من Legend | 4 عناصر مع النسبة المئوية والعدد |
+| 3 | تحقق من مجموع الأرقام | يساوي `totalRequests` الفعلي |
+| 4 | DB فارغ (totalRequests = 0) | رسالة "لا توجد بيانات" بدلاً من Chart |
+| 5 | تحقق من النص المركزي في الدائرة | العدد الإجمالي الصحيح |
+
+**Expected Result:** Donut Chart دقيق ويعكس البيانات الحقيقية.  
+**Automation Candidate:** No
+
+---
+
+#### ADMUIX-007
+**Name:** Area Chart — معدل الإنجاز ينتهي بالقيمة الفعلية  
+**Priority:** Medium | **Type:** Visual / Data  
+**Preconditions:** وظائف مكتملة موجودة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحقق من Area Chart | منحنى 30 يوم مع gradient بنفسجي |
+| 2 | تحقق من الرقم الكبير | يساوي `completionRate` المحسوب فعلياً |
+| 3 | النقطة الأخيرة في المنحنى | تحتوي على dot + glow بنفسجي |
+| 4 | تسميات المحور الزمني | "اليوم" / "قبل 15 يوم" / "قبل 30 يوم" |
+
+**Expected Result:** Chart بصري مع رقم الإنجاز الفعلي في البطاقة.  
+**Automation Candidate:** No
+
+---
+
+#### ADMUIX-008
+**Name:** Smart Alerts Panel — يعرض تنبيهات حقيقية  
+**Priority:** Critical | **Type:** Functional / Data  
+**Preconditions:** بيانات متنوعة في DB
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | طلبات طارئة نشطة موجودة | "🚨 X طلب طارئ نشط" باللون الأحمر |
+| 2 | طلبات متوقفة +48 ساعة موجودة | "⚠️ X طلب بدون عروض +48 ساعة" |
+| 3 | حسابات موقوفة موجودة | "🚫 X حساب مستخدم موقوف" |
+| 4 | لا توجد تنبيهات | "✅ لا تنبيهات — النظام يعمل بشكل سليم" |
+| 5 | اضغط على أي تنبيه | ينتقل للصفحة المرتبطة |
+| 6 | تحقق من status indicators في الأسفل | "Supabase متصل" و "Expo Push نشط" |
+
+**Expected Result:** Panel يعرض تنبيهات حقيقية وقابلة للنقر.  
+**Automation Candidate:** No
+
+---
+
+#### ADMUIX-009
+**Name:** Flags Badge في Sidebar يتحدث كل 30 ثانية  
+**Priority:** High | **Type:** Functional / Realtime  
+**Preconditions:** بلاغات غير مراجعة موجودة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح البوابة — بلاغات موجودة | badge أحمر بجانب "مراقبة المزودين" |
+| 2 | راجِع جميع البلاغات | badge يختفي خلال 30 ثانية |
+| 3 | تحقق من عدم الحاجة لـ Refresh | يتحدث تلقائياً بدون إعادة تحميل |
+
+**Expected Result:** Badge يعكس الحالة الحقيقية تلقائياً.  
+**Automation Candidate:** No
+
+---
+
+## 30. RT — Real-Time Features
+
+### Overview
+اختبار جميع الخصائص التي تعتمد على Supabase Realtime في التطبيق.
+
+---
+
+#### RT-001
+**Name:** العروض تظهر فوراً على شاشة الطلب دون pull-to-refresh  
+**Priority:** Critical | **Type:** Realtime / Functional  
+**Preconditions:** جهازان — عميل على شاشة request-detail، مزود جاهز للتقديم
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | العميل يفتح طلباً بحالة `open` | شاشة تفاصيل الطلب مفتوحة |
+| 2 | المزود يرسل عرضاً على نفس الطلب | بطاقة العرض تظهر فوراً على شاشة العميل |
+| 3 | العميل لم يتحرك أو يسحب للأعلى | العرض وصل بدون أي فعل من العميل |
+| 4 | تحقق من بيانات العرض | اسم المزود + السعر + التقييم صحيح |
+| 5 | مزود ثانٍ يرسل عرضاً | يظهر العرض الثاني فوراً أيضاً |
+
+**Expected Result:** كل عرض جديد يظهر فورياً بدون تدخل من العميل.  
+**Automation Candidate:** No
+
+---
+
+#### RT-002
+**Name:** لا تكرار في العروض بعد وصول Realtime + عودة للشاشة  
+**Priority:** High | **Type:** Realtime / Data Integrity  
+**Preconditions:** العميل على شاشة طلب مفتوح
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مزود يرسل عرضاً | يظهر العرض فوراً عبر Realtime |
+| 2 | العميل يغادر الشاشة ويعود | العرض يظهر مرة واحدة فقط (لا تكرار) |
+| 3 | تحقق من عدد العروض | يطابق العدد الفعلي في DB |
+
+**Expected Result:** deduplication guard يمنع العرض مرتين.  
+**Automation Candidate:** No
+
+---
+
+#### RT-003
+**Name:** Channel لا يعمل للطلبات المكتملة أو الملغاة  
+**Priority:** High | **Type:** Realtime / Scope  
+**Preconditions:** طلب بحالة `completed` أو `cancelled`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح طلباً بحالة `completed` | شاشة التفاصيل تفتح |
+| 2 | تحقق من Supabase channels (DevTools) | لا يوجد channel `bids:${id}` مفتوح |
+| 3 | افتح طلباً بحالة `cancelled` | نفس النتيجة — لا channel مفتوح |
+| 4 | افتح طلباً بحالة `open` | channel `bids:${id}` مفتوح ونشط |
+
+**Expected Result:** Channel يعمل فقط للحالات التي تقبل عروضاً.  
+**Automation Candidate:** No
+
+---
+
+#### RT-004
+**Name:** Channel يُغلق عند مغادرة الشاشة  
+**Priority:** High | **Type:** Realtime / Memory Leak  
+**Preconditions:** طلب مفتوح
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح request-detail لطلب `open` | channel `bids:${id}` نشط |
+| 2 | اضغط "رجوع" للخروج من الشاشة | channel يُغلق فوراً (cleanup) |
+| 3 | افتح طلباً مختلفاً | channel جديد بـ id مختلف يفتح |
+| 4 | تأكد لا يوجد channel قديم | الـ channel السابق لم يبقَ مفتوحاً |
+
+**Expected Result:** لا memory leaks — كل channel يُغلق عند unmount.  
+**Automation Candidate:** No
+
+---
+
+#### RT-005
+**Name:** التحقق من باقي الخصائص Realtime الموجودة مسبقاً  
+**Priority:** Critical | **Type:** Realtime / Regression  
+**Preconditions:** جهازان لكل اختبار
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مزود يرسل رسالة في الشات | تظهر للعميل فوراً دون refresh ✅ |
+| 2 | عميل يقبل عرض | يصل للمزود فوراً (job INSERT) ✅ |
+| 3 | مزود يضع كود التأكيد | يظهر للعميل فوراً ✅ |
+| 4 | مزود يؤكد خلال Grace Period | شاشة العميل تتقدم تلقائياً ✅ |
+| 5 | Admin يعدّل رصيد مزود | رصيد المزود يتحدث في التطبيق فوراً ✅ |
+| 6 | notification جديد | badge العدد يزيد فوراً ✅ |
+
+**Expected Result:** جميع الخصائص Realtime تعمل بدون انقطاع.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v2.1*  
+*Total Test Cases: 451 across 30 modules*  
+*Critical: 122 | High: 186 | Medium: 116 | Low: 28*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
