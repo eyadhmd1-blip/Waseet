@@ -35,6 +35,7 @@ const EMPTY = {
   totalUsers: 0, totalProviders: 0, totalRequests: 0, totalJobs: 0,
   openRequests: 0, activeJobs: 0, newUsers30: 0, completedJobs30: 0,
   disabledUsers: 0, urgentOpen: 0, contractsBidding: 0, subscribedProviders: 0,
+  urgentTickets: 0, pendingCriticalReports: 0, unreviewedFlags: 0, expiringSubscriptions: 0,
   recentRequests: [] as any[], recentUsers: [] as any[],
   alertStalled: [] as any[], topCities: [] as [string, number][],
   _error: true,
@@ -59,6 +60,10 @@ async function getDashboardData() {
       { data: recentUsers },
       { data: alertStalled },
       { data: cityStats },
+      { count: urgentTickets },
+      { count: pendingCriticalReports },
+      { count: unreviewedFlags },
+      { count: expiringSubscriptions },
     ] = await Promise.all([
       supabaseAdmin.from('users').select('*', { count: 'exact', head: true }),
       supabaseAdmin.from('providers').select('*', { count: 'exact', head: true }),
@@ -76,6 +81,11 @@ async function getDashboardData() {
       supabaseAdmin.from('users').select('id, full_name, role, city, created_at, phone_verified').order('created_at', { ascending: false }).limit(6),
       supabaseAdmin.from('requests').select('id, title, city, created_at').eq('status', 'open').lt('created_at', daysAgo(2)).order('created_at', { ascending: true }).limit(5),
       supabaseAdmin.from('requests').select('city').gte('created_at', daysAgo(30)),
+      // Action Center: 4 additional safety checks
+      supabaseAdmin.from('support_tickets').select('*', { count: 'exact', head: true }).eq('priority', 'urgent').eq('status', 'open'),
+      supabaseAdmin.from('reports').select('*', { count: 'exact', head: true }).in('report_type', ['abusive', 'no_show']).eq('status', 'pending'),
+      supabaseAdmin.from('provider_flags').select('*', { count: 'exact', head: true }).eq('reviewed', false),
+      supabaseAdmin.from('providers').select('*', { count: 'exact', head: true }).eq('is_subscribed', true).gte('subscription_ends', new Date().toISOString()).lt('subscription_ends', new Date(Date.now() + 7 * 86_400_000).toISOString()),
     ]);
 
     const cityMap: Record<string, number> = {};
@@ -92,10 +102,14 @@ async function getDashboardData() {
       newUsers30:          newUsers30          ?? 0,
       completedJobs30:     completedJobs30     ?? 0,
       disabledUsers:       disabledUsers       ?? 0,
-      urgentOpen:          urgentOpen          ?? 0,
-      contractsBidding:    contractsBidding    ?? 0,
-      subscribedProviders: subscribedProviders ?? 0,
-      recentRequests:      recentRequests      ?? [],
+      urgentOpen:              urgentOpen              ?? 0,
+      contractsBidding:        contractsBidding        ?? 0,
+      subscribedProviders:     subscribedProviders     ?? 0,
+      urgentTickets:           urgentTickets           ?? 0,
+      pendingCriticalReports:  pendingCriticalReports  ?? 0,
+      unreviewedFlags:         unreviewedFlags         ?? 0,
+      expiringSubscriptions:   expiringSubscriptions   ?? 0,
+      recentRequests:          recentRequests          ?? [],
       recentUsers:         recentUsers         ?? [],
       alertStalled:        alertStalled        ?? [],
       topCities,
@@ -278,18 +292,34 @@ export default async function DashboardPage() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 
-  // Smart alerts list
-  const alerts: { icon: string; text: string; color: string; href: string }[] = [];
+  // Action Center — alerts sorted critical → warning → info
+  type AlertItem = { icon: string; text: string; color: string; bg: string; href: string };
+  const alerts: AlertItem[] = [];
+
+  // Critical (red)
+  if (d.pendingCriticalReports > 0)
+    alerts.push({ icon: '🚩', text: `${d.pendingCriticalReports} بلاغ خطير (إساءة / غياب) بانتظار المراجعة`, color: 'text-red-400', bg: 'rgba(239,68,68,0.07)', href: '/abuse-reports' });
+  if (d.urgentTickets > 0)
+    alerts.push({ icon: '🎫', text: `${d.urgentTickets} تذكرة دعم عاجلة مفتوحة`, color: 'text-red-300', bg: 'rgba(239,68,68,0.07)', href: '/support' });
   if (d.urgentOpen > 0)
-    alerts.push({ icon: '🚨', text: `${d.urgentOpen} طلب طارئ نشط`, color: 'text-red-400', href: '/requests?status=open' });
+    alerts.push({ icon: '🚨', text: `${d.urgentOpen} طلب طارئ نشط`, color: 'text-rose-400', bg: 'rgba(244,63,94,0.07)', href: '/requests?status=open' });
+
+  // Warning (amber)
+  if (d.unreviewedFlags > 0)
+    alerts.push({ icon: '🏴', text: `${d.unreviewedFlags} علم مزود بانتظار قرار`, color: 'text-amber-400', bg: 'rgba(245,158,11,0.07)', href: '/provider-flags' });
   if (d.alertStalled.length > 0)
-    alerts.push({ icon: '⚠️', text: `${d.alertStalled.length} طلب بدون عروض +48 ساعة`, color: 'text-amber-400', href: '/requests' });
-  if (d.disabledUsers > 0)
-    alerts.push({ icon: '🚫', text: `${d.disabledUsers} حساب مستخدم موقوف`, color: 'text-orange-400', href: '/users' });
+    alerts.push({ icon: '⏳', text: `${d.alertStalled.length} طلب مفتوح 48+ ساعة بلا عروض`, color: 'text-amber-300', bg: 'rgba(245,158,11,0.07)', href: '/requests' });
+  if (d.expiringSubscriptions > 0)
+    alerts.push({ icon: '⏰', text: `${d.expiringSubscriptions} اشتراك ينتهي خلال 7 أيام`, color: 'text-yellow-400', bg: 'rgba(234,179,8,0.07)', href: '/providers' });
+
+  // Info (blue)
   if (d.contractsBidding > 0)
-    alerts.push({ icon: '🔄', text: `${d.contractsBidding} عقد دوري ينتظر عروضاً`, color: 'text-blue-400', href: '/contracts' });
+    alerts.push({ icon: '🔄', text: `${d.contractsBidding} عقد دوري ينتظر عروضاً`, color: 'text-blue-400', bg: 'rgba(59,130,246,0.07)', href: '/contracts' });
+  if (d.disabledUsers > 0)
+    alerts.push({ icon: '🚫', text: `${d.disabledUsers} حساب مستخدم موقوف`, color: 'text-slate-400', bg: 'rgba(100,116,139,0.07)', href: '/users' });
+
   if (alerts.length === 0)
-    alerts.push({ icon: '✅', text: 'لا تنبيهات — النظام يعمل بشكل سليم', color: 'text-emerald-400', href: '/' });
+    alerts.push({ icon: '✅', text: 'لا تنبيهات — النظام يعمل بشكل سليم', color: 'text-emerald-400', bg: 'rgba(16,185,129,0.07)', href: '/' });
 
   return (
     <div className="p-6 space-y-6" dir="rtl">
@@ -645,8 +675,8 @@ export default async function DashboardPage() {
               <a key={i} href={alert.href}
                 className="flex items-start gap-3 p-3 rounded-xl transition-all group"
                 style={{
-                  background: 'rgba(109,40,217,0.06)',
-                  border: '1px solid rgba(109,40,217,0.10)',
+                  background: alert.bg,
+                  border: `1px solid ${alert.bg.replace(/[\d.]+\)$/, '0.18)')}`,
                 }}>
                 <span className="text-lg shrink-0 mt-0.5">{alert.icon}</span>
                 <span className={`text-sm font-medium leading-snug group-hover:brightness-125 transition-all ${alert.color}`}>

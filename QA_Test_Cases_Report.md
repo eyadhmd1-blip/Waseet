@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 2.0  
+**Document Version:** 2.5  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -44,6 +44,10 @@
 31. [ANTF — Admin Notifications (Email + SMS)](#31-antf--admin-notifications-email--sms)
 32. [LIFECYCLE — Automated Lifecycle Notifications](#32-lifecycle--automated-lifecycle-notifications)
 33. [NTGTG — Manual Targeted Broadcast (Enhanced Segments)](#33-ntgtg--manual-targeted-broadcast-enhanced-segments)
+34. [ACTR — Action Center (Enhanced Smart Alerts)](#34-actr--action-center-enhanced-smart-alerts)
+35. [REVT — Revenue Timeline Chart](#35-revt--revenue-timeline-chart)
+36. [SDLY — Supply/Demand Analytics Page](#36-sdly--supplydemand-analytics-page)
+37. [SYSH — System Health Page](#37-sysh--system-health-page)
 
 ---
 
@@ -95,7 +99,11 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | ANTF | 10 | 2 | 6 | 2 | 0 |
 | LIFECYCLE | 12 | 2 | 6 | 4 | 0 |
 | NTGTG | 10 | 2 | 5 | 3 | 0 |
-| **TOTAL** | **483** | **128** | **203** | **125** | **28** |
+| ACTR | 10 | 2 | 4 | 3 | 1 |
+| REVT | 6 | 1 | 2 | 2 | 1 |
+| SDLY | 8 | 2 | 4 | 2 | 0 |
+| SYSH | 8 | 2 | 4 | 2 | 0 |
+| **TOTAL** | **515** | **135** | **216** | **135** | **29** |
 
 ---
 
@@ -5268,9 +5276,543 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v2.4*  
-*Total Test Cases: 483 across 33 modules*  
-*Critical: 128 | High: 203 | Medium: 125 | Low: 28*  
+---
+
+## 34. ACTR — Action Center (Enhanced Smart Alerts)
+
+> صفحة لوحة التحكم: قسم "التنبيهات الذكية" — 4 فحوصات أمان جديدة مرتبة حسب الخطورة
+
+---
+
+#### ACTR-001
+**Name:** تنبيه حمراء — بلاغات خطيرة معلقة  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** يوجد سجل في `reports` بحالة `pending` و `report_type` = `abusive` أو `no_show`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح لوحة التحكم | تنبيه أحمر 🚩 يظهر بعدد البلاغات |
+| 2 | الضغط على التنبيه | التوجه إلى `/abuse-reports` |
+| 3 | خلفية التنبيه | `rgba(239,68,68,0.07)` — أحمر خفيف |
+
+**Expected Result:** التنبيه يظهر فقط عندما `pendingCriticalReports > 0`.  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-002
+**Name:** تنبيه حمراء — تذاكر دعم عاجلة  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** يوجد سجل في `support_tickets` بأولوية `urgent` وحالة `open`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح لوحة التحكم | تنبيه 🎫 يظهر بعدد التذاكر |
+| 2 | عدم وجود تذاكر عاجلة | التنبيه لا يظهر |
+| 3 | الضغط على التنبيه | التوجه إلى `/support` |
+
+**Expected Result:** التنبيه مشروط بـ `urgentTickets > 0`.  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-003
+**Name:** تنبيه عنبري — أعلام مزودين غير مراجَعة  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** يوجد سجل في `provider_flags` بـ `reviewed = false`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح لوحة التحكم | تنبيه 🏴 عنبري بالعدد |
+| 2 | الضغط | التوجه إلى `/provider-flags` |
+| 3 | مراجعة كل الأعلام | التنبيه يختفي |
+
+**Expected Result:** `unreviewedFlags` يُحسب من `provider_flags WHERE reviewed = false`.  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-004
+**Name:** تنبيه عنبري — طلبات راكدة 48+ ساعة  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** طلب مفتوح منذ أكثر من 48 ساعة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح لوحة التحكم | تنبيه ⏳ بعدد الطلبات الراكدة |
+| 2 | الضغط | التوجه إلى `/requests` |
+| 3 | لا طلبات راكدة | التنبيه لا يظهر |
+
+**Expected Result:** يستخدم بيانات `alertStalled` من query الرئيسية (status=open + created_at < now-2days).  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-005
+**Name:** تنبيه أصفر — اشتراكات تنتهي خلال 7 أيام  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** مزود مشترك مع `subscription_ends` < اليوم + 7 أيام
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح لوحة التحكم | تنبيه ⏰ بالعدد |
+| 2 | الاشتراك ينتهي بعد 8 أيام | لا تنبيه |
+| 3 | الضغط | التوجه إلى `/providers` |
+
+**Expected Result:** `expiringSubscriptions` = مزودين بـ `is_subscribed=true` وتنتهي اشتراكاتهم بين الآن و+7 أيام.  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-006
+**Name:** ترتيب التنبيهات حسب الخطورة  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** وجود تنبيهات من كل درجات الخطورة معاً
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | عدة أنواع من التنبيهات معاً | التنبيهات الحمراء أعلاً، ثم عنبرية، ثم زرقاء |
+| 2 | لا تنبيهات | رسالة خضراء ✅ واحدة فقط |
+| 3 | البادج في العنوان | يعرض إجمالي عدد التنبيهات |
+
+**Expected Result:** الترتيب: Critical (red) → Warning (amber) → Info (blue) → OK (green).  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-007
+**Name:** لا تنبيهات — حالة النظام السليم  
+**Priority:** Medium | **Type:** UX  
+**Preconditions:** كل المتغيرات = 0
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح لوحة التحكم بنظام نظيف | رسالة ✅ خضراء واحدة |
+| 2 | عنوان قسم التنبيهات | بادج أخضر صغير بدلاً من عداد |
+| 3 | الخلفية | `rgba(16,185,129,0.07)` خضراء خفيفة |
+
+**Expected Result:** `alerts` array يحتوي على عنصر واحد فقط (OK).  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-008
+**Name:** خلفية كل تنبيه تعكس لون خطورته  
+**Priority:** Medium | **Type:** Visual  
+**Preconditions:** وجود تنبيهات مختلطة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تنبيه أحمر | خلفية `rgba(239,68,68,...)` |
+| 2 | تنبيه عنبري | خلفية `rgba(245,158,11,...)` |
+| 3 | تنبيه أزرق | خلفية `rgba(59,130,246,...)` |
+
+**Expected Result:** `alert.bg` dynamic — لا خلفية موحدة لكل التنبيهات.  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-009
+**Name:** الاستعلامات الأربعة الجديدة تُنفَّذ دون أخطاء  
+**Priority:** Medium | **Type:** Integration  
+**Preconditions:** قاعدة بيانات متصلة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تحميل الداشبورد | لا أخطاء في console من الاستعلامات الجديدة |
+| 2 | الجداول `support_tickets`, `reports`, `provider_flags` | تُرجع count صحيحاً |
+| 3 | جدول `providers` مع فلتر انتهاء الاشتراك | count صحيح |
+
+**Expected Result:** كل 20 استعلام في `Promise.all` تنجح.  
+**Automation Candidate:** No
+
+---
+
+#### ACTR-010
+**Name:** fallback عند فشل قاعدة البيانات  
+**Priority:** Low | **Type:** Error Handling  
+**Preconditions:** قاعدة البيانات غير متصلة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فشل `getDashboardData()` | `EMPTY` يُرجع مع `_error: true` |
+| 2 | عرض الداشبورد | رسالة خطأ بنر أحمر في الأعلى |
+| 3 | قسم التنبيهات | لا تنبيهات (كلها 0) |
+
+**Expected Result:** النظام يعمل دون تعطل عند فشل الاستعلامات.  
+**Automation Candidate:** No
+
+---
+
+## 35. REVT — Revenue Timeline Chart
+
+> صفحة التقارير: مخطط الإيراد الشهري — آخر 6 أشهر
+
+---
+
+#### REVT-001
+**Name:** عرض 6 أشهر بالتسلسل الصحيح  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** مزودون مشتركون في الأشهر الـ 6 الماضية
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح صفحة التقارير | 6 أعمدة تمثل الأشهر من الأقدم للأحدث |
+| 2 | تسميات الأشهر | بالعربية (مثل: يناير، فبراير...) مع السنة |
+| 3 | الشهر الحالي | العمود الأخير يمثل الشهر الحالي |
+
+**Expected Result:** `revenueTimeline` = 6 عناصر مرتبة chronologically.  
+**Automation Candidate:** No
+
+---
+
+#### REVT-002
+**Name:** ارتفاع الأعمدة يتناسب مع الإيراد  
+**Priority:** High | **Type:** Visual  
+**Preconditions:** اشتراكات بقيم مختلفة في أشهر مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | شهر بإيراد مرتفع | عمود أطول من شهر بإيراد أدنى |
+| 2 | شهر بدون إيراد | عمود شاحب بأدنى ارتفاع (2%) |
+| 3 | شهر بأعلى إيراد | عمود بارتفاع 100% |
+
+**Expected Result:** `heightPct = (rev / maxTimelineRev) * 100`, min = 2%.  
+**Automation Candidate:** No
+
+---
+
+#### REVT-003
+**Name:** حالة فارغة عند عدم وجود اشتراكات  
+**Priority:** High | **Type:** Edge Case  
+**Preconditions:** لا مزودون مشتركون في آخر 6 أشهر
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح صفحة التقارير | رسالة "لا توجد بيانات اشتراك بعد" |
+| 2 | لا أعمدة تظهر | chart container مخفي |
+
+**Expected Result:** `revenueTimeline.every(m => m.rev === 0)` → empty state.  
+**Automation Candidate:** No
+
+---
+
+#### REVT-004
+**Name:** مبلغ الإيراد الحالي يتطابق مع KPI card  
+**Priority:** Medium | **Type:** Data Consistency  
+**Preconditions:** اشتراكات نشطة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | قراءة KPI "إيراد الاشتراكات / شهر" | قيمة X |
+| 2 | النظر إلى عنوان Revenue Timeline | يظهر نفس القيمة X |
+| 3 | مقارنة الأرقام | متطابقة |
+
+**Expected Result:** كلاهما يستخدم `fmtMoney(monthlyRevenue)` — نفس المصدر.  
+**Automation Candidate:** No
+
+---
+
+#### REVT-005
+**Name:** تنسيق المبالغ بالدينار الأردني  
+**Priority:** Medium | **Type:** Localization  
+**Preconditions:** اشتراكات بقيم مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | قيمة إيراد = 25 | تظهر كـ "25 د.أ" |
+| 2 | قيمة = 0 | العمود الشاحب لا يعرض مبلغاً |
+
+**Expected Result:** `fmtMoney()` صحيح على كل الأعمدة.  
+**Automation Candidate:** No
+
+---
+
+#### REVT-006
+**Name:** مزود خرج الاشتراك ويُعاد الاشتراك — يُحسب في الشهر الصحيح  
+**Priority:** Low | **Type:** Edge Case  
+**Preconditions:** مزود انضم في شهر ماضٍ ومشترك حالياً
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مزود `created_at` = قبل 3 أشهر | يظهر في عمود الشهر الثالث |
+| 2 | لا يُحسب في الشهر الحالي | العمود الحالي لا يزيد بسببه |
+
+**Expected Result:** التجميع حسب `created_at` (شهر الانضمام) وليس `subscription_ends`.  
+**Automation Candidate:** No
+
+---
+
+## 36. SDLY — Supply/Demand Analytics Page
+
+> صفحة `/analytics`: تحليل العرض والطلب حسب المدينة والفئة
+
+---
+
+#### SDLY-001
+**Name:** العرض (مزودون) مُجمَّع صحيحاً حسب المدينة  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** مزودون موزعون على مدن مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح `/analytics` | البار الأزرق لكل مدينة يعكس عدد مزوديها |
+| 2 | إضافة مزود جديد في عمّان | عمود عمّان يزيد بـ 1 |
+| 3 | مدينة بمزودين=0 | لا شريط أزرق |
+
+**Expected Result:** `citySupply` يُحسب من `providers.user(city)`.  
+**Automation Candidate:** No
+
+---
+
+#### SDLY-002
+**Name:** الطلب (طلبات مفتوحة) مُجمَّع صحيحاً حسب المدينة  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** طلبات مفتوحة بمدن مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح `/analytics` | البار الأصفر لكل مدينة يعكس عدد طلباتها المفتوحة |
+| 2 | إغلاق طلب في مدينة | البار ينخفض |
+| 3 | طلبات بحالة غير open | لا تُحتسب |
+
+**Expected Result:** `cityDemand` يُحسب من `requests WHERE status='open'`.  
+**Automation Candidate:** No
+
+---
+
+#### SDLY-003
+**Name:** بادج "نقص" يظهر عند demand > supply * 1.5  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** مدينة بطلبات أكثر من 1.5 ضعف عدد مزوديها
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مدينة: 2 مزود، 4 طلب (4 > 2*1.5=3) | بادج ⚠️ نقص يظهر |
+| 2 | مدينة: 2 مزود، 3 طلب (3 = 1.5*2) | لا بادج |
+| 3 | المدينة تظهر في قسم "مدن بها نقص" | نعم |
+
+**Expected Result:** منطق `demand > supply * 1.5`.  
+**Automation Candidate:** No
+
+---
+
+#### SDLY-004
+**Name:** فئة بـ demand > supply تحصل على بادج "طلب عالٍ"  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** فئة بطلبات مفتوحة أكثر من مزودين
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فئة كهرباء: 3 مزود، 5 طلبات | بادج 🔥 يظهر |
+| 2 | فئة بـ supply >= demand | لا بادج |
+| 3 | الفئة تظهر في "فئات ذات طلب مرتفع" | نعم |
+
+**Expected Result:** `demand > supply` يُشغّل badge + summary row.  
+**Automation Candidate:** No
+
+---
+
+#### SDLY-005
+**Name:** `categories` array في providers تُحتسب لكل عنصر  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** مزود يخدم 3 فئات مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مزود بـ `categories = ['electrical', 'plumbing', 'cleaning']` | يُحتسب في 3 فئات مختلفة |
+| 2 | فئة لا يخدمها أحد | عمود أزرق = 0 أو الفئة لا تظهر |
+
+**Expected Result:** `catSupply[cat]++` لكل slug في `p.categories`.  
+**Automation Candidate:** No
+
+---
+
+#### SDLY-006
+**Name:** KPI cards تعرض الأرقام الصحيحة  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** بيانات حية
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | بطاقة "إجمالي المزودين" | تساوي count في لوحة التحكم |
+| 2 | بطاقة "طلبات مفتوحة" | تساوي openRequests في الداشبورد |
+| 3 | "نسبة الطلب / العرض" | = openRequests / providers (تنسيق Xx) |
+
+**Expected Result:** الأرقام مأخوذة من نفس الجداول بشكل مباشر.  
+**Automation Candidate:** No
+
+---
+
+#### SDLY-007
+**Name:** قسم "مدن بها نقص" و"فئات ذات طلب مرتفع" متطابقان مع الرسوم  
+**Priority:** Medium | **Type:** Consistency  
+**Preconditions:** وجود حالات نقص وطلب عالٍ
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مدينة مُعلَّمة بـ ⚠️ في الرسم | تظهر في قسم "مدن بها نقص" |
+| 2 | فئة مُعلَّمة بـ 🔥 | تظهر في "فئات ذات طلب مرتفع" |
+| 3 | لا نقص في أي مدينة | رسالة ✅ في القسم |
+
+**Expected Result:** كلا القسمين يستخدم نفس البيانات `cityData` و `catData`.  
+**Automation Candidate:** No
+
+---
+
+#### SDLY-008
+**Name:** الصفحة تعمل مع بيانات فارغة (لا مزودين / لا طلبات)  
+**Priority:** Medium | **Type:** Edge Case  
+**Preconditions:** قاعدة بيانات جديدة فارغة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح `/analytics` بلا بيانات | رسالة "لا توجد بيانات بعد" في كل قسم |
+| 2 | KPI cards | تعرض 0 بدون أخطاء |
+| 3 | نسبة الطلب/العرض | تعرض "—" (providers = 0) |
+
+**Expected Result:** لا أخطاء JS، كل الأقسام تعرض empty states.  
+**Automation Candidate:** No
+
+---
+
+## 37. SYSH — System Health Page
+
+> صفحة `/system`: مراقبة المهام المجدولة والخدمات
+
+---
+
+#### SYSH-001
+**Name:** قائمة pg_cron تُعرض عبر `admin_cron_status()`  
+**Priority:** Critical | **Type:** Integration  
+**Preconditions:** migration 086 مطبّق وpg_cron مُفعَّل
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح `/system` | قائمة بكل المهام المجدولة من pg_cron |
+| 2 | اسم المهمة | يظهر `jobname` بوضوح |
+| 3 | الجدول الزمني | يظهر `schedule` (مثل `0 6 * * *`) |
+
+**Expected Result:** `supabaseAdmin.rpc('admin_cron_status')` تُرجع البيانات دون خطأ.  
+**Automation Candidate:** No
+
+---
+
+#### SYSH-002
+**Name:** مهمة فاشلة تُظهر تسليط أحمر ورسالة الخطأ  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** مهمة pg_cron آخر تشغيل فيها `status = 'failed'`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مهمة فاشلة | خلفية حمراء خفيفة على السطر |
+| 2 | `last_error` | تظهر رسالة الخطأ تحت اسم المهمة |
+| 3 | بادج حالة | نص "فشل" أحمر |
+
+**Expected Result:** `STATUS_META['failed']` → `dot: 'bg-red-400'`, خلفية `rgba(239,68,68,0.04)`.  
+**Automation Candidate:** No
+
+---
+
+#### SYSH-003
+**Name:** عداد رموز Push صحيح  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** مستخدمون بـ push tokens مسجلة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فتح `/system` | بطاقة "أجهزة Push نشطة" بالعدد الصحيح |
+| 2 | مستخدم يُلغي تسجيل token | العداد ينخفض بـ 1 |
+| 3 | لا tokens | العداد = 0 |
+
+**Expected Result:** count من `push_tokens` table.  
+**Automation Candidate:** No
+
+---
+
+#### SYSH-004
+**Name:** معدل القراءة محسوب صحيحاً (7 أيام)  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** إشعارات مقروءة وغير مقروءة في آخر 7 أيام
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | 100 إشعار، 60 مقروء | معدل = 60% |
+| 2 | 0 إشعارات | معدل = 0% (لا قسمة على صفر) |
+| 3 | 100% مقروء | شريط أخضر كامل |
+
+**Expected Result:** `readRate = Math.round((readNotifs / totalNotifs) * 100)`.  
+**Automation Candidate:** No
+
+---
+
+#### SYSH-005
+**Name:** لون شريط القراءة يتغير حسب العتبة  
+**Priority:** High | **Type:** Visual  
+**Preconditions:** معدلات قراءة مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | معدل >= 70% | شريط أخضر |
+| 2 | معدل 40-69% | شريط عنبري |
+| 3 | معدل < 40% | شريط أحمر |
+
+**Expected Result:** `linear-gradient` يتغير بحسب `readRate` threshold.  
+**Automation Candidate:** No
+
+---
+
+#### SYSH-006
+**Name:** عدد الاشتراكات المنتهية يتطابق مع الداشبورد  
+**Priority:** High | **Type:** Data Consistency  
+**Preconditions:** اشتراكات تنتهي خلال 7 أيام
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | بطاقة "اشتراكات تنتهي" في `/system` | نفس القيمة في بطاقة الداشبورد |
+| 2 | مزود تنتهي اشتراكاته خلال 8 أيام | لا يُحتسب |
+| 3 | لون البطاقة | أصفر إذا > 0، رمادي إذا = 0 |
+
+**Expected Result:** نفس query المستخدم في الداشبورد (7-day window).  
+**Automation Candidate:** No
+
+---
+
+#### SYSH-007
+**Name:** البادج الرئيسي (سليم / تنبيه) يعكس حالة pg_cron  
+**Priority:** Medium | **Type:** Functional  
+**Preconditions:** مهام pg_cron بحالات مختلفة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | كل المهام نجحت | بادج أخضر "النظام سليم" |
+| 2 | مهمة واحدة فاشلة | بادج أحمر "تنبيه: راجع الأخطاء" |
+| 3 | لا مهام مجدولة بعد | بادج أخضر (لا فشل) |
+
+**Expected Result:** `allCronOk = cronJobs.every(j => j.last_status === 'succeeded' || !j.last_status)`.  
+**Automation Candidate:** No
+
+---
+
+#### SYSH-008
+**Name:** فشل `admin_cron_status()` لا يكسر الصفحة  
+**Priority:** Medium | **Type:** Error Handling  
+**Preconditions:** `cron` schema غير متاح أو migration 086 لم يُطبَّق
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | RPC يُرجع خطأ | `cronErr = true`, `cronJobs = []` |
+| 2 | قسم المهام | رسالة "تعذّر الاتصال بـ cron schema" |
+| 3 | باقي الصفحة | تعمل بشكل طبيعي (push tokens، read rate) |
+
+**Expected Result:** كل metric مستقل — فشل RPC لا يؤثر على بقية البيانات.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v2.5*  
+*Total Test Cases: 515 across 37 modules*  
+*Critical: 135 | High: 216 | Medium: 135 | Low: 29*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*

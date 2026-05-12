@@ -118,6 +118,22 @@ export default async function ReportsPage() {
         s + ((r.ai_suggested_price_min + r.ai_suggested_price_max) / 2), 0) / priced.length)
     : 0;
 
+  // ── Revenue Timeline — last 6 months (grouped by provider creation month) ───
+  const nowDate = new Date();
+  const revenueTimeline = Array.from({ length: 6 }, (_, i) => {
+    const monthStart = new Date(nowDate.getFullYear(), nowDate.getMonth() - (5 - i), 1);
+    const monthEnd   = new Date(nowDate.getFullYear(), nowDate.getMonth() - (5 - i) + 1, 1);
+    const label = monthStart.toLocaleDateString('ar-JO', { month: 'short', year: '2-digit' });
+    const monthProviders = providers.filter((p: any) => {
+      const created = new Date(p.created_at);
+      return created >= monthStart && created < monthEnd && p.is_subscribed;
+    });
+    const rev   = monthProviders.reduce((sum: number, p: any) => sum + (SUB_PRICES[p.subscription_tier ?? ''] ?? 0), 0);
+    const count = monthProviders.length;
+    return { label, rev, count };
+  });
+  const maxTimelineRev = Math.max(...revenueTimeline.map(m => m.rev), 1);
+
   // ── Bid Boost metrics (last 30 days) ─────────────────────────────────────
   const totalBoosts   = boosts30.length;
   const freeBoosts    = boosts30.filter((b: any) => b.provider?.subscription_tier === 'premium').length;
@@ -215,6 +231,51 @@ export default async function ReportsPage() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Revenue Timeline */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <h2 className="text-slate-200 font-semibold">الإيراد الشهري — آخر 6 أشهر</h2>
+            <p className="text-slate-500 text-xs mt-0.5">مبني على اشتراكات المزودين المنضمين هذه الفترة</p>
+          </div>
+          <div className="text-right">
+            <div className="text-amber-400 font-bold text-xl">{fmtMoney(monthlyRevenue)}</div>
+            <div className="text-slate-600 text-xs mt-0.5">الإيراد الحالي / شهر</div>
+          </div>
+        </div>
+        {revenueTimeline.every(m => m.rev === 0) ? (
+          <p className="text-slate-600 text-sm text-center py-6">لا توجد بيانات اشتراك بعد</p>
+        ) : (
+          <div className="flex items-end gap-2" style={{ height: '120px' }} dir="ltr">
+            {revenueTimeline.map(({ label, rev, count }) => {
+              const heightPct = Math.max((rev / maxTimelineRev) * 100, 2);
+              return (
+                <div key={label} className="flex-1 flex flex-col items-center gap-1">
+                  {rev > 0 && (
+                    <span className="text-[9px] text-amber-400 font-bold leading-tight text-center">
+                      {fmtMoney(rev)}
+                    </span>
+                  )}
+                  <div className="w-full relative flex-1">
+                    <div className="absolute bottom-0 w-full rounded-t-lg transition-all"
+                      style={{
+                        height: `${heightPct}%`,
+                        background: rev > 0
+                          ? 'linear-gradient(180deg,rgba(245,158,11,0.9) 0%,rgba(217,119,6,0.65) 100%)'
+                          : 'rgba(51,65,85,0.4)',
+                      }} />
+                  </div>
+                  <div className="text-center mt-1">
+                    <div className="text-[9px] text-slate-500">{label}</div>
+                    {count > 0 && <div className="text-[8px] text-slate-700">{count} مشترك</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* City activity chart */}

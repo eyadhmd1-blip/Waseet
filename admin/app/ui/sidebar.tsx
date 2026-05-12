@@ -53,8 +53,10 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: 'الرئيسية',
     items: [
-      { href: '/',        label: 'لوحة التحكم', icon: '📊', iconBg: 'bg-violet-500/20 text-violet-300' },
-      { href: '/reports', label: 'التقارير',     icon: '📈', iconBg: 'bg-blue-500/20 text-blue-300'    },
+      { href: '/',          label: 'لوحة التحكم',     icon: '📊', iconBg: 'bg-violet-500/20 text-violet-300' },
+      { href: '/reports',   label: 'التقارير',         icon: '📈', iconBg: 'bg-blue-500/20 text-blue-300'    },
+      { href: '/analytics', label: 'العرض والطلب',     icon: '⚖️', iconBg: 'bg-amber-500/20 text-amber-300'  },
+      { href: '/system',    label: 'صحة النظام',       icon: '🖥️', iconBg: 'bg-emerald-500/20 text-emerald-300' },
     ],
   },
   {
