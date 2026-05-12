@@ -41,6 +41,7 @@
 28. [FLAG — Provider Automatic Flagging & Admin Portal](#28-flag--provider-automatic-flagging--admin-portal)
 29. [ADMUIX — Admin Portal Visual Redesign](#29-admuix--admin-portal-visual-redesign)
 30. [RT — Real-Time Features](#30-rt--real-time-features)
+31. [ANTF — Admin Notifications (Email + SMS)](#31-antf--admin-notifications-email--sms)
 
 ---
 
@@ -89,7 +90,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | FLAG | 12 | 2 | 6 | 4 | 0 |
 | ADMUIX | 9 | 0 | 5 | 4 | 0 |
 | RT | 5 | 1 | 4 | 0 | 0 |
-| **TOTAL** | **451** | **122** | **186** | **116** | **28** |
+| ANTF | 10 | 2 | 6 | 2 | 0 |
+| **TOTAL** | **461** | **124** | **192** | **118** | **28** |
 
 ---
 
@@ -4694,9 +4696,193 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v2.1*  
-*Total Test Cases: 451 across 30 modules*  
-*Critical: 122 | High: 186 | Medium: 116 | Low: 28*  
+---
+
+## 31. ANTF — Admin Notifications (Email + SMS)
+
+**الوصف:** نظام إشعارات الأدمن — 9 أنواع عبر Resend (إيميل) و Unifonic (SMS)  
+**الملفات:** `supabase/functions/notify-admin/index.ts` · `supabase/migrations/084_admin_notifications.sql`
+
+---
+
+#### ANTF-001
+**Name:** إشعار CliQ — إيميل + SMS عند طلب دفع جديد  
+**Priority:** Critical | **Type:** Notification / Financial  
+**Preconditions:** المزود يختار باقة مدفوعة، RESEND_API_KEY + ADMIN_EMAIL + ADMIN_PHONE مضبوطة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مزود يختار باقة "Pro" ويضغط "اشترك الآن" | تُنشأ تذكرة دعم بـ `category='payment'` |
+| 2 | DB trigger `trg_notify_admin_cliq_payment` يُطلق | `invoke_notify_admin('cliq_payment', ...)` يُستدعى |
+| 3 | Edge Function `notify-admin` تُستدعى | ترسل إيميل + SMS للأدمن |
+| 4 | تحقق من صندوق البريد | إيميل بعنوان "💳 طلب دفع CliQ جديد — Pro (12 د.أ)" يصل خلال دقيقة |
+| 5 | تحقق من هاتف الأدمن | SMS يصل: "وسيط 💳: طلب CliQ من [اسم]..." |
+| 6 | محتوى الإيميل | يحتوي اسم المزود، الهاتف، اسم الباقة، المبلغ، رابط التذكرة |
+
+**Expected Result:** إيميل + SMS يصلان فورياً عند كل طلب CliQ.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-002
+**Name:** إشعار تذكرة طارئة — إيميل + SMS  
+**Priority:** Critical | **Type:** Notification / Support  
+**Preconditions:** مستخدم يفتح تذكرة بـ `priority='urgent'` (غير Payment)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | عميل يفتح تذكرة دعم طارئة بفئة "حساب" | تُنشأ التذكرة |
+| 2 | Trigger يُطلق | `notify-admin` يُستدعى بـ `urgent_ticket` |
+| 3 | الأدمن يتلقى إيميل + SMS | بعنوان "🚨 تذكرة دعم طارئة" |
+| 4 | CliQ payment لا يُطلق urgent_ticket | الـ trigger يتحقق: `category != 'payment'` |
+
+**Expected Result:** فصل صحيح: Payment يُطلق ANTF-001، الطارئة الأخرى تُطلق ANTF-002.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-003
+**Name:** إشعار بلاغ خطير — إيميل فوري (abusive / no_show)  
+**Priority:** Critical | **Type:** Notification / Safety  
+**Preconditions:** مستخدم يقدم بلاغاً من نوع `abusive` أو `no_show`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | عميل يبلغ عن مزود بنوع `abusive` | RPC `submit_report` يُدرج في `reports` |
+| 2 | Trigger `trg_notify_admin_abuse_critical` يُطلق | Edge Function تُستدعى |
+| 3 | الأدمن يتلقى إيميل | يحتوي اسم المُبلَّغ عنه، المُبلِّغ، النوع، الوصف |
+| 4 | بلاغ `spam` أو `fake_bid` | لا يُطلق هذا الـ trigger (يذهب لـ ANTF-008) |
+
+**Expected Result:** فقط abusive و no_show تُرسل فوراً.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-004
+**Name:** إشعار علم مزود جديد — إيميل فوري  
+**Priority:** High | **Type:** Notification / Quality  
+**Preconditions:** trigger `trg_flag_on_rating` أو `trg_flag_on_bid_rejected` يُطلق علماً جديداً
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | عميل يقيّم مزوداً بـ 1 نجمة (avg < 2.5) | `flag_provider` يُدرج في `provider_flags` |
+| 2 | Trigger `trg_notify_admin_provider_flag` يُطلق | Email يُرسل للأدمن |
+| 3 | الإيميل يحتوي | اسم المزود، الهاتف، السبب (low_rating)، التفاصيل (avg_rating, rated_jobs) |
+| 4 | نفس المزود يحصل على علم ثانٍ لنفس السبب | `flag_provider` تتجاهله (dedup guard) — لا إيميل مكرر |
+
+**Expected Result:** إيميل واحد لكل علم جديد فريد.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-005
+**Name:** إشعار إلغاءات متكررة — إيميل فوري  
+**Priority:** High | **Type:** Notification / Abuse Prevention  
+**Preconditions:** مستخدم يصل لـ 3 إلغاءات في الشهر
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | مستخدم يلغي 3 مهام في الشهر الجاري | `fn_check_cancellation_abuse` يُدرج في `admin_alerts` |
+| 2 | Trigger `trg_notify_admin_cancellation_abuse` يُطلق | Email يُرسل للأدمن |
+| 3 | الإيميل يحتوي | اسم المستخدم، الهاتف، العدد، الشهر |
+| 4 | إلغاء رابع نفس الشهر | لا trigger ثانٍ (fn_check_cancellation_abuse تُطلق عند count=3 فقط) |
+
+**Expected Result:** إيميل واحد عند بلوغ الحد.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-006
+**Name:** إشعار طلب طارئ بدون عروض +2h — إيميل (cron كل 30 دقيقة)  
+**Priority:** High | **Type:** Notification / Operations  
+**Preconditions:** طلب طارئ `is_urgent=true` مفتوح منذ أكثر من ساعتين بدون عروض
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | pg_cron يُطلق `urgent_no_bids` كل 30 دقيقة | Edge Function تبحث عن طلبات مؤهلة |
+| 2 | يوجد طلب طارئ منذ 2.5h بدون عروض | يُضمَّن في الإيميل |
+| 3 | إيميل يُرسل للأدمن | جدول يحتوي العنوان، المدينة، عدد الساعات |
+| 4 | `admin_urgency_notified_at` يُحدَّث | الطلب لا يُعاد إرساله في الدورة التالية |
+| 5 | طلب طارئ منذ 1.5h | لا يُضمَّن (شرط 2h لم يُستوَفَ بعد) |
+
+**Expected Result:** الأدمن يعرف عن الطلبات الطارئة الراكدة دون إرسال مكرر.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-007
+**Name:** تجميع تذاكر الدعم العادية — إيميل كل ساعة  
+**Priority:** Medium | **Type:** Notification / Support  
+**Preconditions:** تذاكر دعم جديدة بـ `priority='normal'`، `category != 'payment'`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | 3 تذاكر دعم عادية تُفتح خلال ساعة | كلها بـ `admin_notified_at = null` |
+| 2 | pg_cron يُطلق `normal_tickets` | Edge Function تجمعها في إيميل واحد |
+| 3 | إيميل يُرسل: "3 تذاكر دعم جديدة" | جدول بالمستخدمين والمواضيع والفئات |
+| 4 | `admin_notified_at` يُحدَّث على الـ 3 | لا تُعاد في الساعة التالية |
+| 5 | لا تذاكر جديدة | لا إيميل يُرسل |
+
+**Expected Result:** تجميع ذكي يمنع إيميلاً لكل تذكرة.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-008
+**Name:** تجميع البلاغات الاعتيادية — إيميل كل ساعتين  
+**Priority:** Medium | **Type:** Notification / Safety  
+**Preconditions:** بلاغات جديدة من نوع `spam`، `fake_bid`، أو `other`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | 5 بلاغات spam تُقدَّم خلال ساعتين | كلها `admin_notified_at = null` |
+| 2 | pg_cron يُطلق `reports_batch` | Edge Function تجمعها |
+| 3 | إيميل: "5 بلاغات جديدة تستحق المراجعة" | جدول بالمُبلَّغ عنهم والأنواع |
+| 4 | `admin_notified_at` يُحدَّث | لا تكرار |
+
+**Expected Result:** تجميع صحيح لـ spam/fake_bid/other فقط.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-009
+**Name:** الملخص اليومي — إيميل في 8:00 صباحاً (توقيت عمّان)  
+**Priority:** Medium | **Type:** Notification / Digest  
+**Preconditions:** pg_cron مضبوط على 05:00 UTC (= 08:00 عمّان)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | الساعة 05:00 UTC | cron يُطلق `daily_digest` |
+| 2 | Edge Function تحسب المقاييس | عملاء جدد، مزودون، طلبات، مهام مكتملة في آخر 24h |
+| 3 | إيميل يُرسل | جدولان: "النشاط — آخر 24 ساعة" و"يحتاج انتباهاً" |
+| 4 | يوم بدون نشاط | الإيميل يُرسل بأصفار (لا يتوقف) |
+| 5 | الأرقام الحمراء | تذاكر مفتوحة، أعلام معلقة، بلاغات معلقة، طلبات طارئة نشطة |
+
+**Expected Result:** الأدمن يبدأ يومه بصورة كاملة عن المنصة.  
+**Automation Candidate:** No
+
+---
+
+#### ANTF-010
+**Name:** مقاومة الفشل — Missing Secrets لا تُوقف النظام  
+**Priority:** High | **Type:** Resilience  
+**Preconditions:** أحد الـ secrets غير مضبوط
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | RESEND_API_KEY فارغ | الـ function تُسجل warning وتعود بدون خطأ |
+| 2 | ADMIN_PHONE فارغ | SMS يُتخطى، الإيميل يُرسل بشكل طبيعي |
+| 3 | supabase_url غير مضبوط في DB | `invoke_notify_admin` تُطلق RAISE WARNING فقط |
+| 4 | Resend API يُرجع 4xx | الخطأ يُسجَّل في logs — لا crash في العملية الرئيسية |
+
+**Expected Result:** الإشعارات non-blocking — فشلها لا يؤثر على المستخدم أو DB.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v2.2*  
+*Total Test Cases: 461 across 31 modules*  
+*Critical: 124 | High: 192 | Medium: 118 | Low: 28*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
