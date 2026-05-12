@@ -67,7 +67,7 @@ function buildMessage(
       body  = `"${requestTitle}" — اختار العميل من بين ${totalBids} عروض. ملف شخصي قوي يُضاعف فرصك.${newReqStr}`;
     } else {
       title = "🌟 الفرصة القادمة في طريقها إليك";
-      body  = `"${requestTitle}" — كنت 1 من ${totalBids} مقدمين هذه المرة. كل محاولة تبني سمعتك.${newReqStr}`;
+      body  = `"${requestTitle}" — كنت 1 من ${totalBids} مقدمين هذه المرة. كل محاولة تبني بصمتك.${newReqStr}`;
     }
   }
 
@@ -191,7 +191,7 @@ Deno.serve(async (req) => {
         title = lang === "en" ? "🌟 The next opportunity is on its way" : "🌟 الفرصة القادمة في طريقها إليك";
         body  = lang === "en"
           ? `"${request.title}" — every attempt builds your reputation.`
-          : `"${request.title}" — كل محاولة تبني سمعتك.`;
+          : `"${request.title}" — كل محاولة تبني بصمتك.`;
       }
 
       return {

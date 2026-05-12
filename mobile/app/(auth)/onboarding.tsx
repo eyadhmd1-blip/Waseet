@@ -78,7 +78,7 @@ function Step1Role({
     ? ['🔍 ابحث', '💬 قارن', '✅ وظّف']
     : ['🔍 Search', '💬 Compare', '✅ Hire'];
   const PROVIDER_CHIPS = lang === 'ar'
-    ? ['💰 اكسب', '📊 تتبع', '⭐ سمعة']
+    ? ['💰 اكسب', '📊 تتبع', '⭐ بصمة']
     : ['💰 Earn', '📊 Track', '⭐ Grow'];
 
   const renderCard = (r: Role) => {
@@ -486,7 +486,7 @@ function Step1RoleNew({
   ];
   const PROVIDER_CHIPS = [
     { icon: '💰', label: 'دخل أعلى ونمو مستمر' },
-    { icon: '⭐', label: 'بني سمعتك وتقييمك' },
+    { icon: '⭐', label: 'بني بصمتك وتقييمك' },
     { icon: '👥', label: 'اعملاء أكثر فرص أكبر' },
   ];
 
