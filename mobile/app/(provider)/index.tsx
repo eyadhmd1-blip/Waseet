@@ -849,7 +849,7 @@ function EmptyFeedState({
     !!(provider?.is_subscribed && ((provider.subscription_credits ?? 0) + (provider.bonus_credits ?? 0)) > 0));
   const hasBio       = !!(provider?.bio?.trim());
   const hasPortfolio = portfolioCount > 0 || (provider?.portfolio_urls?.length ?? 0) > 0;
-  const profileOk    = hasBio && hasPortfolio;
+  const profileOk    = hasPortfolio;
 
   if (!isNew) {
     return (
@@ -1125,6 +1125,18 @@ export default function ProviderFeed() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Refresh portfolioCount when screen regains focus (e.g. after adding portfolio item)
+  useFocusEffect(useCallback(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase
+        .from('portfolio_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('provider_id', user.id)
+        .then(({ count }) => { if (count !== null) setPortfolioCount(count); });
+    });
+  }, []));
 
   // Safety net: if load() hangs for any reason, clear the spinner after 12 s
   useEffect(() => {
