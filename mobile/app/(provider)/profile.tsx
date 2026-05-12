@@ -319,6 +319,13 @@ export default function ProviderProfile() {
     ? [colors.bg, '#1A1407']
     : ['#FDF6E3', '#FFFBF8'];
 
+  const rawPhone   = provider.user?.phone ?? '';
+  const maskedPhone = rawPhone
+    ? '‪' + rawPhone.replace(/(\+\d{3})(\d+)(\d{3})/, (_, a, b, c) =>
+        `${a}${'*'.repeat(b.length)}${c}`
+      ) + '‬'
+    : '';
+
   return (
     <View style={styles.container}>
       <AppHeader
@@ -853,8 +860,25 @@ export default function ProviderProfile() {
             label={t('profile.notifications')}
             onPress={() => router.push('/notification-settings')}
             colors={colors}
-            divider={false}
           />
+          {!!maskedPhone && (
+            <SettingsRow
+              icon="📱"
+              label={t('profile.phone')}
+              colors={colors}
+              divider={false}
+              right={
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  {provider.user?.phone_verified && (
+                    <View style={{ backgroundColor: '#10B98122', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 2 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#10B981' }}>✓ {t('common.verified')}</Text>
+                    </View>
+                  )}
+                  <Text style={{ fontSize: 13, color: colors.textMuted, fontFamily: 'monospace' }}>{maskedPhone}</Text>
+                </View>
+              }
+            />
+          )}
         </SettingsGroup>
 
         <SettingsGroup title={t('profile.settingsPublicProfile')} colors={colors}>
