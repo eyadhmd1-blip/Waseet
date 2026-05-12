@@ -480,14 +480,14 @@ function Step1RoleNew({
     : ['#FDF6E3', '#FFFBF8'];
 
   const CLIENT_CHIPS   = [
-    { icon: '🏷️', label: 'قارن الأسعار واختار الأفضل' },
+    { icon: '🏷️', label: 'قارن الأسعار واختر الأفضل' },
     { icon: '⚡',  label: 'طلب سريع في ثوانٍ' },
     { icon: '🛡️', label: 'موثوق ومضمون' },
   ];
   const PROVIDER_CHIPS = [
     { icon: '💰', label: 'دخل أعلى ونمو مستمر' },
-    { icon: '⭐', label: 'بني بصمتك وتقييمك' },
-    { icon: '👥', label: 'اعملاء أكثر فرص أكبر' },
+    { icon: '⭐', label: 'ابنِ بصمتك وتقييمك' },
+    { icon: '👥', label: 'عملاء أكثر فرص أكبر' },
   ];
 
   const renderCard = (isClient: boolean) => {
@@ -498,7 +498,7 @@ function Step1RoleNew({
       : (isDark ? BLUE_COLOR + '22' : '#EFF6FF');
     const chips     = isClient ? CLIENT_CHIPS : PROVIDER_CHIPS;
     const title     = isClient ? 'أنا طالب خدمة' : 'أنا مقدم خدمة';
-    const subtitle  = isClient ? 'ابحث عن أفضل مقدم\nضمن دقايق' : 'أبدأ باستقبال الطلبات\nوزيد دخلك';
+    const subtitle  = isClient ? 'ابحث عن أفضل مقدم\nضمن دقائق' : 'ابدأ باستقبال الطلبات\nوزِد دخلك';
     return (
       <TouchableOpacity
         style={[{
