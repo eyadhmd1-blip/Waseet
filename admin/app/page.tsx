@@ -348,7 +348,7 @@ export default async function DashboardPage() {
 
           <div className="relative">
             <div className="text-3xl mb-2">👋</div>
-            <h1 className="text-2xl font-black text-white leading-tight">
+            <h1 className="text-2xl font-black leading-tight" style={{ color: 'var(--text-on-card)' }}>
               مرحباً بك، <span className="text-transparent bg-clip-text"
                 style={{ backgroundImage: 'linear-gradient(90deg,#C4B5FD,#A78BFA)' }}>{adminName}</span>
             </h1>
@@ -373,8 +373,8 @@ export default async function DashboardPage() {
         {/* AI Insight card */}
         <div className="w-72 rounded-2xl p-5 flex flex-col justify-between shrink-0"
           style={{
-            background: 'linear-gradient(135deg, rgba(245,158,11,0.10) 0%, rgba(6,4,15,0.80) 100%)',
-            border: '1px solid rgba(245,158,11,0.20)',
+            background: 'var(--ai-card-bg)',
+            border: 'var(--ai-card-border)',
           }}>
           <div>
             <div className="flex items-center gap-2.5 mb-3">

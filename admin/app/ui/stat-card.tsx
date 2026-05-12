@@ -1,12 +1,12 @@
 interface StatCardProps {
   icon:        string;
-  iconBg?:     string;   // e.g. "bg-blue-500/15 text-blue-400"
+  iconBg?:     string;
   label:       string;
   value:       string | number;
   sub?:        string;
   trend?:      string;
   trendUp?:    boolean;
-  accent?:     boolean;  // legacy compat
+  accent?:     boolean;
   danger?:     boolean;
   sparkData?:  number[];
   sparkColor?: string;
@@ -74,9 +74,9 @@ export function StatCard({
         </div>
       </div>
 
-      {/* Value */}
-      <div className={`text-[2rem] font-black mb-0.5 tabular-nums leading-none
-        ${isRed ? 'text-red-400' : 'text-white'}`}>
+      {/* Value — uses CSS variable so it adapts to dark/light */}
+      <div className={`text-[2rem] font-black mb-0.5 tabular-nums leading-none text-adaptive
+        ${isRed ? '!text-red-400' : ''}`}>
         {typeof value === 'number' ? value.toLocaleString('ar-JO') : value}
       </div>
 

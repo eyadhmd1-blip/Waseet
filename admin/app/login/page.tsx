@@ -17,41 +17,43 @@ export default async function LoginPage({
   return (
     <div style={{
       minHeight: '100vh',
-      background: '#0F172A',
+      background: 'var(--login-bg)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       fontFamily: 'system-ui, sans-serif',
       direction: 'rtl',
     }}>
-      <div style={{
-        width: '100%',
-        maxWidth: 400,
-        padding: '0 24px',
-      }}>
+      <div style={{ width: '100%', maxWidth: 400, padding: '0 24px' }}>
+
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ fontSize: 48, marginBottom: 10 }}>⚡</div>
           <h1 style={{ color: '#F59E0B', fontSize: 28, fontWeight: 900, margin: 0 }}>وسيط</h1>
-          <p style={{ color: '#475569', fontSize: 13, marginTop: 6 }}>لوحة تحكم المدير</p>
+          <p style={{ color: 'var(--login-subtitle)', fontSize: 13, marginTop: 6 }}>لوحة تحكم المدير</p>
         </div>
 
         {/* Card */}
         <div style={{
-          background: '#1E293B',
+          background: 'var(--login-card-bg)',
           borderRadius: 20,
           padding: 32,
-          border: '1px solid #334155',
+          border: '1px solid var(--login-card-border)',
         }}>
-          <h2 style={{ color: '#F1F5F9', fontSize: 20, fontWeight: 700, margin: '0 0 24px', textAlign: 'center' }}>
+          <h2 style={{
+            color: 'var(--login-title)',
+            fontSize: 20, fontWeight: 700,
+            margin: '0 0 24px', textAlign: 'center',
+          }}>
             تسجيل الدخول
           </h2>
 
           {errorMsg && (
             <div style={{
-              background: '#450a0a', border: '1px solid #7f1d1d',
+              background: 'var(--login-error-bg)',
+              border: '1px solid var(--login-error-border)',
               borderRadius: 10, padding: '12px 14px', marginBottom: 16,
-              color: '#fca5a5', fontSize: 13, textAlign: 'center',
+              color: 'var(--login-error-text)', fontSize: 13, textAlign: 'center',
             }}>
               {errorMsg}
             </div>
@@ -59,7 +61,11 @@ export default async function LoginPage({
 
           <form action={loginAction} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
-              <label style={{ display: 'block', color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+              <label style={{
+                display: 'block',
+                color: 'var(--login-label)',
+                fontSize: 13, fontWeight: 600, marginBottom: 8,
+              }}>
                 اسم المستخدم
               </label>
               <input
@@ -69,11 +75,11 @@ export default async function LoginPage({
                 autoComplete="username"
                 style={{
                   width: '100%',
-                  background: '#0F172A',
-                  border: '1px solid #334155',
+                  background: 'var(--login-input-bg)',
+                  border: '1px solid var(--login-input-border)',
                   borderRadius: 10,
                   padding: '12px 14px',
-                  color: '#F1F5F9',
+                  color: 'var(--login-input-text)',
                   fontSize: 15,
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -84,7 +90,11 @@ export default async function LoginPage({
             </div>
 
             <div>
-              <label style={{ display: 'block', color: '#94A3B8', fontSize: 13, fontWeight: 600, marginBottom: 8 }}>
+              <label style={{
+                display: 'block',
+                color: 'var(--login-label)',
+                fontSize: 13, fontWeight: 600, marginBottom: 8,
+              }}>
                 كلمة المرور
               </label>
               <input
@@ -94,11 +104,11 @@ export default async function LoginPage({
                 autoComplete="current-password"
                 style={{
                   width: '100%',
-                  background: '#0F172A',
-                  border: '1px solid #334155',
+                  background: 'var(--login-input-bg)',
+                  border: '1px solid var(--login-input-border)',
                   borderRadius: 10,
                   padding: '12px 14px',
-                  color: '#F1F5F9',
+                  color: 'var(--login-input-text)',
                   fontSize: 15,
                   outline: 'none',
                   boxSizing: 'border-box',
@@ -127,7 +137,7 @@ export default async function LoginPage({
           </form>
         </div>
 
-        <p style={{ color: '#334155', fontSize: 11, textAlign: 'center', marginTop: 20 }}>
+        <p style={{ color: 'var(--login-footer)', fontSize: 11, textAlign: 'center', marginTop: 20 }}>
           وسيط Admin v1.0 · للاستخدام الداخلي فقط
         </p>
       </div>

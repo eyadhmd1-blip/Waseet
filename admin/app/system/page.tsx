@@ -153,7 +153,7 @@ export default async function SystemPage() {
       {/* Cron jobs */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4"
-          style={{ borderBottom: '1px solid rgba(30,41,59,1)' }}>
+          style={{ borderBottom: '1px solid var(--surface-divider)' }}>
           <div className="flex items-center gap-2">
             {cronErr && (
               <span className="text-xs text-red-400 bg-red-500/10 px-2 py-0.5 rounded">⚠️ خطأ في جلب البيانات</span>

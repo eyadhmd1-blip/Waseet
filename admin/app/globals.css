@@ -1,18 +1,136 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&display=swap');
 
+/* ── Dark theme (default) ─────────────────────────────────────── */
 :root {
-  --background: #06040F;
-  --foreground: #EDE9FF;
-  --card:             #0C091D;
-  --card-hover:       #130E29;
-  --card-border:      rgba(109, 40, 217, 0.16);
-  --card-border-hover:rgba(139, 92, 246, 0.32);
-  --sidebar-bg:       #080616;
-  --sidebar-border:   rgba(109, 40, 217, 0.20);
-  --accent:           #7C3AED;
-  --accent-glow:      rgba(124, 58, 237, 0.14);
+  --background:        #06040F;
+  --foreground:        #EDE9FF;
+  --card:              #0C091D;
+  --card-hover:        #130E29;
+  --card-border:       rgba(109, 40, 217, 0.16);
+  --card-border-hover: rgba(139, 92, 246, 0.32);
+  --sidebar-bg:        #080616;
+  --sidebar-border:    rgba(109, 40, 217, 0.20);
+  --accent:            #7C3AED;
+  --accent-glow:       rgba(124, 58, 237, 0.14);
+
+  /* Inline-style helpers */
+  --surface-divider:   rgba(30, 41, 59, 1);
+  --kbd-bg:            rgba(30, 41, 59, 0.60);
+  --kbd-border:        rgba(51, 65, 85, 0.50);
+  --text-on-card:      #ffffff;
+
+  /* AI insight card */
+  --ai-card-bg:        linear-gradient(135deg, rgba(245,158,11,0.10) 0%, rgba(6,4,15,0.80) 100%);
+  --ai-card-border:    1px solid rgba(245,158,11,0.20);
+
+  /* Login page */
+  --login-bg:          #0F172A;
+  --login-card-bg:     #1E293B;
+  --login-card-border: #334155;
+  --login-label:       #94A3B8;
+  --login-input-bg:    #0F172A;
+  --login-input-text:  #F1F5F9;
+  --login-input-border:#334155;
+  --login-footer:      #334155;
+  --login-title:       #F1F5F9;
+  --login-subtitle:    #475569;
+  --login-error-bg:    #450a0a;
+  --login-error-border:#7f1d1d;
+  --login-error-text:  #fca5a5;
 }
+
+/* ── Light theme overrides ────────────────────────────────────── */
+[data-theme="light"] {
+
+  /* Semantic tokens */
+  --background:        #f1f5f9;
+  --foreground:        #1e293b;
+  --card:              #ffffff;
+  --card-hover:        #f8fafc;
+  --card-border:       rgba(109, 40, 217, 0.10);
+  --card-border-hover: rgba(109, 40, 217, 0.25);
+  --sidebar-bg:        #ffffff;
+  --sidebar-border:    rgba(109, 40, 217, 0.12);
+  --accent:            #7C3AED;
+  --accent-glow:       rgba(124, 58, 237, 0.08);
+
+  /* Inline-style helpers */
+  --surface-divider:   rgba(203, 213, 225, 1);
+  --kbd-bg:            rgba(226, 232, 240, 0.90);
+  --kbd-border:        rgba(180, 200, 220, 0.60);
+  --text-on-card:      #1e293b;
+
+  /* AI insight card */
+  --ai-card-bg:        linear-gradient(135deg, rgba(245,158,11,0.10) 0%, rgba(255,255,255,0.85) 100%);
+  --ai-card-border:    1px solid rgba(245,158,11,0.25);
+
+  /* Login page */
+  --login-bg:          #f1f5f9;
+  --login-card-bg:     #ffffff;
+  --login-card-border: #e2e8f0;
+  --login-label:       #475569;
+  --login-input-bg:    #f8fafc;
+  --login-input-text:  #1e293b;
+  --login-input-border:#cbd5e1;
+  --login-footer:      #94a3b8;
+  --login-title:       #1e293b;
+  --login-subtitle:    #64748b;
+  --login-error-bg:    #fef2f2;
+  --login-error-border:#fecaca;
+  --login-error-text:  #dc2626;
+
+  /* ── Tailwind slate palette inversion ──────────────────────── */
+  /* High shades (dark in default) become light, low shades become dark */
+  --color-slate-950:  #020617;
+  --color-slate-900:  #f8fafc;
+  --color-slate-800:  #e2e8f0;
+  --color-slate-700:  #cbd5e1;
+  --color-slate-600:  #94a3b8;
+  --color-slate-500:  #64748b;
+  --color-slate-400:  #475569;
+  --color-slate-300:  #334155;
+  --color-slate-200:  #1e293b;
+  --color-slate-100:  #0f172a;
+  --color-slate-50:   #020617;
+
+  /* ── Accent colors: shift *-400 / *-300 to darker shades ─── */
+  /* Reason: bright 400 variants fail WCAG AA on white (#f8fafc) */
+  --color-violet-300: #6d28d9;
+  --color-violet-400: #5b21b6;
+  --color-blue-300:   #1d4ed8;
+  --color-blue-400:   #2563eb;
+  --color-amber-300:  #b45309;
+  --color-amber-400:  #d97706;
+  --color-emerald-300:#047857;
+  --color-emerald-400:#059669;
+  --color-red-300:    #b91c1c;
+  --color-red-400:    #dc2626;
+  --color-rose-300:   #be123c;
+  --color-rose-400:   #e11d48;
+  --color-orange-300: #c2410c;
+  --color-orange-400: #ea580c;
+  --color-yellow-300: #a16207;
+  --color-yellow-400: #ca8a04;
+  --color-sky-300:    #0369a1;
+  --color-sky-400:    #0284c7;
+  --color-teal-300:   #0f766e;
+  --color-teal-400:   #0d9488;
+  --color-indigo-300: #4338ca;
+  --color-indigo-400: #4f46e5;
+  --color-cyan-300:   #0e7490;
+  --color-cyan-400:   #0891b2;
+  --color-green-300:  #15803d;
+  --color-green-400:  #16a34a;
+  --color-lime-300:   #4d7c0f;
+  --color-lime-400:   #65a30d;
+  --color-purple-300: #7e22ce;
+  --color-purple-400: #9333ea;
+  --color-pink-300:   #be185d;
+  --color-pink-400:   #db2777;
+}
+
+/* ── Utilities ────────────────────────────────────────────────── */
 
 * { box-sizing: border-box; }
 
@@ -20,30 +138,38 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Cairo', 'Segoe UI', Tahoma, Arial, sans-serif;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-/* ── Scrollbar ─────────────────────────────────────────────── */
+/* Smooth theme transitions on key surfaces */
+aside, header, .pk-card, .pk-card-hover {
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* ── Adaptive text utility ───────────────────────────────────── */
+.text-adaptive { color: var(--text-on-card); }
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(109,40,217,0.35); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(139,92,246,0.60); }
 
-/* ── Table row hover ──────────────────────────────────────── */
+/* ── Table row hover ─────────────────────────────────────────── */
 tr.row-hover:hover { background: rgba(109,40,217,0.05); }
 
-/* ── Shared card utility (used by dashboard + inner pages) ── */
+/* ── Shared card utility ─────────────────────────────────────── */
 .pk-card {
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: 1rem;
-  transition: border-color 0.15s ease, background 0.15s ease;
 }
 .pk-card-hover:hover {
   background: var(--card-hover);
   border-color: var(--card-border-hover);
 }
 
-/* ── Subtle glow ring on violet focus ─────────────────────── */
+/* ── Glow ring ───────────────────────────────────────────────── */
 .pk-glow {
   box-shadow: 0 0 0 1px rgba(124,58,237,0.25), 0 8px 32px rgba(124,58,237,0.10);
 }
