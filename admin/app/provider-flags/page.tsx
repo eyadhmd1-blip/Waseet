@@ -42,8 +42,8 @@ async function getFlags(page: number, showAll: boolean) {
     .select(`
       id, reason, details, reviewed, reviewed_at, reviewed_by, action_taken, admin_note, created_at,
       provider:providers!provider_flags_provider_id_fkey(
-        id, display_name, phone, reputation_tier, is_active, flag_count,
-        user:users!providers_id_fkey(full_name, phone)
+        id, reputation_tier, flag_count,
+        user:users!providers_id_fkey(full_name, phone, city)
       )
     `, { count: 'exact' })
     .order('created_at', { ascending: false })
@@ -177,8 +177,9 @@ export default async function ProviderFlagsPage({
             <div className="divide-y divide-slate-800">
               {flags.map((flag: any) => {
                 const prov        = flag.provider as any;
-                const provName    = prov?.display_name ?? (prov?.user as any)?.full_name ?? '—';
-                const provPhone   = prov?.phone ?? (prov?.user as any)?.phone ?? '—';
+                const provUser    = prov?.user as any;
+                const provName    = provUser?.full_name ?? '—';
+                const provPhone   = provUser?.phone ?? '—';
                 const details     = (flag.details ?? {}) as Record<string, unknown>;
 
                 return (
@@ -208,10 +209,7 @@ export default async function ProviderFlagsPage({
                       <div className="text-right">
                         <div className="text-slate-200 font-semibold text-sm">{provName}</div>
                         <div className="text-slate-500 text-xs mt-0.5">
-                          {provPhone} · {prov?.reputation_tier ?? '—'}
-                          {prov?.is_active === false && (
-                            <span className="mr-1.5 text-xs px-1.5 py-0.5 rounded bg-red-500/20 text-red-400">موقوف</span>
-                          )}
+                          {provPhone} · {prov?.reputation_tier ?? '—'} · {provUser?.city ?? '—'}
                         </div>
                       </div>
                     </div>

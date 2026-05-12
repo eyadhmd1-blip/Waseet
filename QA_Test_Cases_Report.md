@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 2.6  
+**Document Version:** 3.0  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -49,6 +49,7 @@
 36. [SDLY — Supply/Demand Analytics Page](#36-sdly--supplydemand-analytics-page)
 37. [SYSH — System Health Page](#37-sysh--system-health-page)
 38. [BUGFIX — Bug-Fix Regression Suite (v2.6)](#38-bugfix--bug-fix-regression-suite-v26)
+39. [BUGFIX2 — Bug-Fix Regression Suite v3.0 (Pass-2)](#39-bugfix2--bug-fix-regression-suite-v30-pass-2)
 
 ---
 
@@ -105,7 +106,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | SDLY | 8 | 2 | 4 | 2 | 0 |
 | SYSH | 8 | 2 | 4 | 2 | 0 |
 | BUGFIX | 8 | 5 | 3 | 0 | 0 |
-| **TOTAL** | **523** | **140** | **219** | **135** | **29** |
+| BUGFIX2 | 13 | 5 | 5 | 3 | 0 |
+| **TOTAL** | **536** | **145** | **224** | **138** | **29** |
 
 ---
 
@@ -5965,9 +5967,239 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v2.6*  
-*Total Test Cases: 523 across 38 modules*  
-*Critical: 140 | High: 220 | Medium: 135 | Low: 29* (8 حالات جديدة: 5 Critical + 3 High — من BUGFIX-001 إلى BUGFIX-008 مع اعتبار BUGFIX-006 High)  
+---
+
+## 39. BUGFIX2 — Bug-Fix Regression Suite v3.0 (Pass-2)
+
+### Overview
+13 regression cases covering the 13 bugs fixed in migration 088 and the edge-function / admin-portal patches applied in Pass-2.
+
+---
+
+#### BUGFIX2-001
+**Name:** استعلام admin provider-flags يعمل بعد إصلاح الأعمدة المفقودة  
+**Fixes:** NC-02 | **Priority:** Critical | **Type:** Admin Portal  
+**Preconditions:** migration 088 مُطبَّق؛ يوجد provider_flag واحد على الأقل
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح `/provider-flags` في الأدمن بورتال | الصفحة تُحمَّل بدون خطأ (لا `column providers.display_name does not exist`) |
+| 2 | تحقق من عرض اسم المقدم | `full_name` من جدول `users` يظهر صحيحاً |
+| 3 | تحقق من عرض رقم الهاتف | `phone` من جدول `users` يظهر صحيحاً |
+| 4 | تحقق من عرض المدينة | `city` من جدول `users` يظهر بجانب رقم الهاتف |
+| 5 | تحقق من `flag_count` و`reputation_tier` | يُعرَضان من جدول `providers` صحيحاً |
+
+**Regression:** عداد البلاغات وفلاتر المراجعة تعمل كالمعتاد.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX2-002
+**Name:** renotify_providers لا يتعطل بسبب p.city  
+**Fixes:** NC-01 | **Priority:** Critical | **Type:** Cron / DB  
+**Preconditions:** يوجد طلب مفتوح منذ أكثر من ساعتين وأقل من 48 ساعة بدون عروض
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تشغيل `SELECT renotify_providers_for_stale_requests()` يدوياً | لا يُرجع خطأ `column p.city does not exist` |
+| 2 | مزود لديه `city` يطابق المدينة في `users` وليس في `providers` | يستقبل إشعاراً في الـ notifications inbox |
+| 3 | مزود مدينته تختلف عن مدينة الطلب | لا يستقبل إشعاراً |
+| 4 | بعد التشغيل: حقل `provider_renotified_at` في الطلب | يُحدَّث إلى NOW() (idempotency) |
+
+**Regression:** `expire_stale_requests` يعمل كالمعتاد.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX2-003
+**Name:** undo_accept_bid مع FOR UPDATE يمنع race condition  
+**Fixes:** NC-03 | **Priority:** Critical | **Type:** Concurrency  
+**Preconditions:** job نشط بـ grace period نشطة، المقدم لم يلتزم بعد
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | إرسال `undo_accept_bid` و`provider_commit_job` في نفس اللحظة | إحداهما تنجح والأخرى تفشل — لا حالة نصفية |
+| 2 | إذا نجح `provider_commit_job` أولاً | `undo_accept_bid` يُرجع `provider_already_committed` |
+| 3 | إذا نجح `undo_accept_bid` أولاً | Job يُلغى؛ `provider_commit_job` يُرجع `job_not_active` |
+
+**Regression:** Grace period المنتهية لا تزال ترفض الـ undo.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-004
+**Name:** undo_accept_bid يُعيد فقط العروض المرفوضة ويمسح rejected_at  
+**Fixes:** NC-05 | **Priority:** Critical | **Type:** Functional  
+**Preconditions:** طلب لديه ثلاثة عروض (P1 مقبول، P2 مرفوض، P3 في حالة غير pending قبل الـ accept)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | العميل يقبل عرض P1 | P2 يصبح `rejected` مع `rejected_at` محدد |
+| 2 | العميل ينفذ `undo_accept_bid` خلال فترة السماح | P1 يعود إلى `pending` مع `rejected_at = NULL` |
+| 3 | P2 يعود إلى `pending` | `rejected_at = NULL` (لا كولداون كاذب لمدة 24 ساعة) |
+| 4 | P2 يحاول تقديم عرض على نفس العميل فوراً | لا تظهر رسالة `COOLDOWN_ACTIVE` |
+| 5 | طلب الخدمة | يعود إلى `open` |
+
+**Regression:** عرض تم سحبه (`withdrawn`) — إن وُجد — لا يُعاد إلى `pending`.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-005
+**Name:** كولداون 24 ساعة لا يُطبَّق على الطلبات الملغاة/المنتهية  
+**Fixes:** NC-04 | **Priority:** Critical | **Type:** Functional  
+**Preconditions:** مقدم لديه عرض مرفوض على طلب **ملغى** خلال آخر 24 ساعة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | طلب العميل يُلغى بعد رفض عرض المقدم | `bids.rejected_at` محدد |
+| 2 | نفس العميل ينشر طلباً جديداً | الطلب الجديد يظهر للمقدم |
+| 3 | المقدم يحاول تقديم عرض على الطلب الجديد | `submit_bid_with_credits` لا يُرجع `COOLDOWN_ACTIVE` |
+| 4 | المقدم يُقدّم عرضاً على طلب آخر بنفس العميل | العرض يُقبَل (طالما الطلب القديم ملغى/منتهٍ) |
+
+**Regression:** الكولداون لا يزال يُطبَّق عند رفض العرض على طلب نشط.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-006
+**Name:** send_otp يولّد رمزاً بـ CSPRNG  
+**Fixes:** NH-01 | **Priority:** High | **Type:** Security  
+**Preconditions:** migration 088 مُطبَّق
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | قراءة دالة `send_otp` في DB | جسم الدالة يحتوي `gen_random_bytes` وليس `RANDOM()` |
+| 2 | طلب 1000 OTP لأرقام مختلفة | توزيع الأرقام عشوائي (لا أنماط متكررة في فئة معينة) |
+| 3 | التحقق من تطبيق الـ rate limit | لا يزال: 60 ثانية بين الإرسالات، 5 رسائل/يوم |
+
+**Regression:** كل وظائف send_otp الأخرى (daily cap, cooldown, expire old) تعمل كالمعتاد.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-007
+**Name:** verify_otp يستخدم مقارنة صريحة عبر متغير  
+**Fixes:** NH-02 | **Priority:** High | **Type:** Security  
+**Preconditions:** OTP صالح في قاعدة البيانات
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | قراءة دالة `verify_otp` في DB | المقارنة تُنفَّذ عبر `v_stored_code IS DISTINCT FROM p_code` (لا inline subquery) |
+| 2 | إرسال رمز صحيح | `{"success": true}` |
+| 3 | إرسال رمز خاطئ | `{"success": false, "error": "WRONG_CODE"}` |
+| 4 | عداد المحاولات | يزيد لكلا الحالتين قبل المقارنة |
+
+**Regression:** حد المحاولات (5) ومسح verified_at يعملان كالمعتاد.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-008
+**Name:** cancel_job يرفض إلغاء العميل بعد التزام المقدم  
+**Fixes:** NH-03 | **Priority:** High | **Type:** Functional  
+**Preconditions:** job نشط، المقدم التزم (`provider_committed_at IS NOT NULL`)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | العميل يستدعي `cancel_job` بعد `provider_committed_at` | `{"success": false, "error": "PROVIDER_COMMITTED"}` |
+| 2 | حالة الـ job | لا تتغير (لا تزال `active`) |
+| 3 | المقدم يستدعي `cancel_job` على نفس الـ job | ينجح (المقدم مسموح له بالإلغاء) |
+| 4 | المقدم لم يلتزم بعد (`provider_committed_at IS NULL`) | العميل يستطيع الإلغاء بشكل طبيعي |
+
+**Regression:** سجل الإلغاء (`cancellation_log`) يُكتَب عند الإلغاء المسموح به.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-009
+**Name:** verify-otp edge function تجد المستخدم رقم 1001+  
+**Fixes:** NH-04 | **Priority:** High | **Type:** Functional  
+**Preconditions:** قاعدة بيانات تحتوي أكثر من 1000 مستخدم؛ المستخدم المستهدف ليس له صف في `users`
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | قراءة كود `verify-otp/index.ts` | لا يوجد `listUsers({ perPage: 1000 })`؛ يُستخدَم `rpc("lookup_auth_user_by_phone_or_email")` |
+| 2 | محاولة تسجيل دخول لمستخدم auth موجود بدون صف users (incomplete onboarding) | Edge function تجد المستخدم عبر الـ RPC |
+| 3 | تحقق من الـ RPC `lookup_auth_user_by_phone_or_email` | موجود في DB؛ يُرجع `auth_user_id, auth_email, auth_phone` |
+| 4 | بعد الإصلاح | يُكمَل تسجيل الدخول بدون خطأ `USER_ERROR` |
+
+**Regression:** المسار الطبيعي (مستخدم موجود في users) لا يتأثر.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX2-010
+**Name:** fn_check_cancellation_abuse يُنبّه على الإلغاء الرابع وما بعده  
+**Fixes:** NH-05 | **Priority:** High | **Type:** Admin / Abuse  
+**Preconditions:** مستخدم ألغى 3 وظائف هذا الشهر
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | المستخدم يُلغي وظيفة رابعة | تُضاف تنبيه في `admin_alerts` مع `count=4` |
+| 2 | وظيفة خامسة | تنبيه آخر بـ `count=5` |
+| 3 | بالسابق (قبل الإصلاح) | فقط الثالثة تولّد تنبيهاً؛ الرابعة والخامسة تُهمَل |
+| 4 | رسالة التنبيه | تحتوي العدد الصحيح (4 أو 5...) |
+
+**Regression:** التنبيه على الثالثة لا يزال يعمل.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-011
+**Name:** boost_bid يعمل بأمان مع SET search_path  
+**Fixes:** NM-01 | **Priority:** Medium | **Type:** Security / Functional  
+**Preconditions:** provider مشترك لديه بيد بحالة pending
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | قراءة تعريف `boost_bid` في DB | يحتوي `SET search_path = public, pg_catalog` |
+| 2 | استدعاء `boost_bid` بـ bid_id صالح | `{"success": true, "boost_expires_at": "..."}` |
+| 3 | بعد ساعتين | `is_boosted` يبقى `true` حتى انتهاء `boost_expires_at` |
+| 4 | محاولة boost ثانٍ على نفس الـ bid | `{"error": "ALREADY_BOOSTED"}` |
+
+**Regression:** الـ credits تُخصَم مرة واحدة فقط.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-012
+**Name:** cleanup_expired_otps يعمل يومياً ويُنظّف phone_otps  
+**Fixes:** NM-02 | **Priority:** Medium | **Type:** Cron  
+**Preconditions:** migration 088 مُطبَّق
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | التحقق من جدول `cron.job` | مهمة `cleanup-expired-otps` موجودة بجدول `0 4 * * *` |
+| 2 | إضافة صفوف `phone_otps` منتهية الصلاحية بأكثر من يوم | بعد تشغيل `cleanup_expired_otps()` يدوياً: الصفوف تُحذَف |
+| 3 | OTPs منتهية الصلاحية منذ أقل من يوم | لا تُحذَف |
+| 4 | OTPs مُتحقَّق منها حديثاً | لا تُحذَف |
+
+**Regression:** OTPs النشطة ضمن الساعة لا تُمس.  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX2-013
+**Name:** invoke_notify_no_bids و invoke_send_delayed_commit_notifications تحتويان SET search_path  
+**Fixes:** NM-03 | **Priority:** Medium | **Type:** Security  
+**Preconditions:** migration 088 مُطبَّق
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | قراءة `invoke_notify_no_bids` في DB | يحتوي `SET search_path = public, pg_catalog` |
+| 2 | قراءة `invoke_send_delayed_commit_notifications` في DB | يحتوي `SET search_path = public, pg_catalog` |
+| 3 | تشغيل `invoke_notify_no_bids()` مع app.settings مُهيأة | يُرسِل HTTP POST للدالة الحافة بدون خطأ |
+| 4 | تشغيل `invoke_send_delayed_commit_notifications()` | يُرسِل HTTP POST صحيحاً |
+
+**Regression:** الـ pg_cron schedules للدالتين لا تزال نشطة.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v3.0*  
+*Total Test Cases: 536 across 39 modules*  
+*Critical: 145 | High: 224 | Medium: 138 | Low: 29*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*

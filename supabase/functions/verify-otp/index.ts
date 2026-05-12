@@ -127,22 +127,20 @@ Deno.serve(async (req: Request) => {
       } else {
         // Auth user already exists but has no application users row yet
         // (e.g. previous login attempt that didn't complete onboarding).
-        // Scan auth users to find them — acceptable for a small staging user base.
-        console.warn("createUser failed, searching existing auth users:", createError?.message);
+        // Use targeted DB RPC lookup instead of full user scan (NH-04).
+        console.warn("createUser failed, looking up existing auth user:", createError?.message);
 
-        const { data: { users: authUsers } } = await supabase.auth.admin.listUsers({
-          perPage: 1000,
-          page: 1,
+        const { data: foundUsers } = await supabase.rpc("lookup_auth_user_by_phone_or_email", {
+          p_phone: phone.trim(),
+          p_email: syntheticEmail,
         });
 
-        const found = authUsers?.find(
-          (u) => u.phone === phone.trim() || u.email === syntheticEmail
-        );
+        const found = foundUsers?.[0] ?? null;
 
         if (found) {
           // Update their email to the synthetic one if it differs
-          if (found.email !== syntheticEmail) {
-            await supabase.auth.admin.updateUserById(found.id, {
+          if (found.auth_email !== syntheticEmail) {
+            await supabase.auth.admin.updateUserById(found.auth_user_id as string, {
               email: syntheticEmail,
               email_confirm: true,
             });
