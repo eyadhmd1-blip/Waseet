@@ -168,10 +168,12 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 
 | Step | Action | Expected Result |
 |------|--------|----------------|
-| 1 | Register with role: provider | `providers` row auto-created with default values: `is_subscribed=false`, `trial_used=false`, `bid_credits=0` |
-| 2 | Complete onboarding | Provider routed to `(provider)/index.tsx` |
+| 1 | Register with role: provider | `users` + `providers` rows created; `providers` row has `is_subscribed=false`, `trial_used=false`, no subscription fields set |
+| 2 | Complete registration | Provider routed to `/subscribe` screen with trial plan pre-selected |
+| 3 | Provider selects trial, taps "ابدأ مجاناً" | `activate_provider_subscription` RPC fires; `is_subscribed=true`, `subscription_tier='trial'`, `trial_used=true`, 10 credits, 30-day expiry |
+| 4 | After trial activation | Provider routed to `/(provider)` dashboard |
 
-**Expected Result:** Both `users` and `providers` rows created atomically. `subscription_tier` defaults to null until trial activated.  
+**Expected Result:** Both `users` and `providers` rows created atomically. `subscription_tier` remains null until the provider explicitly activates via the subscribe screen.  
 **Automation Candidate:** Yes
 
 ---
@@ -2064,6 +2066,7 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 #### ADM-003
 **Name:** Admin suspends provider  
 **Priority:** Critical | **Type:** Functional
+**Note:** For the corresponding unsuspend flow, see ADM-037.
 
 | Step | Action | Expected Result |
 |------|--------|----------------|
@@ -2229,6 +2232,7 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | ADM-034 | Admin login attempt from new IP — alert (if MFA present) | High | Security |
 | ADM-035 | Admin portal down for maintenance — graceful error page | Low | Functional |
 | ADM-036 | Admin portal API calls use service role key (not anon key) | Critical | Security |
+| ADM-037 | Admin unsuspends provider — push notification delivered using correct userId | High | Functional |
 
 ---
 
@@ -2672,6 +2676,10 @@ Arabic (ar) primary language with RTL layout; English (en) optional. All text fr
 | LOC-012 | English fallback text not visible in production build | High | Localization |
 | LOC-013 | City names in Arabic (عمّان, الزرقاء, إربد...) | Medium | Localization |
 | LOC-014 | Admin portal — category group names in Arabic | Low | Localization |
+| LOC-015 | Tier labels (trial/basic/pro/premium) display in English when app language = EN — provider profile + saved-providers screen | High | Localization |
+| LOC-016 | Provider feed greeting ("صباح الخير" / "Good Morning") switches correctly on language toggle | High | Localization |
+| LOC-017 | Error hints in new-request, urgent-request, support-new, portfolio-add screens — all show English text when app language = EN | High | Localization |
+| LOC-018 | Saved providers count label shows "X saved providers" in EN and "X مقدم محفوظ" in AR | Medium | Localization |
 
 ---
 
