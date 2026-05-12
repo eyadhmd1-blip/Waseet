@@ -324,7 +324,9 @@ function RootHeader({
               /* Client: initials circle */
               <>
                 <View style={[s.avatar, { backgroundColor: avatarColor }]}>
-                  <Text style={s.avatarInitials}>{initials}</Text>
+                  <Text style={s.avatarInitials}>
+                    {initials.length === 2 ? `${initials[0]} ${initials[1]}` : initials}
+                  </Text>
                 </View>
                 <View style={[s.roleBadge, { borderColor: '#3B82F6' }]}>
                   <Text style={s.roleBadgeText}>👤</Text>
@@ -689,7 +691,7 @@ function makeStyles(colors: AppColors, headerPad: number, isDark: boolean) {
       fontSize:      14,
       fontWeight:    '700',
       color:         '#fff',
-      letterSpacing: 3,
+      letterSpacing: 1,
     },
     roleBadge: {
       position:        'absolute',
