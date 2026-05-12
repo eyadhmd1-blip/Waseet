@@ -153,19 +153,17 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           .from('manual_payments')
           .select('amount_jod, created_at')
           .order('created_at', { ascending: true });
-        const byMonth = new Map<string, number>();
+        const byMonth = new Map<string, { rev: number; count: number }>();
         for (const m of (data ?? [])) {
           const key = new Date(m.created_at).toLocaleDateString('ar-JO', { year: 'numeric', month: 'long' });
-          byMonth.set(key, (byMonth.get(key) ?? 0) + Number(m.amount_jod));
+          const v   = byMonth.get(key) ?? { rev: 0, count: 0 };
+          v.rev   += Number(m.amount_jod);
+          v.count += 1;
+          byMonth.set(key, v);
         }
         H = ['الشهر', 'الإيراد (دينار)', 'عدد المدفوعات'];
-        const counts = new Map<string, number>();
-        for (const m of (data ?? [])) {
-          const key = new Date(m.created_at).toLocaleDateString('ar-JO', { year: 'numeric', month: 'long' });
-          counts.set(key, (counts.get(key) ?? 0) + 1);
-        }
-        R = Array.from(byMonth.entries()).map(([month, rev]) => [
-          month, rev.toFixed(3), counts.get(month) ?? 0,
+        R = Array.from(byMonth.entries()).map(([month, v]) => [
+          month, v.rev.toFixed(3), v.count,
         ]);
         filename = `a05-monthly-revenue-${today}.csv`;
         break;
@@ -262,18 +260,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           .select('status')
           .gte('created_at', ago30d);
         const all       = (data ?? []).length;
-        const withBids  = (data ?? []).filter((r: any) => r.status !== 'open').length;
+        // "غادر مفتوح" = كل طلب تجاوز مرحلة open (بعض الملغيات قد لا تكون وصلها عروض — تقريبي)
+        const leftOpen  = (data ?? []).filter((r: any) => r.status !== 'open').length;
         const inprog    = (data ?? []).filter((r: any) => r.status === 'in_progress').length;
         const done      = (data ?? []).filter((r: any) => r.status === 'completed').length;
         const cancelled = (data ?? []).filter((r: any) => r.status === 'cancelled').length;
         const pct       = (n: number) => all > 0 ? `${Math.round((n / all) * 100)}%` : '—';
-        H = ['المرحلة', 'العدد', 'النسبة من الإجمالي'];
+        H = ['المرحلة', 'العدد', 'النسبة من الإجمالي', 'ملاحظة'];
         R = [
-          ['طلبات مستلمة (30 يوم)', all,       '100%'],
-          ['وصلت عروضاً',           withBids,  pct(withBids)],
-          ['قيد التنفيذ',           inprog,    pct(inprog)],
-          ['مكتملة',                done,      pct(done)],
-          ['ملغاة',                 cancelled, pct(cancelled)],
+          ['طلبات مستلمة (30 يوم)', all,      '100%',           ''],
+          ['غادر مرحلة مفتوح',      leftOpen, pct(leftOpen),    'تقريبي — يشمل ملغيات قبل أي عرض'],
+          ['قيد التنفيذ',           inprog,   pct(inprog),      ''],
+          ['مكتملة',                done,     pct(done),        ''],
+          ['ملغاة',                 cancelled,pct(cancelled),   ''],
         ];
         filename = `b04-conversion-funnel-${today}.csv`;
         break;
@@ -553,7 +552,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
       case 'd03': { // العملاء الخاملون (لم يطلبوا أبداً)
         const [{ data: clients }, { data: active }] = await Promise.all([
-          supabaseAdmin.from('users').select('full_name, phone, city, created_at').eq('role', 'client'),
+          supabaseAdmin.from('users').select('id, full_name, phone, city, created_at').eq('role', 'client'),
           supabaseAdmin.from('requests').select('client_id'),
         ]);
         const activeSet = new Set((active ?? []).map(r => r.client_id));
@@ -567,7 +566,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
       case 'd04': { // توزيع المستخدمين (بالمدينة والنوع)
         const { data } = await supabaseAdmin.from('users').select('city, role');
-        const roleMap: Record<string, string> = { client: 'عميل', provider: 'مقدم خدمة' };
         const tally = new Map<string, { clients: number; providers: number }>();
         for (const u of (data ?? [])) {
           const city = u.city ?? '—';
@@ -722,16 +720,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           d.setHours(0, 0, 0, 0);
           return d;
         });
+        // Use days[0] (6 days ago midnight) as query start — aligns with bucket boundaries
+        const weekStart = days[0].toISOString();
         const [
           { data: usersData }, { data: reqsData }, { data: jobsData },
           { data: pmtData },   { data: rptData },  { data: flagData },
         ] = await Promise.all([
-          supabaseAdmin.from('users').select('created_at, role').gte('created_at', ago7d),
-          supabaseAdmin.from('requests').select('created_at, status').gte('created_at', ago7d),
-          supabaseAdmin.from('jobs').select('confirmed_at').eq('confirmed_by_client', true).not('confirmed_at', 'is', null).gte('confirmed_at', ago7d),
-          supabaseAdmin.from('manual_payments').select('created_at, amount_jod').gte('created_at', ago7d),
-          supabaseAdmin.from('reports').select('created_at').gte('created_at', ago7d),
-          supabaseAdmin.from('provider_flags').select('created_at').gte('created_at', ago7d),
+          supabaseAdmin.from('users').select('created_at, role').gte('created_at', weekStart),
+          supabaseAdmin.from('requests').select('created_at, status').gte('created_at', weekStart),
+          supabaseAdmin.from('jobs').select('confirmed_at').eq('confirmed_by_client', true).not('confirmed_at', 'is', null).gte('confirmed_at', weekStart),
+          supabaseAdmin.from('manual_payments').select('created_at, amount_jod').gte('created_at', weekStart),
+          supabaseAdmin.from('reports').select('created_at').gte('created_at', weekStart),
+          supabaseAdmin.from('provider_flags').select('created_at').gte('created_at', weekStart),
         ]);
         H = ['التاريخ', 'مستخدمون جدد', 'عملاء', 'مقدمون', 'طلبات', 'وظائف مكتملة', 'إيراد يدوي (دينار)', 'بلاغات', 'إشارات مقدمين'];
         R = days.map(dayStart => {
