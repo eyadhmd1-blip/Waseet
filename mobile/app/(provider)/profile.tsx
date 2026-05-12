@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, Image, Dimensions, Switch,
@@ -138,6 +138,8 @@ export default function ProviderProfile() {
   const { contentPad } = useInsets();
   const router = useRouter();
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
+  const scrollRef   = useRef<ScrollView>(null);
+  const tabSectionY = useRef(0);
 
   const [provider, setProvider]               = useState<(Provider & { user: User }) | null>(null);
   const [loading, setLoading]                 = useState(true);
@@ -180,6 +182,15 @@ export default function ProviderProfile() {
   useEffect(() => { load(); }, [load]);
   // Refresh portfolio thumbnails whenever screen regains focus
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // Auto-scroll to tab section when opened with tab=portfolio
+  useEffect(() => {
+    if (!loading && tabParam === 'portfolio') {
+      setTimeout(() => {
+        scrollRef.current?.scrollTo({ y: tabSectionY.current, animated: true });
+      }, 350);
+    }
+  }, [loading, tabParam]);
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 12000);
     return () => clearTimeout(timer);
@@ -318,6 +329,7 @@ export default function ProviderProfile() {
       />
       <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView
+        ref={scrollRef}
         style={styles.scrollView}
         contentContainerStyle={{ paddingBottom: contentPad + 32 }}
         showsVerticalScrollIndicator={false}
@@ -521,7 +533,7 @@ export default function ProviderProfile() {
         {/* ══════════════════════════════════════════════════════
             ZONE 4 — SEGMENTED TABS: Specialties | Portfolio
         ══════════════════════════════════════════════════════ */}
-        <View style={styles.sectionPad}>
+        <View style={styles.sectionPad} onLayout={e => { tabSectionY.current = e.nativeEvent.layout.y; }}>
           {/* Segment control */}
           <View style={[styles.segmentWrap, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {(['specialties', 'portfolio'] as const).map(tab => {
