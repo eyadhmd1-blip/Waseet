@@ -74,7 +74,14 @@
     "sessionFailed": "Session creation failed. Please try again.",
     "accountSuspended": "Your account has been suspended. Contact support for assistance.",
     "resendWait": "Please wait before requesting another code.",
-    "resendFailed": "Failed to resend. Check your connection."
+    "resendFailed": "Failed to resend. Check your connection.",
+    "lastStep": "One last step to get started",
+    "trialBadge": "🎁 30-day free trial + 10 welcome credits",
+    "nameErrorHint": "⚠️ Please enter your full name",
+    "cityErrorHint": "⚠️ Please select your city",
+    "trustBadge": "🔒 Your data is protected and will never be shared with any third party",
+    "roleSelected": "✓  Selected",
+    "roleTap": "○  Tap to select"
   },
   "home": {
     "mostRequested": "Most Requested",

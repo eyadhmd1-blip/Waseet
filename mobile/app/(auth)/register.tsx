@@ -151,7 +151,7 @@ export default function RegisterScreen() {
 
           {/* Title + subtitle */}
           <Text style={styles.title}>✨ {t('auth.completeRegister')}</Text>
-          <Text style={styles.subtitle}>خطوة أخيرة لبدء التجربة</Text>
+          <Text style={styles.subtitle}>{t('auth.lastStep')}</Text>
 
           {/* ── Role selector ─────────────────────────────────────── */}
           <Text style={styles.sectionLabel}>{t('auth.iAm')}</Text>
@@ -188,7 +188,7 @@ export default function RegisterScreen() {
           {/* Provider trial badge */}
           {role === 'provider' && (
             <View style={styles.trialBadge}>
-              <Text style={styles.trialText}>🎁 تجربة مجانية 30 يوم + 10 رصيد ترحيبي</Text>
+              <Text style={styles.trialText}>{t('auth.trialBadge')}</Text>
             </View>
           )}
 
@@ -205,7 +205,7 @@ export default function RegisterScreen() {
             />
           </View>
           {nameError && (
-            <Text style={styles.errorHint}>⚠️ يرجى إدخال اسمك الكامل</Text>
+            <Text style={styles.errorHint}>{t('auth.nameErrorHint')}</Text>
           )}
 
           {/* ── City picker ────────────────────────────────────────── */}
@@ -230,7 +230,7 @@ export default function RegisterScreen() {
             ))}
           </ScrollView>
           {cityError && (
-            <Text style={styles.errorHint}>⚠️ يرجى اختيار مدينتك</Text>
+            <Text style={styles.errorHint}>{t('auth.cityErrorHint')}</Text>
           )}
 
           {/* ── CTA ───────────────────────────────────────────────── */}
@@ -247,7 +247,7 @@ export default function RegisterScreen() {
 
           {/* Trust badge */}
           <View style={styles.trustBadge}>
-            <Text style={styles.trustText}>🔒 بياناتك محفوظة ولن تُشارَك مع أي طرف ثالث</Text>
+            <Text style={styles.trustText}>{t('auth.trustBadge')}</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -263,6 +263,7 @@ function RoleCard({
   icon: string; label: string; sub: string; isDark: boolean;
   colors: AppColors; styles: ReturnType<typeof createStyles>;
 }) {
+  const { t } = useLanguage();
   return (
     <TouchableOpacity
       style={[styles.roleCard, isActive && { borderColor: accent }]}
@@ -275,7 +276,7 @@ function RoleCard({
         { backgroundColor: isActive ? accent : (isDark ? 'rgba(255,255,255,0.06)' : '#F0F0F0') },
       ]}>
         <Text style={[styles.roleBannerText, { color: isActive ? '#fff' : colors.textMuted }]}>
-          {isActive ? '✓  تم الاختيار' : '○  اضغط للاختيار'}
+          {isActive ? t('auth.roleSelected') : t('auth.roleTap')}
         </Text>
       </View>
 
