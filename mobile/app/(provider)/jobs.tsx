@@ -42,7 +42,8 @@ export default function ProviderJobs() {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [codeSent, setCodeSent]           = useState(false);
   const [sendingCode, setSendingCode]     = useState<Record<string, boolean>>({});
-  const inputRefs = useRef<TextInput[]>([]);
+  const inputRefs      = useRef<TextInput[]>([]);
+  const sendingCodeRef = useRef<Record<string, boolean>>({});
 
   const load = useCallback(async (isTabSwitch = false) => {
     try {
@@ -122,6 +123,8 @@ export default function ProviderJobs() {
   }, [load]);
 
   const handleTaskDone = async (job: JobWithMeta) => {
+    if (sendingCodeRef.current[job.id]) return;
+    sendingCodeRef.current[job.id] = true;
     setSendingCode(prev => ({ ...prev, [job.id]: true }));
 
     // Code is generated server-side inside send-confirm-notification.
@@ -130,6 +133,7 @@ export default function ProviderJobs() {
       body: { job_id: job.id, client_id: job.client_id },
     });
 
+    sendingCodeRef.current[job.id] = false;
     setSendingCode(prev => ({ ...prev, [job.id]: false }));
 
     if (fnError || notifResult?.error) {
