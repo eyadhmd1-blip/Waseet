@@ -28,7 +28,7 @@ export function useUnreadMsgCount() {
       .from('jobs')
       .select('id')
       .or(`client_id.eq.${userId},provider_id.eq.${userId}`)
-      .in('status', ['active', 'completed', 'disputed']);
+      .in('status', ['active', 'disputed']);
 
     const jobIds = (jobsData ?? []).map((j: any) => j.id);
     jobIdsRef.current = new Set(jobIds);
