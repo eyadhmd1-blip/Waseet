@@ -10,6 +10,7 @@ import { useTheme } from '../../src/context/ThemeContext';
 import { supabase } from '../../src/lib/supabase';
 import { useTutorial } from '../../src/hooks/useTutorial';
 import { OnboardingCarousel } from '../tutorial/carousel';
+import { useUnreadMsgCount } from '../../src/hooks/useUnreadMsgCount';
 
 // Shown at most once per app session
 let _alertShownThisSession = false;
@@ -32,6 +33,7 @@ export default function ProviderLayout() {
   const [alert, setAlert] = useState<AlertState | null>(null);
   const checked = useRef(false);
   const { showCarousel, dismissCarousel } = useTutorial('provider');
+  const { count: unreadMsgs } = useUnreadMsgCount();
 
   const tabBarStyle = {
     ...makeTabBarStyle(colors, insets.bottom),
@@ -160,6 +162,7 @@ export default function ProviderLayout() {
           options={{
             title: t('chat.title'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>💬</Text>,
+            tabBarBadge: unreadMsgs > 0 ? unreadMsgs : undefined,
           }}
         />
         <Tabs.Screen

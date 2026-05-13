@@ -6,12 +6,14 @@ import { useLanguage } from '../../src/hooks/useLanguage';
 import { useTheme } from '../../src/context/ThemeContext';
 import { useTutorial } from '../../src/hooks/useTutorial';
 import { OnboardingCarousel } from '../tutorial/carousel';
+import { useUnreadMsgCount } from '../../src/hooks/useUnreadMsgCount';
 
 export default function ClientLayout() {
   const insets = useSafeAreaInsets();
   const { isRTL } = useLanguage();
   const { colors } = useTheme();
   const { showCarousel, dismissCarousel } = useTutorial('client');
+  const { count: unreadMsgs } = useUnreadMsgCount();
 
   const tabBarStyle = {
     ...makeTabBarStyle(colors, insets.bottom),
@@ -47,6 +49,7 @@ export default function ClientLayout() {
           options={{
             title: 'الرسائل',
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>💬</Text>,
+            tabBarBadge: unreadMsgs > 0 ? unreadMsgs : undefined,
           }}
         />
         <Tabs.Screen
