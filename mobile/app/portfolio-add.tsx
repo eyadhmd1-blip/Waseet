@@ -372,8 +372,11 @@ export default function PortfolioAddScreen() {
 
     const manipulated = await ImageManipulator.manipulateAsync(
       asset.uri,
-      [{ crop: { originX: cropX, originY: cropY, width: cropW, height: cropH } }],
-      { compress: 0.88, format: ImageManipulator.SaveFormat.JPEG },
+      [
+        { crop: { originX: cropX, originY: cropY, width: cropW, height: cropH } },
+        { resize: { width: 1600 } },
+      ],
+      { compress: 0.90, format: ImageManipulator.SaveFormat.JPEG },
     );
 
     setPreview(null);
