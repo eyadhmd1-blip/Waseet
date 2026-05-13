@@ -186,6 +186,34 @@ export default function NotificationInboxScreen() {
 
   useEffect(() => { initialLoad(); }, [initialLoad]);
 
+  // ── Real-time: prepend new notifications instantly ──────────
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) return;
+      const userId = session.user.id;
+
+      channel = supabase
+        .channel(`notif_inbox_${userId}`)
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
+          (payload) => {
+            const incoming = { ...(payload.new as NotifRow), is_read: true };
+            setItems(prev => {
+              if (prev.some(n => n.id === incoming.id)) return prev;
+              return [incoming, ...prev];
+            });
+            supabase.rpc('mark_notification_read', { p_notif_id: incoming.id, p_user_id: userId });
+          },
+        )
+        .subscribe();
+    });
+
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
   // ── Pull-to-refresh ─────────────────────────────────────────
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
