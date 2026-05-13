@@ -205,7 +205,14 @@ export default function NotificationInboxScreen() {
               if (prev.some(n => n.id === incoming.id)) return prev;
               return [incoming, ...prev];
             });
-            supabase.rpc('mark_notification_read', { p_notif_id: incoming.id, p_user_id: userId });
+            supabase.rpc('mark_notification_read', { p_notif_id: incoming.id, p_user_id: userId })
+              .then(({ error }) => {
+                if (error) {
+                  setItems(prev => prev.map(n =>
+                    n.id === incoming.id ? { ...n, is_read: false } : n
+                  ));
+                }
+              });
           },
         )
         .subscribe();
