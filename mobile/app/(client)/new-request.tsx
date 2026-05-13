@@ -7,6 +7,7 @@ import { SuccessModal } from '../../src/components/SuccessModal';
 import { SuggestServiceModal } from '../../src/components/SuggestServiceModal';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { supabase } from '../../src/lib/supabase';
 import { CATEGORY_GROUPS, JORDAN_CITIES, CATEGORY_PLACEHOLDERS, ICON_MAP } from '../../src/constants/categories';
 import { useCategories } from '../../src/hooks/useCategories';
@@ -215,8 +216,13 @@ export default function NewRequestScreen() {
     try {
       for (const uri of images) {
         const fileName = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`;
+        const { uri: compressedUri } = await manipulateAsync(
+          uri,
+          [{ resize: { width: 1200 } }],
+          { compress: 0.85, format: SaveFormat.JPEG },
+        );
         // fetch().blob() produces empty/corrupt data on Android — use arrayBuffer() instead
-        const response = await fetch(uri);
+        const response = await fetch(compressedUri);
         const arrayBuffer = await response.arrayBuffer();
         const { data: uploadData, error: uploadErr } = await supabase.storage
           .from('request-images')
