@@ -4,7 +4,7 @@
 // Params: job_id, provider_name
 // ============================================================
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
@@ -31,6 +31,21 @@ export default function RateJobScreen() {
   }>();
 
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
+
+  const [providerName, setProviderName] = useState(provider_name ?? '');
+
+  useEffect(() => {
+    if (!job_id) return;
+    supabase
+      .from('jobs')
+      .select('provider:providers!jobs_provider_id_fkey(user:users(full_name))')
+      .eq('id', job_id)
+      .single()
+      .then(({ data }) => {
+        const name = (data?.provider as any)?.user?.full_name;
+        if (name) setProviderName(name);
+      });
+  }, [job_id]);
 
   const [rating, setRating]       = useState(0);
   const [hovered, setHovered]     = useState(0);
@@ -105,7 +120,7 @@ export default function RateJobScreen() {
 
     Alert.alert(
       t('rateJob.successTitle'),
-      t('rateJob.successMsg', { name: provider_name }),
+      t('rateJob.successMsg', { name: providerName }),
       [{ text: t('common.confirm'), onPress: () => router.replace('/(client)/requests') }],
     );
   };
@@ -128,10 +143,10 @@ export default function RateJobScreen() {
         {/* Provider chip */}
         <View style={styles.provChip}>
           <View style={styles.provAvatar}>
-            <Text style={styles.provAvatarText}>{provider_name?.charAt(0) ?? '?'}</Text>
+            <Text style={styles.provAvatarText}>{providerName?.charAt(0) ?? '?'}</Text>
           </View>
           <View>
-            <Text style={styles.provName}>{provider_name}</Text>
+            <Text style={styles.provName}>{providerName}</Text>
             <Text style={styles.provSub}>{t('rateJob.providerSub')}</Text>
           </View>
         </View>
