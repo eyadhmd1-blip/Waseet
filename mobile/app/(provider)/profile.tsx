@@ -262,6 +262,10 @@ export default function ProviderProfile() {
   };
 
   const saveCategories = async () => {
+    if (selectedCats.length === 0) {
+      Alert.alert(t('profile.maxSpecialties'), t('profile.minSpecialtiesMsg'));
+      return;
+    }
     setSavingCats(true);
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const authUser = _ses?.user;

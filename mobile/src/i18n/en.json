@@ -631,6 +631,7 @@
     "noSpecialties": "Tap to add your specialties",
     "maxSpecialties": "Specialty Limit",
     "maxSpecialtiesMsg": "You can select up to 3 specialties.",
+    "minSpecialtiesMsg": "You must select at least one specialty.",
     "maxSpecialtiesNote": "Max 3 specialties",
     "selectedCount": "{{count}} / {{max}} selected",
     "creditsRemainingCaption": "credits remaining",

@@ -639,6 +639,7 @@
     "noSpecialties": "اضغط لإضافة تخصصاتك",
     "maxSpecialties": "حد التخصصات",
     "maxSpecialtiesMsg": "يمكنك اختيار 3 تخصصات كحد أقصى.",
+    "minSpecialtiesMsg": "يجب اختيار تخصص واحد على الأقل.",
     "maxSpecialtiesNote": "الحد الأقصى: 3 تخصصات",
     "selectedCount": "{{count}} / {{max}} تخصصات مختارة",
     "creditsRemainingCaption": "رصيد متبقٍ هذا الشهر",
