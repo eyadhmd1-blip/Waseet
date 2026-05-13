@@ -8,7 +8,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo} from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  ActivityIndicator, Alert, Animated, Easing,
+  ActivityIndicator, Alert, Animated, Easing, AppState,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
@@ -37,6 +37,7 @@ export default function ProviderConfirmScreen() {
   const [acting, setActing]     = useState(false);
   const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const isActingRef  = useRef(false);
+  const deadlineRef  = useRef<number>(0);
   const ringPulse   = useRef(new Animated.Value(1)).current;
 
   const isUrgent = !!(job?.request as any)?.is_urgent;
@@ -72,6 +73,7 @@ export default function ProviderConfirmScreen() {
         const deadline = data.provider_commit_deadline
           ? new Date(data.provider_commit_deadline).getTime()
           : Date.now() + totalSecs * 1000;
+        deadlineRef.current = deadline;
 
         const tick = () => {
           const remaining = Math.max(0, Math.round((deadline - Date.now()) / 1000));
@@ -87,6 +89,20 @@ export default function ProviderConfirmScreen() {
 
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [job_id]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active' && deadlineRef.current > 0) {
+        const remaining = Math.max(0, Math.round((deadlineRef.current - Date.now()) / 1000));
+        setSecs(remaining);
+        if (remaining <= 0) {
+          if (intervalRef.current) clearInterval(intervalRef.current);
+          setExpired(true);
+        }
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   useEffect(() => {
     if (!isUrgent) return;
