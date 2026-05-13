@@ -1096,6 +1096,46 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | JOB-028 | Job detail shows both parties' names and contact info | Medium | Functional |
 | JOB-029 | Confirmation code cannot be reused after successful confirm | Critical | Security |
 | JOB-030 | Provider score does not go below 0 with bad ratings | Low | Boundary |
+| JOB-031 | Grace period — زر "طلباتي" مخفي أثناء العد النشط | High | Regression |
+| JOB-032 | رمز التأكيد يظهر تلقائياً لطالب الخدمة عبر Realtime | Critical | Regression |
+
+---
+
+#### JOB-031
+**Name:** Grace period — زر "طلباتي" مخفي أثناء العد النشط  
+**Priority:** High | **Type:** Regression  
+**Fixes:** gap — العميل يغادر نافذة الإلغاء دون أن يعرف بفقدانها  
+**Preconditions:** عميل قبل عرضاً لأول مرة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | العميل يقبل العرض | شاشة grace-period تظهر مع العد التنازلي |
+| 2 | العد النشط (secondsLeft > 0) | زر "طلباتي" **غير موجود** في الشاشة |
+| 3 | العد ينتهي (locked) | زر "طلباتي" **يظهر** |
+| 4 | المقدم يلتزم (confirmed) | زر "طلباتي" **يظهر** |
+| 5 | المقدم يرفض | Alert يظهر + زر للانتقال لطلباتي |
+
+**Regression:** قبل الإصلاح كان العميل يضغط "طلباتي" أثناء العد وتُمسح الشاشة من الـ stack نهائياً فيفقد حق الإلغاء.  
+**Automation Candidate:** Yes
+
+---
+
+#### JOB-032
+**Name:** رمز التأكيد يظهر تلقائياً لطالب الخدمة عبر Realtime  
+**Priority:** Critical | **Type:** Regression  
+**Fixes:** جدول `jobs` لم يكن في `supabase_realtime` publication  
+**Preconditions:** طلب في حالة `in_progress`؛ العميل على شاشة تفاصيل الطلب
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | العميل يفتح تفاصيل الطلب (in_progress) | تظهر رسالة "العمل جارٍ، انتظر رمز التأكيد" |
+| 2 | مقدم الخدمة يضغط "أنجزت العمل ✓" | رمز 6 أرقام يظهر **تلقائياً** على شاشة العميل دون refresh |
+| 3 | العميل يعطي الرمز للمقدم | المقدم يدخله في الـ modal |
+| 4 | العميل يفتح الشاشة بعد توليد الرمز (لا Realtime مطلوب) | الرمز يظهر من load() مباشرة |
+| 5 | العميل يسحب للأسفل (pull-to-refresh) | الرمز يظهر (fallback بدون Realtime) |
+
+**Regression:** قبل الإصلاح لم يكن `jobs` في Realtime publication فكان الـ subscription لا يُطلَق أبداً.  
+**Automation Candidate:** No (يحتاج Realtime environment حقيقي)
 
 ---
 
@@ -6614,8 +6654,8 @@ ORDER BY group_slug, sort_order;
 ---
 
 *End of Waseet QA Test Cases Report v3.1*  
-*Total Test Cases: 558 across 40 modules*  
-*Critical: 149 | High: 234 | Medium: 144 | Low: 31*  
+*Total Test Cases: 560 across 40 modules*  
+*Critical: 150 | High: 235 | Medium: 144 | Low: 31*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
