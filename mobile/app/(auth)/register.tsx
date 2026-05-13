@@ -60,6 +60,22 @@ export default function RegisterScreen() {
     if (error) {
       setLoading(false);
       if ((error as any).code === '23505') {
+        if (role === 'provider') {
+          const { data: existingProv } = await supabase
+            .from('providers')
+            .select('id')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (!existingProv) {
+            setLoading(true);
+            const { error: provErr2 } = await supabase.from('providers').insert({ id: user.id });
+            setLoading(false);
+            if (!provErr2) {
+              router.replace({ pathname: '/subscribe', params: { tier: 'trial' } } as any);
+              return;
+            }
+          }
+        }
         Alert.alert(
           t('auth.phoneAlreadyRegistered'),
           t('auth.phoneAlreadyRegisteredMsg'),
@@ -79,8 +95,11 @@ export default function RegisterScreen() {
         id: user.id,
       });
       if (provErr) {
-        // Rollback the users insert so the user can retry cleanly
-        await supabase.from('users').delete().eq('id', user.id);
+        const { error: rollbackErr } = await supabase.from('users').delete().eq('id', user.id);
+        if (rollbackErr) {
+          // Rollback failed — sign out so next OTP attempt auto-recovers via 23505 path
+          await supabase.auth.signOut();
+        }
         setLoading(false);
         Alert.alert(t('common.error'), t('auth.registrationFailed'));
         return;
