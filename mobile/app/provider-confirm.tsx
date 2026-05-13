@@ -90,12 +90,14 @@ export default function ProviderConfirmScreen() {
 
   useEffect(() => {
     if (!isUrgent) return;
-    Animated.loop(
+    const anim = Animated.loop(
       Animated.sequence([
         Animated.timing(ringPulse, { toValue: 1.06, duration: 900, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
         Animated.timing(ringPulse, { toValue: 1,    duration: 900, useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
       ])
-    ).start();
+    );
+    anim.start();
+    return () => anim.stop();
   }, [isUrgent]);
 
   const fmtMSS = (s: number) => {
