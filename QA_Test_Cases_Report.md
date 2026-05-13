@@ -6653,9 +6653,159 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v3.1*  
-*Total Test Cases: 560 across 40 modules*  
-*Critical: 150 | High: 235 | Medium: 144 | Low: 31*  
+## 41. BUGFIX3 — Bug-Fix Regression Suite v4.0 (Pass-3)
+
+### Overview
+8 regression cases covering the bugs fixed in Pass-3 (mobile app): real-time messages, countdown timer sync, provider registration rollback, notification read-state sync, double-tap guard on task-done, provider name source in rate screen, unsaved rating discard warning, and hardcoded Arabic strings in register screen.
+
+---
+
+#### BUGFIX3-001
+**Name:** محادثة جديدة تظهر تلقائياً في قائمة الرسائل بدون سحب للأسفل  
+**Fixes:** BUG-M03 | **Priority:** High | **Type:** Real-time / Mobile  
+**Preconditions:** مستخدم مسجّل دخوله (client أو provider)، شاشة الرسائل مفتوحة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | الطرف الآخر يُنشئ job جديد (يصبح active) ويُرسل رسالة أولى | المحادثة الجديدة تظهر فوراً في القائمة بدون سحب |
+| 2 | تحقق من عدم السحب للأسفل | البطاقة تظهر في أعلى القائمة خلال ثوانٍ |
+| 3 | اضغط على المحادثة الجديدة | شاشة الـ chat تفتح بالـ job_id الصحيح |
+| 4 | تحقق بعد إغلاق التطبيق وإعادة فتحه | المحادثة لا تختفي وتبقى في القائمة |
+
+**Regression:** المحادثات الموجودة مسبقاً لا تتأثر.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX3-002
+**Name:** مؤقت provider-confirm يُعاد تزامنه عند عودة التطبيق من الخلفية  
+**Fixes:** BUG-M05 | **Priority:** High | **Type:** Timer / Mobile  
+**Preconditions:** مزود على شاشة provider-confirm والمهلة لم تنته بعد
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح شاشة provider-confirm (مهلة 15 دقيقة مثلاً) | المؤقت يعدّ تنازلياً بشكل طبيعي |
+| 2 | اضغط Home لإرسال التطبيق للخلفية لمدة تتجاوز المهلة | — |
+| 3 | أعد التطبيق للواجهة | شاشة "المهلة انتهت" تظهر فوراً (لا تظهر قيمة مجمّدة) |
+| 4 | تكرار: إرسال للخلفية قبل انتهاء المهلة ثم العودة | المؤقت يعرض الوقت المتبقي الصحيح (لا تأخير) |
+| 5 | الضغط على "تأكيد" بعد انتهاء المهلة (إن عُرض) | يُعطي رسالة خطأ deadline_expired |
+
+**Regression:** سلوك المؤقت الطبيعي (أمامية) لا يتغير.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX3-003
+**Name:** استرداد تسجيل مزود ناقص + rollback صحيح عند الفشل  
+**Fixes:** BUG-C03 | **Priority:** Critical | **Type:** Registration / Mobile  
+**Preconditions:** رقم هاتف مسجّل في auth لكن بدون providers record (حالة stuck)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أدخل رقم الهاتف المُعلَّق → OTP → شاشة التسجيل | الشاشة تفتح بشكل طبيعي |
+| 2 | اختر دور "مزود" واملأ البيانات واضغط إنشاء حساب | يكتشف النظام السجل الناقص ويُنشئ providers record |
+| 3 | تحقق من التوجيه | يُوجَّه لشاشة الاشتراك (subscribe) لا "الرقم مسجّل مسبقاً" |
+| 4 | سيناريو rollback: إنشاء حالة فشل providers insert مع RLS يمنع الحذف | المستخدم يُسجَّل خروجه تلقائياً → يمكنه إعادة المحاولة بـ OTP |
+| 5 | تحقق من عدم وجود orphaned users records بعد rollback ناجح | users.delete تمت بنجاح عند نجاح الـ rollback |
+
+**Regression:** مسار التسجيل الطبيعي (client وprovider) يعمل بدون تغيير.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX3-004
+**Name:** حالة "مقروء" للإشعار الوارد real-time متزامنة بين الواجهة وقاعدة البيانات  
+**Fixes:** BUG-M02 | **Priority:** Medium | **Type:** Real-time / Mobile  
+**Preconditions:** المستخدم على شاشة notification-inbox
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | يصل إشعار جديد real-time | يظهر في القائمة مباشرة كـ "مقروء" (is_read: true) |
+| 2 | أغلق التطبيق وأعد فتحه → افتح inbox | الإشعار لا يزال "مقروءاً" — لا يعود لـ "غير مقروء" |
+| 3 | محاكاة فشل الشبكة أثناء وصول إشعار (airplane mode بعد الاستقبال) | الإشعار يُعاد لـ "غير مقروء" في الواجهة ليطابق DB |
+| 4 | بعد استعادة الشبكة: اضغط على الإشعار | يُحدَّث كـ "مقروء" في DB بشكل طبيعي |
+
+**Regression:** الإشعارات المحمَّلة عند الفتح الأول (fetchPage) لا تتأثر.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX3-005
+**Name:** الضغط المزدوج على "أنجزت العمل" لا يُولّد كوداً جديداً  
+**Fixes:** BUG-H03 | **Priority:** Critical | **Type:** Double-tap Guard / Mobile  
+**Preconditions:** مزود لديه job نشط، شاشة Jobs مفتوحة
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "أنجزت العمل" مرة واحدة | يُرسَل إشعار للعميل مع كود تأكيد |
+| 2 | اضغط "أنجزت العمل" مرتين متتاليتين بسرعة | طلب واحد فقط يُرسَل — الكود لا يتغير |
+| 3 | العميل يُدخل الكود الذي استلمه | ينجح التأكيد بدون "كود خاطئ" |
+| 4 | تحقق في DB: عدد استدعاءات send-confirm-notification | استدعاء واحد فقط للـ Edge Function لكل job |
+
+**Regression:** زر "أنجزت العمل" يعمل بشكل طبيعي للضغطة الأولى.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX3-006
+**Name:** اسم المزود في شاشة التقييم يأتي من قاعدة البيانات لا من URL  
+**Fixes:** BUG-H06 | **Priority:** Medium | **Type:** Security / Mobile  
+**Preconditions:** job مكتمل، العميل على شاشة rate-job
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح شاشة التقييم بشكل طبيعي | اسم المزود يظهر صحيحاً من DB |
+| 2 | حاول تعديل provider_name في الـ URL/params يدوياً | الاسم المعروض يُحدَّث للاسم الحقيقي من DB بعد التحميل |
+| 3 | أرسل التقييم | التقييم يُسجَّل للمزود الصحيح (عبر job_id) لا الاسم المُعدَّل |
+| 4 | تحقق في DB: jobs.client_rating | مربوط بالـ job_id الصحيح |
+
+**Regression:** شاشة التقييم تفتح وتعمل بشكل طبيعي.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX3-007
+**Name:** تحذير عند الرجوع من شاشة التقييم بعد إدخال بيانات  
+**Fixes:** BUG-L02 | **Priority:** High | **Type:** UX / Mobile  
+**Preconditions:** العميل على شاشة rate-job
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط رجوع بدون إدخال أي شيء | التنقل يحدث مباشرة بدون Alert |
+| 2 | اختر نجمة ثم اضغط رجوع (iOS header) | Alert "تجاهل التقييم؟" يظهر |
+| 3 | في الـ Alert: اضغط "إلغاء" | يبقى على شاشة التقييم مع الحفاظ على البيانات |
+| 4 | في الـ Alert: اضغط "تجاهل" | ينتقل لقائمة الطلبات |
+| 5 | اضغط زر الرجوع الصلب (Android) بعد كتابة تعليق | نفس الـ Alert يظهر |
+| 6 | اكتب تعليقاً فقط (بدون نجمة) ثم ارجع | Alert يظهر (review.trim() > 0) |
+
+**Regression:** إرسال التقييم بشكل طبيعي يعمل بدون تأثير.  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX3-008
+**Name:** نصوص شاشة التسجيل تتغير مع اللغة  
+**Fixes:** BUG-L01 | **Priority:** Low | **Type:** i18n / Mobile  
+**Preconditions:** المستخدم يغيّر لغة التطبيق للإنجليزية
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح شاشة التسجيل بالعربية | جميع النصوص بالعربية |
+| 2 | غيّر اللغة للإنجليزية وافتح شاشة التسجيل | النص "One last step to get started" يظهر (لا "خطوة أخيرة") |
+| 3 | تحقق من badge التجربة المجانية | "🎁 30-day free trial + 10 welcome credits" |
+| 4 | اترك حقل الاسم فارغاً واضغط إنشاء | "⚠️ Please enter your full name" |
+| 5 | لا تختر مدينة واضغط إنشاء | "⚠️ Please select your city" |
+| 6 | تحقق من RoleCard banner | "○  Tap to select" / "✓  Selected" |
+| 7 | تحقق من trust badge | "🔒 Your data is protected..." |
+
+**Regression:** شاشة التسجيل بالعربية تعمل بشكل طبيعي.  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.0*  
+*Total Test Cases: 568 across 41 modules*  
+*Critical: 152 | High: 238 | Medium: 146 | Low: 32*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
