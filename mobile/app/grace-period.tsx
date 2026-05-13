@@ -308,12 +308,6 @@ export default function GracePeriodScreen() {
         </TouchableOpacity>
       )}
 
-      <TouchableOpacity
-        style={styles.homeBtn}
-        onPress={() => router.replace('/(client)/requests')}
-      >
-        <Text style={styles.homeBtnText}>{t('gracePeriod.goToRequests')}</Text>
-      </TouchableOpacity>
     </View>
   );
 }
