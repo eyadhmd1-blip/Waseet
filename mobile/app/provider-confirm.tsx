@@ -35,7 +35,8 @@ export default function ProviderConfirmScreen() {
   const [secondsLeft, setSecs]  = useState(0);
   const [expired, setExpired]   = useState(false);
   const [acting, setActing]     = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isActingRef  = useRef(false);
   const ringPulse   = useRef(new Animated.Value(1)).current;
 
   const isUrgent = !!(job?.request as any)?.is_urgent;
@@ -104,8 +105,11 @@ export default function ProviderConfirmScreen() {
   };
 
   const handleConfirm = useCallback(async () => {
+    if (isActingRef.current) return;
+    isActingRef.current = true;
     setActing(true);
     const { data, error } = await supabase.rpc('provider_commit_job', { p_job_id: job_id });
+    isActingRef.current = false;
     setActing(false);
 
     if (error || data?.error) {
