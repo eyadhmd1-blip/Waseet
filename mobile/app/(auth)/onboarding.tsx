@@ -320,13 +320,15 @@ function Step3Services({
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={{ paddingVertical: 14, alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.border, marginTop: 8 }}
-          onPress={onSuggest}
-        >
-          <Text style={{ fontSize: 13, color: colors.textMuted }}>
-            {t('suggestions.notFound')}
-          </Text>
+        <TouchableOpacity style={styles.suggestCard} onPress={onSuggest} activeOpacity={0.8}>
+          <View style={styles.suggestIconWrap}>
+            <Text style={styles.suggestIconEmoji}>💡</Text>
+          </View>
+          <View style={styles.suggestCardBody}>
+            <Text style={styles.suggestCardTitle}>{t('suggestions.notFound')}</Text>
+            <Text style={styles.suggestCardSub}>{t('suggestions.notFoundSub')}</Text>
+          </View>
+          <Text style={styles.suggestCardArrow}>›</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -1069,6 +1071,14 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   catCheckMark: { fontSize: 9, color: colors.bg, fontWeight: '700' },
   selectedBar: { backgroundColor: colors.surface, borderRadius: 10, padding: 12, marginTop: 4, borderWidth: 1, borderColor: colors.accent },
   selectedBarText: { color: colors.accent, fontSize: 13, textAlign: 'center' },
+
+  suggestCard:      { flexDirection: 'row', alignItems: 'center', marginTop: 20, marginHorizontal: 2, marginBottom: 8, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 18, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.accent + '88', backgroundColor: colors.accentDim, gap: 12 },
+  suggestIconWrap:  { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.accent + '22', alignItems: 'center', justifyContent: 'center' },
+  suggestIconEmoji: { fontSize: 22 },
+  suggestCardBody:  { flex: 1, gap: 2 },
+  suggestCardTitle: { fontSize: 14, fontWeight: '700', color: colors.accent },
+  suggestCardSub:   { fontSize: 12, color: colors.textMuted, lineHeight: 18 },
+  suggestCardArrow: { fontSize: 22, color: colors.accent, fontWeight: '700' },
 
   // Trial card
   trialCard: {
