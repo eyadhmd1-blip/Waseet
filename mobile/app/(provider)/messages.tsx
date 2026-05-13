@@ -133,7 +133,7 @@ export default function ProviderMessages() {
       .channel('provider-conv-list')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
         const msg = payload.new as any;
-        if (!jobIds.has(msg.job_id)) return;
+        if (!jobIds.has(msg.job_id)) { load(); return; }
         setLastMsgMap(prev => ({ ...prev, [msg.job_id]: msg }));
         if (msg.sender_id !== myId) {
           setUnreadMap(prev => ({ ...prev, [msg.job_id]: (prev[msg.job_id] ?? 0) + 1 }));
