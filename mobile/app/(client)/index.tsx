@@ -206,7 +206,6 @@ function CategoryCard({ icon, name, color, onPress }: {
 
 // ─── Main screen ──────────────────────────────────────────────
 
-const SHOW_CATS = 9;
 
 export default function ClientHome() {
   const { colors, isDark } = useTheme();
@@ -294,7 +293,7 @@ export default function ClientHome() {
   const filteredCats = useMemo(() => {
     const group = CATEGORY_GROUPS.find(g => g.slug === activeGroup);
     if (!group) return [];
-    return group.categories.slice(0, SHOW_CATS).map(c => ({
+    return group.categories.map(c => ({
       slug:  c.slug,
       icon:  ICON_MAP[c.icon] ?? '🔧',
       name:  c.name_ar,
