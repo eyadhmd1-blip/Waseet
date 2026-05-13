@@ -819,7 +819,10 @@
     },
     "errSubmit": "Failed to submit rating. Please try again.",
     "successTitle": "Thank you for your rating! 🌟",
-    "successMsg": "You helped {{name}} build their reputation on the platform."
+    "successMsg": "You helped {{name}} build their reputation on the platform.",
+    "exitTitle": "Discard Rating?",
+    "exitMsg": "You have unsaved changes. Are you sure you want to leave?",
+    "exitConfirm": "Discard"
   },
   "subscribe": {
     "title": "Choose Your Plan",

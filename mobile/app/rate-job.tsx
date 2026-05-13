@@ -4,10 +4,10 @@
 // Params: job_id, provider_name
 // ============================================================
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, BackHandler,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -53,6 +53,31 @@ export default function RateJobScreen() {
   const [tags, setTags]           = useState<TagKey[]>([]);
   const [submitting, setSubmit]   = useState(false);
   const [ratingError, setRatingError] = useState(false);
+
+  const hasInput = rating > 0 || review.trim().length > 0 || tags.length > 0;
+
+  const handleBack = useCallback(() => {
+    if (!hasInput) {
+      router.replace('/(client)/requests' as any);
+      return;
+    }
+    Alert.alert(
+      t('rateJob.exitTitle'),
+      t('rateJob.exitMsg'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('rateJob.exitConfirm'), style: 'destructive', onPress: () => router.replace('/(client)/requests' as any) },
+      ],
+    );
+  }, [hasInput, router, t]);
+
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      handleBack();
+      return true;
+    });
+    return () => sub.remove();
+  }, [handleBack]);
 
   const toggleTag = (tag: TagKey) => {
     setTags(prev =>
@@ -132,7 +157,7 @@ export default function RateJobScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <AppHeader variant="stack" title={t('rateJob.title')} onBack={() => router.replace('/(client)/requests' as any)} />
+      <AppHeader variant="stack" title={t('rateJob.title')} onBack={handleBack} />
       <LinearGradient colors={gradColors} style={{ flex: 1 }}>
       <ScrollView
         style={{ flex: 1 }}
