@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.6  
+**Document Version:** 4.7  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -7333,9 +7333,76 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.6*  
-*Total Test Cases: 601 across 47 modules*  
-*Critical: 157 | High: 253 | Medium: 158 | Low: 33 (previously: 598/46)*  
+---
+
+## 48. BUGFIX10 — Bug-Fix Regression Suite v4.7 (BUG-AL01 i18n)
+
+**Bug:** كلمة "بروفايل" (دخيلة) مستخدمة بدلاً من "ملف" (عربية فصيحة) في 10 مواضع  
+**Fix:** استبدال كامل في `ar.json` — لا تغيير في الكود أو المفاتيح  
+**Date:** 2026-05-14  
+**Files Changed:** `mobile/src/i18n/ar.json`
+
+---
+
+#### BUGFIX10-001
+**ID:** BUGFIX10-001  
+**Title:** Provider profile screen title shows "ملف المقدم" in Arabic  
+**Priority:** Medium  
+**Steps:**
+1. غيّر لغة التطبيق للعربية
+2. افتح ملف أي مقدم خدمة
+
+**Expected:** عنوان الشاشة يقرأ "ملف المقدم" (لا "بروفايل المقدم")  
+**Regression:** English mode يبقى "Provider Profile" بدون تغيير  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX10-002
+**ID:** BUGFIX10-002  
+**Title:** Share sheet title shows "مشاركة ملف {{name}}"  
+**Priority:** Medium  
+**Steps:**
+1. افتح ملف مقدم → اضغط مشاركة
+2. لاحظ عنوان نافذة المشاركة
+
+**Expected:** "مشاركة ملف اسم المقدم" (لا بروفايل)  
+**Regression:** رابط المشاركة يعمل طبيعياً  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX10-003
+**ID:** BUGFIX10-003  
+**Title:** Chat "share profile" message shows "ملف" not "بروفايل"  
+**Priority:** Medium  
+**Steps:**
+1. في شاشة المحادثة، شارك ملف مقدم
+2. لاحظ نص الرسالة المُرسلة
+
+**Expected:** "أشارك معك ملف [الاسم] 👤"  
+**Regression:** وظيفة المشاركة في المحادثة تعمل طبيعياً  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX10-004
+**ID:** BUGFIX10-004  
+**Title:** Referral section shows "شارك ملفك" not "بروفايلك"  
+**Priority:** Low  
+**Steps:**
+1. افتح ملف المقدم الخاص بك (provider view)
+2. مرر للأسفل لقسم الإحالة
+
+**Expected:** العنوان يقرأ "📣 شارك ملفك"  
+**Regression:** زر المشاركة يعمل طبيعياً  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.7*  
+*Total Test Cases: 605 across 48 modules*  
+*Critical: 157 | High: 253 | Medium: 161 | Low: 34 (previously: 601/47)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
