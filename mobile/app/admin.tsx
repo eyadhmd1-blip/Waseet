@@ -7,7 +7,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Alert,
+  ActivityIndicator, RefreshControl, Alert, Modal, TextInput,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
@@ -67,6 +68,13 @@ export default function AdminScreen() {
   const [isAdmin,     setIsAdmin]     = useState(false);
   const [actioning,   setActioning]   = useState<string | null>(null);
 
+  // ── Grant Trial modal ─────────────────────────────────────────
+  const [trialModal,    setTrialModal]    = useState(false);
+  const [trialPhone,    setTrialPhone]    = useState('');
+  const [trialProvider, setTrialProvider] = useState<{ id: string; full_name: string; trial_used: boolean } | null>(null);
+  const [trialSearching, setTrialSearching] = useState(false);
+  const [trialGranting,  setTrialGranting]  = useState(false);
+
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -117,6 +125,66 @@ export default function AdminScreen() {
   useEffect(() => { load(); }, [load]);
 
   const onRefresh = () => { setRefreshing(true); load(true); };
+
+  const handleSearchProvider = useCallback(async () => {
+    const phone = trialPhone.trim();
+    if (!phone) return;
+    setTrialSearching(true);
+    setTrialProvider(null);
+    const normalized = phone.startsWith('0') ? '+962' + phone.slice(1) : phone;
+    const { data } = await supabase
+      .from('users')
+      .select('id, full_name, providers!inner(trial_used)')
+      .eq('phone', normalized)
+      .maybeSingle();
+    setTrialSearching(false);
+    if (!data) {
+      Alert.alert(t('common.attention'), t('admin.trialNotFound'));
+      return;
+    }
+    const prov = data.providers as any;
+    setTrialProvider({
+      id:         data.id,
+      full_name:  data.full_name,
+      trial_used: Array.isArray(prov) ? prov[0]?.trial_used : prov?.trial_used,
+    });
+  }, [trialPhone, t]);
+
+  const handleGrantTrial = useCallback(async () => {
+    if (!trialProvider) return;
+    if (trialProvider.trial_used) {
+      Alert.alert(t('common.attention'), t('admin.trialAlreadyUsed'));
+      return;
+    }
+    Alert.alert(
+      t('admin.trialGrant'),
+      t('admin.trialConfirm', { name: trialProvider.full_name }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('admin.trialGrant'),
+          onPress: async () => {
+            setTrialGranting(true);
+            const { error } = await supabase.rpc('admin_grant_trial', {
+              p_provider_id: trialProvider.id,
+            });
+            setTrialGranting(false);
+            if (error) {
+              const msg = error.message?.includes('trial_already_used')
+                ? t('admin.trialAlreadyUsed')
+                : error.message;
+              Alert.alert(t('common.error'), msg);
+            } else {
+              Alert.alert(t('common.success'), t('admin.trialSuccess'));
+              setTrialModal(false);
+              setTrialPhone('');
+              setTrialProvider(null);
+            }
+          },
+        },
+      ],
+    );
+  }, [trialProvider, t]);
 
   const handleSuggestionAction = useCallback(async (id: string, name: string, action: 'approved' | 'rejected') => {
     const isApprove = action === 'approved';
@@ -182,8 +250,66 @@ export default function AdminScreen() {
           <Text style={styles.backArrow}>→</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{t('admin.title')}</Text>
-        <View style={{ width: 36 }} />
+        <TouchableOpacity style={styles.trialHeaderBtn} onPress={() => { setTrialModal(true); setTrialPhone(''); setTrialProvider(null); }}>
+          <Text style={styles.trialHeaderBtnText}>🎁</Text>
+        </TouchableOpacity>
       </View>
+
+      {/* Grant Trial Modal */}
+      <Modal visible={trialModal} transparent animationType="slide" onRequestClose={() => setTrialModal(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>{t('admin.trialModalTitle')}</Text>
+
+            <View style={styles.modalSearchRow}>
+              <TextInput
+                style={styles.modalInput}
+                placeholder={t('admin.trialSearchPlaceholder')}
+                placeholderTextColor={colors.textMuted}
+                value={trialPhone}
+                onChangeText={v => { setTrialPhone(v); setTrialProvider(null); }}
+                keyboardType="phone-pad"
+                textAlign={isRTL ? 'right' : 'left'}
+              />
+              <TouchableOpacity
+                style={[styles.modalSearchBtn, trialSearching && styles.modalBtnDisabled]}
+                onPress={handleSearchProvider}
+                disabled={trialSearching}
+              >
+                {trialSearching
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.modalSearchBtnText}>{t('admin.trialSearch')}</Text>
+                }
+              </TouchableOpacity>
+            </View>
+
+            {trialProvider && (
+              <View style={styles.modalProviderCard}>
+                <Text style={styles.modalProviderName}>{trialProvider.full_name}</Text>
+                {trialProvider.trial_used && (
+                  <Text style={styles.modalProviderWarn}>{t('admin.trialAlreadyUsed')}</Text>
+                )}
+                {!trialProvider.trial_used && (
+                  <TouchableOpacity
+                    style={[styles.modalGrantBtn, trialGranting && styles.modalBtnDisabled]}
+                    onPress={handleGrantTrial}
+                    disabled={trialGranting}
+                  >
+                    {trialGranting
+                      ? <ActivityIndicator color="#fff" size="small" />
+                      : <Text style={styles.modalGrantBtnText}>{t('admin.trialGrant')}</Text>
+                    }
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setTrialModal(false)}>
+              <Text style={styles.modalCloseBtnText}>{t('common.cancel')}</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* Filter tabs */}
       <View style={styles.filterRow}>
@@ -374,5 +500,26 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     suggBtnDisabled: { opacity: 0.5 },
     suggApproveBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
     suggRejectBtnText:  { fontSize: 13, fontWeight: '700', color: '#EF4444' },
+
+    trialHeaderBtn:     { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
+    trialHeaderBtnText: { fontSize: 20 },
+
+    modalOverlay:     { flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'flex-end' },
+    modalBox:         { backgroundColor: colors.bg, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 16 },
+    modalTitle:       { fontSize: 17, fontWeight: '700', color: colors.textPrimary, textAlign: 'center' },
+    modalSearchRow:   { flexDirection: isRTL ? 'row-reverse' : 'row', gap: 8 },
+    modalInput:       { flex: 1, backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, color: colors.textPrimary, fontSize: 14, borderWidth: 1, borderColor: colors.border },
+    modalSearchBtn:   { backgroundColor: colors.accent, borderRadius: 12, paddingHorizontal: 16, justifyContent: 'center', alignItems: 'center' },
+    modalBtnDisabled: { opacity: 0.5 },
+    modalSearchBtnText: { fontSize: 13, fontWeight: '700', color: colors.bg },
+
+    modalProviderCard: { backgroundColor: colors.surface, borderRadius: 14, padding: 14, gap: 10, borderWidth: 1, borderColor: colors.border },
+    modalProviderName: { fontSize: 15, fontWeight: '700', color: colors.textPrimary, textAlign: ta },
+    modalProviderWarn: { fontSize: 13, color: '#EF4444', textAlign: ta },
+    modalGrantBtn:     { backgroundColor: '#15803D', borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
+    modalGrantBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+
+    modalCloseBtn:     { paddingVertical: 12, alignItems: 'center' },
+    modalCloseBtnText: { fontSize: 14, color: colors.textMuted, fontWeight: '600' },
   });
 }

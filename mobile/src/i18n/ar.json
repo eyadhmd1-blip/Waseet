@@ -1545,7 +1545,16 @@
     "suggApprove": "موافقة",
     "suggReject": "رفض",
     "suggApproveConfirm": "الموافقة على \"{{name}}\" ستُضيفها للخدمات وتُخطر المستخدم",
-    "suggRejectConfirm": "هل تريد رفض هذا الاقتراح؟"
+    "suggRejectConfirm": "هل تريد رفض هذا الاقتراح؟",
+    "trialBtn": "🎁 منح تجربة",
+    "trialModalTitle": "منح اشتراك تجريبي",
+    "trialSearchPlaceholder": "رقم الهاتف (مثال: 0791234567)",
+    "trialSearch": "بحث",
+    "trialNotFound": "لم يُعثر على مزود بهذا الرقم",
+    "trialAlreadyUsed": "هذا المزود استخدم التجربة مسبقاً",
+    "trialConfirm": "منح 30 يوماً تجريبياً + 10 نقاط لـ {{name}}؟",
+    "trialGrant": "منح التجربة",
+    "trialSuccess": "تم منح الاشتراك التجريبي بنجاح"
   },
   "suggestions": {
     "notFound": "لم تجد خدمتك؟ اقترح خدمة جديدة",

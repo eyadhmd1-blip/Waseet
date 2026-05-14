@@ -1537,7 +1537,16 @@
     "suggApprove": "Approve",
     "suggReject": "Reject",
     "suggApproveConfirm": "Approving \"{{name}}\" will add it to services and notify the user",
-    "suggRejectConfirm": "Reject this suggestion?"
+    "suggRejectConfirm": "Reject this suggestion?",
+    "trialBtn": "🎁 Grant Trial",
+    "trialModalTitle": "Grant Trial Subscription",
+    "trialSearchPlaceholder": "Phone number (e.g. 0791234567)",
+    "trialSearch": "Search",
+    "trialNotFound": "No provider found with this number",
+    "trialAlreadyUsed": "This provider has already used their trial",
+    "trialConfirm": "Grant 30-day trial + 10 credits to {{name}}?",
+    "trialGrant": "Grant Trial",
+    "trialSuccess": "Trial subscription granted successfully"
   },
   "suggestions": {
     "notFound": "Can't find your service? Suggest one",
