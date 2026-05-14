@@ -732,11 +732,11 @@ export default function OnboardingScreen() {
   }, []);
   const [done, setDone]               = useState(false);
 
-  // Steps: client = [1,2,5]  provider = [1,2,3,4,5]
-  const steps = role === 'provider' ? [1, 2, 3, 4] : [1, 2];
+  // Steps: client = [1,2]  provider = [1,2,3] — plan selection removed, trial auto-activated
+  const steps = role === 'provider' ? [1, 2, 3] : [1, 2];
   const [stepIndex, setStepIndex]     = useState(0);
   const currentStep = steps[stepIndex];
-  const totalVisual = role === 'provider' ? 4 : 2;
+  const totalVisual = role === 'provider' ? 3 : 2;
 
   // Slide animation
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -846,17 +846,8 @@ export default function OnboardingScreen() {
         await supabase.rpc('init_provider_demo', { p_provider_id: user.id });
       }
 
-      // Sync planChoice state so handleExplore routes correctly
-      if (planOverride !== undefined) setPlanChoice(planOverride);
-
-      const effectivePlan = planOverride !== undefined ? planOverride : planChoice;
-      const isPaid = role === 'provider' && effectivePlan !== 'trial' && effectivePlan !== null;
-
-      // Directly signal _layout.tsx with the real role so the route guard
-      // resolves instantly without waiting for onAuthStateChange.
-      // For paid plans, pass a redirect target so the guard sends the provider
-      // to the subscribe screen instead of the default /(provider) home.
-      notifyRoleUpdate(role, isPaid ? `/subscribe?tier=${effectivePlan}` : undefined);
+      // Signal _layout.tsx with role so the route guard resolves instantly.
+      notifyRoleUpdate(role, undefined);
 
       setDone(true);
     } catch (err: any) {
@@ -867,11 +858,7 @@ export default function OnboardingScreen() {
   };
 
   const handleExplore = () => {
-    if (role === 'provider' && planChoice !== 'trial' && planChoice !== null) {
-      router.replace(`/subscribe?tier=${planChoice}` as any);
-    } else {
-      router.replace(role === 'provider' ? '/(provider)' : '/(client)');
-    }
+    router.replace(role === 'provider' ? '/(provider)' : '/(client)');
   };
 
   // Step 1 — new full-screen design (no header/progress bar)
@@ -941,18 +928,6 @@ export default function OnboardingScreen() {
             setSelectedCats={setSelectedCats}
             groups={groups}
             onSuggest={() => setShowSuggest(true)}
-          />
-        )}
-        {currentStep === 4 && (
-          <Step4Plan
-            planChoice={planChoice}
-            setPlanChoice={setPlanChoice}
-            trialUsed={trialUsed}
-            saving={saving}
-            onStartFree={() => {
-              setPlanChoice('trial');
-              handleSubmit('trial');
-            }}
           />
         )}
       </Animated.View>
