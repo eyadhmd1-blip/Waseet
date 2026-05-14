@@ -89,6 +89,19 @@ export default function SupportScreen() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+    const channel = supabase
+      .channel('admin-new-tickets')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'support_tickets' },
+        () => { setAdminNew(prev => prev + 1); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isAdmin]);
+
   if (loading) {
     return (
       <View style={styles.center}>
