@@ -28,6 +28,7 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { getServiceRoleKey } from "../_shared/keys.ts";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -57,7 +58,7 @@ const json = (body: object, status = 200) =>
 function makeAdmin() {
   return createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    getServiceRoleKey(),
     { auth: { persistSession: false } },
   );
 }
@@ -611,7 +612,7 @@ Deno.serve(async (req: Request) => {
 
   // Only DB triggers / pg_cron (via service_role key) may invoke this function
   const authHeader = req.headers.get("Authorization") ?? "";
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const serviceKey = getServiceRoleKey();
   if (!authHeader || authHeader !== `Bearer ${serviceKey}`) {
     return json({ error: "unauthorized" }, 401);
   }
