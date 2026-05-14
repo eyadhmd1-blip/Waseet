@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TextInput,
-  TouchableOpacity, Alert, KeyboardAvoidingView, Platform,
+  TouchableOpacity, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,7 @@ import { supabase } from '../src/lib/supabase';
 import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
 import type { AppColors } from '../src/constants/colors';
+import { useAppAlert } from '../src/components/AppAlert';
 
 const RESEND_COOLDOWN = 60; // seconds
 
@@ -19,6 +20,7 @@ export default function VerifyPhoneScreen() {
   const { colors, isDark } = useTheme();
 
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
+  const { showAlert, AlertComponent } = useAppAlert();
 
   const [phone, setPhone]       = useState('');
   const [otp, setOtp]           = useState(['', '', '', '', '', '']);
@@ -68,7 +70,7 @@ export default function VerifyPhoneScreen() {
       });
 
       if (error) {
-        Alert.alert(t('common.error'), t('verifyPhone.sendFailed'));
+        showAlert(t('common.error'), t('verifyPhone.sendFailed'));
         return;
       }
 
@@ -84,7 +86,7 @@ export default function VerifyPhoneScreen() {
       setStep('enter_code');
       startCountdown();
     } catch {
-      Alert.alert(t('common.error'), t('verifyPhone.sendFailed'));
+      showAlert(t('common.error'), t('verifyPhone.sendFailed'));
     } finally {
       setLoading(false);
     }
@@ -114,7 +116,7 @@ export default function VerifyPhoneScreen() {
       });
 
       if (error) {
-        Alert.alert(t('verifyPhone.wrongCode'), t('verifyPhone.wrongCodeMsg'));
+        showAlert(t('verifyPhone.wrongCode'), t('verifyPhone.wrongCodeMsg'));
         setOtp(['', '', '', '', '', '']);
         inputs.current[0]?.focus();
         return;
@@ -132,7 +134,7 @@ export default function VerifyPhoneScreen() {
         router.replace('/(client)');
       }
     } catch {
-      Alert.alert(t('common.error'), t('verifyPhone.verifyFailed'));
+      showAlert(t('common.error'), t('verifyPhone.verifyFailed'));
     } finally {
       setLoading(false);
     }
@@ -233,6 +235,7 @@ export default function VerifyPhoneScreen() {
         )}
       </View>
     </KeyboardAvoidingView>
+      {AlertComponent}
     </LinearGradient>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TextInput,
-  TouchableOpacity, KeyboardAvoidingView, Platform, Alert,
+  TouchableOpacity, KeyboardAvoidingView, Platform,
   ScrollView, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,6 +12,7 @@ import { useInsets } from '../../src/hooks/useInsets';
 import { rs } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
+import { useAppAlert } from '../../src/components/AppAlert';
 
 function normalizeDigits(s: string): string {
   return s
@@ -29,6 +30,7 @@ export default function LoginScreen() {
   const [phoneError, setPhoneError] = useState(false);
 
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
+  const { showAlert, AlertComponent } = useAppAlert();
 
   // ── Send OTP ─────────────────────────────────────────────────
   const handleSendOtp = async () => {
@@ -41,7 +43,7 @@ export default function LoginScreen() {
 
     const jordanPattern = /^(\+962|00962|0)?7[789]\d{7}$/;
     if (!jordanPattern.test(formatted)) {
-      Alert.alert(t('common.error'), 'رقم الهاتف غير صالح.\nأدخل رقماً أردنياً صحيحاً\nمثال: 0791234567');
+      showAlert(t('common.error'), 'رقم الهاتف غير صالح.\nأدخل رقماً أردنياً صحيحاً\nمثال: 0791234567');
       return;
     }
 
@@ -63,15 +65,15 @@ export default function LoginScreen() {
 
       if (error || !data?.success) {
         if (errCode === 'INVALID_JORDAN_PHONE' || errCode === 'INVALID_PHONE') {
-          Alert.alert(t('common.error'), 'رقم الهاتف غير صالح.\nأدخل رقماً أردنياً صحيحاً\nمثال: 0791234567');
+          showAlert(t('common.error'), 'رقم الهاتف غير صالح.\nأدخل رقماً أردنياً صحيحاً\nمثال: 0791234567');
         } else if (errCode === 'RATE_LIMITED' || errCode === 'TOO_MANY_REQUESTS') {
-          Alert.alert(t('common.error'), 'تجاوزت الحد المسموح.\nانتظر قليلاً وأعد المحاولة.');
+          showAlert(t('common.error'), 'تجاوزت الحد المسموح.\nانتظر قليلاً وأعد المحاولة.');
         } else if (errCode === 'DAILY_LIMIT_EXCEEDED') {
-          Alert.alert(t('common.error'), 'تجاوزت الحد اليومي لإرسال الرموز.\nحاول مجدداً غداً.');
+          showAlert(t('common.error'), 'تجاوزت الحد اليومي لإرسال الرموز.\nحاول مجدداً غداً.');
         } else if (errCode === 'SMS_SEND_FAILED') {
-          Alert.alert(t('common.error'), 'تعذّر إرسال الرسالة النصية.\nحاول مرة أخرى.');
+          showAlert(t('common.error'), 'تعذّر إرسال الرسالة النصية.\nحاول مرة أخرى.');
         } else {
-          Alert.alert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
+          showAlert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
         }
         return;
       }
@@ -80,7 +82,7 @@ export default function LoginScreen() {
       if (data.dev_code) params.dev_code = String(data.dev_code);
       router.push({ pathname: '/(auth)/verify', params });
     } catch {
-      Alert.alert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
+      showAlert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
     } finally {
       setLoading(false);
     }
@@ -172,6 +174,7 @@ export default function LoginScreen() {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
+      {AlertComponent}
     </LinearGradient>
   );
 }

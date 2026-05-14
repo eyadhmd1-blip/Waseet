@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TextInput,
-  TouchableOpacity, Alert, useWindowDimensions,
+  TouchableOpacity, useWindowDimensions,
   ScrollView, Image, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,6 +12,7 @@ import { useInsets } from '../../src/hooks/useInsets';
 import { rs } from '../../src/utils/layout';
 import { useTheme } from '../../src/context/ThemeContext';
 import type { AppColors } from '../../src/constants/colors';
+import { useAppAlert } from '../../src/components/AppAlert';
 
 const RESEND_COOLDOWN = 60;
 
@@ -36,6 +37,7 @@ export default function VerifyScreen() {
     () => createStyles(colors, isRTL, isDark, otpBoxSize),
     [colors, isRTL, isDark, otpBoxSize],
   );
+  const { showAlert, AlertComponent } = useAppAlert();
 
   // ── Countdown timer ───────────────────────────────────────────
   const startCountdown = useCallback(() => {
@@ -96,11 +98,11 @@ export default function VerifyScreen() {
         }
 
         if (errCode === 'OTP_EXPIRED') {
-          Alert.alert(t('common.error'), t('auth.otpExpired'));
+          showAlert(t('common.error'), t('auth.otpExpired'));
         } else if (errCode === 'MAX_ATTEMPTS') {
-          Alert.alert(t('common.error'), t('auth.maxAttempts'));
+          showAlert(t('common.error'), t('auth.maxAttempts'));
         } else {
-          Alert.alert(t('auth.wrongCode'), t('auth.wrongCodeMsg'));
+          showAlert(t('auth.wrongCode'), t('auth.wrongCodeMsg'));
         }
         setOtp(['', '', '', '', '', '']);
         inputs.current[0]?.focus();
@@ -113,7 +115,7 @@ export default function VerifyScreen() {
       });
 
       if (sessionError || !sessionData?.user) {
-        Alert.alert(t('common.error'), t('auth.sessionFailed'));
+        showAlert(t('common.error'), t('auth.sessionFailed'));
         return;
       }
 
@@ -125,7 +127,7 @@ export default function VerifyScreen() {
 
       if (userData?.is_suspended) {
         await supabase.auth.signOut();
-        Alert.alert(t('common.error'), t('auth.accountSuspended'));
+        showAlert(t('common.error'), t('auth.accountSuspended'));
         return;
       }
 
@@ -137,7 +139,7 @@ export default function VerifyScreen() {
         router.replace('/(client)');
       }
     } catch {
-      Alert.alert(t('common.error'), t('auth.wrongCodeMsg'));
+      showAlert(t('common.error'), t('auth.wrongCodeMsg'));
       setOtp(['', '', '', '', '', '']);
       inputs.current[0]?.focus();
     } finally {
@@ -157,9 +159,9 @@ export default function VerifyScreen() {
       if (error || !data?.success) {
         const errCode: string | undefined = data?.error;
         if (errCode === 'RATE_LIMITED' || errCode === 'TOO_MANY_REQUESTS') {
-          Alert.alert(t('common.error'), t('auth.resendWait'));
+          showAlert(t('common.error'), t('auth.resendWait'));
         } else {
-          Alert.alert(t('common.error'), t('auth.resendFailed'));
+          showAlert(t('common.error'), t('auth.resendFailed'));
         }
         return;
       }
@@ -168,7 +170,7 @@ export default function VerifyScreen() {
       inputs.current[0]?.focus();
       startCountdown();
     } catch {
-      Alert.alert(t('common.error'), t('auth.resendFailed'));
+      showAlert(t('common.error'), t('auth.resendFailed'));
     } finally {
       setResending(false);
     }
@@ -290,6 +292,7 @@ export default function VerifyScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      {AlertComponent}
     </LinearGradient>
   );
 }

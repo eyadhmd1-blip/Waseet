@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  Switch, ActivityIndicator, Alert, Animated,
+  Switch, ActivityIndicator, Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
@@ -10,6 +10,7 @@ import { useLanguage } from '../src/hooks/useLanguage';
 import { useTheme } from '../src/context/ThemeContext';
 import { AppHeader } from '../src/components/AppHeader';
 import type { AppColors } from '../src/constants/colors';
+import { useAppAlert } from '../src/components/AppAlert';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export default function NotificationSettingsScreen() {
   const { t, isRTL } = useLanguage();
   const st = useMemo(() => createSt(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const router = useRouter();
+  const { showAlert, AlertComponent } = useAppAlert();
 
   const [prefs,   setPrefs]   = useState<Prefs>(DEFAULTS);
   const [loading, setLoading] = useState(true);
@@ -106,7 +108,7 @@ export default function NotificationSettingsScreen() {
     // Validate quiet hours range (BUG-024)
     if (!QUIET_START_OPTIONS.includes(prefs.quiet_hour_start) ||
         !QUIET_END_OPTIONS.includes(prefs.quiet_hour_end)) {
-      Alert.alert(t('common.error'), t('notifSettings.saveErr'));
+      showAlert(t('common.error'), t('notifSettings.saveErr'));
       return;
     }
 
@@ -121,9 +123,9 @@ export default function NotificationSettingsScreen() {
 
     setSaving(false);
     if (error) {
-      Alert.alert(t('common.error'), t('notifSettings.saveErr'));
+      showAlert(t('common.error'), t('notifSettings.saveErr'));
     } else {
-      Alert.alert(t('notifSettings.saveSuccess'), t('notifSettings.saveSuccessMsg'));
+      showAlert(t('notifSettings.saveSuccess'), t('notifSettings.saveSuccessMsg'));
     }
   };
 
@@ -302,6 +304,7 @@ export default function NotificationSettingsScreen() {
           </TouchableOpacity>
       </Animated.ScrollView>
       </LinearGradient>
+      {AlertComponent}
     </View>
   );
 }

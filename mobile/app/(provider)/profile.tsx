@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   RefreshControl, ActivityIndicator, Image, Dimensions, Switch,
-  Modal, Alert,
+  Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter, useFocusEffect, useLocalSearchParams } from 'expo-router';
@@ -19,6 +19,7 @@ import { getInitials } from '../../src/utils/avatar';
 import { useTheme } from '../../src/context/ThemeContext';
 import { AppHeader } from '../../src/components/AppHeader';
 import type { AppColors } from '../../src/constants/colors';
+import { useAppAlert } from '../../src/components/AppAlert';
 
 const { width: W } = Dimensions.get('window');
 
@@ -136,6 +137,7 @@ export default function ProviderProfile() {
   const { t, isRTL, lang, toggleLanguage } = useLanguage();
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const { contentPad } = useInsets();
+  const { showAlert, AlertComponent } = useAppAlert();
   const router = useRouter();
   const { tab: tabParam } = useLocalSearchParams<{ tab?: string }>();
   const scrollRef   = useRef<ScrollView>(null);
@@ -222,7 +224,7 @@ export default function ProviderProfile() {
     const authUser = _ses?.user;
     if (!authUser) { setIsAvailable(prev); return; }
     const { error } = await supabase.from('providers').update({ is_available: val }).eq('id', authUser.id);
-    if (error) { setIsAvailable(prev); Alert.alert(t('common.error'), error.message); }
+    if (error) { setIsAvailable(prev); showAlert(t('common.error'), error.message); }
   };
 
   const toggleUrgent = async (val: boolean) => {
@@ -232,7 +234,7 @@ export default function ProviderProfile() {
     const authUser = _ses?.user;
     if (!authUser) { setUrgentEnabled(prev); return; }
     const { error } = await supabase.from('providers').update({ urgent_enabled: val }).eq('id', authUser.id);
-    if (error) { setUrgentEnabled(prev); Alert.alert(t('common.error'), error.message); }
+    if (error) { setUrgentEnabled(prev); showAlert(t('common.error'), error.message); }
   };
 
   const openCatModal = () => {
@@ -246,7 +248,7 @@ export default function ProviderProfile() {
     const authUser = _ses?.user;
     if (!authUser) return;
     const { error } = await supabase.from('providers').update({ categories: updated }).eq('id', authUser.id);
-    if (error) { Alert.alert(t('common.error'), error.message); load(); }
+    if (error) { showAlert(t('common.error'), error.message); load(); }
     else load();
   };
 
@@ -254,7 +256,7 @@ export default function ProviderProfile() {
     setSelectedCats(prev => {
       if (prev.includes(slug)) return prev.filter(s => s !== slug);
       if (prev.length >= 3) {
-        Alert.alert(t('profile.maxSpecialties'), t('profile.maxSpecialtiesMsg'));
+        showAlert(t('profile.maxSpecialties'), t('profile.maxSpecialtiesMsg'));
         return prev;
       }
       return [...prev, slug];
@@ -263,7 +265,7 @@ export default function ProviderProfile() {
 
   const saveCategories = async () => {
     if (selectedCats.length === 0) {
-      Alert.alert(t('profile.maxSpecialties'), t('profile.minSpecialtiesMsg'));
+      showAlert(t('profile.maxSpecialties'), t('profile.minSpecialtiesMsg'));
       return;
     }
     setSavingCats(true);
@@ -272,7 +274,7 @@ export default function ProviderProfile() {
     if (!authUser) { setSavingCats(false); return; }
     const { error } = await supabase.from('providers').update({ categories: selectedCats }).eq('id', authUser.id);
     setSavingCats(false);
-    if (error) Alert.alert(t('common.error'), error.message);
+    if (error) showAlert(t('common.error'), error.message);
     else { setCatModalVisible(false); load(); }
   };
 
@@ -290,7 +292,7 @@ export default function ProviderProfile() {
     if (!authUser) { setSavingCity(false); return; }
     const { error } = await supabase.from('users').update({ city: selectedCity }).eq('id', authUser.id);
     setSavingCity(false);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { showAlert(t('common.error'), error.message); return; }
     // Optimistic update — no need to refetch everything
     setProvider(prev => prev ? { ...prev, user: { ...prev.user, city: selectedCity } } : prev);
     setCityModalVisible(false);
@@ -1058,6 +1060,7 @@ export default function ProviderProfile() {
           </View>
         </View>
       </Modal>
+      {AlertComponent}
       </LinearGradient>
     </View>
   );
