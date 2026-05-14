@@ -204,7 +204,7 @@ export default function SupportThreadScreen() {
             data:      { screen: '/(provider)/profile', tier },
             channelId: 'default',
           }),
-        }).catch(() => {});
+        }).catch(err => console.warn('[Waseet] push notify-upgrade failed:', err?.message));
       }
     } catch { /* non-blocking */ }
   };
@@ -250,7 +250,7 @@ export default function SupportThreadScreen() {
           sound:     'default',
           data:      { screen: 'support_thread', job_id: id },
         }),
-      }).catch(() => {});
+      }).catch(err => console.warn('[Waseet] push support-reply failed:', err?.message));
     } catch { /* non-blocking */ }
   };
 

@@ -28,8 +28,8 @@ export function useNetworkStatus() {
   useEffect(() => {
     poll();
 
-    // Poll every 15 seconds when app is in foreground
-    intervalRef.current = setInterval(poll, 15_000);
+    // Poll every 5 seconds when app is in foreground (15s was too slow for 3G drops)
+    intervalRef.current = setInterval(poll, 5_000);
 
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
       if (state === 'active') {

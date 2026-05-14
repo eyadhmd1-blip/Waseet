@@ -193,7 +193,9 @@ export default function ChatScreen() {
           setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') console.warn('[Waseet] chat channel error:', job_id);
+      });
     return () => { supabase.removeChannel(channel); };
   }, [job_id]);
 

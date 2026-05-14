@@ -37,7 +37,12 @@ export function useUnreadNotifCount() {
           { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
           () => setCount(prev => prev + 1),
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR') {
+            console.warn('[Waseet] notif_count channel error — refreshing count');
+            refresh();
+          }
+        });
 
       return channel;
     };

@@ -1255,7 +1255,9 @@ export default function ProviderFeed() {
         }, (payload) => {
           setProvider((prev: any) => prev ? { ...prev, ...payload.new } : prev);
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR') console.warn('[Waseet] provider_profile channel error');
+        });
     });
 
     return () => { if (profileChannel) supabase.removeChannel(profileChannel); };
@@ -1379,7 +1381,7 @@ export default function ProviderFeed() {
     setMyBidAmounts(prev => new Map([...prev, [submittedId, { amount: premiumMin ?? 0, bidId: result.bid_id ?? '', is_boosted: false, boost_expires_at: null }]]));
     supabase.functions.invoke('notify-client-new-bid', {
       body: { request_id: submittedId },
-    }).catch(() => {});
+    }).catch(err => console.warn('[Waseet] notify-client-new-bid failed:', err?.message));
     Alert.alert(t('providerFeed.successUrgentTitle'), t('providerFeed.successUrgentMsg'));
     load();
   };
@@ -1438,7 +1440,7 @@ export default function ProviderFeed() {
     setMyBidAmounts(prev => new Map([...prev, [submittedId, { amount: submittedAmount, bidId: result.bid_id ?? '', is_boosted: false, boost_expires_at: null }]]));
     supabase.functions.invoke('notify-client-new-bid', {
       body: { request_id: submittedId },
-    }).catch(() => {});
+    }).catch(err => console.warn('[Waseet] notify-client-new-bid failed:', err?.message));
     Alert.alert(t('providerFeed.successBidTitle'), t('providerFeed.successBidMsg'));
     load();
   };
@@ -2081,6 +2083,7 @@ export default function ProviderFeed() {
                   source={{ uri: url }}
                   style={{ width: Dimensions_width, height: Dimensions_height }}
                   resizeMode="contain"
+                  onError={() => console.warn('[Waseet] image viewer load failed:', url)}
                 />
               </Pressable>
             ))}
@@ -2134,7 +2137,7 @@ export default function ProviderFeed() {
                       activeOpacity={0.85}
                       onPress={() => setImageViewer({ urls: detailSheet!.image_urls, index: i })}
                     >
-                      <Image source={{ uri: url }} style={styles.detailImg} resizeMode="cover" />
+                      <Image source={{ uri: url }} style={styles.detailImg} resizeMode="cover" onError={() => console.warn('[Waseet] detail image load failed:', url)} />
                     </TouchableOpacity>
                   ))}
                 </ScrollView>

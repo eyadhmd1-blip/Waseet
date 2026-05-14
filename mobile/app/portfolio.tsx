@@ -178,7 +178,7 @@ function PortfolioCard({
         activeOpacity={0.92}
       >
         {thumb ? (
-          <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+          <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => console.warn('[Waseet] portfolio thumb failed:', thumb)} />
         ) : (
           <View style={[StyleSheet.absoluteFill, cardSt.videoPlaceholder]}>
             <Text style={{ fontSize: 44 }}>🎥</Text>

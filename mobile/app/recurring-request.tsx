@@ -182,7 +182,7 @@ export default function RecurringRequestScreen() {
       if (inserted?.id) {
         supabase.functions.invoke('notify-contract', {
           body: { contract_id: inserted.id, city, category_slug: selectedCat.slug },
-        }).catch(() => {});
+        }).catch(err => console.warn('[Waseet] notify-contract failed:', err?.message));
       }
 
       setShowSuccess(true);

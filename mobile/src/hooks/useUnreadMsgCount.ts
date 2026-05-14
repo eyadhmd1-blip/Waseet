@@ -60,7 +60,12 @@ export function useUnreadMsgCount() {
             if (userIdRef.current) fetchCount(userIdRef.current, [...jobIdsRef.current]);
           }, 300);
         })
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'CHANNEL_ERROR') {
+            console.warn('[Waseet] unread_msg channel error — refreshing count');
+            if (userIdRef.current) fetchCount(userIdRef.current, [...jobIdsRef.current]);
+          }
+        });
     };
 
     setup();

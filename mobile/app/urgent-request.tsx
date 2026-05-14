@@ -230,10 +230,17 @@ export default function UrgentRequestScreen() {
     if (!desc.trim() || desc.length < 10) return;
     setAiLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-price-suggest', {
-        body: { category: cat.slug, description: desc.trim() },
-      });
-      if (!error && data?.min && data?.max) { setAiMin(data.min); setAiMax(data.max); }
+      const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 10_000));
+      const result = await Promise.race([
+        supabase.functions.invoke('ai-price-suggest', {
+          body: { category: cat.slug, description: desc.trim() },
+        }),
+        timeout,
+      ]);
+      if (result && !result.error && result.data?.min && result.data?.max) {
+        setAiMin(result.data.min);
+        setAiMax(result.data.max);
+      }
     } catch { /* non-blocking */ }
     finally { setAiLoading(false); }
   }, []);
@@ -292,7 +299,7 @@ export default function UrgentRequestScreen() {
 
       supabase.functions.invoke('notify-urgent', {
         body: { request_id: req!.id, city, category_slug: selectedCat!.slug },
-      }).catch(() => {});
+      }).catch(err => console.warn('[Waseet] notify-urgent failed:', err?.message));
 
       setShowConfirm(false);
       setShowSuccess(true);

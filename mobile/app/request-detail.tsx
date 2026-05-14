@@ -157,7 +157,9 @@ export default function RequestDetail() {
       }, (payload) => {
         setConfirmCode((payload.new as any).confirm_code ?? null);
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') console.warn('[Waseet] job-confirm channel error:', activeJobId);
+      });
     return () => { supabase.removeChannel(channel); };
   }, [activeJobId]);
 
@@ -192,7 +194,9 @@ export default function RequestDetail() {
           );
         }
       })
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') console.warn('[Waseet] bids channel error:', id);
+      });
 
     return () => { supabase.removeChannel(channel); };
   }, [id, request?.status]);
@@ -226,7 +230,7 @@ export default function RequestDetail() {
 
     supabase.functions.invoke('notify-providers-bid-rejected', {
       body: { request_id: id },
-    }).catch(() => {});
+    }).catch(err => console.warn('[Waseet] notify-providers-bid-rejected failed:', err?.message));
 
     setAccepting(null);
 

@@ -51,7 +51,7 @@ function PortfolioThumb({ item }: { item: PortfolioItem }) {
   return (
     <View style={[styles.portfolioThumb, { width: THUMB_SIZE, height: THUMB_SIZE }]}>
       {thumb
-        ? <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} resizeMode="cover" />
+        ? <Image source={{ uri: thumb }} style={StyleSheet.absoluteFill} resizeMode="cover" onError={() => console.warn('[Waseet] provider-profile thumb failed:', thumb)} />
         : <View style={[StyleSheet.absoluteFill, styles.videoThumbBg]}>
             <Text style={{ fontSize: 24 }}>🎥</Text>
           </View>

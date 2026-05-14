@@ -148,14 +148,18 @@ export default function NewRequestScreen() {
     if (!selectedCat || !description.trim()) return;
     setAiLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-price-suggest', {
-        body: { category: selectedCat.slug, description: description.trim() },
-      });
-      if (!error && data?.min && data?.max) {
-        setAiPrice({ min: data.min, max: data.max });
+      const timeout = new Promise<null>(resolve => setTimeout(() => resolve(null), 10_000));
+      const result = await Promise.race([
+        supabase.functions.invoke('ai-price-suggest', {
+          body: { category: selectedCat.slug, description: description.trim() },
+        }),
+        timeout,
+      ]);
+      if (result && !result.error && result.data?.min && result.data?.max) {
+        setAiPrice({ min: result.data.min, max: result.data.max });
       }
     } catch {
-      // AI price is non-blocking
+      // AI price is non-blocking — form still works without it
     } finally {
       setAiLoading(false);
     }
@@ -267,21 +271,23 @@ export default function NewRequestScreen() {
     if (error) {
       // Clean up any images uploaded before the request insert failed
       if (uploadedPaths.length > 0) {
-        supabase.storage.from('request-images').remove(uploadedPaths).catch(() => {});
+        supabase.storage.from('request-images').remove(uploadedPaths).catch(err => console.warn('[Waseet] cleanup images failed:', err?.message));
       }
       Alert.alert(t('common.error'), error.message);
       return;
     }
 
     if (notifId) {
-      supabase.rpc('mark_notification_converted', { notif_id: notifId }).then(() => {});
+      supabase.rpc('mark_notification_converted', { notif_id: notifId }).then(({ error }) => {
+        if (error) console.warn('[Waseet] mark_notification_converted failed:', error.message);
+      });
     }
 
     // Notify matching providers (active + recently lapsed + medium-inactive)
     if (newReq?.id) {
       supabase.functions.invoke('notify-new-request', {
         body: { request_id: newReq.id, city, category_slug: selectedCat!.slug },
-      }).catch(() => {});
+      }).catch(err => console.warn('[Waseet] notify-new-request failed:', err?.message));
     }
 
     setShowSuccess(true);
