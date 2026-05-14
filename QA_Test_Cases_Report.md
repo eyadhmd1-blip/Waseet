@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.2  
+**Document Version:** 4.3  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -7022,9 +7022,101 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.2*  
-*Total Test Cases: 582 across 43 modules*  
-*Critical: 156 | High: 244 | Medium: 149 | Low: 32 (previously: 576/42)*  
+---
+
+## 44. BUGFIX6 — Bug-Fix Regression Suite v4.3 (BUG-AH06)
+
+**Scope:** Cursor-based pagination for admin support tickets  
+**Files:** `mobile/app/admin.tsx`
+
+---
+
+#### BUGFIX6-001
+**ID:** BUGFIX6-001  
+**Title:** Admin sees first 30 tickets on screen open  
+**Priority:** High  
+**Steps:**
+1. أدخل لشاشة Admin (أكثر من 30 تذكرة موجودة في DB)
+2. افحص القائمة عند الفتح
+
+**Expected:** تظهر أحدث 30 تذكرة مرتبة تنازلياً بالتاريخ  
+**Regression:** الـ filter tabs تعمل كما كانت  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX6-002
+**ID:** BUGFIX6-002  
+**Title:** Scrolling to end loads next page  
+**Priority:** High  
+**Steps:**
+1. مرر للأسفل حتى نهاية القائمة (30 تذكرة)
+2. انتظر تحميل الصفحة التالية
+
+**Expected:** spinner يظهر في الأسفل → 30 تذكرة إضافية تُضاف  
+**Regression:** التذاكر الأولى لا تختفي، لا تكرار  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX6-003
+**ID:** BUGFIX6-003  
+**Title:** Filter change resets list to first page  
+**Priority:** High  
+**Steps:**
+1. مرر لأسفل وحمّل صفحة ثانية
+2. غيّر الـ filter (مثلاً من "الكل" إلى "مدفوعات")
+
+**Expected:** القائمة تُفرَّغ وتبدأ من أول 30 تذكرة للفلتر الجديد  
+**Regression:** الـ cursor يُصفَّر عند كل تغيير filter  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX6-004
+**ID:** BUGFIX6-004  
+**Title:** Pull-to-refresh resets to first page  
+**Priority:** Medium  
+**Steps:**
+1. مرر للأسفل وحمّل عدة صفحات
+2. اسحب للأعلى لتفعيل pull-to-refresh
+
+**Expected:** القائمة تُعاد من أول 30 تذكرة  
+**Regression:** لا تكرار في التذاكر بعد الـ refresh  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX6-005
+**ID:** BUGFIX6-005  
+**Title:** No more pages indicator stops loading  
+**Priority:** Medium  
+**Steps:**
+1. مرر للأسفل حتى تنتهي كل التذاكر
+
+**Expected:** الـ spinner لا يظهر بعد آخر صفحة، لا طلبات إضافية للـ DB  
+**Regression:** لا infinite loop  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX6-006
+**ID:** BUGFIX6-006  
+**Title:** Suggestions tab unaffected by pagination changes  
+**Priority:** Medium  
+**Steps:**
+1. انتقل لـ tab "اقتراحات"
+2. تحقق من عرض الاقتراحات المعلقة
+
+**Expected:** الاقتراحات تظهر كما كانت، لا تأثير من pagination  
+**Regression:** أزرار الموافقة/الرفض تعمل طبيعياً  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.3*  
+*Total Test Cases: 588 across 44 modules*  
+*Critical: 156 | High: 247 | Medium: 152 | Low: 32 (previously: 582/43)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
