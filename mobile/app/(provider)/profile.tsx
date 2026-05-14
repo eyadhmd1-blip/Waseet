@@ -385,7 +385,7 @@ export default function ProviderProfile() {
                 { color: provider.user?.city ? tierColor : colors.textMuted },
               ]}>
                 {provider.user?.city
-                  ? provider.user.city
+                  ? t(`cities.${provider.user.city}`, provider.user.city)
                   : t('profile.addCity')}
               </Text>
               <Text style={{ fontSize: 10, color: provider.user?.city ? tierColor : colors.textMuted, opacity: 0.7 }}>✏️</Text>

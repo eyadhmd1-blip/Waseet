@@ -242,7 +242,7 @@ export default function ProviderPublicProfile() {
 
             <View style={styles.heroInfo}>
               <Text style={styles.heroName}>{provider.user?.full_name}</Text>
-              <Text style={styles.heroCity}>📍 {provider.user?.city}</Text>
+              <Text style={styles.heroCity}>📍 {provider.user?.city ? t(`cities.${provider.user.city}`, provider.user.city) : ''}</Text>
               <View style={[styles.badgeRow, { justifyContent: ta === 'right' ? 'flex-end' : 'flex-start' }]}>
                 <View style={[styles.tierPill, { backgroundColor: tier.color + '22' }]}>
                   <Text style={[styles.tierPillText, { color: tier.color }]}>{tierLabel}</Text>
