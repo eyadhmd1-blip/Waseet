@@ -38,7 +38,7 @@ workflows:
       vars:
         EXPO_PUBLIC_ENV: "staging"
         EXPO_PUBLIC_SUPABASE_URL: "https://bkbjsstxhvdnqcmpuulf.supabase.co"
-        EXPO_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrYmpzc3R4aHZkbnFjbXB1dWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMjY3ODcsImV4cCI6MjA5MTgwMjc4N30.-B_KTG1LYlKBlNCWjQhLKYfkp5lXN4xhIm1oMYhHsE4"
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_9rUNVOEc7HBmlte6O15c4A_QPzGtTUo"
 
         EXPO_PUBLIC_PROJECT_ID: "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
 
@@ -140,7 +140,7 @@ workflows:
       vars:
         EXPO_PUBLIC_ENV: "staging"
         EXPO_PUBLIC_SUPABASE_URL: "https://bkbjsstxhvdnqcmpuulf.supabase.co"
-        EXPO_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrYmpzc3R4aHZkbnFjbXB1dWxmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMjY3ODcsImV4cCI6MjA5MTgwMjc4N30.-B_KTG1LYlKBlNCWjQhLKYfkp5lXN4xhIm1oMYhHsE4"
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_9rUNVOEc7HBmlte6O15c4A_QPzGtTUo"
 
         EXPO_PUBLIC_PROJECT_ID: "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
 
