@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.1  
+**Document Version:** 4.2  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -6927,9 +6927,104 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.1*  
-*Total Test Cases: 576 across 42 modules*  
-*Critical: 153 | High: 242 | Medium: 148 | Low: 32 (previously: 568/41)*  
+---
+
+## 43. BUGFIX5 — Bug-Fix Regression Suite v4.2 (BUG-AC02)
+
+**Scope:** Admin subscription activation fix + Grant Trial UI  
+**Files:** `supabase/migrations/091_fix_admin_subscription.sql`, `mobile/app/admin.tsx`, `mobile/src/i18n/ar.json`, `mobile/src/i18n/en.json`
+
+---
+
+#### BUGFIX5-001
+**ID:** BUGFIX5-001  
+**Title:** Admin can activate paid subscription via support thread  
+**Priority:** Critical  
+**Steps:**
+1. مزود يفتح تذكرة دفع (basic/pro/premium)
+2. أدمن يفتح الـ thread ويضغط "تفعيل الاشتراك"
+3. يؤكد في الـ Alert
+
+**Expected:** الاشتراك يُفعَّل بنجاح، التذكرة تُغلق، المزود يستلم إشعاراً  
+**Regression:** تفعيل المزود لنفسه من subscribe.tsx يعمل بشكل طبيعي  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX5-002
+**ID:** BUGFIX5-002  
+**Title:** Admin can grant trial via 🎁 button in admin screen  
+**Priority:** High  
+**Steps:**
+1. اضغط زر 🎁 في header شاشة Admin
+2. أدخل رقم هاتف مزود لم يستخدم التجربة
+3. اضغط "بحث" → تحقق من ظهور اسم المزود
+4. اضغط "منح التجربة" وأكّد
+
+**Expected:** الاشتراك التجريبي يُفعَّل (trial_used = true)، رسالة نجاح  
+**Regression:** شاشة Admin العادية لا تتأثر  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX5-003
+**ID:** BUGFIX5-003  
+**Title:** Search by phone returns correct provider  
+**Priority:** High  
+**Steps:**
+1. افتح modal منح التجربة
+2. أدخل رقم هاتف بصيغة 079xxxxxxx
+3. اضغط "بحث"
+
+**Expected:** يظهر اسم المزود الصحيح  
+**Regression:** بحث برقم غير موجود يُظهر رسالة "لم يُعثر على مزود"  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX5-004
+**ID:** BUGFIX5-004  
+**Title:** Block granting trial to provider who already used it  
+**Priority:** Critical  
+**Steps:**
+1. ابحث عن مزود `trial_used = true`
+2. لاحظ نتيجة البحث
+
+**Expected:** يظهر تحذير "هذا المزود استخدم التجربة مسبقاً"، زر المنح لا يظهر  
+**Regression:** DB guard `trial_already_used` يمنع double-grant حتى لو تجاوز الـ UI  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX5-005
+**ID:** BUGFIX5-005  
+**Title:** Provider cannot activate subscription for another provider  
+**Priority:** Critical  
+**Steps:**
+1. من حساب مزود، استدعِ `activate_provider_subscription` مع UUID مزود آخر مباشرةً
+
+**Expected:** exception "unauthorized: cannot activate subscription for another provider"  
+**Regression:** الإصلاح لم يكسر ownership check للمستخدمين العاديين  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX5-006
+**ID:** BUGFIX5-006  
+**Title:** Grant Trial modal closes and resets after success  
+**Priority:** Medium  
+**Steps:**
+1. امنح تجربة بنجاح
+
+**Expected:** الـ modal يُغلق، حقل الهاتف يُفرَّغ، لا بيانات قديمة عند إعادة الفتح  
+**Regression:** لا تأثير على باقي الشاشة  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.2*  
+*Total Test Cases: 582 across 43 modules*  
+*Critical: 156 | High: 244 | Medium: 149 | Low: 32 (previously: 576/42)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
