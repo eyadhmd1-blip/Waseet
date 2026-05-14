@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 3.0  
+**Document Version:** 4.1  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -6803,9 +6803,133 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.0*  
-*Total Test Cases: 568 across 41 modules*  
-*Critical: 152 | High: 238 | Medium: 146 | Low: 32*  
+## 42. BUGFIX4 — Bug-Fix Regression Suite v4.1 (BUG-AC01)
+
+**Scope:** Admin suggestions management tab + trigger column fix + RLS policies  
+**Files:** `mobile/app/admin.tsx`, `supabase/migrations/090_fix_suggestions_admin.sql`, `mobile/src/i18n/ar.json`, `mobile/src/i18n/en.json`
+
+---
+
+#### BUGFIX4-001
+**ID:** BUGFIX4-001  
+**Title:** Admin can see Suggestions tab in admin screen  
+**Priority:** High  
+**Steps:**
+1. سجّل دخول بمستخدم admin (`is_admin = true`)
+2. انتقل لشاشة Admin
+3. افحص صف الـ filter tabs
+
+**Expected:** يظهر tab "اقتراحات" / "Suggestions" رابعاً بعد "محلول"  
+**Regression:** باقي الـ tabs (الكل، مدفوعات، محلول) تعمل بشكل طبيعي  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX4-002
+**ID:** BUGFIX4-002  
+**Title:** Suggestions tab shows pending suggestions  
+**Priority:** High  
+**Steps:**
+1. أدخل اقتراح خدمة من حساب عميل عادي
+2. ادخل لحساب Admin وانتقل لـ Admin screen
+3. اضغط tab "اقتراحات"
+
+**Expected:** يظهر الاقتراح مع اسم المستخدم والتاريخ وزري "موافقة" و"رفض"  
+**Regression:** شاشة التذاكر لا تتأثر عند التبديل للـ tab  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX4-003
+**ID:** BUGFIX4-003  
+**Title:** Admin approve suggestion sends notification to user  
+**Priority:** High  
+**Steps:**
+1. في tab الاقتراحات اضغط "موافقة" على اقتراح
+2. أكّد في الـ Alert
+3. افحص إشعارات المستخدم صاحب الاقتراح
+
+**Expected:** الاقتراح يختفي من القائمة + يصل إشعار "✅ تمت إضافة خدمتك!" للمستخدم  
+**Regression:** الـ trigger يُدرج في الأعمدة الصحيحة (`type` + `metadata`)  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX4-004
+**ID:** BUGFIX4-004  
+**Title:** Admin reject suggestion removes it from pending list  
+**Priority:** High  
+**Steps:**
+1. في tab الاقتراحات اضغط "رفض" على اقتراح
+2. أكّد في الـ Alert
+
+**Expected:** الاقتراح يختفي فوراً من القائمة (status → rejected)، لا يُرسل إشعار  
+**Regression:** الاقتراحات الأخرى في القائمة لا تتأثر  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX4-005
+**ID:** BUGFIX4-005  
+**Title:** Approve/reject buttons show loading state during processing  
+**Priority:** Medium  
+**Steps:**
+1. اضغط "موافقة" وأكّد
+2. راقب الزرين أثناء معالجة الطلب
+
+**Expected:** يظهر ActivityIndicator في الزر المضغوط، كلا الزرين معطّلان حتى ينتهي الطلب  
+**Regression:** لا double-submit ممكن  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX4-006
+**ID:** BUGFIX4-006  
+**Title:** Suggestions tab shows empty state when no pending suggestions  
+**Priority:** Medium  
+**Steps:**
+1. وافق/ارفض كل الاقتراحات المعلقة
+2. ابق في tab الاقتراحات
+
+**Expected:** رسالة "لا توجد اقتراحات معلقة" تظهر بوضوح  
+**Regression:** لا crash، شاشة التذاكر سليمة  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX4-007
+**ID:** BUGFIX4-007  
+**Title:** Non-admin user cannot access or modify suggestions  
+**Priority:** Critical  
+**Steps:**
+1. من حساب عميل أو مقدم، حاول استدعاء:
+   `SELECT * FROM service_suggestions` (بدون filter على user_id)
+2. حاول UPDATE على اقتراح لمستخدم آخر
+
+**Expected:** RLS يمنع: SELECT يُرجع فقط اقتراحات المستخدم نفسه، UPDATE يفشل  
+**Regression:** RLS policies للمستخدمين العاديين لم تتغير  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX4-008
+**ID:** BUGFIX4-008  
+**Title:** Existing tickets tab unaffected after admin.tsx changes  
+**Priority:** High  
+**Steps:**
+1. ادخل لـ Admin screen
+2. تنقّل بين tabs: الكل، مدفوعات، محلول
+3. افتح تذكرة وتحقق من thread
+
+**Expected:** كل tabs التذاكر تعمل بشكل طبيعي كما كانت قبل التعديل  
+**Regression:** لا تأثير على support-thread.tsx أو activate subscription  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.1*  
+*Total Test Cases: 576 across 42 modules*  
+*Critical: 153 | High: 242 | Medium: 148 | Low: 32 (previously: 568/41)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
