@@ -7713,9 +7713,50 @@ ORDER BY group_slug, sort_order;
 
 ---
 
+---
+
+## 53. BUGFIX14 — Image Picker Buttons RTL Order Fix
+
+**Date:** 2026-05-14  
+**Scope:** portfolio-add.tsx — pickImage dialog  
+**Root Cause:** Alert.alert() renders buttons L→R in array order. In RTL mode, "إلغاء" appeared on the right (most prominent position). Camera and Gallery were on the left — opposite of RTL expectations.  
+**Fix:** Reverse buttons array when `isRTL` is true. No logic changes.
+
+---
+
+#### BUGFIX14-001
+**ID:** BUGFIX14-001  
+**Title:** Image picker buttons appear in correct RTL order — Arabic mode  
+**Priority:** Low  
+**Steps:**
+1. افتح التطبيق باللغة العربية على أندرويد
+2. اذهب إلى إضافة عمل جديد في المحفظة
+3. اضغط على أي صورة مقارنة (قبل أو بعد)
+
+**Expected:** ترتيب الأزرار من اليمين لليسار: الكاميرا ← معرض الصور ← إلغاء ✅  
+**Regression:** الكاميرا ومعرض الصور يعملان بشكل صحيح بعد عكس الترتيب  
+**Automation Candidate:** No (visual only)
+
+---
+
+#### BUGFIX14-002
+**ID:** BUGFIX14-002  
+**Title:** Image picker buttons maintain correct LTR order — English mode  
+**Priority:** Low  
+**Steps:**
+1. افتح التطبيق باللغة الإنجليزية
+2. اذهب إلى إضافة عمل جديد في المحفظة
+3. اضغط على أي صورة مقارنة
+
+**Expected:** ترتيب الأزرار من اليسار لليمين: Camera ← Gallery ← Cancel ✅  
+**Regression:** لا تأثير على وضع اللغة الإنجليزية  
+**Automation Candidate:** No (visual only)
+
+---
+
 *End of Waseet QA Test Cases Report v5.0*  
-*Total Test Cases: 624 across 52 modules*  
-*Critical: 158 | High: 261 | Medium: 168 | Low: 37 (previously: 618/51)*  
+*Total Test Cases: 626 across 53 modules*  
+*Critical: 158 | High: 261 | Medium: 168 | Low: 39 (previously: 624/52)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
