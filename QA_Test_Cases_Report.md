@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.4  
+**Document Version:** 4.5  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -7211,9 +7211,75 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.4*  
-*Total Test Cases: 594 across 45 modules*  
-*Critical: 156 | High: 249 | Medium: 156 | Low: 33 (previously: 588/44)*  
+## 46. BUGFIX8 — Bug-Fix Regression Suite v4.5 (BUG-H04)
+
+**Bug:** BUG-H04 — Admin portal route shows static "not authorized" page instead of auto-redirecting  
+**Fix:** Replaced static error view with `router.replace('/support')` so non-admin users are immediately redirected. DB-level RLS already protects all data.  
+**Date:** 2026-05-14  
+**Files Changed:** `mobile/app/admin.tsx`
+
+---
+
+#### BUGFIX8-001
+**ID:** BUGFIX8-001  
+**Title:** Non-admin user navigating to /admin is auto-redirected to support screen  
+**Priority:** High  
+**Steps:**
+1. سجّل دخول كمستخدم عادي (غير admin)
+2. انتقل مباشرةً لـ /admin (عبر deep link أو navigation)
+3. لاحظ ماذا يحدث
+
+**Expected:** إعادة توجيه فورية لشاشة الدعم (/support) دون عرض أي محتوى للأدمن  
+**Regression:** المستخدم الأدمن يصل للشاشة بشكل طبيعي  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX8-002
+**ID:** BUGFIX8-002  
+**Title:** Admin user accesses admin panel without redirect  
+**Priority:** High  
+**Steps:**
+1. سجّل دخول كـ admin
+2. انتقل لـ /admin
+
+**Expected:** الشاشة تُحمَّل بشكل طبيعي، لا redirect  
+**Regression:** جميع التبويبات (all, open, in_review, suggestions) تعمل  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX8-003
+**ID:** BUGFIX8-003  
+**Title:** DB RLS blocks direct API access by non-admin  
+**Priority:** Critical  
+**Steps:**
+1. احصل على JWT لمستخدم عادي
+2. استعلم مباشرةً: `SELECT * FROM support_tickets`
+
+**Expected:** يرجع فقط تذاكر المستخدم نفسه (user_id = auth.uid())  
+**Regression:** الأدمن يرى كل التذاكر بنفس الاستعلام  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX8-004
+**ID:** BUGFIX8-004  
+**Title:** Loading state does not flash admin content before redirect  
+**Priority:** Medium  
+**Steps:**
+1. مستخدم عادي يفتح /admin
+2. راقب ما يظهر خلال أول 500ms
+
+**Expected:** لا يظهر أي محتوى للأدمن — فقط loading spinner ثم redirect  
+**Regression:** لا flash للتذاكر أو الإحصائيات  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.5*  
+*Total Test Cases: 598 across 46 modules*  
+*Critical: 157 | High: 251 | Medium: 157 | Low: 33 (previously: 594/45)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
