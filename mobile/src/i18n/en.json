@@ -36,7 +36,7 @@
     "tagline": "Your trusted local services platform",
     "client": "Client",
     "provider": "Provider",
-    "getStarted": "Start",
+    "getStarted": "Get Started",
     "login": "Log In"
   },
   "auth": {
@@ -50,7 +50,7 @@
     "verifying": "Verifying...",
     "resendIn": "Resend in",
     "resend": "Didn't receive the code? Resend",
-    "resending": "Sending...",
+    "resending": "Resending...",
     "wrongCode": "Wrong code",
     "wrongCodeMsg": "Please check the code and try again",
     "completeRegister": "Complete your registration",
