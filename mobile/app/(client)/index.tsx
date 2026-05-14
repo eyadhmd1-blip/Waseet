@@ -221,6 +221,7 @@ export default function ClientHome() {
   const [loading,     setLoading]     = useState(true);
   const [refreshing,  setRefreshing]  = useState(false);
   const [activeGroup, setActiveGroup] = useState(CATEGORY_GROUPS[0].slug);
+  const [hasError,    setHasError]    = useState(false);
 
   // ── Animations ───────────────────────────────────────────────
   const contentOp  = useRef(new Animated.Value(0)).current;
@@ -237,6 +238,7 @@ export default function ClientHome() {
 
   // ── Data loading (unchanged) ─────────────────────────────────
   const load = useCallback(async () => {
+    setHasError(false);
     try {
       const { data: { session: _ses } } = await supabase.auth.getSession();
       const authUser = _ses?.user;
@@ -253,6 +255,8 @@ export default function ClientHome() {
       if (profile) setUser(profile);
       if (recent)  setRequests(recent);
       runEntrance();
+    } catch {
+      setHasError(true);
     } finally {
       setLoading(false);
     }
@@ -464,13 +468,29 @@ export default function ClientHome() {
           {requests.length === 0 && (
             <View style={styles.emptyBox}>
               <View style={styles.emptyIconWrap}>
-                <Text style={{ fontSize: 36 }}>📭</Text>
+                <Text style={{ fontSize: 36 }}>{hasError ? '⚠️' : '📭'}</Text>
               </View>
-              <Text style={styles.emptyTitle}>{t('home.noRequests')}</Text>
-              <Text style={[styles.emptySub, { textAlign: 'center' }]}>{t('home.noRequestsSub')}</Text>
-              <TouchableOpacity style={styles.emptyBtn} onPress={() => goNew()} activeOpacity={0.85}>
-                <Text style={styles.emptyBtnText}>{t('home.newRequest')}</Text>
-              </TouchableOpacity>
+              {hasError ? (
+                <>
+                  <Text style={styles.emptyTitle}>{t('common.error')}</Text>
+                  <Text style={[styles.emptySub, { textAlign: 'center' }]}>
+                    {isRTL ? 'تعذّر تحميل البيانات' : 'Failed to load data'}
+                  </Text>
+                  <TouchableOpacity style={styles.emptyBtn} onPress={load} activeOpacity={0.85}>
+                    <Text style={styles.emptyBtnText}>
+                      {isRTL ? '↻ إعادة المحاولة' : '↻ Retry'}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.emptyTitle}>{t('home.noRequests')}</Text>
+                  <Text style={[styles.emptySub, { textAlign: 'center' }]}>{t('home.noRequestsSub')}</Text>
+                  <TouchableOpacity style={styles.emptyBtn} onPress={() => goNew()} activeOpacity={0.85}>
+                    <Text style={styles.emptyBtnText}>{t('home.newRequest')}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           )}
 

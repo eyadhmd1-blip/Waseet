@@ -25,9 +25,10 @@ export default function LoginScreen() {
   const router = useRouter();
   const { t, isRTL } = useLanguage();
   const { colors, isDark } = useTheme();
-  const [phone, setPhone]         = useState('');
-  const [loading, setLoading]     = useState(false);
+  const [phone, setPhone]           = useState('');
+  const [loading, setLoading]       = useState(false);
   const [phoneError, setPhoneError] = useState(false);
+  const [slowNetwork, setSlowNetwork] = useState(false);
 
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
   const { showAlert, AlertComponent } = useAppAlert();
@@ -48,6 +49,7 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
+    const slowTimer = setTimeout(() => setSlowNetwork(true), 8000);
     try {
       const { data, error } = await supabase.functions.invoke('send-otp', {
         body: { phone: formatted },
@@ -84,6 +86,8 @@ export default function LoginScreen() {
     } catch {
       showAlert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
     } finally {
+      clearTimeout(slowTimer);
+      setSlowNetwork(false);
       setLoading(false);
     }
   };
@@ -167,6 +171,10 @@ export default function LoginScreen() {
               {loading ? t('auth.sending') : `📨 ${t('auth.sendCode')}`}
             </Text>
           </TouchableOpacity>
+
+          {slowNetwork && loading && (
+            <Text style={styles.slowHint}>🌐 الشبكة بطيئة، الرسالة في الطريق...</Text>
+          )}
 
           {/* Legal text */}
           <Text style={styles.legal}>
@@ -317,6 +325,14 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
       fontSize:   rs(17, 15, 19),
       fontWeight: '800',
       color:      '#fff',
+    },
+
+    // Slow network hint
+    slowHint: {
+      fontSize:     12,
+      color:        '#F59E0B',
+      textAlign:    'center',
+      marginBottom: 8,
     },
 
     // Legal text

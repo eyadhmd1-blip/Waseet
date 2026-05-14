@@ -80,6 +80,7 @@ export default function ProviderPublicProfile() {
   const [provider, setProvider]   = useState<(Provider & { user: User }) | null>(null);
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [loading, setLoading]     = useState(true);
+  const [hasError, setHasError]   = useState(false);
   const [myId, setMyId]           = useState<string | null>(null);
   const [myRole, setMyRole]       = useState<string | null>(null);
   const [isSaved, setIsSaved]     = useState(false);
@@ -93,6 +94,7 @@ export default function ProviderPublicProfile() {
   const bodyOp   = useRef(new Animated.Value(0)).current;
 
   const load = useCallback(async () => {
+    setHasError(false);
     try {
       if (!provider_id) return;
 
@@ -138,12 +140,20 @@ export default function ProviderPublicProfile() {
         Animated.timing(bodyOp,   { toValue: 1, duration: 500, delay: 280, useNativeDriver: true }),
       ]).start();
   
+    } catch {
+      setHasError(true);
     } finally {
       setLoading(false);
     }
   }, [provider_id]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Safety net: stop spinner after 12s on slow network
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 12000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const toggleSave = async () => {
     if (!myId || !provider_id || savingToggle) return;
@@ -191,7 +201,14 @@ export default function ProviderPublicProfile() {
   if (!provider) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>{t('providerProfile.notFound')}</Text>
+        <Text style={styles.errorText}>
+          {hasError ? (isRTL ? 'تعذّر التحميل — تحقق من اتصالك' : 'Load failed — check your connection') : t('providerProfile.notFound')}
+        </Text>
+        {hasError && (
+          <TouchableOpacity onPress={load} style={[styles.backPill, { marginBottom: 12 }]}>
+            <Text style={styles.backPillText}>{isRTL ? '↻ إعادة المحاولة' : '↻ Retry'}</Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={() => router.back()} style={styles.backPill}>
           <Text style={styles.backPillText}>{t('common.back')}</Text>
         </TouchableOpacity>

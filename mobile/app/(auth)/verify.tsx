@@ -25,10 +25,11 @@ export default function VerifyScreen() {
   const { width: screenW } = useWindowDimensions();
   const otpBoxSize = Math.min(56, Math.max(40, Math.floor((screenW - 72) / 6) - 4));
 
-  const [otp, setOtp]             = useState(['', '', '', '', '', '']);
-  const [otpError, setOtpError]   = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [resending, setResending] = useState(false);
+  const [otp, setOtp]               = useState(['', '', '', '', '', '']);
+  const [otpError, setOtpError]     = useState(false);
+  const [loading, setLoading]       = useState(false);
+  const [resending, setResending]   = useState(false);
+  const [slowNetwork, setSlowNetwork] = useState(false);
   const [countdown, setCountdown] = useState(RESEND_COOLDOWN);
   const inputs = useRef<TextInput[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -83,6 +84,7 @@ export default function VerifyScreen() {
     setOtpError(false);
 
     setLoading(true);
+    const slowTimer = setTimeout(() => setSlowNetwork(true), 8000);
     try {
       const { data: verifyData, error: fnError } = await supabase.functions.invoke('verify-otp', {
         body: { phone: phone!, code, create_session: true },
@@ -143,6 +145,8 @@ export default function VerifyScreen() {
       setOtp(['', '', '', '', '', '']);
       inputs.current[0]?.focus();
     } finally {
+      clearTimeout(slowTimer);
+      setSlowNetwork(false);
       setLoading(false);
     }
   };
@@ -151,6 +155,7 @@ export default function VerifyScreen() {
   const handleResend = async () => {
     if (countdown > 0 || resending || !phone) return;
     setResending(true);
+    const resendSlowTimer = setTimeout(() => setSlowNetwork(true), 8000);
     try {
       const { data, error } = await supabase.functions.invoke('send-otp', {
         body: { phone },
@@ -172,6 +177,8 @@ export default function VerifyScreen() {
     } catch {
       showAlert(t('common.error'), t('auth.resendFailed'));
     } finally {
+      clearTimeout(resendSlowTimer);
+      setSlowNetwork(false);
       setResending(false);
     }
   };
@@ -285,6 +292,12 @@ export default function VerifyScreen() {
               {loading ? t('auth.verifying') : `✅ ${t('auth.verify')}`}
             </Text>
           </TouchableOpacity>
+
+          {slowNetwork && (loading || resending) && (
+            <Text style={{ fontSize: 12, color: '#F59E0B', textAlign: 'center', marginBottom: 8 }}>
+              🌐 الشبكة بطيئة، يرجى الانتظار...
+            </Text>
+          )}
 
           {/* Security badge */}
           <View style={styles.securityBadge}>

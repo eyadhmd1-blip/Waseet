@@ -42,10 +42,13 @@ export default function ProviderJobs() {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [codeSent, setCodeSent]           = useState(false);
   const [sendingCode, setSendingCode]     = useState<Record<string, boolean>>({});
+  const [hasError, setHasError]           = useState(false);
+  const [slowSend, setSlowSend]           = useState(false);
   const inputRefs      = useRef<TextInput[]>([]);
   const sendingCodeRef = useRef<Record<string, boolean>>({});
 
   const load = useCallback(async (isTabSwitch = false) => {
+    setHasError(false);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const uid = session?.user.id;
@@ -78,6 +81,8 @@ export default function ProviderJobs() {
       if (userRes.data?.full_name) setUserName(userRes.data.full_name);
       if (providerRes.data)        setProviderInfo(providerRes.data);
 
+    } catch {
+      setHasError(true);
     } finally {
       setLoading(false);
     }
@@ -91,6 +96,12 @@ export default function ProviderJobs() {
     initialLoaded.current = true;
     load(false);
   }, [load]);
+
+  // Safety net: if load hangs on slow network, stop spinner after 12s
+  useEffect(() => {
+    const timer = setTimeout(() => { setLoading(false); }, 12000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Silently refresh provider header info whenever this tab gains focus
   // (catches admin tier overrides, credit changes, etc. without full reload)
@@ -129,9 +140,12 @@ export default function ProviderJobs() {
 
     // Code is generated server-side inside send-confirm-notification.
     // The client never sees or stores the actual code value.
+    const slowTimer = setTimeout(() => setSlowSend(true), 8000);
     const { data: notifResult, error: fnError } = await supabase.functions.invoke('send-confirm-notification', {
       body: { job_id: job.id, client_id: job.client_id },
     });
+    clearTimeout(slowTimer);
+    setSlowSend(false);
 
     sendingCodeRef.current[job.id] = false;
     setSendingCode(prev => ({ ...prev, [job.id]: false }));
@@ -344,14 +358,30 @@ export default function ProviderJobs() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={{ fontSize: 48, marginBottom: 12 }}>
-                {tab === 'active' ? '🛠️' : '🏆'}
+                {hasError ? '⚠️' : (tab === 'active' ? '🛠️' : '🏆')}
               </Text>
               <Text style={styles.emptyText}>
-                {tab === 'active' ? t('profile.noActiveJobs') : t('profile.noCompletedJobs')}
+                {hasError
+                  ? (lang === 'ar' ? 'تعذّر تحميل البيانات' : 'Failed to load data')
+                  : (tab === 'active' ? t('profile.noActiveJobs') : t('profile.noCompletedJobs'))
+                }
               </Text>
+              {hasError && (
+                <TouchableOpacity onPress={() => load(false)} style={{ marginTop: 12, padding: 10 }}>
+                  <Text style={{ color: colors.accent, fontWeight: '700' }}>
+                    {lang === 'ar' ? '↻ إعادة المحاولة' : '↻ Retry'}
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           }
         />
+      )}
+
+      {slowSend && (
+        <Text style={{ textAlign: 'center', color: '#F59E0B', fontSize: 12, marginTop: 8 }}>
+          {lang === 'ar' ? '🌐 الشبكة بطيئة، الرمز في الطريق...' : '🌐 Slow network, sending code...'}
+        </Text>
       )}
 
       {/* ── Confirm Code Modal ── */}

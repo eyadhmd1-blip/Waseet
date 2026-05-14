@@ -82,6 +82,7 @@ export default function ClientRequests() {
   const [filter,           setFilter]           = useState<Filter>('all');
   const [loading,          setLoading]          = useState(true);
   const [refreshing,       setRefreshing]       = useState(false);
+  const [hasError,         setHasError]         = useState(false);
   const [tab,              setTab]              = useState<Tab>(tabParam === 'contracts' ? 'contracts' : 'requests');
   const [contracts,        setContracts]        = useState<RecurringContract[]>([]);
   const [contractsLoading, setContractsLoading] = useState(true);
@@ -167,6 +168,7 @@ export default function ClientRequests() {
 
   // ── Data loading — always fetch all, filter client-side ──────
   const load = useCallback(async () => {
+    setHasError(false);
     try {
       const { data: { session: _ses } } = await supabase.auth.getSession();
       const user = _ses?.user;
@@ -180,6 +182,8 @@ export default function ClientRequests() {
         .order('created_at', { ascending: false });
 
       if (data) setAllRequests(data);
+    } catch {
+      setHasError(true);
     } finally {
       setLoading(false);
     }
@@ -203,6 +207,12 @@ export default function ClientRequests() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Safety net: stop spinner after 12s on slow network
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 12000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useFocusEffect(useCallback(() => {
     load();
@@ -469,7 +479,22 @@ export default function ClientRequests() {
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
             }
             ListEmptyComponent={
-              filter === 'all' ? (
+              hasError ? (
+                <View style={styles.empty}>
+                  <View style={styles.emptyIconWrap}>
+                    <Text style={styles.emptyIcon}>⚠️</Text>
+                  </View>
+                  <Text style={styles.emptyTitle}>{t('common.error')}</Text>
+                  <Text style={styles.emptyDesc}>
+                    {lang === 'ar' ? 'تعذّر تحميل الطلبات' : 'Failed to load requests'}
+                  </Text>
+                  <TouchableOpacity style={styles.emptyBtn} onPress={load}>
+                    <Text style={styles.emptyBtnText}>
+                      {lang === 'ar' ? '↻ إعادة المحاولة' : '↻ Retry'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : filter === 'all' ? (
                 <View style={styles.empty}>
                   <View style={styles.emptyIconWrap}>
                     <Text style={styles.emptyIcon}>📋</Text>
