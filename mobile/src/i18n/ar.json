@@ -1539,7 +1539,13 @@
     "catProvider": "🔧 مقدم",
     "catAccount": "👤 حساب",
     "catContract": "📄 عقد",
-    "catOther": "💬 أخرى"
+    "catOther": "💬 أخرى",
+    "filterSuggestions": "اقتراحات",
+    "suggEmpty": "لا توجد اقتراحات معلقة",
+    "suggApprove": "موافقة",
+    "suggReject": "رفض",
+    "suggApproveConfirm": "الموافقة على \"{{name}}\" ستُضيفها للخدمات وتُخطر المستخدم",
+    "suggRejectConfirm": "هل تريد رفض هذا الاقتراح؟"
   },
   "suggestions": {
     "notFound": "لم تجد خدمتك؟ اقترح خدمة جديدة",

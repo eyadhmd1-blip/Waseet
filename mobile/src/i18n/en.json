@@ -1531,7 +1531,13 @@
     "catProvider": "🔧 Provider",
     "catAccount": "👤 Account",
     "catContract": "📄 Contract",
-    "catOther": "💬 Other"
+    "catOther": "💬 Other",
+    "filterSuggestions": "Suggestions",
+    "suggEmpty": "No pending suggestions",
+    "suggApprove": "Approve",
+    "suggReject": "Reject",
+    "suggApproveConfirm": "Approving \"{{name}}\" will add it to services and notify the user",
+    "suggRejectConfirm": "Reject this suggestion?"
   },
   "suggestions": {
     "notFound": "Can't find your service? Suggest one",

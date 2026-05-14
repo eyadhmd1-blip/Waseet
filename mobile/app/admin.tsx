@@ -7,7 +7,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, RefreshControl,
+  ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { supabase } from '../src/lib/supabase';
@@ -17,7 +17,16 @@ import { HEADER_PAD } from '../src/utils/layout';
 import { useTheme } from '../src/context/ThemeContext';
 import type { AppColors } from '../src/constants/colors';
 
-type Filter = 'all' | 'payment' | 'resolved';
+type Filter = 'all' | 'payment' | 'resolved' | 'suggestions';
+
+interface AdminSuggestion {
+  id: string;
+  service_name: string;
+  category_hint: string | null;
+  status: string;
+  created_at: string;
+  user: { full_name: string }[] | null;
+}
 
 interface AdminTicket {
   id: string;
@@ -50,11 +59,13 @@ export default function AdminScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
 
-  const [tickets,    setTickets]    = useState<AdminTicket[]>([]);
-  const [loading,    setLoading]    = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [filter,     setFilter]     = useState<Filter>('all');
-  const [isAdmin,    setIsAdmin]    = useState(false);
+  const [tickets,     setTickets]     = useState<AdminTicket[]>([]);
+  const [suggestions, setSuggestions] = useState<AdminSuggestion[]>([]);
+  const [loading,     setLoading]     = useState(true);
+  const [refreshing,  setRefreshing]  = useState(false);
+  const [filter,      setFilter]      = useState<Filter>('all');
+  const [isAdmin,     setIsAdmin]     = useState(false);
+  const [actioning,   setActioning]   = useState<string | null>(null);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -78,16 +89,25 @@ export default function AdminScreen() {
         .order('opened_at', { ascending: false })
         .limit(100);
 
-      if (filter === 'payment') {
-        query = query.eq('category', 'payment').in('status', ['open', 'in_review']);
-      } else if (filter === 'resolved') {
-        query = query.in('status', ['resolved', 'closed']);
+      if (filter === 'suggestions') {
+        const { data: suggData } = await supabase
+          .from('service_suggestions')
+          .select('id, service_name, category_hint, status, created_at, user:users!user_id(full_name)')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        setSuggestions((suggData ?? []) as AdminSuggestion[]);
       } else {
-        query = query.in('status', ['open', 'in_review']);
+        if (filter === 'payment') {
+          query = query.eq('category', 'payment').in('status', ['open', 'in_review']);
+        } else if (filter === 'resolved') {
+          query = query.in('status', ['resolved', 'closed']);
+        } else {
+          query = query.in('status', ['open', 'in_review']);
+        }
+        const { data } = await query;
+        if (data) setTickets(data as AdminTicket[]);
       }
-
-      const { data } = await query;
-      if (data) setTickets(data as AdminTicket[]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -97,6 +117,34 @@ export default function AdminScreen() {
   useEffect(() => { load(); }, [load]);
 
   const onRefresh = () => { setRefreshing(true); load(true); };
+
+  const handleSuggestionAction = useCallback(async (id: string, name: string, action: 'approved' | 'rejected') => {
+    const isApprove = action === 'approved';
+    Alert.alert(
+      isApprove ? t('admin.suggApprove') : t('admin.suggReject'),
+      isApprove ? t('admin.suggApproveConfirm', { name }) : t('admin.suggRejectConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: isApprove ? t('admin.suggApprove') : t('admin.suggReject'),
+          style: isApprove ? 'default' : 'destructive',
+          onPress: async () => {
+            setActioning(id);
+            const { error } = await supabase
+              .from('service_suggestions')
+              .update({ status: action, reviewed_at: new Date().toISOString() })
+              .eq('id', id);
+            setActioning(null);
+            if (error) {
+              Alert.alert(t('common.error'), error.message);
+            } else {
+              setSuggestions(prev => prev.filter(s => s.id !== id));
+            }
+          },
+        },
+      ],
+    );
+  }, [t]);
 
   const fmtDate = (iso: string) => {
     const d = new Date(iso);
@@ -120,9 +168,10 @@ export default function AdminScreen() {
   }
 
   const FILTERS: { key: Filter; label: string }[] = [
-    { key: 'all',      label: t('admin.filterAll') },
-    { key: 'payment',  label: t('admin.filterPayments') },
-    { key: 'resolved', label: t('admin.filterResolved') },
+    { key: 'all',         label: t('admin.filterAll') },
+    { key: 'payment',     label: t('admin.filterPayments') },
+    { key: 'resolved',    label: t('admin.filterResolved') },
+    { key: 'suggestions', label: t('admin.filterSuggestions') },
   ];
 
   return (
@@ -151,61 +200,114 @@ export default function AdminScreen() {
         ))}
       </View>
 
-      {/* Ticket list */}
-      <FlatList
-        data={tickets}
-        keyExtractor={item => item.id}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
-        contentContainerStyle={styles.listContent}
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>{t('admin.emptyText')}</Text>
-          </View>
-        }
-        renderItem={({ item }) => {
-          const isPayment = item.category === 'payment';
-          const isPending = isPayment && (item.status === 'open' || item.status === 'in_review');
-          return (
-            <TouchableOpacity
-              style={[styles.ticketCard, isPending && styles.ticketCardPayment]}
-              onPress={() => router.push({ pathname: '/support-thread', params: { id: item.id } } as any)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.ticketRow}>
-                <Text style={styles.catIcon}>{CAT_ICON[item.category] ?? '💬'}</Text>
-                <View style={styles.ticketBody}>
-                  <Text style={styles.ticketSubject} numberOfLines={1}>
-                    {item.subject}
-                  </Text>
-                  <Text style={styles.ticketMeta}>
-                    {item.user?.[0]?.full_name ?? '—'}  ·  {fmtDate(item.opened_at)}
-                  </Text>
-                  {isPayment && item.plan_tier && (
-                    <View style={styles.planRow}>
-                      <View style={styles.planBadge}>
-                        <Text style={styles.planBadgeText}>
-                          {t('admin.planLabel', { tier: item.plan_tier })}
-                        </Text>
-                      </View>
-                      {item.plan_amount_jod != null && (
-                        <Text style={styles.amountText}>
-                          {t('admin.amountLabel', { amount: item.plan_amount_jod })}
-                        </Text>
-                      )}
-                      {isPending && (
-                        <View style={styles.pendingBadge}>
-                          <Text style={styles.pendingBadgeText}>{t('admin.pendingBadge')}</Text>
-                        </View>
-                      )}
-                    </View>
-                  )}
+      {/* Suggestions list */}
+      {filter === 'suggestions' ? (
+        <FlatList
+          data={suggestions}
+          keyExtractor={item => item.id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>{t('admin.suggEmpty')}</Text>
+            </View>
+          }
+          renderItem={({ item }) => {
+            const isProcessing = actioning === item.id;
+            return (
+              <View style={styles.suggCard}>
+                <View style={styles.suggHeader}>
+                  <Text style={styles.suggIcon}>💡</Text>
+                  <View style={styles.ticketBody}>
+                    <Text style={styles.ticketSubject}>{item.service_name}</Text>
+                    <Text style={styles.ticketMeta}>
+                      {item.user?.[0]?.full_name ?? '—'}  ·  {fmtDate(item.created_at)}
+                    </Text>
+                    {item.category_hint ? (
+                      <Text style={styles.suggHint}>{item.category_hint}</Text>
+                    ) : null}
+                  </View>
                 </View>
-                <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[item.status] ?? STATUS_COLOR.open }]} />
+                <View style={styles.suggActions}>
+                  <TouchableOpacity
+                    style={[styles.suggApproveBtn, isProcessing && styles.suggBtnDisabled]}
+                    onPress={() => handleSuggestionAction(item.id, item.service_name, 'approved')}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing
+                      ? <ActivityIndicator color="#fff" size="small" />
+                      : <Text style={styles.suggApproveBtnText}>{t('admin.suggApprove')}</Text>
+                    }
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.suggRejectBtn, isProcessing && styles.suggBtnDisabled]}
+                    onPress={() => handleSuggestionAction(item.id, item.service_name, 'rejected')}
+                    disabled={isProcessing}
+                  >
+                    <Text style={styles.suggRejectBtnText}>{t('admin.suggReject')}</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
-            </TouchableOpacity>
-          );
-        }}
-      />
+            );
+          }}
+        />
+      ) : (
+        /* Ticket list */
+        <FlatList
+          data={tickets}
+          keyExtractor={item => item.id}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Text style={styles.emptyText}>{t('admin.emptyText')}</Text>
+            </View>
+          }
+          renderItem={({ item }) => {
+            const isPayment = item.category === 'payment';
+            const isPending = isPayment && (item.status === 'open' || item.status === 'in_review');
+            return (
+              <TouchableOpacity
+                style={[styles.ticketCard, isPending && styles.ticketCardPayment]}
+                onPress={() => router.push({ pathname: '/support-thread', params: { id: item.id } } as any)}
+                activeOpacity={0.8}
+              >
+                <View style={styles.ticketRow}>
+                  <Text style={styles.catIcon}>{CAT_ICON[item.category] ?? '💬'}</Text>
+                  <View style={styles.ticketBody}>
+                    <Text style={styles.ticketSubject} numberOfLines={1}>
+                      {item.subject}
+                    </Text>
+                    <Text style={styles.ticketMeta}>
+                      {item.user?.[0]?.full_name ?? '—'}  ·  {fmtDate(item.opened_at)}
+                    </Text>
+                    {isPayment && item.plan_tier && (
+                      <View style={styles.planRow}>
+                        <View style={styles.planBadge}>
+                          <Text style={styles.planBadgeText}>
+                            {t('admin.planLabel', { tier: item.plan_tier })}
+                          </Text>
+                        </View>
+                        {item.plan_amount_jod != null && (
+                          <Text style={styles.amountText}>
+                            {t('admin.amountLabel', { amount: item.plan_amount_jod })}
+                          </Text>
+                        )}
+                        {isPending && (
+                          <View style={styles.pendingBadge}>
+                            <Text style={styles.pendingBadgeText}>{t('admin.pendingBadge')}</Text>
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                  <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[item.status] ?? STATUS_COLOR.open }]} />
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      )}
     </View>
   );
 }
@@ -261,5 +363,16 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     pendingBadgeText: { fontSize: 11, fontWeight: '600', color: '#FCD34D' },
 
     statusDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
+
+    suggCard:        { backgroundColor: colors.surface, borderRadius: 14, padding: 14, borderWidth: 1, borderColor: colors.border, marginBottom: 8 },
+    suggHeader:      { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 12 },
+    suggIcon:        { fontSize: 22, marginTop: 2 },
+    suggHint:        { fontSize: 11, color: colors.textMuted, marginTop: 2 },
+    suggActions:     { flexDirection: 'row', gap: 8 },
+    suggApproveBtn:  { flex: 1, backgroundColor: '#15803D', borderRadius: 10, paddingVertical: 9, alignItems: 'center' },
+    suggRejectBtn:   { flex: 1, backgroundColor: colors.surface, borderRadius: 10, paddingVertical: 9, alignItems: 'center', borderWidth: 1, borderColor: '#EF4444' },
+    suggBtnDisabled: { opacity: 0.5 },
+    suggApproveBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
+    suggRejectBtnText:  { fontSize: 13, fontWeight: '700', color: '#EF4444' },
   });
 }
