@@ -265,14 +265,8 @@ export default function AdminScreen() {
   }
 
   if (!isAdmin) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.errorText}>غير مصرح بالدخول</Text>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>{t('common.back')}</Text>
-        </TouchableOpacity>
-      </View>
-    );
+    router.replace('/support' as any);
+    return null;
   }
 
   const FILTERS: { key: Filter; label: string }[] = [
@@ -486,10 +480,6 @@ function createStyles(colors: AppColors, isRTL: boolean) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
     center:    { flex: 1, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', gap: 16 },
-    errorText: { fontSize: 16, color: colors.textMuted },
-    backBtn:   { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 10 },
-    backBtnText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
-
     header: {
       flexDirection: 'row', alignItems: 'center',
       paddingHorizontal: 16, paddingBottom: 12,
