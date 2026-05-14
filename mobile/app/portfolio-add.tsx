@@ -332,21 +332,12 @@ export default function PortfolioAddScreen() {
   };
 
   const pickImage = (onPick: (uri: string) => void) => {
-    Alert.alert(
-      t('portfolioAdd.sourceTitle'),
-      '',
-      [
-        {
-          text: t('portfolioAdd.sourceCamera'),
-          onPress: () => launchPicker('camera', onPick),
-        },
-        {
-          text: t('portfolioAdd.sourceGallery'),
-          onPress: () => launchPicker('gallery', onPick),
-        },
-        { text: t('common.cancel'), style: 'cancel' },
-      ],
-    );
+    const buttons: { text: string; onPress?: () => void; style?: 'cancel' | 'default' | 'destructive' }[] = [
+      { text: t('portfolioAdd.sourceCamera'), onPress: () => launchPicker('camera', onPick) },
+      { text: t('portfolioAdd.sourceGallery'), onPress: () => launchPicker('gallery', onPick) },
+      { text: t('common.cancel'), style: 'cancel' },
+    ];
+    Alert.alert(t('portfolioAdd.sourceTitle'), '', isRTL ? [...buttons].reverse() : buttons);
   };
 
   // Auto center-crop to 4:3, applied on confirm in preview modal
