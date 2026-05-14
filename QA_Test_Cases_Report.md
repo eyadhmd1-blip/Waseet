@@ -7754,9 +7754,311 @@ ORDER BY group_slug, sort_order;
 
 ---
 
+---
+
+## 54. PRELAUNCH1 — Pre-Launch Hardening Suite (3G Resilience + Security)
+
+**Date:** 2026-05-15  
+**Scope:** login.tsx, verify.tsx, jobs.tsx, (client)/index.tsx, requests.tsx, provider-profile.tsx, seed.ts, seed.js, git history  
+**Changes:**
+- Slow-network indicator (8 s timer) added to OTP send, OTP verify, OTP resend, task-done send
+- hasError state + retry button added to jobs list, client home, requests list, provider profile
+- Safety timeout (12 s) added to jobs list, requests list, provider profile data loaders
+- Network poll interval: 15 s → 5 s
+- CHANNEL_ERROR fallback refresh on all Realtime channels
+- AI price suggest wrapped in 10 s Promise.race
+- i18n: "Start" → "Get Started", "Sending..." → "Resending..."
+- Service role JWT removed from seed.ts + seed.js (replaced with env var)
+- Git history rewritten with git filter-repo to purge key from all 405 commits
+
+---
+
+#### PRELAUNCH1-001
+**ID:** PRELAUNCH1-001  
+**Title:** Slow-network hint appears during OTP send on 3G  
+**Priority:** Medium  
+**Steps:**
+1. افتح شاشة تسجيل الدخول
+2. أدخل رقم الهاتف واضغط "إرسال الرمز"
+3. محاكاة شبكة بطيئة (DevTools throttle → Slow 3G) قبل الضغط
+4. انتظر 8 ثوانٍ دون استجابة
+
+**Expected:** يظهر نص "🌐 الشبكة بطيئة، الرسالة في الطريق..." بلون أصفر تحت الزر  
+**Regression:** لا تغيير في منطق إرسال OTP أو معالجة الأخطاء  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-002
+**ID:** PRELAUNCH1-002  
+**Title:** Slow-network hint disappears after OTP send completes  
+**Priority:** Medium  
+**Steps:**
+1. كرّر PRELAUNCH1-001
+2. انتظر حتى يكتمل الإرسال (ناجح أو فاشل)
+
+**Expected:** يختفي النص الأصفر بمجرد انتهاء العملية  
+**Regression:** لا يبقى النص على الشاشة بعد انتهاء الطلب  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-003
+**ID:** PRELAUNCH1-003  
+**Title:** Slow-network hint appears during OTP verification on slow connection  
+**Priority:** Medium  
+**Steps:**
+1. أدخل رمز OTP الخاطئ على شاشة verify
+2. محاكاة شبكة بطيئة
+3. اضغط "تحقق" وانتظر 8 ثوانٍ
+
+**Expected:** يظهر نص "🌐 الشبكة بطيئة..." طالما التحميل مستمر  
+**Regression:** رسائل خطأ OTP (رمز خاطئ، منتهي) تعمل بشكل طبيعي  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-004
+**ID:** PRELAUNCH1-004  
+**Title:** Slow-network hint appears during OTP resend  
+**Priority:** Medium  
+**Steps:**
+1. على شاشة verify، انتظر انتهاء مؤقت إعادة الإرسال
+2. محاكاة شبكة بطيئة واضغط "إعادة الإرسال"
+3. انتظر 8 ثوانٍ
+
+**Expected:** يظهر نص المهلة أثناء عملية إعادة الإرسال  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-005
+**ID:** PRELAUNCH1-005  
+**Title:** Slow-network hint during task-done send on provider jobs screen  
+**Priority:** Medium  
+**Steps:**
+1. سجّل دخول كمزود خدمة، افتح قائمة الوظائف
+2. افتح وظيفة جارية واضغط "إرسال رمز الإتمام"
+3. محاكاة شبكة بطيئة وانتظر 8 ثوانٍ
+
+**Expected:** يظهر "🌐 الشبكة بطيئة، الرمز في الطريق..." أثناء الإرسال البطيء  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-006
+**ID:** PRELAUNCH1-006  
+**Title:** Jobs screen shows error state with retry button on network failure  
+**Priority:** High  
+**Steps:**
+1. أوقف الاتصال بالإنترنت تماماً
+2. افتح تطبيق مزود الخدمة واذهب لقائمة الوظائف
+
+**Expected:** تظهر رسالة خطأ ⚠️ مع زر "إعادة المحاولة" بدلاً من قائمة فارغة  
+**Regression:** عند استعادة الاتصال والضغط على الزر، تُحمّل الوظائف بشكل طبيعي  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-007
+**ID:** PRELAUNCH1-007  
+**Title:** Client home screen shows error state with retry on network failure  
+**Priority:** High  
+**Steps:**
+1. أوقف الاتصال بالإنترنت
+2. افتح التطبيق كعميل (الصفحة الرئيسية)
+
+**Expected:** تظهر رسالة خطأ مع زر إعادة المحاولة بدلاً من الشاشة الفارغة  
+**Regression:** الضغط على "إعادة المحاولة" يستأنف التحميل الطبيعي  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-008
+**ID:** PRELAUNCH1-008  
+**Title:** Client requests list shows error state with retry on network failure  
+**Priority:** High  
+**Steps:**
+1. أوقف الاتصال
+2. افتح "طلباتي" كعميل
+
+**Expected:** رسالة خطأ + زر إعادة المحاولة في المكوّن الفارغ  
+**Regression:** حالات الفلترة (نشط، مكتمل، ملغى) تعمل طبيعياً بعد استعادة الاتصال  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-009
+**ID:** PRELAUNCH1-009  
+**Title:** Provider profile shows network-error message (not "not found") on load failure  
+**Priority:** High  
+**Steps:**
+1. أوقف الاتصال
+2. افتح ملف مزود خدمة من قائمة العروض
+
+**Expected:** يظهر "تعذّر تحميل الملف الشخصي" مع زر "إعادة المحاولة" — لا رسالة "المزود غير موجود"  
+**Regression:** عند استعادة الاتصال والضغط retry، يُحمّل الملف الشخصي بشكل كامل  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-010
+**ID:** PRELAUNCH1-010  
+**Title:** Safety timeout prevents infinite spinner (12 s cap)  
+**Priority:** High  
+**Steps:**
+1. محاكاة استجابة معلّقة (block all network, no error returned)
+2. افتح jobs list أو requests list أو provider profile
+
+**Expected:** يختفي مؤشر التحميل بعد 12 ثانية على الأكثر حتى بدون استجابة خادم  
+**Regression:** الشاشة لا تتجمد إلى الأبد على مؤشر التحميل  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-011
+**ID:** PRELAUNCH1-011  
+**Title:** Realtime CHANNEL_ERROR triggers fallback refresh on unread message count  
+**Priority:** High  
+**Steps:**
+1. سجّل الدخول كعميل لديه رسائل غير مقروءة
+2. محاكاة انقطاع WebSocket (أوقف الشبكة ثم استعدها)
+
+**Expected:** عدد الرسائل غير المقروءة يتحدث بعد استعادة الاتصال دون الحاجة لإعادة تشغيل التطبيق  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-012
+**ID:** PRELAUNCH1-012  
+**Title:** Realtime CHANNEL_ERROR triggers fallback refresh on notification count  
+**Priority:** High  
+**Steps:**
+1. سجّل الدخول كمزود خدمة لديه إشعارات
+2. محاكاة انقطاع WebSocket
+
+**Expected:** عداد الإشعارات يتحدث بعد استعادة الاتصال  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-013
+**ID:** PRELAUNCH1-013  
+**Title:** AI price suggestion times out gracefully after 10 s (new request)  
+**Priority:** Medium  
+**Steps:**
+1. في وضع الشبكة البطيئة جداً، ابدأ إنشاء طلب جديد
+2. اختر الخدمة وانتظر اقتراح السعر
+
+**Expected:** بعد 10 ثوانٍ بدون استجابة من AI، تُعرض حقول السعر فارغة دون خطأ — الطلب يمكن إتمامه  
+**Regression:** اقتراح AI الناجح خلال 10 ثوانٍ يُعرض بشكل طبيعي  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-014
+**ID:** PRELAUNCH1-014  
+**Title:** AI price suggestion times out gracefully after 10 s (urgent request)  
+**Priority:** Medium  
+**Steps:**
+1. كرّر PRELAUNCH1-013 من شاشة الطلب العاجل
+
+**Expected:** نفس السلوك — المهلة الزمنية لا تمنع إتمام الطلب العاجل  
+**Automation Candidate:** No
+
+---
+
+#### PRELAUNCH1-015
+**ID:** PRELAUNCH1-015  
+**Title:** i18n — "Get Started" button text correct in English  
+**Priority:** Low  
+**Steps:**
+1. افتح التطبيق باللغة الإنجليزية
+2. اذهب لشاشة تسجيل الدخول أو الترحيب
+
+**Expected:** الزر يعرض "Get Started" (وليس "Start")  
+**Regression:** النص العربي "ابدأ" غير متأثر  
+**Automation Candidate:** Yes
+
+---
+
+#### PRELAUNCH1-016
+**ID:** PRELAUNCH1-016  
+**Title:** i18n — "Resending..." text correct during OTP resend in English  
+**Priority:** Low  
+**Steps:**
+1. افتح verify باللغة الإنجليزية
+2. اضغط زر إعادة إرسال OTP
+
+**Expected:** الزر يعرض "Resending..." (وليس "Sending...")  
+**Regression:** حالة الإرسال الأول غير متأثرة  
+**Automation Candidate:** Yes
+
+---
+
+#### PRELAUNCH1-017
+**ID:** PRELAUNCH1-017  
+**Title:** Service role key not present in any file in working tree  
+**Priority:** Critical  
+**Steps:**
+1. في مجلد المشروع، ابحث عن السلسلة `JfE_DLW4jB6_E1MjaOFCSj56n6Tr0jhfQXwFqhKd1V0`
+   ```
+   git grep "JfE_DLW4jB6" -- '*.ts' '*.js' '*.json' '*.yaml'
+   ```
+
+**Expected:** لا نتائج — المفتاح لا يوجد في أي ملف حالي  
+**Automation Candidate:** Yes (CI secret scanning)
+
+---
+
+#### PRELAUNCH1-018
+**ID:** PRELAUNCH1-018  
+**Title:** Service role key not present in git history  
+**Priority:** Critical  
+**Steps:**
+1. شغّل:
+   ```
+   git log --all -p | grep "JfE_DLW4jB6"
+   ```
+
+**Expected:** لا نتائج — المفتاح أُزيل من كامل تاريخ git بعد تشغيل git filter-repo  
+**Automation Candidate:** Yes (CI secret scanning on full history)
+
+---
+
+#### PRELAUNCH1-019
+**ID:** PRELAUNCH1-019  
+**Title:** Seed script uses env var for service role key (no hardcoded value)  
+**Priority:** Critical  
+**Steps:**
+1. افتح `supabase/seed.ts` و `supabase/seed.js`
+2. تحقق من السطر الذي يُعرّف المفتاح
+
+**Expected:** `const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';` — لا قيمة مُشفّرة  
+**Automation Candidate:** Yes (CI secret scanning)
+
+---
+
+#### PRELAUNCH1-020
+**ID:** PRELAUNCH1-020  
+**Title:** Legacy JWT-based API key is disabled and non-functional  
+**Priority:** Critical  
+**Steps:**
+1. احصل على المفتاح القديم (من أي نسخة تاريخية)
+2. حاول استخدامه لاستدعاء Supabase REST API:
+   ```
+   curl https://bkbjsstxhvdnqcmpuulf.supabase.co/rest/v1/users \
+     -H "apikey: <OLD_KEY>" -H "Authorization: Bearer <OLD_KEY>"
+   ```
+
+**Expected:** استجابة 401 Unauthorized — المفتاح القديم لا يعمل بعد تعطيل Legacy JWT  
+**Automation Candidate:** No (manual verification)
+
+---
+
 *End of Waseet QA Test Cases Report v5.0*  
-*Total Test Cases: 626 across 53 modules*  
-*Critical: 158 | High: 261 | Medium: 168 | Low: 39 (previously: 624/52)*  
+*Total Test Cases: 646 across 54 modules*  
+*Critical: 162 | High: 269 | Medium: 173 | Low: 42 (previously: 626/53)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
