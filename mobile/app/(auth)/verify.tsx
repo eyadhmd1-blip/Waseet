@@ -224,7 +224,7 @@ export default function VerifyScreen() {
 
           {/* OTP card */}
           <View style={[styles.otpCard, otpError && styles.otpCardError]}>
-            <Text style={styles.otpLabel}>رمز التحقق</Text>
+            <Text style={styles.otpLabel}>{t('auth.otpLabel')}</Text>
             <View style={styles.otpRow}>
               {otp.map((digit, i) => (
                 <TextInput
@@ -256,7 +256,7 @@ export default function VerifyScreen() {
             {countdown > 0 ? (
               <View style={styles.countdownBadge}>
                 <Text style={styles.countdownText}>
-                  ⏱ إعادة الإرسال بعد{' '}
+                  {t('auth.resendAfter')}{' '}
                   <Text style={styles.countdownNum}>0:{String(countdown).padStart(2, '0')}</Text>
                 </Text>
               </View>
@@ -288,7 +288,7 @@ export default function VerifyScreen() {
 
           {/* Security badge */}
           <View style={styles.securityBadge}>
-            <Text style={styles.securityText}>🔒 الرمز صالح لمدة 10 دقائق فقط</Text>
+            <Text style={styles.securityText}>{t('auth.otpSecurity')}</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>

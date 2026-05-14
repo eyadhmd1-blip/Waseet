@@ -81,7 +81,13 @@
     "cityErrorHint": "⚠️ Please select your city",
     "trustBadge": "🔒 Your data is protected and will never be shared with any third party",
     "roleSelected": "✓  Selected",
-    "roleTap": "○  Tap to select"
+    "roleTap": "○  Tap to select",
+    "phoneLabel": "Phone Number",
+    "phoneSecurity": "🔒 Your number is kept safe with us",
+    "invalidPhone": "Invalid phone number.\nEnter a valid Jordanian number\nExample: 0791234567",
+    "otpLabel": "Verification Code",
+    "resendAfter": "⏱ Resend in",
+    "otpSecurity": "🔒 Code valid for 10 minutes only"
   },
   "home": {
     "mostRequested": "Most Requested",

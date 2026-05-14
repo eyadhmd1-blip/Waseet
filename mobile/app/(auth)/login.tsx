@@ -43,7 +43,7 @@ export default function LoginScreen() {
 
     const jordanPattern = /^(\+962|00962|0)?7[789]\d{7}$/;
     if (!jordanPattern.test(formatted)) {
-      showAlert(t('common.error'), 'رقم الهاتف غير صالح.\nأدخل رقماً أردنياً صحيحاً\nمثال: 0791234567');
+      showAlert(t('common.error'), t('auth.invalidPhone'));
       return;
     }
 
@@ -65,7 +65,7 @@ export default function LoginScreen() {
 
       if (error || !data?.success) {
         if (errCode === 'INVALID_JORDAN_PHONE' || errCode === 'INVALID_PHONE') {
-          showAlert(t('common.error'), 'رقم الهاتف غير صالح.\nأدخل رقماً أردنياً صحيحاً\nمثال: 0791234567');
+          showAlert(t('common.error'), t('auth.invalidPhone'));
         } else if (errCode === 'RATE_LIMITED' || errCode === 'TOO_MANY_REQUESTS') {
           showAlert(t('common.error'), 'تجاوزت الحد المسموح.\nانتظر قليلاً وأعد المحاولة.');
         } else if (errCode === 'DAILY_LIMIT_EXCEEDED') {
@@ -129,7 +129,7 @@ export default function LoginScreen() {
 
           {/* Phone input card */}
           <View style={[styles.inputCard, phoneError && styles.inputCardError]}>
-            <Text style={styles.inputLabel}>رقم الهاتف</Text>
+            <Text style={styles.inputLabel}>{t('auth.phoneLabel')}</Text>
             <View style={styles.inputRow}>
               <View style={styles.codeBox}>
                 <Text style={styles.countryCode}>🇯🇴 +962</Text>
@@ -153,7 +153,7 @@ export default function LoginScreen() {
 
           {/* Security badge */}
           <View style={styles.securityBadge}>
-            <Text style={styles.securityText}>🔒 رقمك محفوظ لدينا بأمان تام</Text>
+            <Text style={styles.securityText}>{t('auth.phoneSecurity')}</Text>
           </View>
 
           {/* CTA button */}
