@@ -1,11 +1,11 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.3  
+**Document Version:** 4.4  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
 **Backend:** Supabase (PostgreSQL + Edge Functions + Realtime)  
-**Date:** 2026-05-12  
+**Date:** 2026-05-14  
 
 ---
 
@@ -7114,9 +7114,106 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.3*  
-*Total Test Cases: 588 across 44 modules*  
-*Critical: 156 | High: 247 | Medium: 152 | Low: 32 (previously: 582/43)*  
+## 45. BUGFIX7 — Bug-Fix Regression Suite v4.4 (BUG-AM02)
+
+**Bug:** BUG-AM02 — Admin ticket count badge not updating in real-time  
+**Fix:** Added Supabase Realtime subscription on `support_tickets` INSERT in `support.tsx`; badge increments immediately when a new ticket arrives without screen reload.  
+**Date:** 2026-05-14  
+**Files Changed:** `mobile/app/support.tsx`
+
+---
+
+#### BUGFIX7-001
+**ID:** BUGFIX7-001  
+**Title:** Admin badge increments in real-time when new ticket submitted  
+**Priority:** High  
+**Steps:**
+1. سجّل دخول كـ admin وانتقل لشاشة الدعم (support)
+2. في جهاز/نافذة ثانية، أرسل تذكرة دعم جديدة كمستخدم عادي
+3. راقب شارة "صندوق الوارد" في شاشة الدعم للمسؤول دون إعادة تحميل
+
+**Expected:** ترتفع قيمة الشارة فوراً (+1) بدون reload  
+**Regression:** لا تأثير على أزرار الانتقال لـ /admin  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX7-002
+**ID:** BUGFIX7-002  
+**Title:** Badge shows correct initial count on screen mount  
+**Priority:** High  
+**Steps:**
+1. أنشئ 3 تذاكر مفتوحة مسبقاً
+2. انتقل من admin→ support (أو أعد تحميل التطبيق)
+3. لاحظ الرقم في شارة صندوق الوارد
+
+**Expected:** تعرض الشارة عدد التذاكر الفعلية (3) عند التحميل الأولي  
+**Regression:** بيانات الحالة الأولية لا تتأثر بالـ subscription  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX7-003
+**ID:** BUGFIX7-003  
+**Title:** Multiple rapid tickets each increment badge once  
+**Priority:** Medium  
+**Steps:**
+1. Admin يفتح شاشة الدعم (adminNew = 0)
+2. أرسل 3 تذاكر متتالية بسرعة
+3. راقب الشارة
+
+**Expected:** الشارة تصل لـ 3 بعد استقرار الـ events  
+**Regression:** لا تكرار في الإضافة  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX7-004
+**ID:** BUGFIX7-004  
+**Title:** Non-admin users do not create Realtime channel  
+**Priority:** Medium  
+**Steps:**
+1. سجّل دخول كمستخدم عادي (غير admin) وافتح شاشة الدعم
+2. راقب network/console: لا يجب إنشاء channel لـ support_tickets
+
+**Expected:** لا subscription على `support_tickets` للمستخدم العادي  
+**Regression:** شاشة الدعم تعمل طبيعياً بدون أخطاء  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX7-005
+**ID:** BUGFIX7-005  
+**Title:** Realtime channel cleaned up on screen unmount  
+**Priority:** Medium  
+**Steps:**
+1. Admin يفتح شاشة الدعم
+2. Admin ينتقل بعيداً (back / navigate)
+3. تحقق من console: لا تحذيرات "channel already subscribed" أو memory leaks
+
+**Expected:** `removeChannel` يُستدعى عند unmount، لا تسرب  
+**Regression:** تنقل الشاشات بعدها يعمل طبيعياً  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX7-006
+**ID:** BUGFIX7-006  
+**Title:** Badge absent when adminNew = 0 (no false zero badge)  
+**Priority:** Low  
+**Steps:**
+1. Admin يفتح شاشة الدعم وجميع التذاكر مغلقة (adminNew = 0)
+2. تحقق من زر "صندوق الوارد"
+
+**Expected:** لا تظهر شارة عندما القيمة = 0  
+**Regression:** الزر نفسه يظل مرئياً للـ admin  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.4*  
+*Total Test Cases: 594 across 45 modules*  
+*Critical: 156 | High: 249 | Medium: 156 | Low: 33 (previously: 588/44)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
