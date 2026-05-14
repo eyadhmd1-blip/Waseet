@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.8  
+**Document Version:** 4.9  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -7467,9 +7467,89 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.8*  
-*Total Test Cases: 609 across 49 modules*  
-*Critical: 157 | High: 253 | Medium: 164 | Low: 35 (previously: 605/48)*  
+---
+
+## 50. FEAT1 — Onboarding Flow Redesign (Auto-Trial + Welcome Screen)
+
+**Change:** حذف Step 4 (اختيار الخطة) من تسجيل المزود — التجريبية تُفعَّل تلقائياً + شاشة ترحيب تسويقية  
+**Date:** 2026-05-14  
+**Files Changed:** `mobile/app/(auth)/onboarding.tsx`, `mobile/src/i18n/ar.json`
+
+---
+
+#### FEAT1-001
+**ID:** FEAT1-001  
+**Title:** Provider registration completes in 3 steps (not 4)  
+**Priority:** High  
+**Steps:**
+1. سجّل حساباً جديداً كمزود خدمة
+2. أكمل الخطوات وتابع progress bar
+
+**Expected:** شريط التقدم يُظهر 3 خطوات فقط (لا 4)، لا تظهر شاشة "اختر خطة البداية"  
+**Regression:** تسجيل العميل يبقى خطوتين  
+**Automation Candidate:** Yes
+
+---
+
+#### FEAT1-002
+**ID:** FEAT1-002  
+**Title:** Trial activated automatically on provider registration  
+**Priority:** Critical  
+**Steps:**
+1. سجّل مزود جديد وأكمل الخطوات الثلاث
+2. تحقق من DB: providers.is_subscribed + subscription_tier + subscription_credits
+
+**Expected:** `is_subscribed=true`, `subscription_tier='trial'`, `subscription_credits=10`, `trial_used=true`  
+**Regression:** المزود يصل للداشبورد مباشرة بعد الترحيب  
+**Automation Candidate:** Yes
+
+---
+
+#### FEAT1-003
+**ID:** FEAT1-003  
+**Title:** Welcome screen shows 10 free credits with 30-day validity  
+**Priority:** High  
+**Steps:**
+1. أكمل تسجيل مزود جديد
+2. لاحظ الشاشة التي تظهر قبل الداشبورد
+
+**Expected:** تظهر شاشة "حسابك جاهز! 🎉" مع نص "10 رصيد مجاني · صالحة لمدة 30 يوماً — مجاناً"  
+**Regression:** زر "اكتشف التطبيق" يوصل للداشبورد  
+**Automation Candidate:** No
+
+---
+
+#### FEAT1-004
+**ID:** FEAT1-004  
+**Title:** No redirect to subscribe screen after registration  
+**Priority:** High  
+**Steps:**
+1. سجّل مزود جديد وأكمل التسجيل
+2. اضغط "اكتشف التطبيق"
+
+**Expected:** يذهب مباشرة لـ `/(provider)` home — لا يُحوَّل لـ /subscribe  
+**Regression:** شاشة /subscribe لا تزال متاحة من الداشبورد  
+**Automation Candidate:** Yes
+
+---
+
+#### FEAT1-005
+**ID:** FEAT1-005  
+**Title:** Provider with trialUsed=true can still register (no crash)  
+**Priority:** Medium  
+**Steps:**
+1. حاول تسجيل مزود بنفس الرقم مرتين (أو حساب استُنفدت تجريبيته)
+2. تابع السلوك
+
+**Expected:** الحساب يُنشأ بدون تفعيل trial — لا crash  
+**Regression:** رسالة الخطأ الصحيحة تظهر للحساب المكرر  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.9*  
+*Total Test Cases: 614 across 50 modules*  
+*Critical: 158 | High: 257 | Medium: 164 | Low: 35 (previously: 609/49)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
