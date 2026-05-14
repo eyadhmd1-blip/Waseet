@@ -1,8 +1,8 @@
 // Waseet seed script — run with: node seed.js
 const { createClient } = require('../mobile/node_modules/@supabase/supabase-js');
 
-const URL = 'https://bkbjsstxhvdnqcmpuulf.supabase.co';
-const KEY = 'REDACTED_SERVICE_ROLE_KEY';
+const URL = process.env.SUPABASE_URL ?? 'https://bkbjsstxhvdnqcmpuulf.supabase.co';
+const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 const s = createClient(URL, KEY, { auth: { autoRefreshToken: false, persistSession: false } });
 
 async function createAuthUser(phone, name) {

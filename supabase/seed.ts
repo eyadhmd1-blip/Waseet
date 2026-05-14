@@ -10,8 +10,8 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL      = 'https://bkbjsstxhvdnqcmpuulf.supabase.co';
-const SERVICE_ROLE_KEY  = 'REDACTED_SERVICE_ROLE_KEY';
+const SUPABASE_URL      = process.env.SUPABASE_URL      ?? 'https://bkbjsstxhvdnqcmpuulf.supabase.co';
+const SERVICE_ROLE_KEY  = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
 
 const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
   auth: { autoRefreshToken: false, persistSession: false },
