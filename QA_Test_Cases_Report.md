@@ -7617,9 +7617,105 @@ ORDER BY group_slug, sort_order;
 
 ---
 
+---
+
+## 52. BUGFIX13 — RTL Alert Dialog Fix (AppAlert Hook)
+
+**Date:** 2026-05-14  
+**Scope:** 5 screens — login, verify, verify-phone, notification-settings, provider profile  
+**Root Cause:** Native Android `Alert.alert()` renders title with LTR alignment regardless of app RTL setting. Message body auto-detects Arabic text direction (Unicode Bidi) but title does not.  
+**Fix:** Created `useAppAlert` hook (Modal-based) as drop-in replacement. Same API `showAlert(title, message)`. 30 calls replaced across 5 screens. Zero logic changes.
+
+---
+
+#### BUGFIX13-001
+**ID:** BUGFIX13-001  
+**Title:** Alert title "خطأ" appears right-aligned in Arabic mode — login screen  
+**Priority:** Medium  
+**Steps:**
+1. افتح التطبيق باللغة العربية على أندرويد
+2. أدخل رقم هاتف غير صالح في شاشة تسجيل الدخول
+3. اضغط "إرسال الرمز"
+
+**Expected:** نافذة تنبيه تظهر مع عنوان "خطأ" محاذٍ لليمين ✅  
+**Regression:** نافذة التنبيه تظهر وتُغلق بشكل صحيح، لا تأثير على منطق OTP  
+**Automation Candidate:** No (visual only)
+
+---
+
+#### BUGFIX13-002
+**ID:** BUGFIX13-002  
+**Title:** Alert title "رمز خاطئ" appears right-aligned in Arabic mode — verify screen  
+**Priority:** High  
+**Steps:**
+1. افتح التطبيق باللغة العربية على أندرويد
+2. أدخل رمز OTP خاطئ في شاشة التحقق
+
+**Expected:** نافذة تنبيه تظهر بعنوان "رمز خاطئ" محاذٍ لليمين ✅  
+**Regression:** حقول OTP تُفرّغ بعد الخطأ، التركيز يعود للحقل الأول — يظل يعمل  
+**Automation Candidate:** No (visual only)
+
+---
+
+#### BUGFIX13-003
+**ID:** BUGFIX13-003  
+**Title:** Alert title "خطأ" appears right-aligned — verify-phone screen  
+**Priority:** Medium  
+**Steps:**
+1. افتح التطبيق باللغة العربية على أندرويد
+2. في شاشة تغيير رقم الهاتف، أدخل رمزاً خاطئاً
+
+**Expected:** عنوان "خطأ" / "رمز خاطئ" محاذٍ لليمين ✅  
+**Regression:** منطق تغيير الهاتف لا يتأثر  
+**Automation Candidate:** No (visual only)
+
+---
+
+#### BUGFIX13-004
+**ID:** BUGFIX13-004  
+**Title:** Alert title right-aligned in Arabic mode — notification-settings screen  
+**Priority:** Low  
+**Steps:**
+1. افتح إعدادات الإشعارات باللغة العربية على أندرويد
+2. اضغط "حفظ" مع خطأ في الشبكة (simulate offline)
+
+**Expected:** عنوان "خطأ" محاذٍ لليمين ✅  
+**Regression:** إعدادات الإشعارات تُحفظ وتُقرأ بشكل صحيح  
+**Automation Candidate:** No (visual only)
+
+---
+
+#### BUGFIX13-005
+**ID:** BUGFIX13-005  
+**Title:** Alert title right-aligned in Arabic mode — provider profile screen  
+**Priority:** Medium  
+**Steps:**
+1. افتح ملف مزود الخدمة باللغة العربية على أندرويد
+2. حاول حفظ تخصصات مع تجاوز الحد الأقصى
+
+**Expected:** عنوان "الحد الأقصى للتخصصات" محاذٍ لليمين ✅  
+**Regression:** حفظ التخصصات واختيار المدينة يظلان يعملان بشكل صحيح  
+**Automation Candidate:** No (visual only)
+
+---
+
+#### BUGFIX13-006
+**ID:** BUGFIX13-006  
+**Title:** AppAlert OK button dismisses dialog correctly  
+**Priority:** High  
+**Steps:**
+1. أي شاشة من الشاشات الخمس — أثِر نافذة التنبيه
+2. اضغط "حسناً"
+
+**Expected:** النافذة تُغلق فوراً، الشاشة الأصلية تظهر بدون أي تأثير جانبي  
+**Regression:** لا تغيير في state الشاشة بعد الإغلاق  
+**Automation Candidate:** No (visual only)
+
+---
+
 *End of Waseet QA Test Cases Report v5.0*  
-*Total Test Cases: 618 across 51 modules*  
-*Critical: 158 | High: 259 | Medium: 166 | Low: 35 (previously: 614/50)*  
+*Total Test Cases: 624 across 52 modules*  
+*Critical: 158 | High: 261 | Medium: 168 | Low: 37 (previously: 618/51)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
