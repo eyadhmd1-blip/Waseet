@@ -36,10 +36,12 @@ export function useUnreadMsgCount() {
   }, [fetchCount]);
 
   useEffect(() => {
+    let cancelled = false;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
     const setup = async () => {
       await refresh();
+      if (cancelled) return;
       const userId = userIdRef.current;
       if (!userId) return;
 
@@ -63,6 +65,7 @@ export function useUnreadMsgCount() {
 
     setup();
     return () => {
+      cancelled = true;
       if (channel) supabase.removeChannel(channel);
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
