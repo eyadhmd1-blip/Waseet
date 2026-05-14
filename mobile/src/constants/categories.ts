@@ -10,7 +10,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     name_ar: 'صيانة المنازل',
     name_en: 'Home Maintenance',
     categories: [
-      { id: '', slug: 'electrical',       name_ar: 'كهرباء',              name_en: 'Electrical',            group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'zap',          sort_order: 1,  is_active: true },
+      { id: '', slug: 'electrical',       name_ar: 'كهرباء المنازل',       name_en: 'Home Electrical',            group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'zap',          sort_order: 1,  is_active: true },
       { id: '', slug: 'plumbing',         name_ar: 'سباكة',               name_en: 'Plumbing',              group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'droplets',     sort_order: 2,  is_active: true },
       { id: '', slug: 'ac_repair',        name_ar: 'تكييف وتبريد',         name_en: 'AC & Cooling',          group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'wind',         sort_order: 3,  is_active: true },
       { id: '', slug: 'carpentry',        name_ar: 'نجارة',               name_en: 'Carpentry',             group_slug: 'maintenance', group_ar: 'صيانة المنازل', group_en: 'Home Maintenance', icon: 'hammer',       sort_order: 4,  is_active: true },
