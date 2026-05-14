@@ -1,4 +1,5 @@
 import 'intl-pluralrules';   // polyfill — must be first import
+import * as Sentry from '@sentry/react-native';
 import { Component, useEffect, useState, useRef, useCallback } from 'react';
 import { Platform, View, Text, StatusBar, TouchableOpacity, AppState } from 'react-native';
 import { Stack, useRouter, useSegments } from 'expo-router';
@@ -14,6 +15,11 @@ import { useNetworkStatus } from '../src/hooks/useNetworkStatus';
 import { ThemeProvider, useTheme } from '../src/context/ThemeContext';
 import { initI18n } from '../src/i18n';
 import i18nInstance from '../src/i18n';
+
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN,
+  debug: false,
+});
 
 SplashScreen.preventAutoHideAsync();
 
@@ -374,7 +380,7 @@ function RootLayoutInner() {
   );
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
@@ -383,6 +389,8 @@ export default function RootLayout() {
     </ErrorBoundary>
   );
 }
+
+export default Sentry.wrap(RootLayout);
 
 const offlineBanner: import('react-native').ViewStyle = {
   position: 'absolute', top: 0, left: 0, right: 0, zIndex: 9999,

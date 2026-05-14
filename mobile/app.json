@@ -43,14 +43,19 @@
               "pathPrefix": "/p/"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.waseet.app",
-      "associatedDomains": ["applinks:waseet.app"],
+      "associatedDomains": [
+        "applinks:waseet.app"
+      ],
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSUserNotificationUsageDescription": "نرسل إليك إشعارات عند وصول عروض جديدة أو تحديثات على طلباتك."
@@ -65,15 +70,19 @@
       "expo-router",
       "expo-secure-store",
       "expo-localization",
+      "@sentry/react-native/expo",
       [
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
           "color": "#3B82F6",
           "defaultChannel": "default",
-          "sounds": ["./assets/sounds/notification.wav"]
+          "sounds": [
+            "./assets/sounds/notification.wav"
+          ]
         }
-      ]
+      ],
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true
