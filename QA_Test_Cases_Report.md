@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.5  
+**Document Version:** 4.6  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -7277,9 +7277,65 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.5*  
-*Total Test Cases: 598 across 46 modules*  
-*Critical: 157 | High: 251 | Medium: 157 | Low: 33 (previously: 594/45)*  
+---
+
+## 47. BUGFIX9 — Bug-Fix Regression Suite v4.6 (Race Condition — useUnreadMsgCount)
+
+**Bug:** Race condition في `useUnreadMsgCount.ts` — double subscribe crash  
+**Fix:** Added `cancelled` flag; after `await refresh()`, checks `if (cancelled) return` so a cleaned-up effect never calls `.on()` on an already-subscribed channel.  
+**Date:** 2026-05-14  
+**Files Changed:** `mobile/src/hooks/useUnreadMsgCount.ts`
+
+---
+
+#### BUGFIX9-001
+**ID:** BUGFIX9-001  
+**Title:** No console error on rapid mount/unmount of message screen  
+**Priority:** High  
+**Steps:**
+1. افتح شاشة الرسائل ثم اضغط Back بسرعة
+2. أعد فتح شاشة الرسائل
+3. راقب console: لا يجب ظهور خطأ "cannot add postgres_changes callbacks after subscribe()"
+
+**Expected:** لا أخطاء، عداد الرسائل يعمل طبيعياً  
+**Regression:** عداد الرسائل غير المقروءة يظهر القيمة الصحيحة  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX9-002
+**ID:** BUGFIX9-002  
+**Title:** Unread count updates correctly on new message after remount  
+**Priority:** High  
+**Steps:**
+1. افتح التطبيق، انتقل للرسائل ثم ارجع، ثم أعد الفتح
+2. أرسل رسالة جديدة من حساب آخر
+3. لاحظ العداد في الـ tab bar
+
+**Expected:** العداد يرتفع +1 بشكل طبيعي  
+**Regression:** لا تأثير على أي شاشة أخرى تستخدم useUnreadMsgCount  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX9-003
+**ID:** BUGFIX9-003  
+**Title:** Channel cleanup on screen leave — no memory leak  
+**Priority:** Medium  
+**Steps:**
+1. افتح شاشة الرسائل
+2. انتقل لشاشة أخرى
+3. راقب: لا تحذيرات "channel already subscribed" أو memory leaks في console
+
+**Expected:** removeChannel يُستدعى عند unmount بشكل نظيف  
+**Regression:** باقي الشاشات لا تتأثر  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v4.6*  
+*Total Test Cases: 601 across 47 modules*  
+*Critical: 157 | High: 253 | Medium: 158 | Low: 33 (previously: 598/46)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
