@@ -4,7 +4,7 @@
 // Lists all open support tickets, highlights payment requests.
 // ============================================================
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert, Modal, TextInput,
@@ -53,6 +53,8 @@ const CAT_ICON: Record<string, string> = {
   account: '👤', contract: '📄', other: '💬',
 };
 
+const PAGE_SIZE = 30;
+
 export default function AdminScreen() {
   const { headerPad } = useInsets();
   const router  = useRouter();
@@ -66,7 +68,10 @@ export default function AdminScreen() {
   const [refreshing,  setRefreshing]  = useState(false);
   const [filter,      setFilter]      = useState<Filter>('all');
   const [isAdmin,     setIsAdmin]     = useState(false);
-  const [actioning,   setActioning]   = useState<string | null>(null);
+  const [actioning,    setActioning]   = useState<string | null>(null);
+  const [loadingMore,  setLoadingMore] = useState(false);
+  const [hasMore,      setHasMore]     = useState(true);
+  const cursorRef = useRef<{ opened_at: string; id: string } | null>(null);
 
   // ── Grant Trial modal ─────────────────────────────────────────
   const [trialModal,    setTrialModal]    = useState(false);
@@ -74,6 +79,48 @@ export default function AdminScreen() {
   const [trialProvider, setTrialProvider] = useState<{ id: string; full_name: string; trial_used: boolean } | null>(null);
   const [trialSearching, setTrialSearching] = useState(false);
   const [trialGranting,  setTrialGranting]  = useState(false);
+
+  const fetchTickets = useCallback(async (reset: boolean) => {
+    if (reset) {
+      cursorRef.current = null;
+      setTickets([]);
+    }
+
+    let query = supabase
+      .from('support_tickets')
+      .select('id, category, priority, status, subject, plan_tier, plan_amount_jod, opened_at, user:users!user_id(full_name)')
+      .order('opened_at', { ascending: false })
+      .order('id',         { ascending: false })
+      .limit(PAGE_SIZE);
+
+    if (filter === 'payment') {
+      query = query.eq('category', 'payment').in('status', ['open', 'in_review']);
+    } else if (filter === 'resolved') {
+      query = query.in('status', ['resolved', 'closed']);
+    } else {
+      query = query.in('status', ['open', 'in_review']);
+    }
+
+    if (!reset && cursorRef.current) {
+      const { opened_at, id } = cursorRef.current;
+      query = query.or(`opened_at.lt.${opened_at},and(opened_at.eq.${opened_at},id.lt.${id})`);
+    }
+
+    const { data } = await query;
+    if (!data) return;
+
+    if (reset) {
+      setTickets(data as AdminTicket[]);
+    } else {
+      setTickets(prev => [...prev, ...(data as AdminTicket[])]);
+    }
+
+    if (data.length > 0) {
+      const last = data[data.length - 1];
+      cursorRef.current = { opened_at: last.opened_at, id: last.id };
+    }
+    setHasMore(data.length === PAGE_SIZE);
+  }, [filter]);
 
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -91,12 +138,6 @@ export default function AdminScreen() {
       if (!userData?.is_admin) { setIsAdmin(false); return; }
       setIsAdmin(true);
 
-      let query = supabase
-        .from('support_tickets')
-        .select('id, category, priority, status, subject, plan_tier, plan_amount_jod, opened_at, user:users!user_id(full_name)')
-        .order('opened_at', { ascending: false })
-        .limit(100);
-
       if (filter === 'suggestions') {
         const { data: suggData } = await supabase
           .from('service_suggestions')
@@ -106,25 +147,24 @@ export default function AdminScreen() {
           .limit(100);
         setSuggestions((suggData ?? []) as AdminSuggestion[]);
       } else {
-        if (filter === 'payment') {
-          query = query.eq('category', 'payment').in('status', ['open', 'in_review']);
-        } else if (filter === 'resolved') {
-          query = query.in('status', ['resolved', 'closed']);
-        } else {
-          query = query.in('status', ['open', 'in_review']);
-        }
-        const { data } = await query;
-        if (data) setTickets(data as AdminTicket[]);
+        await fetchTickets(true);
       }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [filter]);
+  }, [filter, fetchTickets]);
 
   useEffect(() => { load(); }, [load]);
 
   const onRefresh = () => { setRefreshing(true); load(true); };
+
+  const onEndReached = useCallback(async () => {
+    if (!hasMore || loadingMore || filter === 'suggestions') return;
+    setLoadingMore(true);
+    await fetchTickets(false);
+    setLoadingMore(false);
+  }, [hasMore, loadingMore, filter, fetchTickets]);
 
   const handleSearchProvider = useCallback(async () => {
     const phone = trialPhone.trim();
@@ -384,6 +424,9 @@ export default function AdminScreen() {
           keyExtractor={item => item.id}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />}
           contentContainerStyle={styles.listContent}
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.3}
+          ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.accent} style={{ marginVertical: 16 }} /> : null}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Text style={styles.emptyText}>{t('admin.emptyText')}</Text>
