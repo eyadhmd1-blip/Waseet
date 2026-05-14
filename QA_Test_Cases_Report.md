@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.9  
+**Document Version:** 5.0  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -7547,9 +7547,79 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.9*  
-*Total Test Cases: 614 across 50 modules*  
-*Critical: 158 | High: 257 | Medium: 164 | Low: 35 (previously: 609/49)*  
+---
+
+## 51. BUGFIX12 — Bug-Fix Regression Suite v5.0 (City i18n)
+
+**Bug:** أسماء المدن الأردنية تظهر بالعربية في وضع اللغة الإنجليزية  
+**Root Cause:** `provider-profile.tsx` و`(provider)/profile.tsx` يعرضان `city` مباشرة من DB بدون `t()` + مأدبا مفقودة من ملفي الترجمة  
+**Fix:** تغليف بـ `t('cities.X', X)` في الملفين + إضافة مأدبا/Madaba  
+**Date:** 2026-05-14  
+**Files Changed:** `provider-profile.tsx`, `(provider)/profile.tsx`, `ar.json`, `en.json`
+
+---
+
+#### BUGFIX12-001
+**ID:** BUGFIX12-001  
+**Title:** Provider public profile shows city in English when app is in English  
+**Priority:** High  
+**Steps:**
+1. غيّر لغة التطبيق للإنجليزية
+2. افتح ملف أي مزود (provider-profile)
+3. لاحظ اسم المدينة
+
+**Expected:** تظهر "Irbid" بدلاً من "إربد" (وهكذا لكل المدن)  
+**Regression:** الوضع العربي يعرض الأسماء العربية كما كان  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX12-002
+**ID:** BUGFIX12-002  
+**Title:** Provider own profile (My Profile) shows city in English  
+**Priority:** High  
+**Steps:**
+1. غيّر لغة التطبيق للإنجليزية
+2. افتح تبويب Profile للمزود
+3. لاحظ chip المدينة
+
+**Expected:** "Amman" / "Irbid" / إلخ — لا عربية  
+**Regression:** زر تعديل المدينة يعمل طبيعياً  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX12-003
+**ID:** BUGFIX12-003  
+**Title:** Madaba city displays correctly in both languages  
+**Priority:** Medium  
+**Steps:**
+1. سجّل مزود باختيار مدينة "مأدبا"
+2. افتح الملف بالعربية ثم بالإنجليزية
+
+**Expected:** بالعربية "مأدبا" — بالإنجليزية "Madaba"  
+**Regression:** باقي المدن لا تتأثر  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX12-004
+**ID:** BUGFIX12-004  
+**Title:** All 12 Jordan cities translate correctly in English mode  
+**Priority:** Medium  
+**Steps:**
+1. اختبر جميع المدن: عمّان، الزرقاء، إربد، العقبة، السلط، المفرق، جرش، عجلون، الكرك، معان، الطفيلة، مأدبا
+2. تحقق من الترجمة الإنجليزية في الملف الشخصي
+
+**Expected:** كل مدينة تظهر باسمها الإنجليزي الصحيح  
+**Regression:** client profile يظل يعرض الترجمة الصحيحة (كان صحيحاً مسبقاً)  
+**Automation Candidate:** Yes
+
+---
+
+*End of Waseet QA Test Cases Report v5.0*  
+*Total Test Cases: 618 across 51 modules*  
+*Critical: 158 | High: 259 | Medium: 166 | Low: 35 (previously: 614/50)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
