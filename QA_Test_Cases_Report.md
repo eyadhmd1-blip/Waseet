@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 4.7  
+**Document Version:** 4.8  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -7400,9 +7400,76 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v4.7*  
-*Total Test Cases: 605 across 48 modules*  
-*Critical: 157 | High: 253 | Medium: 161 | Low: 34 (previously: 601/47)*  
+---
+
+## 49. BUGFIX11 — Bug-Fix Regression Suite v4.8 (كهرباء → كهرباء المنازل)
+
+**Bug:** تخصص "كهرباء" (صيانة المنازل) يظهر بدون سياق بجانب "كهرباء السيارات"  
+**Fix:** تم تغيير الاسم إلى "كهرباء المنازل" في categories.ts + ar.json + en.json + DB migration + رفع CACHE_KEY إلى v2  
+**Date:** 2026-05-14  
+**Files Changed:** `categories.ts`, `ar.json`, `en.json`, `useCategories.ts`, `092_rename_electrical_category.sql`
+
+---
+
+#### BUGFIX11-001
+**ID:** BUGFIX11-001  
+**Title:** Provider specialty selection shows "كهرباء المنازل" not "كهرباء"  
+**Priority:** Medium  
+**Steps:**
+1. سجّل دخول كمزود خدمة جديد أو افتح "تعديل التخصصات"
+2. ابحث عن تخصص الكهرباء تحت مجموعة "صيانة المنازل"
+
+**Expected:** يظهر "كهرباء المنازل" (لا "كهرباء")  
+**Regression:** "كهرباء السيارات" تحت صيانة السيارات تبقى كما هي  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX11-002
+**ID:** BUGFIX11-002  
+**Title:** Provider profile tag shows "كهرباء المنازل" not "كهرباء"  
+**Priority:** Medium  
+**Steps:**
+1. افتح ملف مزود يملك تخصص `electrical`
+2. لاحظ الـ tag المعروضة
+
+**Expected:** ⚡ كهرباء المنازل  
+**Regression:** باقي التخصصات تُعرض بأسمائها الصحيحة  
+**Automation Candidate:** Yes
+
+---
+
+#### BUGFIX11-003
+**ID:** BUGFIX11-003  
+**Title:** Cache bust — fresh install or expired cache shows new name  
+**Priority:** Medium  
+**Steps:**
+1. احذف بيانات التطبيق (أو انتظر انتهاء الساعة) ثم أعد الفتح
+2. افتح شاشة اختيار التخصصات
+
+**Expected:** يُجلب من DB "كهرباء المنازل" مباشرة، لا "كهرباء" القديمة  
+**Regression:** جميع التخصصات الأخرى تُجلب بشكل صحيح  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX11-004
+**ID:** BUGFIX11-004  
+**Title:** English mode shows "Home Electrical" not "Electrical"  
+**Priority:** Low  
+**Steps:**
+1. غيّر لغة التطبيق للإنجليزية
+2. افتح تعديل التخصصات أو ملف مزود
+
+**Expected:** التخصص يُعرض كـ "Home Electrical"  
+**Regression:** "Car Electrical" تبقى كما هي  
+**Automation Candidate:** Yes
+
+---
+
+*End of Waseet QA Test Cases Report v4.8*  
+*Total Test Cases: 609 across 49 modules*  
+*Critical: 157 | High: 253 | Medium: 164 | Low: 35 (previously: 605/48)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
