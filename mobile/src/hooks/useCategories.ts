@@ -66,7 +66,12 @@ export function useCategories() {
 
         if (error || !data || data.length === 0) return;
 
-        const fetched = rowsToGroups(data);
+        const slugOrder = CATEGORY_GROUPS.map(g => g.slug);
+        const fetched = rowsToGroups(data).sort((a, b) => {
+          const ia = slugOrder.indexOf(a.slug);
+          const ib = slugOrder.indexOf(b.slug);
+          return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        });
         if (!cancelled && fetched.length > 0) {
           setGroups(fetched);
           await AsyncStorage.setItem(
