@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
         title,
         body,
         type:     "confirm_job",
-        screen:   "/(client)/jobs",
+        screen:   "/(client)/requests",
         metadata: { job_id },
       });
 
@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       sound: "default",
       title,
       body,
-      data:  { job_id, type: "confirm_job" },
+      data:  { job_id, type: "confirm_job", screen: "/(client)/requests" },
       ttl:   1800,
     };
 

@@ -60,9 +60,10 @@ export function handleNotifTap(data: NotifRouteData, router: Router) {
       router.push('/(client)/requests' as any);
       break;
 
-    // Client: jobs tab (confirm code received)
+    // Client: confirm code received — navigate to requests (client has no /jobs tab)
     case '/(client)/jobs':
-      router.push('/(client)/jobs' as any);
+    case '/(client)/requests':
+      router.push('/(client)/requests' as any);
       break;
 
     // Provider: jobs tab (bid accepted / job confirmed / job rated)
