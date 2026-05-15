@@ -140,8 +140,8 @@ export default function ClientRequests() {
   }, []);
 
   const greetingLine = userName
-    ? (lang === 'ar' ? `${greeting}، ${userName} ${greetingEmoji}` : `${greeting}, ${userName} ${greetingEmoji}`)
-    : `${greeting} ${greetingEmoji}`;
+    ? (lang === 'ar' ? `${greetingEmoji} ${greeting}، ${userName}` : `${greetingEmoji} ${greeting}, ${userName}`)
+    : `${greetingEmoji} ${greeting}`;
 
   const STATUS_LABEL: Record<string, string> = {
     open:        t('requests.statusOpen'),
