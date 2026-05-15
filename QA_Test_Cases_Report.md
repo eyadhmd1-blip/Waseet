@@ -8056,9 +8056,156 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v5.0*  
-*Total Test Cases: 646 across 54 modules*  
-*Critical: 162 | High: 269 | Medium: 173 | Low: 42 (previously: 626/53)*  
+---
+
+### Module PRELAUNCH2 — API Key Migration & Load Test Validation
+
+#### PRELAUNCH2-001
+**ID:** PRELAUNCH2-001  
+**Title:** Publishable API key (waseetupdated) accepted by Supabase REST API  
+**Priority:** Critical  
+**Steps:**
+1. شغّل:
+   ```
+   curl -s -o /dev/null -w "%{http_code}" \
+     -H "apikey: sb_publishable_lKYwWidN9UNk3ncxGoJq0Q_zCo5-nyQ" \
+     -H "Authorization: Bearer sb_publishable_lKYwWidN9UNk3ncxGoJq0Q_zCo5-nyQ" \
+     "https://bkbjsstxhvdnqcmpuulf.supabase.co/rest/v1/requests?select=id&limit=1"
+   ```
+2. لاحظ الـ HTTP status code
+
+**Expected:** 200 — المفتاح مقبول والاستجابة صحيحة  
+**Automation Candidate:** Yes (CI health check)
+
+---
+
+#### PRELAUNCH2-002
+**ID:** PRELAUNCH2-002  
+**Title:** Unregistered API key rejected with clear error  
+**Priority:** High  
+**Steps:**
+1. جرّب مفتاحاً غير مسجّل:
+   ```
+   curl -s -H "apikey: sb_publishable_INVALID" \
+     "https://bkbjsstxhvdnqcmpuulf.supabase.co/rest/v1/requests?select=id&limit=1"
+   ```
+
+**Expected:** `{"message":"Unregistered API key"}` مع status 401  
+**Automation Candidate:** Yes
+
+---
+
+#### PRELAUNCH2-003
+**ID:** PRELAUNCH2-003  
+**Title:** codemagic.yaml android workflow uses correct publishable key  
+**Priority:** Critical  
+**Steps:**
+1. افتح `codemagic.yaml`
+2. في قسم `android-staging` → `vars`، تحقق من قيمة `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+**Expected:** `sb_publishable_lKYwWidN9UNk3ncxGoJq0Q_zCo5-nyQ`  
+**Automation Candidate:** Yes (grep in CI)
+
+---
+
+#### PRELAUNCH2-004
+**ID:** PRELAUNCH2-004  
+**Title:** codemagic.yaml ios workflow uses correct publishable key  
+**Priority:** Critical  
+**Steps:**
+1. افتح `codemagic.yaml`
+2. في قسم `ios-staging` → `vars`، تحقق من قيمة `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+
+**Expected:** `sb_publishable_lKYwWidN9UNk3ncxGoJq0Q_zCo5-nyQ` — مطابق لقسم android  
+**Automation Candidate:** Yes
+
+---
+
+#### PRELAUNCH2-005
+**ID:** PRELAUNCH2-005  
+**Title:** k6 load test — 0% HTTP error rate at 300 VUs  
+**Priority:** High  
+**Steps:**
+1. شغّل: `k6 run k6/load_test.js`
+2. انتظر اكتمال الـ 3 دقائق (ramp 50→150→300→0 VUs)
+3. لاحظ `http_req_failed` و `error_rate`
+
+**Expected:** `http_req_failed: 0.00%` و `error_rate: 0.00%` — صفر أخطاء  
+**Automation Candidate:** Yes (CI load stage)
+
+---
+
+#### PRELAUNCH2-006
+**ID:** PRELAUNCH2-006  
+**Title:** k6 load test — REST /requests endpoint returns 200  
+**Priority:** High  
+**Steps:**
+1. شغّل: `k6 run k6/load_test.js`
+2. في ملخص النتائج، تحقق من الـ check `requests 200`
+
+**Expected:** ✓ 100% pass — جميع طلبات `/rest/v1/requests` تُجيب بـ 200  
+**Automation Candidate:** Yes
+
+---
+
+#### PRELAUNCH2-007
+**ID:** PRELAUNCH2-007  
+**Title:** k6 load test — REST /users (providers) endpoint returns 200  
+**Priority:** High  
+**Steps:**
+1. شغّل: `k6 run k6/load_test.js`
+2. في ملخص النتائج، تحقق من الـ check `providers 200`
+
+**Expected:** ✓ 100% pass — جميع طلبات `/rest/v1/users?role=eq.provider` تُجيب بـ 200  
+**Automation Candidate:** Yes
+
+---
+
+#### PRELAUNCH2-008
+**ID:** PRELAUNCH2-008  
+**Title:** k6 load test — REST /service_categories endpoint returns 200  
+**Priority:** High  
+**Steps:**
+1. شغّل: `k6 run k6/load_test.js`
+2. في ملخص النتائج، تحقق من الـ check `categories 200`
+
+**Expected:** ✓ 100% pass — جميع طلبات `/rest/v1/service_categories` تُجيب بـ 200  
+**Automation Candidate:** Yes
+
+---
+
+#### PRELAUNCH2-009
+**ID:** PRELAUNCH2-009  
+**Title:** k6 load test — median latency under 300ms on free tier  
+**Priority:** Medium  
+**Steps:**
+1. شغّل: `k6 run k6/load_test.js`
+2. في ملخص النتائج، لاحظ `http_req_duration` median
+
+**Expected:** median < 300ms — الـ median latency مقبول حتى على الخطة المجانية  
+**Automation Candidate:** Yes
+
+---
+
+#### PRELAUNCH2-010
+**ID:** PRELAUNCH2-010  
+**Title:** Sentry DSN configured in mobile app  
+**Priority:** High  
+**Steps:**
+1. افتح `mobile/.env.local`
+2. تحقق من وجود `EXPO_PUBLIC_SENTRY_DSN`
+3. افتح `mobile/app/_layout.tsx`
+4. تأكد من `Sentry.init({ dsn: process.env.EXPO_PUBLIC_SENTRY_DSN })`
+5. تأكد أن `export default Sentry.wrap(RootLayout)`
+
+**Expected:** DSN مُعرَّف وSentry مُهيَّأ ويلتف حول RootLayout  
+**Automation Candidate:** Yes (grep)
+
+---
+
+*End of Waseet QA Test Cases Report v5.1*  
+*Total Test Cases: 656 across 55 modules*  
+*Critical: 164 | High: 276 | Medium: 174 | Low: 42 (previously: 646/54)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
