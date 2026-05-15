@@ -1536,6 +1536,7 @@ export default function ProviderFeed() {
         variant="root"
         userName={provider?.user?.full_name}
         userRole="provider"
+        userCity={provider?.city ? t(`cities.${provider.city}`, { defaultValue: provider.city }) : undefined}
         providerScore={provider?.score}
         providerRepTier={provider?.reputation_tier}
         providerLifetimeJobs={provider?.lifetime_jobs}

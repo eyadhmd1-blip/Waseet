@@ -412,8 +412,13 @@ function RootHeader({
                 </Text>
               </View>
             </Animated.View>
-            {/* Group 3: Tier + score + jobs + credits (all together) */}
+            {/* Group 3: City + Tier + score + jobs + credits (all together) */}
             <Animated.View style={[chipStyle(3), { flexDirection: 'row', gap: 6, alignItems: 'center' }]}>
+              {props.userCity ? (
+                <View style={s.chip}>
+                  <Text style={s.chipText}>📍 {props.userCity}</Text>
+                </View>
+              ) : null}
               <View style={[s.chip, { backgroundColor: tierColor + '20' }]}>
                 <Text style={[s.chipText, { color: tierColor }]}>{tierLabel}</Text>
               </View>
