@@ -8361,6 +8361,168 @@ ORDER BY group_slug, sort_order;
 
 ---
 
+## 56. BUGFIX16 — Category Labels, Display Order & RTL Greeting Emoji Fix
+
+**Date:** 2026-05-15  
+**Scope:** (client)/index.tsx, src/constants/categories.ts, src/hooks/useCategories.ts, app/(client)/requests.tsx  
+**Changes:**
+- تغيير label "صيانة" → "منازل" و "تنظيف" → "نقل وتنظيف" في صف الأيقونات بالشاشة الرئيسية
+- توحيد ترتيب عرض الفئات بين الشاشة الرئيسية وشاشة "طلب جديد": منازل، سيارات، نقل وتنظيف، تقنية، مياه، صحة، تعليم، مناسبات، حِرَف، تصميم، حيوانات
+- إضافة post-fetch sort في useCategories.ts لضمان الترتيب بعد جلب DB (لا يُعيد DB الترتيب الصحيح)
+- رفع cache key من `waseet_categories_v2` إلى `waseet_categories_v3` لمسح البيانات المخزنة القديمة
+- نقل emoji التحية في requests.tsx إلى بداية النص (لا نهايته) لإصلاح خلل RTL (كانت تظهر كـ "صورة" في Android)
+- استبدال emoji المساء من 🌆 إلى 🌛 (هلال أيمن — مناسب ثقافياً)
+
+---
+
+#### BUGFIX16-001
+**ID:** BUGFIX16-001  
+**Title:** Home screen icon row shows "منازل" not "صيانة"  
+**Priority:** High  
+**Steps:**
+1. افتح تطبيق العميل
+2. لاحظ صف الأيقونات في الشاشة الرئيسية
+3. انظر إلى الأيقونة الأولى (المنازل)
+
+**Expected:** الـ label تحت أيقونة المنازل يقرأ "منازل" — لا "صيانة"  
+**Regression:** لا تغيير في تصفية الطلبات عند الضغط على هذه الأيقونة  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-002
+**ID:** BUGFIX16-002  
+**Title:** Home screen icon row shows "نقل وتنظيف" not "تنظيف"  
+**Priority:** High  
+**Steps:**
+1. افتح تطبيق العميل
+2. مرّر صف الأيقونات حتى تصل للأيقونة الثالثة
+3. لاحظ الـ label
+
+**Expected:** الـ label يقرأ "نقل وتنظيف" — يشير لوجود خدمات التوصيل داخل هذه المجموعة  
+**Regression:** لا تغيير في خدمات مجموعة cleaning نفسها  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-003
+**ID:** BUGFIX16-003  
+**Title:** Home screen icon row order matches agreed sequence  
+**Priority:** High  
+**Steps:**
+1. افتح الشاشة الرئيسية
+2. مرّر صف الأيقونات من البداية للنهاية وسجّل الترتيب
+
+**Expected:** الترتيب: منازل → سيارات → نقل وتنظيف → تقنية → مياه → صحة → تعليم → مناسبات → حِرَف → تصميم → حيوانات  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-004
+**ID:** BUGFIX16-004  
+**Title:** New-request screen chips order matches home screen icon row  
+**Priority:** High  
+**Steps:**
+1. من الشاشة الرئيسية، اضغط على "طلب جديد"
+2. لاحظ ترتيب chips الفئات الرئيسية في أعلى الشاشة
+
+**Expected:** الترتيب مطابق للشاشة الرئيسية: منازل، سيارات، نقل وتنظيف، تقنية، مياه، صحة، تعليم، مناسبات، حِرَف، تصميم، حيوانات  
+**Regression:** لا تغيير في منطق إنشاء الطلب أو فلترة الخدمات  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-005
+**ID:** BUGFIX16-005  
+**Title:** New-request chips order preserved after DB fetch  
+**Priority:** High  
+**Steps:**
+1. أغلق التطبيق تماماً (cold start)
+2. افتح شاشة "طلب جديد"
+3. انتظر اكتمال تحميل الفئات من DB
+4. لاحظ ترتيب الـ chips
+
+**Expected:** الترتيب لا يتغير بعد جلب DB — post-fetch sort يُعيد ترتيب المجموعات وفق CATEGORY_GROUPS  
+**Regression:** لا تغيير في البيانات المجلوبة أو الخدمات داخل كل فئة  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-006
+**ID:** BUGFIX16-006  
+**Title:** Cache key v3 invalidates stale v2 category order  
+**Priority:** Medium  
+**Steps:**
+1. ثبّت نسخة قديمة من التطبيق (تستخدم cache v2)
+2. حدّث التطبيق للنسخة الحالية
+3. افتح شاشة "طلب جديد"
+
+**Expected:** الـ cache القديم يُتجاهَل تلقائياً — الفئات تُجلَب من DB بالترتيب الصحيح بدون الحاجة لمسح بيانات التطبيق  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-007
+**ID:** BUGFIX16-007  
+**Title:** Requests screen header shows no stray "image" artifact in Arabic (RTL)  
+**Priority:** Critical  
+**Steps:**
+1. اضبط اللغة على العربية (RTL)
+2. سجّل دخول كعميل
+3. افتح شاشة "طلباتي"
+4. لاحظ نص الترحيب في الهيدر
+
+**Expected:** لا تظهر أي صورة أو مربع غريب في الهيدر — نص الترحيب يعرض صحيحاً مع emoji في الجانب الأيمن  
+**Regression:** لا تغيير في منطق عرض الطلبات أو تحميلها  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-008
+**ID:** BUGFIX16-008  
+**Title:** Greeting emoji appears to the RIGHT of text in Arabic mode  
+**Priority:** High  
+**Steps:**
+1. اضبط اللغة على العربية
+2. افتح شاشة "طلباتي"
+3. لاحظ موقع الـ emoji في نص التحية
+
+**Expected:** الـ emoji (☀️ / 🌤️ / 🌛 / 🌙) يظهر على اليمين قبل نص الترحيب — لا يطفو على اليسار  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-009
+**ID:** BUGFIX16-009  
+**Title:** Evening greeting shows crescent 🌛 between 17:00 and 21:00  
+**Priority:** Medium  
+**Steps:**
+1. اضبط وقت الجهاز بين 17:00 و 20:59
+2. افتح شاشة "طلباتي"
+3. لاحظ الـ emoji في نص الترحيب
+
+**Expected:** يظهر 🌛 (هلال أيمن) — لا 🌆 (مدينة مع غروب)  
+**Regression:** لا تغيير في باقي أوقات اليوم  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX16-010
+**ID:** BUGFIX16-010  
+**Title:** Full greeting emoji schedule verified across all time ranges  
+**Priority:** Medium  
+**Steps:**
+1. اختبر الشاشة في 4 نطاقات زمنية مختلفة
+
+**Expected:**
+- 05:00–11:59 → ☀️ (صباح الخير)
+- 12:00–16:59 → 🌤️ (مساء الخير / ظهر)
+- 17:00–20:59 → 🌛 (مساء النور)
+- 21:00–04:59 → 🌙 (تصبح على خير)  
+**Automation Candidate:** No
+
+---
+
 ## Module HOMEUI — Client Home UI Redesign
 
 **Scope:** البحث 3D · صف الأيقونات · Footer المُعاد ترتيبه  
@@ -8528,9 +8690,9 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v5.3*  
-*Total Test Cases: 678 across 57 modules*  
-*Critical: 164 | High: 285 | Medium: 181 | Low: 48 (previously: 668/56)*  
+*End of Waseet QA Test Cases Report v5.4*  
+*Total Test Cases: 688 across 58 modules*  
+*Critical: 165 | High: 290 | Medium: 185 | Low: 48 (previously: 678/57)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/ICON_LABEL/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
