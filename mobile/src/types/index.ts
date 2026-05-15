@@ -72,8 +72,6 @@ export interface Provider {
   // availability
   is_available?: boolean;
   urgent_enabled?: boolean;
-  // location
-  city?: string;
   // sharing / public profile
   username?: string;
   share_count?: number;
