@@ -70,13 +70,13 @@ export default function LoginScreen() {
         if (errCode === 'INVALID_JORDAN_PHONE' || errCode === 'INVALID_PHONE') {
           showAlert(t('common.error'), t('auth.invalidPhone'));
         } else if (errCode === 'RATE_LIMITED' || errCode === 'TOO_MANY_REQUESTS') {
-          showAlert(t('common.error'), 'تجاوزت الحد المسموح.\nانتظر قليلاً وأعد المحاولة.');
+          showAlert(t('common.error'), t('auth.rateLimited'));
         } else if (errCode === 'DAILY_LIMIT_EXCEEDED') {
-          showAlert(t('common.error'), 'تجاوزت الحد اليومي لإرسال الرموز.\nحاول مجدداً غداً.');
+          showAlert(t('common.error'), t('auth.dailyLimit'));
         } else if (errCode === 'SMS_SEND_FAILED') {
-          showAlert(t('common.error'), 'تعذّر إرسال الرسالة النصية.\nحاول مرة أخرى.');
+          showAlert(t('common.error'), t('auth.smsFailed'));
         } else {
-          showAlert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
+          showAlert(t('common.error'), t('auth.networkError'));
         }
         return;
       }
@@ -85,7 +85,7 @@ export default function LoginScreen() {
       if (data.dev_code) params.dev_code = String(data.dev_code);
       router.push({ pathname: '/(auth)/verify', params });
     } catch {
-      showAlert(t('common.error'), 'تعذّر الاتصال.\nتحقق من اتصالك بالإنترنت وأعد المحاولة.');
+      showAlert(t('common.error'), t('auth.networkError'));
     } finally {
       clearTimeout(slowTimer);
       setSlowNetwork(false);

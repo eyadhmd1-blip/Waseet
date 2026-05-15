@@ -96,10 +96,10 @@ const SECTIONS: Section[] = [
 // ─── Accordion item ───────────────────────────────────────────
 
 function AccordionItem({
-  qKey, aKey, colors, t, isLast,
-}: FaqItem & { colors: AppColors; t: (k: string) => string; isLast: boolean }) {
+  qKey, aKey, colors, t, isLast, isRTL,
+}: FaqItem & { colors: AppColors; t: (k: string) => string; isLast: boolean; isRTL: boolean }) {
   const [open, setOpen] = useState(false);
-  const st = accStyles(colors);
+  const st = accStyles(colors, isRTL);
 
   const toggle = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -117,7 +117,8 @@ function AccordionItem({
   );
 }
 
-function accStyles(colors: AppColors) {
+function accStyles(colors: AppColors, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     item: {
       borderBottomWidth: 1, borderBottomColor: colors.border,
@@ -125,9 +126,9 @@ function accStyles(colors: AppColors) {
     },
     itemLast: { borderBottomWidth: 0 },
     qRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
-    qText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20, textAlign: 'right' },
+    qText: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.textPrimary, lineHeight: 20, textAlign: ta },
     arrow: { fontSize: 10, color: colors.textMuted, marginTop: 4 },
-    aText: { fontSize: 13, color: colors.textSecondary, lineHeight: 21, marginTop: 10, textAlign: 'right' },
+    aText: { fontSize: 13, color: colors.textSecondary, lineHeight: 21, marginTop: 10, textAlign: ta },
   });
 }
 
@@ -135,7 +136,7 @@ function accStyles(colors: AppColors) {
 
 export default function HelpCenterScreen() {
   const { colors, isDark } = useTheme();
-  const { t }             = useLanguage();
+  const { t, isRTL }      = useLanguage();
   const { headerPad, contentPad, bottom } = useInsets();
   const router            = useRouter();
   const { role: roleParam } = useLocalSearchParams<{ role?: string }>();
@@ -167,7 +168,7 @@ export default function HelpCenterScreen() {
   }, [query, role, t]);
 
   const gradColors: [string, string] = isDark ? [colors.bg, '#1A1407'] : ['#FDF6E3', '#FFFBF8'];
-  const st = styles(colors, isDark);
+  const st = styles(colors, isDark, isRTL);
 
   return (
     <LinearGradient colors={gradColors} style={st.root}>
@@ -229,6 +230,7 @@ export default function HelpCenterScreen() {
                   colors={colors}
                   t={t}
                   isLast={idx === section.items.length - 1}
+                  isRTL={isRTL}
                 />
               ))}
             </View>
@@ -276,7 +278,8 @@ export default function HelpCenterScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────
 
-function styles(colors: AppColors, isDark: boolean) {
+function styles(colors: AppColors, isDark: boolean, isRTL: boolean) {
+  const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.bg },
 
@@ -287,7 +290,7 @@ function styles(colors: AppColors, isDark: boolean) {
     },
     backBtn:     {},
     backText:    { fontSize: 16, color: colors.accent, fontWeight: '600' },
-    headerTitle: { flex: 1, fontSize: 18, fontWeight: '800', color: colors.textPrimary, textAlign: 'right' },
+    headerTitle: { flex: 1, fontSize: 18, fontWeight: '800', color: colors.textPrimary, textAlign: ta },
 
     searchWrap: {
       flexDirection: 'row', alignItems: 'center', gap: 10,
@@ -297,7 +300,7 @@ function styles(colors: AppColors, isDark: boolean) {
       paddingHorizontal: 14, paddingVertical: 12,
     },
     searchIcon:  { fontSize: 16 },
-    searchInput: { flex: 1, fontSize: 14, color: colors.textPrimary, textAlign: 'right' },
+    searchInput: { flex: 1, fontSize: 14, color: colors.textPrimary, textAlign: ta },
     clearBtn:    { fontSize: 14, color: colors.textMuted, fontWeight: '700' },
 
     content: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 0 },

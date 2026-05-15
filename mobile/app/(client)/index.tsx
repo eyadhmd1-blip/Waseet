@@ -73,18 +73,18 @@ const GROUP_SHORT_AR: Record<string, string> = {
   water_services: 'خدمات المياه',
 };
 
-const GROUP_ICON_LABEL: Record<string, string> = {
-  maintenance:    'منازل',
-  car_services:   'سيارات',
-  cleaning:       'نقل وتنظيف',
-  technical:      'تقنية',
-  events:         'مناسبات',
-  education:      'تعليم',
-  freelance:      'تصميم',
-  health_beauty:  'صحة',
-  handicrafts:    'حِرَف',
-  pets:           'حيوانات',
-  water_services: 'مياه',
+const GROUP_ICON_LABEL: Record<string, { ar: string; en: string }> = {
+  maintenance:    { ar: 'منازل',       en: 'Home' },
+  car_services:   { ar: 'سيارات',      en: 'Cars' },
+  cleaning:       { ar: 'نقل وتنظيف', en: 'Cleaning' },
+  technical:      { ar: 'تقنية',       en: 'Tech' },
+  events:         { ar: 'مناسبات',     en: 'Events' },
+  education:      { ar: 'تعليم',       en: 'Education' },
+  freelance:      { ar: 'تصميم',       en: 'Design' },
+  health_beauty:  { ar: 'صحة',         en: 'Health' },
+  handicrafts:    { ar: 'حِرَف',        en: 'Crafts' },
+  pets:           { ar: 'حيوانات',     en: 'Pets' },
+  water_services: { ar: 'مياه',        en: 'Water' },
 };
 
 // ترتيب العرض حسب الأكثر طلباً
@@ -384,7 +384,7 @@ export default function ClientHome() {
                     <Text style={styles.iconEmoji}>{GROUP_EMOJI[g.slug]}</Text>
                   </View>
                   <Text style={[styles.iconLabel, active && { color: col, fontWeight: '700' }]} numberOfLines={1}>
-                    {GROUP_ICON_LABEL[g.slug] ?? g.name_ar}
+                    {(isRTL ? GROUP_ICON_LABEL[g.slug]?.ar : GROUP_ICON_LABEL[g.slug]?.en) ?? (isRTL ? g.name_ar : g.name_en)}
                   </Text>
                 </TouchableOpacity>
               );

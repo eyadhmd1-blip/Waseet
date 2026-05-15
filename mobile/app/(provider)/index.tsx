@@ -562,7 +562,7 @@ function RequestCard({
 
           {item.ai_suggested_price_min && item.ai_suggested_price_max && !isUrgent && (
             <View>
-              <Text style={styles.aiPriceTag}>✨ توقع ذ.ا</Text>
+              <Text style={styles.aiPriceTag}>✨ {isRTL ? 'توقع ذ.ا' : 'AI Est.'}</Text>
               <Text style={styles.aiPrice}>
                 {item.ai_suggested_price_min}–{item.ai_suggested_price_max} د.أ
               </Text>
@@ -2184,7 +2184,7 @@ export default function ProviderFeed() {
                   <View style={styles.detailInfoRow}>
                     <Text style={styles.detailInfoIcon}>✨</Text>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.aiPriceTag}>توقع ذكاء اصطناعي</Text>
+                      <Text style={styles.aiPriceTag}>{isRTL ? 'توقع ذكاء اصطناعي' : 'AI Estimate'}</Text>
                       <Text style={[styles.detailInfoValue, { color: colors.accent, fontWeight: '700' }]}>
                         {detailSheet.ai_suggested_price_min}–{detailSheet.ai_suggested_price_max} د.أ
                       </Text>
