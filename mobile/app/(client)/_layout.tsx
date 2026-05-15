@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Text, View, Dimensions } from 'react-native';
+import { Text, View, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { makeTabBarStyle, makeTabOptions } from '../../src/constants/theme';
 import { useLanguage } from '../../src/hooks/useLanguage';
@@ -8,24 +8,23 @@ import { useTutorial } from '../../src/hooks/useTutorial';
 import { OnboardingCarousel } from '../tutorial/carousel';
 import { useUnreadMsgCount } from '../../src/hooks/useUnreadMsgCount';
 
-const { width: W } = Dimensions.get('window');
-const BTN = Math.min(46, Math.floor(W * 0.11));
-
 export default function ClientLayout() {
   const insets = useSafeAreaInsets();
   const { isRTL } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { showCarousel, dismissCarousel } = useTutorial('client');
   const { count: unreadMsgs } = useUnreadMsgCount();
 
   const tabBarStyle = {
     ...makeTabBarStyle(colors, insets.bottom),
     flexDirection: (isRTL ? 'row-reverse' : 'row') as 'row' | 'row-reverse',
+    height: 68 + insets.bottom,   // 12px extra so the raised button stays in-bounds
   };
 
   return (
     <View style={{ flex: 1 }}>
       <Tabs screenOptions={{ ...makeTabOptions(colors), tabBarStyle }}>
+
         <Tabs.Screen
           name="index"
           options={{
@@ -33,6 +32,7 @@ export default function ClientLayout() {
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🏠</Text>,
           }}
         />
+
         <Tabs.Screen
           name="requests"
           options={{
@@ -40,21 +40,56 @@ export default function ClientLayout() {
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📋</Text>,
           }}
         />
+
         <Tabs.Screen
           name="new-request"
           options={{
-            title: 'طلب جديد',
-            tabBarIcon: ({ focused }) => (
-              <View style={{
-                width: BTN, height: BTN, borderRadius: BTN / 2,
-                backgroundColor: focused ? colors.accent : colors.accent + 'CC',
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Text style={{ fontSize: 20, color: '#fff', fontWeight: '700' }}>+</Text>
-              </View>
-            ),
+            tabBarButton: (props) => {
+              const focused = props.accessibilityState?.selected ?? false;
+              return (
+                <TouchableOpacity
+                  onPress={props.onPress}
+                  activeOpacity={0.82}
+                  style={[
+                    props.style,
+                    { alignItems: 'center', justifyContent: 'flex-start', paddingTop: 0 },
+                  ]}
+                >
+                  {/* Raised circle */}
+                  <View style={{
+                    width: 56, height: 56, borderRadius: 28,
+                    backgroundColor: colors.accent,
+                    alignItems: 'center', justifyContent: 'center',
+                    marginTop: -10,
+                    opacity: focused ? 1 : 0.9,
+                    ...Platform.select({
+                      ios: {
+                        shadowColor: isDark ? '#000' : colors.accent,
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: isDark ? 0.5 : 0.38,
+                        shadowRadius: 10,
+                      },
+                    }),
+                  }}>
+                    <Text style={{ fontSize: 28, color: '#fff', fontWeight: '300', lineHeight: 32 }}>
+                      +
+                    </Text>
+                  </View>
+
+                  {/* Label */}
+                  <Text style={{
+                    fontSize: 11, fontWeight: '600',
+                    color: focused ? colors.accent : colors.textMuted,
+                    marginTop: 3,
+                  }}>
+                    طلب جديد
+                  </Text>
+                </TouchableOpacity>
+              );
+            },
           }}
         />
+
         <Tabs.Screen
           name="messages"
           options={{
@@ -63,6 +98,7 @@ export default function ClientLayout() {
             tabBarBadge: unreadMsgs > 0 ? unreadMsgs : undefined,
           }}
         />
+
         <Tabs.Screen
           name="profile"
           options={{
@@ -70,6 +106,7 @@ export default function ClientLayout() {
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>👤</Text>,
           }}
         />
+
         {/* Hide non-tab screens from the tab bar */}
         <Tabs.Screen name="saved-providers" options={{ href: null }} />
       </Tabs>
