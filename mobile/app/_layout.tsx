@@ -216,11 +216,13 @@ function RootLayoutInner() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!session) {
-        // Only sign the user out on an explicit SIGNED_OUT event.
-        // INITIAL_SESSION with null means the token is expired and a
-        // refresh is in progress — setting role=null here would flash
-        // the auth screen before TOKEN_REFRESHED arrives.
-        if (event === 'SIGNED_OUT') setRole(null);
+        // INITIAL_SESSION + null: either no session at all (fresh install /
+        // logged-out), or an expired token whose refresh is in progress.
+        // We must set role=null in both cases so the loading screen clears.
+        // If a refresh is in progress, TOKEN_REFRESHED fires next (~200ms)
+        // and resolveRole() overrides the null — a brief auth-screen flash
+        // is acceptable and far better than being stuck on the loading view.
+        if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') setRole(null);
         return;
       }
       resolveRole(session.user.id);
