@@ -8203,9 +8203,178 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v5.1*  
-*Total Test Cases: 656 across 55 modules*  
-*Critical: 164 | High: 276 | Medium: 174 | Low: 42 (previously: 646/54)*  
+---
+
+## Module HOMEUI — Client Home UI Redesign
+
+**Scope:** البحث 3D · صف الأيقونات · Footer المُعاد ترتيبه  
+**Files:** `mobile/app/(client)/index.tsx`, `mobile/app/(client)/_layout.tsx`
+
+---
+
+#### HOMEUI-001
+**ID:** HOMEUI-001  
+**Title:** Search bar renders with elevated 3D shadow (light mode)  
+**Priority:** Medium  
+**Steps:**
+1. افتح تطبيق العميل بالمظهر الفاتح
+2. انتقل للشاشة الرئيسية
+3. لاحظ حقل البحث
+
+**Expected:** الحقل يظهر بخلفية بيضاء مع ظل خفيف (elevation: 5) يجعله يبدو بارزاً كـ 3D — لا يلمس الحواف ولا يُشوَّه  
+**Automation Candidate:** No (visual)
+
+---
+
+#### HOMEUI-002
+**ID:** HOMEUI-002  
+**Title:** Search bar renders with highlight border (dark mode)  
+**Priority:** Medium  
+**Steps:**
+1. افتح تطبيق العميل بالمظهر الداكن
+2. انتقل للشاشة الرئيسية
+3. لاحظ حافة حقل البحث العلوية
+
+**Expected:** حافة علوية أفتح (rgba(255,255,255,0.18)) تعطي وهم 3D في الوضع الداكن  
+**Automation Candidate:** No (visual)
+
+---
+
+#### HOMEUI-003
+**ID:** HOMEUI-003  
+**Title:** Category icon row replaces chips — 11 icons visible  
+**Priority:** High  
+**Steps:**
+1. افتح الشاشة الرئيسية للعميل
+2. تحقق من عدم وجود chips نصية
+3. مرر أفقياً في صف الأيقونات
+4. عد الأيقونات
+
+**Expected:** 11 أيقونة دائرية (emoji + label قصير تحتها)، لا chips، القائمة قابلة للتمرير أفقياً  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-004
+**ID:** HOMEUI-004  
+**Title:** Tapping icon selects group and updates category grid  
+**Priority:** High  
+**Steps:**
+1. افتح الشاشة الرئيسية
+2. انقر على أيقونة "سيارات"
+3. لاحظ تغير الأيقونة المحددة وشبكة الفئات
+
+**Expected:** أيقونة السيارات تظهر بحدود ملونة (active state)، وشبكة الفئات تُحدَّث لتعرض فئات car_services  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-005
+**ID:** HOMEUI-005  
+**Title:** Icon row labels truncate correctly (no overflow)  
+**Priority:** Medium  
+**Steps:**
+1. اختبر على جهاز بعرض ضيق (320px) وعريض (430px)
+2. لاحظ أسماء الأيقونات
+
+**Expected:** الأسماء القصيرة (صيانة، سيارات، حِرَف...) تظهر في سطر واحد دون تداخل أو overflow  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-006
+**ID:** HOMEUI-006  
+**Title:** Icon sizes scale correctly on all screen widths  
+**Priority:** Medium  
+**Steps:**
+1. اختبر على iPhone SE (375px)، iPhone 15 (393px)، Samsung Galaxy (412px)
+2. لاحظ حجم دوائر الأيقونات
+
+**Expected:** الحجم يتراوح بين 43-48px عبر الأجهزة (Math.min(48, W*0.115)) — دائري واضح في جميع الحالات  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-007
+**ID:** HOMEUI-007  
+**Title:** Footer tab order: Home | Requests | +New | Messages | Profile  
+**Priority:** High  
+**Steps:**
+1. افتح تطبيق العميل
+2. لاحظ ترتيب تبويبات الـ Footer من اليسار لليمين (LTR) أو من اليمين لليسار (RTL)
+
+**Expected:** LTR: 🏠 الرئيسية | 📋 طلباتي | ➕ طلب جديد | 💬 الرسائل | 👤 حسابي  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-008
+**ID:** HOMEUI-008  
+**Title:** Center "New Request" tab renders as prominent gold button  
+**Priority:** High  
+**Steps:**
+1. افتح تطبيق العميل
+2. لاحظ تبويبة "طلب جديد" في المنتصف
+
+**Expected:** أيقونة ➕ داخل مربع ذهبي مدور (colors.accent) بحجم ~46px — بارز بصرياً مقارنة بباقي التبويبات  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-009
+**ID:** HOMEUI-009  
+**Title:** Center button shadow visible on iOS  
+**Priority:** Low  
+**Steps:**
+1. اختبر على جهاز/محاكي iOS
+2. لاحظ ظل زر "طلب جديد"
+
+**Expected:** ظل ذهبي خفيف تحت الزر المركزي (shadowColor: accent) — يعزز البروز البصري  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-010
+**ID:** HOMEUI-010  
+**Title:** RTL: footer reverses correctly with reordered tabs  
+**Priority:** High  
+**Steps:**
+1. اضبط اللغة على العربية (RTL)
+2. افتح الشاشة الرئيسية
+
+**Expected:** الترتيب يُعكس: حسابي | الرسائل | طلب جديد (مركز) | طلباتي | الرئيسية — الزر المركزي يبقى في المنتصف  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-011
+**ID:** HOMEUI-011  
+**Title:** Dark mode: icon row circles use dark background  
+**Priority:** Medium  
+**Steps:**
+1. فعّل المظهر الداكن
+2. لاحظ الأيقونات غير المحددة
+
+**Expected:** دوائر الأيقونات بخلفية `rgba(255,255,255,0.06)` — تناسب الخلفية الداكنة دون بروز مفرط  
+**Automation Candidate:** No
+
+---
+
+#### HOMEUI-012
+**ID:** HOMEUI-012  
+**Title:** Tapping search bar navigates to new-request screen  
+**Priority:** High  
+**Steps:**
+1. من الشاشة الرئيسية، انقر على حقل البحث
+
+**Expected:** التطبيق ينتقل لشاشة "طلب جديد" (/(client)/new-request) — نفس السلوك السابق بدون تغيير  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v5.2*  
+*Total Test Cases: 668 across 56 modules*  
+*Critical: 164 | High: 283 | Medium: 179 | Low: 42 (previously: 656/55)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
-*⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/DISPLAY_ORDER في (client)/index.tsx*  
+*⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/ICON_LABEL/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
