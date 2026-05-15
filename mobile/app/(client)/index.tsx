@@ -74,9 +74,9 @@ const GROUP_SHORT_AR: Record<string, string> = {
 };
 
 const GROUP_ICON_LABEL: Record<string, string> = {
-  maintenance:    'صيانة',
+  maintenance:    'منازل',
   car_services:   'سيارات',
-  cleaning:       'تنظيف',
+  cleaning:       'نقل وتنظيف',
   technical:      'تقنية',
   events:         'مناسبات',
   education:      'تعليم',
@@ -90,8 +90,8 @@ const GROUP_ICON_LABEL: Record<string, string> = {
 // ترتيب العرض حسب الأكثر طلباً
 const DISPLAY_ORDER = [
   'maintenance', 'car_services', 'cleaning', 'technical',
-  'events', 'education', 'freelance', 'health_beauty', 'handicrafts', 'pets',
-  'water_services',
+  'water_services', 'health_beauty', 'education', 'events', 'handicrafts', 'freelance',
+  'pets',
 ];
 const SORTED_GROUPS = DISPLAY_ORDER
   .map(slug => CATEGORY_GROUPS.find(g => g.slug === slug))

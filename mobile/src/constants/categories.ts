@@ -28,7 +28,23 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     ],
   },
 
-  // ── 2. تنظيف ونقل ────────────────────────────────────────
+  // ── 2. صيانة السيارات ────────────────────────────────────
+  {
+    slug: 'car_services',
+    name_ar: 'صيانة السيارات',
+    name_en: 'Car Services',
+    categories: [
+      { id: '', slug: 'car_repair',      name_ar: 'إصلاح السيارات',             name_en: 'Car Repair',                group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'car',       sort_order: 42, is_active: true },
+      { id: '', slug: 'car_electrical',  name_ar: 'كهرباء السيارات',            name_en: 'Car Electrical',            group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'battery',   sort_order: 43, is_active: true },
+      { id: '', slug: 'car_tires',       name_ar: 'إطارات وتغيير زيت',          name_en: 'Tires & Oil Change',        group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'gauge',     sort_order: 44, is_active: true },
+      { id: '', slug: 'car_ac',          name_ar: 'تكييف السيارات',             name_en: 'Car AC & Cooling',          group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'snowflake', sort_order: 45, is_active: true },
+      { id: '', slug: 'car_bodywork',    name_ar: 'هيكل ودهان السيارات',        name_en: 'Bodywork & Paint',          group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'shield',    sort_order: 46, is_active: true },
+      { id: '', slug: 'car_cleaning',    name_ar: 'غسيل وتلميع السيارات',       name_en: 'Car Wash & Detailing',      group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'droplet',   sort_order: 47, is_active: true },
+      { id: '', slug: 'car_accessories', name_ar: 'إكسسوارات وزينة السيارات',   name_en: 'Car Accessories & Decor',   group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'car-mod',   sort_order: 51, is_active: true },
+    ],
+  },
+
+  // ── 3. تنظيف ونقل ────────────────────────────────────────
   {
     slug: 'cleaning',
     name_ar: 'تنظيف ونقل',
@@ -42,7 +58,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     ],
   },
 
-  // ── 3. الخدمات الفنية (جديد) ──────────────────────────────
+  // ── 4. الخدمات الفنية ────────────────────────────────────
   {
     slug: 'technical',
     name_ar: 'الخدمات الفنية',
@@ -57,7 +73,19 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     ],
   },
 
-  // ── 4. الصحة والعناية (جديد) ─────────────────────────────
+  // ── 5. خدمات المياه ──────────────────────────────────────
+  {
+    slug: 'water_services',
+    name_ar: 'خدمات المياه',
+    name_en: 'Water Services',
+    categories: [
+      { id: '', slug: 'water_tank',    name_ar: 'تنك مياه صالحة للشرب',  name_en: 'Drinking Water Tank',  group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'water-tank',   sort_order: 48, is_active: true },
+      { id: '', slug: 'sewage_tanker', name_ar: 'صهريج مياه عادمة',       name_en: 'Sewage Tanker',        group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'sewage-truck', sort_order: 49, is_active: true },
+      { id: '', slug: 'tank_cleaning', name_ar: 'تنظيف وتعقيم الخزانات', name_en: 'Water Tank Cleaning',  group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'tank-wash',    sort_order: 50, is_active: true },
+    ],
+  },
+
+  // ── 6. الصحة والعناية ────────────────────────────────────
   {
     slug: 'health_beauty',
     name_ar: 'الصحة والعناية',
@@ -65,12 +93,23 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     categories: [
       { id: '', slug: 'cupping_massage', name_ar: 'حجامة ومساج',           name_en: 'Cupping & Massage',    group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'massage',      sort_order: 23, is_active: true },
       { id: '', slug: 'home_nursing',    name_ar: 'تمريض وعناية منزلية',   name_en: 'Home Nursing & Care',  group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'nurse',        sort_order: 24, is_active: true },
-      { id: '', slug: 'beauty_women', name_ar: 'تجميل نسائي منزلي',   name_en: "Women's Home Beauty", group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'lipstick',  sort_order: 25, is_active: true },
-      { id: '', slug: 'beauty_men',   name_ar: 'حلاقة رجالية منزلية', name_en: "Men's Home Barber",   group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'scissors',  sort_order: 26, is_active: true },
+      { id: '', slug: 'beauty_women',    name_ar: 'تجميل نسائي منزلي',     name_en: "Women's Home Beauty",  group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'lipstick',     sort_order: 25, is_active: true },
+      { id: '', slug: 'beauty_men',      name_ar: 'حلاقة رجالية منزلية',   name_en: "Men's Home Barber",    group_slug: 'health_beauty', group_ar: 'الصحة والعناية', group_en: 'Health & Beauty', icon: 'scissors',     sort_order: 26, is_active: true },
     ],
   },
 
-  // ── 5. المناسبات والفعاليات (جديد) ───────────────────────
+  // ── 7. تعليم وتدريب ──────────────────────────────────────
+  {
+    slug: 'education',
+    name_ar: 'تعليم وتدريب',
+    name_en: 'Education & Training',
+    categories: [
+      { id: '', slug: 'tutoring',       name_ar: 'تدريس خصوصي',        name_en: 'Private Tutoring', group_slug: 'education', group_ar: 'تعليم وتدريب', group_en: 'Education & Training', icon: 'book-open', sort_order: 29, is_active: true },
+      { id: '', slug: 'quran_teaching', name_ar: 'تعليم قرآن وتجويد',  name_en: 'Quran Teaching',   group_slug: 'education', group_ar: 'تعليم وتدريب', group_en: 'Education & Training', icon: 'moon',      sort_order: 30, is_active: true },
+    ],
+  },
+
+  // ── 8. المناسبات والفعاليات ───────────────────────────────
   {
     slug: 'events',
     name_ar: 'المناسبات والفعاليات',
@@ -82,18 +121,19 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     ],
   },
 
-  // ── 6. تعليم وتدريب ──────────────────────────────────────
+  // ── 9. الحِرَف اليدوية والتقليدية ────────────────────────
   {
-    slug: 'education',
-    name_ar: 'تعليم وتدريب',
-    name_en: 'Education & Training',
+    slug: 'handicrafts',
+    name_ar: 'الحِرَف اليدوية والتقليدية',
+    name_en: 'Handicrafts & Traditions',
     categories: [
-      { id: '', slug: 'tutoring',       name_ar: 'تدريس خصوصي',        name_en: 'Private Tutoring', group_slug: 'education', group_ar: 'تعليم وتدريب', group_en: 'Education & Training', icon: 'book-open', sort_order: 29, is_active: true },
-      { id: '', slug: 'quran_teaching', name_ar: 'تعليم قرآن وتجويد',  name_en: 'Quran Teaching',   group_slug: 'education', group_ar: 'تعليم وتدريب', group_en: 'Education & Training', icon: 'moon',      sort_order: 30, is_active: true },
+      { id: '', slug: 'tailoring',  name_ar: 'خياطة وتفصيل',        name_en: 'Tailoring & Sewing',  group_slug: 'handicrafts', group_ar: 'الحِرَف اليدوية والتقليدية', group_en: 'Handicrafts & Traditions', icon: 'thread',    sort_order: 36, is_active: true },
+      { id: '', slug: 'embroidery', name_ar: 'تطريز وأعمال يدوية',  name_en: 'Embroidery & Crafts', group_slug: 'handicrafts', group_ar: 'الحِرَف اليدوية والتقليدية', group_en: 'Handicrafts & Traditions', icon: 'stitch',    sort_order: 37, is_active: true },
+      { id: '', slug: 'shoemaking', name_ar: 'صناعة وإصلاح أحذية', name_en: 'Shoemaking & Repair', group_slug: 'handicrafts', group_ar: 'الحِرَف اليدوية والتقليدية', group_en: 'Handicrafts & Traditions', icon: 'shoe',      sort_order: 38, is_active: true },
     ],
   },
 
-  // ── 7. تصميم وأعمال حرة ──────────────────────────────────
+  // ── 10. تصميم وأعمال حرة ─────────────────────────────────
   {
     slug: 'freelance',
     name_ar: 'تصميم وأعمال حرة',
@@ -107,19 +147,7 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
     ],
   },
 
-  // ── 8. الحِرَف اليدوية والتقليدية (جديد) ─────────────────
-  {
-    slug: 'handicrafts',
-    name_ar: 'الحِرَف اليدوية والتقليدية',
-    name_en: 'Handicrafts & Traditions',
-    categories: [
-      { id: '', slug: 'tailoring',  name_ar: 'خياطة وتفصيل',        name_en: 'Tailoring & Sewing',  group_slug: 'handicrafts', group_ar: 'الحِرَف اليدوية والتقليدية', group_en: 'Handicrafts & Traditions', icon: 'thread',    sort_order: 36, is_active: true },
-      { id: '', slug: 'embroidery', name_ar: 'تطريز وأعمال يدوية',  name_en: 'Embroidery & Crafts', group_slug: 'handicrafts', group_ar: 'الحِرَف اليدوية والتقليدية', group_en: 'Handicrafts & Traditions', icon: 'stitch',    sort_order: 37, is_active: true },
-      { id: '', slug: 'shoemaking', name_ar: 'صناعة وإصلاح أحذية', name_en: 'Shoemaking & Repair', group_slug: 'handicrafts', group_ar: 'الحِرَف اليدوية والتقليدية', group_en: 'Handicrafts & Traditions', icon: 'shoe',      sort_order: 38, is_active: true },
-    ],
-  },
-
-  // ── 9. الحيوانات الأليفة (جديد) ──────────────────────────
+  // ── 11. الحيوانات الأليفة ─────────────────────────────────
   {
     slug: 'pets',
     name_ar: 'الحيوانات الأليفة',
@@ -128,34 +156,6 @@ export const CATEGORY_GROUPS: CategoryGroup[] = [
       { id: '', slug: 'pet_grooming', name_ar: 'تجميل ورعاية الحيوانات', name_en: 'Pet Grooming & Care', group_slug: 'pets', group_ar: 'الحيوانات الأليفة', group_en: 'Pet Services', icon: 'paw',         sort_order: 39, is_active: true },
       { id: '', slug: 'pet_training', name_ar: 'تدريب الحيوانات',        name_en: 'Pet Training',        group_slug: 'pets', group_ar: 'الحيوانات الأليفة', group_en: 'Pet Services', icon: 'dog-lead',    sort_order: 40, is_active: true },
       { id: '', slug: 'vet_home',     name_ar: 'بيطري منزلي',             name_en: 'Home Vet Visit',      group_slug: 'pets', group_ar: 'الحيوانات الأليفة', group_en: 'Pet Services', icon: 'stethoscope', sort_order: 41, is_active: true },
-    ],
-  },
-
-  // ── 10. صيانة السيارات ───────────────────────────────────
-  {
-    slug: 'car_services',
-    name_ar: 'صيانة السيارات',
-    name_en: 'Car Services',
-    categories: [
-      { id: '', slug: 'car_repair',     name_ar: 'إصلاح السيارات',        name_en: 'Car Repair',           group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'car',       sort_order: 42, is_active: true },
-      { id: '', slug: 'car_electrical', name_ar: 'كهرباء السيارات',       name_en: 'Car Electrical',       group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'battery',   sort_order: 43, is_active: true },
-      { id: '', slug: 'car_tires',      name_ar: 'إطارات وتغيير زيت',     name_en: 'Tires & Oil Change',   group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'gauge',     sort_order: 44, is_active: true },
-      { id: '', slug: 'car_ac',         name_ar: 'تكييف السيارات',        name_en: 'Car AC & Cooling',     group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'snowflake', sort_order: 45, is_active: true },
-      { id: '', slug: 'car_bodywork',    name_ar: 'هيكل ودهان السيارات',         name_en: 'Bodywork & Paint',          group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'shield',      sort_order: 46, is_active: true },
-      { id: '', slug: 'car_cleaning',    name_ar: 'غسيل وتلميع السيارات',         name_en: 'Car Wash & Detailing',      group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'droplet',     sort_order: 47, is_active: true },
-      { id: '', slug: 'car_accessories', name_ar: 'إكسسوارات وزينة السيارات',    name_en: 'Car Accessories & Decor',   group_slug: 'car_services', group_ar: 'صيانة السيارات', group_en: 'Car Services', icon: 'car-mod',     sort_order: 51, is_active: true },
-    ],
-  },
-
-  // ── 11. خدمات المياه ─────────────────────────────────────
-  {
-    slug: 'water_services',
-    name_ar: 'خدمات المياه',
-    name_en: 'Water Services',
-    categories: [
-      { id: '', slug: 'water_tank',    name_ar: 'تنك مياه صالحة للشرب',  name_en: 'Drinking Water Tank',  group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'water-tank',   sort_order: 48, is_active: true },
-      { id: '', slug: 'sewage_tanker', name_ar: 'صهريج مياه عادمة',       name_en: 'Sewage Tanker',        group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'sewage-truck', sort_order: 49, is_active: true },
-      { id: '', slug: 'tank_cleaning', name_ar: 'تنظيف وتعقيم الخزانات', name_en: 'Water Tank Cleaning',  group_slug: 'water_services', group_ar: 'خدمات المياه', group_en: 'Water Services', icon: 'tank-wash',    sort_order: 50, is_active: true },
     ],
   },
 ];
