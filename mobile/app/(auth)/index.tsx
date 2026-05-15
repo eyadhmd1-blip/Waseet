@@ -3,12 +3,14 @@
 // Animated: orbiting service icons, connection pulse, particles
 // ============================================================
 
-import { useEffect, useRef, useMemo} from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   Animated, Dimensions, Easing, Platform, StyleSheet as RN,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { INTRO_SEEN_KEY } from './intro';
 import { StatusBar } from 'expo-status-bar';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -145,6 +147,17 @@ export default function WelcomeScreen() {
   const router = useRouter();
   const { t, lang, changeLanguage } = useLanguage();
   const { headerPad, contentPad } = useInsets();
+  const [introChecked, setIntroChecked] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(INTRO_SEEN_KEY).then(seen => {
+      if (!seen) {
+        router.replace('/(auth)/intro' as any);
+      } else {
+        setIntroChecked(true);
+      }
+    });
+  }, []);
 
   const logoScale  = useRef(new Animated.Value(0)).current;
   const logoOp     = useRef(new Animated.Value(0)).current;
@@ -179,6 +192,8 @@ export default function WelcomeScreen() {
 
   const orbitSpin   = orbitRot.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
   const counterSpin = orbitRot.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-360deg'] });
+
+  if (!introChecked) return null;
 
   return (
     <View style={[styles.container, { paddingBottom: contentPad }]}>

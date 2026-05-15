@@ -39,6 +39,17 @@
     "getStarted": "Get Started",
     "login": "Log In"
   },
+  "intro": {
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Get Started",
+    "slide1Title": "Request Any Service",
+    "slide1Desc": "Describe what you need in a few words — service providers in your area will reach out to you instantly",
+    "slide2Title": "Compare & Choose with Confidence",
+    "slide2Desc": "Every provider is rated and verified by real users — pick the best fit for your budget",
+    "slide3Title": "Safe & Secure Platform",
+    "slide3Desc": "Digital contracts, secure payments, and instant support — your peace of mind is guaranteed"
+  },
   "auth": {
     "enterPhone": "Enter your phone number",
     "phoneSubtitle": "We'll send you a verification code by SMS",
