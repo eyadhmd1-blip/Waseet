@@ -46,16 +46,11 @@ export default function ClientLayout() {
             title: 'طلب جديد',
             tabBarIcon: ({ focused }) => (
               <View style={{
-                width: BTN, height: BTN, borderRadius: 14,
-                backgroundColor: colors.accent,
+                width: BTN, height: BTN, borderRadius: BTN / 2,
+                backgroundColor: focused ? colors.accent : colors.accent + 'CC',
                 alignItems: 'center', justifyContent: 'center',
-                shadowColor: colors.accent,
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: focused ? 0.5 : 0.35,
-                shadowRadius: 8,
-                elevation: focused ? 8 : 5,
               }}>
-                <Text style={{ fontSize: 22 }}>➕</Text>
+                <Text style={{ fontSize: 20, color: '#fff', fontWeight: '700' }}>+</Text>
               </View>
             ),
           }}
