@@ -2779,6 +2779,49 @@ Arabic (ar) primary language with RTL layout; English (en) optional. All text fr
 
 ---
 
+#### LOC-019
+**Name:** Onboarding Step 1 — full English rendering  
+**Priority:** High | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Set app language = EN; launch onboarding as new user | Step 1 welcome screen shows "👋 Welcome to Waseet" (not Arabic) |
+| 2 | Check subtitle | "Choose how you want to use the app" in English |
+| 3 | Check social proof row | "+12,000 users trust us" in English |
+| 4 | Check role card titles | "I am a Client" / "I am a Provider" in English |
+| 5 | Check role card subtitles | "Find the best provider within minutes" / "Start receiving requests and grow your income" |
+| 6 | Check benefit chips (3 per card) | All chip labels in English (e.g., "Compare prices and choose the best") |
+| 7 | Check trust badges | "Safe & Trusted", "No Complexity", "24/7 Support" in English |
+| 8 | Check CTA button | "🚀 Get Started" in English |
+| 9 | Check legal text | "By using the app, you agree to our Terms & Conditions and Privacy Policy" in English |
+| 10 | Select a card; check selection banner | "Selected" (not "تم الاختيار") appears in English |
+| 11 | Switch language back to AR | All Step 1 strings revert to Arabic |
+
+---
+
+#### LOC-020
+**Name:** Onboarding Step 4 — subscription plan names bilingual  
+**Priority:** High | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Register as provider; reach Step 4 plan selection in AR mode | Plan names show Arabic: "الأساسية", "المحترف", "النخبة" |
+| 2 | Same screen in EN mode | Plan names show English: "Basic", "Pro", "Elite" |
+
+---
+
+#### LOC-021
+**Name:** Client tab bar — English labels  
+**Priority:** High | **Type:** Localization
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Set app language = EN; open client home | Tab bar shows "Home", "My Requests", "New Request", "Messages", "Account" |
+| 2 | Switch to AR | Tab bar shows "الرئيسية", "طلباتي", "طلب جديد", "الرسائل", "حسابي" |
+| 3 | Unread message badge | Badge still appears in both languages |
+
+---
+
 ## 17. Risk Assessment
 
 ### Critical Risk Areas
@@ -8799,7 +8842,7 @@ ORDER BY group_slug, sort_order;
 ---
 
 *End of Waseet QA Test Cases Report v5.5*  
-*Total Test Cases: 692 across 59 modules*  
+*Total Test Cases: 710 across 59 modules*  
 *Critical: 165 | High: 291 | Medium: 188 | Low: 48 (previously: 688/58)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/ICON_LABEL/DISPLAY_ORDER في (client)/index.tsx*  
