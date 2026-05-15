@@ -8205,6 +8205,162 @@ ORDER BY group_slug, sort_order;
 
 ---
 
+## 55. BUGFIX15 — Zero-Risk Bug Fixes (BUG-011, BUG-013, BUG-015, BUG-018, BUG-019)
+
+**Date:** 2026-05-15  
+**Scope:** login.tsx, verify.tsx, _layout.tsx, profile.tsx, p/[username].tsx, chat.tsx, request-detail.tsx, (provider)/index.tsx, i18n/ar.json, i18n/en.json  
+**Changes:**
+- BUG-011: Added `myServices` i18n key; replaced hardcoded Arabic in profile.tsx and p/[username].tsx with `t()` calls
+- BUG-013: Extended splash null-guard from `!i18nReady` to `!i18nReady || role === undefined` — prevents blank flash between auth resolve and navigator mount
+- BUG-015: Confirmed OTP send button already had `disabled={loading}` — no code change needed
+- BUG-018: Verify screen back button now uses `router.replace({ pathname: '/(auth)/login', params: { phone } })`; login.tsx reads `phone` from params as initial state
+- BUG-019: Removed all CHANNEL_ERROR `console.warn` handlers from chat, request-detail (×2), provider/index (×2); replaced `.catch(console.error)` with `.catch(() => {})`
+
+---
+
+#### BUGFIX15-001
+**ID:** BUGFIX15-001  
+**Title:** Profile screen shows "خدماتي" via i18n (not hardcoded)  
+**Priority:** Low  
+**Steps:**
+1. سجّل دخول كعميل يمتلك خدمات
+2. افتح شاشة الملف الشخصي
+3. ابحث عن قسم الخدمات
+
+**Expected:** يظهر عنوان "خدماتي" (AR) أو "My Services" (EN) مشتق من مفتاح `profile.myServices` — يتغير عند تبديل اللغة  
+**Regression:** لا تغيير في بيانات الخدمات أو التخطيط  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-002
+**ID:** BUGFIX15-002  
+**Title:** Provider deep-link not-found text uses i18n  
+**Priority:** Low  
+**Steps:**
+1. افتح رابط `waseet://p/nonexistentuser`
+2. انتظر انتهاء البحث
+
+**Expected:** يظهر نص خطأ مترجم (AR: "لم يتم العثور على هذا المقدم" / EN: "Provider not found") — لا نص عربي مشفر  
+**Regression:** لا تغيير في منطق البحث عن المزود  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-003
+**ID:** BUGFIX15-003  
+**Title:** Switching language updates profile myServices label  
+**Priority:** Low  
+**Steps:**
+1. افتح الملف الشخصي باللغة العربية
+2. لاحظ عنوان قسم الخدمات
+3. غيّر اللغة إلى الإنجليزية
+4. أعد فتح الملف الشخصي
+
+**Expected:** العنوان يتحوّل من "خدماتي" إلى "My Services" بعد تبديل اللغة  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-004
+**ID:** BUGFIX15-004  
+**Title:** No blank white flash between splash and main content on cold start  
+**Priority:** Medium  
+**Steps:**
+1. اغلق التطبيق تماماً (Force Stop)
+2. أعد تشغيله وراقب الانتقال من شاشة البداية
+
+**Expected:** ينتقل مباشرةً من شاشة البداية إلى المحتوى الرئيسي دون وميض أبيض/فارغ  
+**Regression:** لا تغيير في منطق المصادقة أو التوجيه  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-005
+**ID:** BUGFIX15-005  
+**Title:** Splash remains until both auth and i18n are resolved  
+**Priority:** Medium  
+**Steps:**
+1. شغّل التطبيق على شبكة بطيئة بحيث تتأخر حالة المصادقة
+2. راقب متى تختفي شاشة البداية
+
+**Expected:** شاشة البداية تبقى حتى تتوافر قيمة `role` ويكون `i18nReady = true` — لا تختفي مبكراً  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-006
+**ID:** BUGFIX15-006  
+**Title:** OTP send button disabled after first tap  
+**Priority:** Medium  
+**Steps:**
+1. افتح شاشة تسجيل الدخول وأدخل رقم هاتف صحيح
+2. اضغط "إرسال الرمز" بسرعة مرتين متتاليتين
+
+**Expected:** الزر يُعطَّل فور أول ضغطة (disabled={loading}) — لا يُرسَل الطلب مرتين  
+**Regression:** لا تغيير في منطق إرسال OTP  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-007
+**ID:** BUGFIX15-007  
+**Title:** Phone number pre-filled when returning from verify screen  
+**Priority:** High  
+**Steps:**
+1. افتح شاشة تسجيل الدخول وأدخل رقم الهاتف
+2. اضغط "إرسال الرمز" للانتقال لشاشة التحقق
+3. اضغط زر الرجوع في شاشة التحقق
+
+**Expected:** تعود لشاشة تسجيل الدخول مع رقم الهاتف محفوظاً في حقل الإدخال  
+**Regression:** لا تغيير في منطق إرسال OTP أو التحقق  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-008
+**ID:** BUGFIX15-008  
+**Title:** Hardware back from verify screen preserves phone number  
+**Priority:** High  
+**Steps:**
+1. أدخل رقم الهاتف في شاشة تسجيل الدخول
+2. اضغط "إرسال الرمز"
+3. استخدم زر الرجوع المادي (Android) أو gesture (iOS) من شاشة التحقق
+
+**Expected:** حقل رقم الهاتف في شاشة تسجيل الدخول يحتوي على الرقم المُدخَل مسبقاً  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-009
+**ID:** BUGFIX15-009  
+**Title:** No console.warn logged on Realtime channel error  
+**Priority:** Low  
+**Steps:**
+1. افتح شاشة المحادثة أو تفاصيل الطلب
+2. قطع الإنترنت مؤقتاً ثم أعده
+3. راقب وحدة تحكم Metro/Flipper
+
+**Expected:** لا رسائل `[Waseet] chat channel error` أو `[Waseet] request-detail channel error` في وحدة التحكم  
+**Regression:** لا تغيير في منطق الاتصال الفوري أو استلام البيانات  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX15-010
+**ID:** BUGFIX15-010  
+**Title:** No console.error on provider screen setup failure  
+**Priority:** Low  
+**Steps:**
+1. افتح شاشة مزود الخدمة على شبكة غير مستقرة
+2. راقب وحدة تحكم Metro/Flipper
+
+**Expected:** لا رسائل `console.error` ناتجة عن `setup().catch()` — الأخطاء تُبتلَع بصمت  
+**Regression:** لا تغيير في منطق تحميل بيانات المزود  
+**Automation Candidate:** No
+
+---
+
 ## Module HOMEUI — Client Home UI Redesign
 
 **Scope:** البحث 3D · صف الأيقونات · Footer المُعاد ترتيبه  
@@ -8372,9 +8528,9 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v5.2*  
-*Total Test Cases: 668 across 56 modules*  
-*Critical: 164 | High: 283 | Medium: 179 | Low: 42 (previously: 656/55)*  
+*End of Waseet QA Test Cases Report v5.3*  
+*Total Test Cases: 678 across 57 modules*  
+*Critical: 164 | High: 285 | Medium: 181 | Low: 48 (previously: 668/56)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/ICON_LABEL/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
