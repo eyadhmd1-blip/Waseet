@@ -121,11 +121,17 @@ export default function VerifyScreen() {
         return;
       }
 
-      const { data: userData } = await supabase
+      const { data: userData, error: userFetchError } = await supabase
         .from('users')
         .select('role, is_suspended')
         .eq('id', sessionData.user.id)
-        .single();
+        .maybeSingle();
+
+      if (userFetchError) {
+        await supabase.auth.signOut();
+        showAlert(t('common.error'), t('auth.sessionFailed'));
+        return;
+      }
 
       if (userData?.is_suspended) {
         await supabase.auth.signOut();
