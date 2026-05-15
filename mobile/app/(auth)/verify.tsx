@@ -16,6 +16,9 @@ import { useAppAlert } from '../../src/components/AppAlert';
 
 const RESEND_COOLDOWN = 60;
 
+const normalizeDigits = (s: string) =>
+  s.replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660));
+
 export default function VerifyScreen() {
   const { headerPad, contentPad } = useInsets();
   const router = useRouter();
@@ -249,7 +252,7 @@ export default function VerifyScreen() {
                     otpError ? styles.otpBoxError : null,
                   ]}
                   value={digit}
-                  onChangeText={v => handleChange(v.replace(/\D/g, ''), i)}
+                  onChangeText={v => handleChange(normalizeDigits(v).replace(/\D/g, ''), i)}
                   keyboardType="number-pad"
                   maxLength={1}
                   textAlign="center"

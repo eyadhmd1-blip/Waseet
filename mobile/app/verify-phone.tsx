@@ -13,6 +13,9 @@ import { useAppAlert } from '../src/components/AppAlert';
 
 const RESEND_COOLDOWN = 60; // seconds
 
+const normalizeDigits = (s: string) =>
+  s.replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660));
+
 export default function VerifyPhoneScreen() {
   const router   = useRouter();
   const { t, isRTL } = useLanguage();
@@ -99,7 +102,7 @@ export default function VerifyPhoneScreen() {
 
   const handleChange = (value: string, index: number) => {
     const next = [...otp];
-    next[index] = value.replace(/\D/g, '');
+    next[index] = normalizeDigits(value).replace(/\D/g, '');
     setOtp(next);
     if (value && index < 5) inputs.current[index + 1]?.focus();
     if (!value && index > 0) inputs.current[index - 1]?.focus();
