@@ -135,7 +135,7 @@ export default function ClientRequests() {
     const h = new Date().getHours();
     if (h >= 5  && h < 12) return '☀️';
     if (h >= 12 && h < 17) return '🌤️';
-    if (h >= 17 && h < 21) return '🌆';
+    if (h >= 17 && h < 21) return '🌛';
     return '🌙';
   }, []);
 
