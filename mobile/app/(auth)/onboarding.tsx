@@ -404,7 +404,7 @@ function Step4Plan({
               )}
               <View style={styles.planRow}>
                 <View style={styles.planLeft}>
-                  <Text style={styles.planName}>{plan.name_ar}</Text>
+                  <Text style={styles.planName}>{isRTL ? plan.name_ar : plan.name_en}</Text>
                   <Text style={styles.planDesc}>{creditsDesc[plan.tier] ?? ''}</Text>
                   <Text style={styles.planCredits}>
                     {plan.is_unlimited
@@ -465,7 +465,7 @@ function Step1RoleNew({
   role, onSelect, onNext,
 }: { role: Role; onSelect: (r: Role) => void; onNext: () => void }) {
   const { colors, isDark } = useTheme();
-  const { isRTL }          = useLanguage();
+  const { t, isRTL }       = useLanguage();
   const { headerPad, contentPad } = useInsets();
   const { width: screenW, height: screenH } = useWindowDimensions();
 
@@ -482,14 +482,14 @@ function Step1RoleNew({
     : ['#FDF6E3', '#FFFBF8'];
 
   const CLIENT_CHIPS   = [
-    { icon: '🏷️', label: 'قارن الأسعار واختر الأفضل' },
-    { icon: '⚡',  label: 'طلب سريع في ثوانٍ' },
-    { icon: '🛡️', label: 'موثوق ومضمون' },
+    { icon: '🏷️', label: t('onboarding.clientChip1') },
+    { icon: '⚡',  label: t('onboarding.clientChip2') },
+    { icon: '🛡️', label: t('onboarding.clientChip3') },
   ];
   const PROVIDER_CHIPS = [
-    { icon: '💰', label: 'دخل أعلى ونمو مستمر' },
-    { icon: '⭐', label: 'ابنِ بصمتك وتقييمك' },
-    { icon: '👥', label: 'عملاء أكثر فرص أكبر' },
+    { icon: '💰', label: t('onboarding.providerChip1') },
+    { icon: '⭐', label: t('onboarding.providerChip2') },
+    { icon: '👥', label: t('onboarding.providerChip3') },
   ];
 
   const renderCard = (isClient: boolean) => {
@@ -499,8 +499,8 @@ function Step1RoleNew({
       ? (isDark ? GOLD_COLOR + '22' : '#FFFBEF')
       : (isDark ? BLUE_COLOR + '22' : '#EFF6FF');
     const chips     = isClient ? CLIENT_CHIPS : PROVIDER_CHIPS;
-    const title     = isClient ? 'أنا طالب خدمة' : 'أنا مقدم خدمة';
-    const subtitle  = isClient ? 'ابحث عن أفضل مقدم\nضمن دقائق' : 'ابدأ باستقبال الطلبات\nوزِد دخلك';
+    const title     = isClient ? t('onboarding.clientCardTitle') : t('onboarding.providerCardTitle');
+    const subtitle  = isClient ? t('onboarding.clientCardSubNew') : t('onboarding.providerCardSubNew');
     return (
       <TouchableOpacity
         style={[{
@@ -531,7 +531,7 @@ function Step1RoleNew({
             {isActive ? '✓' : '○'}
           </Text>
           <Text style={{ fontSize: 12, fontWeight: '700', color: isActive ? '#fff' : (isDark ? colors.textMuted : '#9CA3AF') }}>
-            {isActive ? 'تم الاختيار' : 'اضغط للاختيار'}
+            {isActive ? t('onboarding.cardSelected') : t('onboarding.cardTapToSelect')}
           </Text>
         </View>
 
@@ -609,10 +609,10 @@ function Step1RoleNew({
 
           {/* Title + subtitle */}
           <Text style={{ fontSize: rs(24, 20, 28), fontWeight: '800', color: colors.textPrimary, textAlign: 'center', marginBottom: 4 }}>
-            👋 أهلاً بك في وسيط
+            {t('onboarding.step1Welcome')}
           </Text>
           <Text style={{ fontSize: rs(13, 12, 15), color: colors.textMuted, textAlign: 'center', marginBottom: isSmall ? 10 : 14 }}>
-            اختر كيف تريد استخدام التطبيق
+            {t('onboarding.step1ChooseHow')}
           </Text>
 
           {/* Social proof row */}
@@ -638,7 +638,7 @@ function Step1RoleNew({
             <Text style={{ color: '#F59E0B', fontSize: 13, letterSpacing: 1 }}>★★★★★</Text>
             <Text style={{ fontSize: 12, color: colors.textMuted }}>
               <Text style={{ color: GOLD_COLOR, fontWeight: '700' }}>+12,000</Text>
-              {' مستخدم يثقون بنا'}
+              {t('onboarding.step1SocialProof')}
             </Text>
           </View>
 
@@ -659,9 +659,9 @@ function Step1RoleNew({
               borderColor: isDark ? colors.border : 'rgba(201,168,76,0.18)',
             }}>
               {[
-                { icon: '🔒', title: 'آمن وموثوق',  sub: 'بياناتك في أمان' },
-                { icon: '⚡', title: 'بدون تعقيد', sub: 'تجربة سهلة وسريعة' },
-                { icon: '🎧', title: 'دعم 24/7',   sub: 'نحن هنا لمساعدتك' },
+                { icon: '🔒', title: t('onboarding.badge1Title'), sub: t('onboarding.badge1Sub') },
+                { icon: '⚡', title: t('onboarding.badge2Title'), sub: t('onboarding.badge2Sub') },
+                { icon: '🎧', title: t('onboarding.badge3Title'), sub: t('onboarding.badge3Sub') },
               ].map((badge, i, arr) => (
                 <View key={badge.title} style={{
                   alignItems: 'center', flex: 1,
@@ -687,13 +687,13 @@ function Step1RoleNew({
             onPress={onNext}
             activeOpacity={0.85}
           >
-            <Text style={{ fontSize: rs(17, 15, 19), fontWeight: '800', color: '#fff' }}>🚀 ابدأ الآن</Text>
+            <Text style={{ fontSize: rs(17, 15, 19), fontWeight: '800', color: '#fff' }}>{t('onboarding.startNow')}</Text>
             <Text style={{ fontSize: 20, color: '#fff' }}>{isRTL ? '←' : '→'}</Text>
           </TouchableOpacity>
 
           {/* Legal text */}
           <Text style={{ fontSize: 11, color: colors.textMuted, textAlign: 'center', marginTop: 10, lineHeight: 16 }}>
-            🔒 باستخدامك للتطبيق، فأنت توافق على الشروط والأحكام وسياسة الخصوصية
+            {t('onboarding.legalText')}
           </Text>
         </ScrollView>
       </LinearGradient>

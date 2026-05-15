@@ -10,7 +10,7 @@ import { useUnreadMsgCount } from '../../src/hooks/useUnreadMsgCount';
 
 export default function ClientLayout() {
   const insets = useSafeAreaInsets();
-  const { isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { colors, isDark } = useTheme();
   const { showCarousel, dismissCarousel } = useTutorial('client');
   const { count: unreadMsgs } = useUnreadMsgCount();
@@ -28,7 +28,7 @@ export default function ClientLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'الرئيسية',
+            title: t('home.tabHome'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🏠</Text>,
           }}
         />
@@ -36,7 +36,7 @@ export default function ClientLayout() {
         <Tabs.Screen
           name="requests"
           options={{
-            title: 'طلباتي',
+            title: t('home.tabRequests'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📋</Text>,
           }}
         />
@@ -82,7 +82,7 @@ export default function ClientLayout() {
                     color: focused ? colors.accent : colors.textMuted,
                     marginTop: 3,
                   }}>
-                    طلب جديد
+                    {t('home.tabNewRequest')}
                   </Text>
                 </TouchableOpacity>
               );
@@ -93,7 +93,7 @@ export default function ClientLayout() {
         <Tabs.Screen
           name="messages"
           options={{
-            title: 'الرسائل',
+            title: t('home.tabMessages'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>💬</Text>,
             tabBarBadge: unreadMsgs > 0 ? unreadMsgs : undefined,
           }}
@@ -102,7 +102,7 @@ export default function ClientLayout() {
         <Tabs.Screen
           name="profile"
           options={{
-            title: 'حسابي',
+            title: t('home.tabProfile'),
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>👤</Text>,
           }}
         />
