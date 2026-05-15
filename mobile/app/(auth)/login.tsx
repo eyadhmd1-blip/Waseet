@@ -5,7 +5,7 @@ import {
   ScrollView, Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { useLanguage } from '../../src/hooks/useLanguage';
 import { useInsets } from '../../src/hooks/useInsets';
@@ -25,7 +25,8 @@ export default function LoginScreen() {
   const router = useRouter();
   const { t, isRTL } = useLanguage();
   const { colors, isDark } = useTheme();
-  const [phone, setPhone]           = useState('');
+  const { phone: phoneParam } = useLocalSearchParams<{ phone?: string }>();
+  const [phone, setPhone]           = useState(phoneParam ?? '');
   const [loading, setLoading]       = useState(false);
   const [phoneError, setPhoneError] = useState(false);
   const [slowNetwork, setSlowNetwork] = useState(false);

@@ -157,9 +157,7 @@ export default function RequestDetail() {
       }, (payload) => {
         setConfirmCode((payload.new as any).confirm_code ?? null);
       })
-      .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR') console.warn('[Waseet] job-confirm channel error:', activeJobId);
-      });
+      .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [activeJobId]);
 
@@ -194,9 +192,7 @@ export default function RequestDetail() {
           );
         }
       })
-      .subscribe((status) => {
-        if (status === 'CHANNEL_ERROR') console.warn('[Waseet] bids channel error:', id);
-      });
+      .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [id, request?.status]);

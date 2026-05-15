@@ -1206,12 +1206,10 @@ export default function ProviderFeed() {
             is_urgent: !!req?.is_urgent,
           });
         })
-        .subscribe((status) => {
-          if (status === 'CHANNEL_ERROR') console.warn('[Waseet] provider_jobs channel error');
-        });
+        .subscribe();
     };
 
-    setup().catch(console.error);
+    setup().catch(() => {});
     return () => { if (channel) supabase.removeChannel(channel); };
   }, []);
 
@@ -1255,9 +1253,7 @@ export default function ProviderFeed() {
         }, (payload) => {
           setProvider((prev: any) => prev ? { ...prev, ...payload.new } : prev);
         })
-        .subscribe((status) => {
-          if (status === 'CHANNEL_ERROR') console.warn('[Waseet] provider_profile channel error');
-        });
+        .subscribe();
     });
 
     return () => { if (profileChannel) supabase.removeChannel(profileChannel); };

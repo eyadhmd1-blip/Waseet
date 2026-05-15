@@ -344,7 +344,7 @@ export default function ClientProfile() {
 
         {/* ══ QUICK ACTIONS GRID ═══════════════════════════════ */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>خدماتي</Text>
+          <Text style={styles.sectionTitle}>{t('profile.myServices')}</Text>
           <View style={styles.qaGrid}>
             <View style={styles.qaRow}>
               <QuickAction icon="🔖" label={t('saved.title')}             onPress={() => router.push('/(client)/saved-providers')} />

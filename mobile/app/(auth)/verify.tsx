@@ -204,7 +204,7 @@ export default function VerifyScreen() {
         {/* Back button */}
         <TouchableOpacity
           style={[styles.back, { paddingTop: headerPad }]}
-          onPress={() => router.back()}
+          onPress={() => router.replace({ pathname: '/(auth)/login' as any, params: { phone: phone ?? '' } })}
           activeOpacity={0.7}
         >
           <View style={styles.backBtn}>

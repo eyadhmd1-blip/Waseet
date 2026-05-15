@@ -3,6 +3,7 @@ import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { supabase } from '../../src/lib/supabase';
 import { useTheme } from '../../src/context/ThemeContext';
+import { useLanguage } from '../../src/hooks/useLanguage';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -10,6 +11,7 @@ export default function ProviderDeepLink() {
   const { username } = useLocalSearchParams<{ username: string }>();
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
@@ -40,7 +42,7 @@ export default function ProviderDeepLink() {
   if (notFound) {
     return (
       <View style={[styles.center, { backgroundColor: colors.bg }]}>
-        <Text style={{ color: colors.textSecondary, fontSize: 16 }}>لم يتم العثور على هذا المقدم</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 16 }}>{t('providerProfile.notFound')}</Text>
       </View>
     );
   }

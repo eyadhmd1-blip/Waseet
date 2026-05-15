@@ -333,8 +333,8 @@ function RootLayoutInner() {
 
   }, [role, segments]);
 
-  // Don't render until i18n is initialised (prevents flash of untranslated content)
-  if (!i18nReady) return null;
+  // Don't render until both i18n and auth are ready — prevents any blank-screen flash
+  if (!i18nReady || role === undefined) return null;
 
   return (
     <SafeAreaProvider>
