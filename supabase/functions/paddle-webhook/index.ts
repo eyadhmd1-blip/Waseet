@@ -34,7 +34,7 @@ const VALID_TIERS = new Set(["trial", "basic", "pro", "premium"]);
 
 const TIER_PRICE_JOD: Record<string, number> = {
   trial:    0,
-  basic:    5,
+  basic:    7,
   pro:     12,
   premium: 22,
 };

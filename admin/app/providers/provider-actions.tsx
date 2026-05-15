@@ -20,10 +20,10 @@ const SUB_CREDITS: Record<string, string> = {
   trial: '10 رصيد', basic: '20 رصيد', pro: '50 رصيد', premium: 'غير محدود',
 };
 const SUB_PRICE: Record<string, string> = {
-  trial: 'مجاناً', basic: '5 JOD', pro: '12 JOD', premium: '22 JOD',
+  trial: 'مجاناً', basic: '7 JOD', pro: '12 JOD', premium: '22 JOD',
 };
 const SUB_DEFAULT_AMOUNT: Record<string, number> = {
-  trial: 0, basic: 5, pro: 12, premium: 22,
+  trial: 0, basic: 7, pro: 12, premium: 22,
 };
 const DURATION_OPTIONS = [1, 2, 3, 6, 12] as const;
 const METHOD_LABELS: Record<string, string> = {
