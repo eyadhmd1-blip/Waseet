@@ -127,21 +127,32 @@ export default function ProviderMessages() {
 
   useEffect(() => {
     if (!myId || jobs.length === 0) return;
+    let cancelled = false;
     const jobIds = new Set(jobs.map(j => j.id));
+    const channelName = 'provider-conv-list';
 
-    channelRef.current = supabase
-      .channel('provider-conv-list')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-        const msg = payload.new as any;
-        if (!jobIds.has(msg.job_id)) { load(); return; }
-        setLastMsgMap(prev => ({ ...prev, [msg.job_id]: msg }));
-        if (msg.sender_id !== myId) {
-          setUnreadMap(prev => ({ ...prev, [msg.job_id]: (prev[msg.job_id] ?? 0) + 1 }));
-        }
-      })
-      .subscribe();
+    const setup = async () => {
+      const stale = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
+
+      channelRef.current = supabase
+        .channel(channelName)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
+          const msg = payload.new as any;
+          if (!jobIds.has(msg.job_id)) { load(); return; }
+          setLastMsgMap(prev => ({ ...prev, [msg.job_id]: msg }));
+          if (msg.sender_id !== myId) {
+            setUnreadMap(prev => ({ ...prev, [msg.job_id]: (prev[msg.job_id] ?? 0) + 1 }));
+          }
+        })
+        .subscribe();
+    };
+
+    setup().catch(e => console.warn('[provider-conv-list] setup error:', e?.message));
 
     return () => {
+      cancelled = true;
       if (channelRef.current) supabase.removeChannel(channelRef.current);
     };
   }, [jobs, myId]);

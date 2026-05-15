@@ -188,14 +188,24 @@ export default function NotificationInboxScreen() {
 
   // ── Real-time: prepend new notifications instantly ──────────
   useEffect(() => {
+    let cancelled = false;
     let channel: ReturnType<typeof supabase.channel> | null = null;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) return;
+    const setup = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (cancelled || !session) return;
       const userId = session.user.id;
 
+      // Remove any stale channel with the same name before creating a new one.
+      // supabase.channel() returns the existing channel if one is still
+      // registered — calling .on() on an already-subscribed channel throws.
+      const channelName = `notif_inbox_${userId}`;
+      const stale = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
+
       channel = supabase
-        .channel(`notif_inbox_${userId}`)
+        .channel(channelName)
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` },
@@ -216,9 +226,14 @@ export default function NotificationInboxScreen() {
           },
         )
         .subscribe();
-    });
+    };
 
-    return () => { if (channel) supabase.removeChannel(channel); };
+    setup().catch(e => console.warn('[notif_inbox] setup error:', e?.message));
+
+    return () => {
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+    };
   }, []);
 
   // ── Pull-to-refresh ─────────────────────────────────────────

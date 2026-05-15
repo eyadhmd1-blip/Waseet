@@ -149,52 +149,72 @@ export default function RequestDetail() {
   // Live-update the confirm code when provider sets it
   useEffect(() => {
     if (!activeJobId) return;
-    const channel = supabase
-      .channel(`job-confirm-${activeJobId}`)
-      .on('postgres_changes', {
-        event: 'UPDATE', schema: 'public', table: 'jobs',
-        filter: `id=eq.${activeJobId}`,
-      }, (payload) => {
-        setConfirmCode((payload.new as any).confirm_code ?? null);
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const channelName = `job-confirm-${activeJobId}`;
+
+    const setup = async () => {
+      const stale = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', {
+          event: 'UPDATE', schema: 'public', table: 'jobs',
+          filter: `id=eq.${activeJobId}`,
+        }, (payload) => {
+          setConfirmCode((payload.new as any).confirm_code ?? null);
+        })
+        .subscribe();
+    };
+
+    setup().catch(e => console.warn('[job-confirm] setup error:', e?.message));
+    return () => { cancelled = true; if (channel) supabase.removeChannel(channel); };
   }, [activeJobId]);
 
   // Live bids — new bids appear instantly without pull-to-refresh
   useEffect(() => {
     if (!id) return;
     if (request?.status !== 'open' && request?.status !== 'reviewing') return;
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const channelName = `bids:${id}`;
 
-    const channel = supabase
-      .channel(`bids:${id}`)
-      .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'bids',
-        filter: `request_id=eq.${id}`,
-      }, async (payload) => {
-        const { data } = await supabase
-          .from('bids')
-          .select(`
-            *,
-            provider:providers(
-              id, score, reputation_tier, badge_verified, lifetime_jobs, is_available,
-              user:users(full_name, city)
-            )
-          `)
-          .eq('id', (payload.new as any).id)
-          .single();
+    const setup = async () => {
+      const stale = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'bids',
+          filter: `request_id=eq.${id}`,
+        }, async (payload) => {
+          const { data } = await supabase
+            .from('bids')
+            .select(`
+              *,
+              provider:providers(
+                id, score, reputation_tier, badge_verified, lifetime_jobs, is_available,
+                user:users(full_name, city)
+              )
+            `)
+            .eq('id', (payload.new as any).id)
+            .single();
 
-        if (data) {
-          setBids(prev =>
-            prev.some(b => b.id === (data as BidWithProvider).id)
-              ? prev
-              : [...prev, data as BidWithProvider]
-          );
-        }
-      })
-      .subscribe();
+          if (data) {
+            setBids(prev =>
+              prev.some(b => b.id === (data as BidWithProvider).id)
+                ? prev
+                : [...prev, data as BidWithProvider]
+            );
+          }
+        })
+        .subscribe();
+    };
 
-    return () => { supabase.removeChannel(channel); };
+    setup().catch(e => console.warn('[bids] setup error:', e?.message));
+    return () => { cancelled = true; if (channel) supabase.removeChannel(channel); };
   }, [id, request?.status]);
 
   // ── Accept bid ──────────────────────────────────────────────
