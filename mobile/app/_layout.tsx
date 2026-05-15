@@ -333,8 +333,10 @@ function RootLayoutInner() {
 
   }, [role, segments]);
 
-  // Don't render until both i18n and auth are ready — prevents any blank-screen flash
-  if (!i18nReady || role === undefined) return null;
+  // Don't render until both i18n and auth are ready — prevents any blank-screen flash.
+  // Return a solid background View (not null) so Expo Go on iPad shows the app's
+  // background color instead of a white screen while SplashScreen is unreliable in dev.
+  if (!i18nReady || role === undefined) return <View style={{ flex: 1, backgroundColor: colors.bg }} />;
 
   return (
     <SafeAreaProvider>

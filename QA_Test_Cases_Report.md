@@ -67,6 +67,7 @@
 54. [PRELAUNCH1 — Pre-Launch Hardening Suite (3G Resilience + Security)](#54-prelaunch1--pre-launch-hardening-suite-3g-resilience--security)
 55. [BUGFIX15 — Zero-Risk Bug Fixes (BUG-011, BUG-013, BUG-015, BUG-018, BUG-019)](#55-bugfix15--zero-risk-bug-fixes-bug-011-bug-013-bug-015-bug-018-bug-019)
 56. [BUGFIX16 — Category Labels, Display Order & RTL Greeting Emoji Fix](#56-bugfix16--category-labels-display-order--rtl-greeting-emoji-fix)
+57. [BUGFIX17 — iPad/Expo Go White Screen Fix (Loading View)](#57-bugfix17--ipadexpo-go-white-screen-fix-loading-view)
 
 ---
 
@@ -141,7 +142,8 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | PRELAUNCH1 | 20 | 4 | 7 | 7 | 2 |
 | BUGFIX15 | 10 | 0 | 2 | 3 | 5 |
 | BUGFIX16 | 10 | 1 | 6 | 3 | 0 |
-| **TOTAL** | **664** | **162** | **275** | **182** | **45** |
+| BUGFIX17 | 4 | 0 | 1 | 3 | 0 |
+| **TOTAL** | **668** | **162** | **276** | **185** | **45** |
 
 ---
 
@@ -8722,9 +8724,83 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v5.4*  
-*Total Test Cases: 688 across 58 modules*  
-*Critical: 165 | High: 290 | Medium: 185 | Low: 48 (previously: 678/57)*  
+---
+
+## 57. BUGFIX17 — iPad/Expo Go White Screen Fix (Loading View)
+
+**Date:** 2026-05-14  
+**Scope:** mobile/app/_layout.tsx  
+**Root Cause:** `RootLayoutInner` returned `null` while waiting for auth + i18n. In Expo Go (development), `SplashScreen` is largely a no-op and does not cover the null render — resulting in a white screen on iPad (and potentially other devices) until initialization completes.  
+**Fix:** Replaced `return null` with `return <View style={{ flex: 1, backgroundColor: colors.bg }} />` so the loading phase shows the app's background color instead of white.
+
+---
+
+#### BUGFIX17-001
+**Name:** iPad via Expo Go — لا شاشة بيضاء أثناء التحميل  
+**Priority:** High | **Type:** Regression / Platform  
+**Preconditions:** Expo Go مثبَّت على iPad، التطبيق لم يُحمَّل بعد (أو تم مسح الـ cache)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح التطبيق عبر Expo Go على iPad | تظهر شاشة بلون خلفية التطبيق (ليس أبيض) أثناء تحميل auth + i18n |
+| 2 | انتظر حتى اكتمال التحميل | تنتقل التطبيق تلقائياً إلى شاشة تسجيل الدخول أو الشاشة الرئيسية حسب الجلسة |
+| 3 | كرر الخطوة 1 بعد تغيير اللغة إلى الإنجليزية | نفس السلوك — لا شاشة بيضاء |
+
+**Regression:** التطبيق يعمل بشكل كامل بعد اكتمال التحميل — لا تأثير على المسار الطبيعي  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX17-002
+**Name:** iPhone via Expo Go — لا انحدار بعد الإصلاح  
+**Priority:** Medium | **Type:** Regression  
+**Preconditions:** Expo Go على iPhone
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح التطبيق عبر Expo Go على iPhone | تظهر شاشة خلفية التطبيق أو Splash — لا شاشة بيضاء |
+| 2 | اكتمال التحميل | الانتقال الطبيعي إلى شاشة الدخول أو الرئيسية |
+| 3 | تسجيل دخول كـ client | شاشة الطلبات تُحمَّل بشكل صحيح |
+| 4 | تسجيل دخول كـ provider | شاشة المزود تُحمَّل بشكل صحيح |
+
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX17-003
+**Name:** Standalone EAS Build — شاشة البداية (Splash) لا تتأثر  
+**Priority:** Medium | **Type:** Regression  
+**Preconditions:** بناء EAS مثبَّت (ليس Expo Go)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح التطبيق من البناء الرسمي | تظهر شاشة البداية (Splash) من app.json |
+| 2 | انتظر اكتمال auth + i18n | تختفي Splash وتظهر الشاشة المناسبة |
+| 3 | أعد الفتح بعد إغلاق التطبيق | نفس السلوك — لا شاشة بيضاء |
+
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX17-004
+**Name:** Safety Timeout — إخفاء شاشة التحميل بعد 8 ثوانٍ كحد أقصى  
+**Priority:** Medium | **Type:** Edge Case  
+**Preconditions:** وضع Airplane Mode مُفعَّل قبل فتح التطبيق
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | فعّل Airplane Mode وافتح التطبيق | شاشة خلفية التطبيق تظهر (auth stalls في وضع offline) |
+| 2 | انتظر 8 ثوانٍ | تختفي شاشة التحميل وتظهر شاشة تسجيل الدخول أو الرئيسية |
+| 3 | ألغِ Airplane Mode | التطبيق يستعيد الجلسة ويعود لحالته الطبيعية |
+
+**Regression:** safety timeout (setTimeout 8000ms في _layout.tsx) لا يزال يعمل  
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v5.5*  
+*Total Test Cases: 692 across 59 modules*  
+*Critical: 165 | High: 291 | Medium: 188 | Low: 48 (previously: 688/58)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/ICON_LABEL/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
