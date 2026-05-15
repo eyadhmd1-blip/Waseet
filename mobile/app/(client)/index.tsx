@@ -26,6 +26,8 @@ const { width: W } = Dimensions.get('window');
 const H_PAD    = 20;
 const CARD_GAP = 10;
 const CARD_W_3 = Math.floor((W - H_PAD * 2 - CARD_GAP * 2) / 3);
+const ICON_BTN  = Math.min(48, Math.floor(W * 0.115));
+const ICON_FONT = Math.min(22, Math.floor(W * 0.054));
 
 // ─── Maps ─────────────────────────────────────────────────────
 
@@ -69,6 +71,20 @@ const GROUP_SHORT_AR: Record<string, string> = {
   handicrafts:    'الحِرَف',
   pets:           'الحيوانات',
   water_services: 'خدمات المياه',
+};
+
+const GROUP_ICON_LABEL: Record<string, string> = {
+  maintenance:    'صيانة',
+  car_services:   'سيارات',
+  cleaning:       'تنظيف',
+  technical:      'تقنية',
+  events:         'مناسبات',
+  education:      'تعليم',
+  freelance:      'تصميم',
+  health_beauty:  'صحة',
+  handicrafts:    'حِرَف',
+  pets:           'حيوانات',
+  water_services: 'مياه',
 };
 
 // ترتيب العرض حسب الأكثر طلباً
@@ -344,12 +360,12 @@ export default function ClientHome() {
             <Text style={styles.searchHint}>{t('home.searchPlaceholder')}</Text>
           </TouchableOpacity>
 
-          {/* ── Group chips ─────────────────────────────────────── */}
+          {/* ── Category icon row ──────────────────────────────── */}
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            style={styles.chipsScroll}
-            contentContainerStyle={[styles.chipsContent, { flexDirection: 'row' }]}
+            style={styles.iconRowScroll}
+            contentContainerStyle={[styles.iconRowContent, { flexDirection: 'row' }]}
           >
             {SORTED_GROUPS.map(g => {
               const active = activeGroup === g.slug;
@@ -357,13 +373,18 @@ export default function ClientHome() {
               return (
                 <TouchableOpacity
                   key={g.slug}
-                  style={[styles.chip, active && { backgroundColor: col + '20', borderColor: col }]}
+                  style={styles.iconItem}
                   onPress={() => setActiveGroup(g.slug)}
                   activeOpacity={0.75}
                 >
-                  <Text style={styles.chipEmoji}>{GROUP_EMOJI[g.slug]}</Text>
-                  <Text style={[styles.chipText, active && { color: col, fontWeight: '700' }]}>
-                    {GROUP_SHORT_AR[g.slug] ?? g.name_ar}
+                  <View style={[
+                    styles.iconCircle,
+                    active && { backgroundColor: col + '28', borderColor: col, borderWidth: 2 },
+                  ]}>
+                    <Text style={styles.iconEmoji}>{GROUP_EMOJI[g.slug]}</Text>
+                  </View>
+                  <Text style={[styles.iconLabel, active && { color: col, fontWeight: '700' }]} numberOfLines={1}>
+                    {GROUP_ICON_LABEL[g.slug] ?? g.name_ar}
                   </Text>
                 </TouchableOpacity>
               );
@@ -542,11 +563,18 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     // ── Search ──────────────────────────────────────────────────
     searchBar: {
       marginHorizontal: H_PAD, marginTop: 16, marginBottom: 14,
-      backgroundColor: colors.surface,
+      backgroundColor: isDark ? colors.surface : '#FFFFFF',
       borderRadius: 16,
       paddingHorizontal: 14, paddingVertical: 12,
-      borderWidth: 1, borderColor: colors.border,
+      borderWidth: 1,
+      borderColor: isDark ? 'rgba(255,255,255,0.10)' : 'rgba(0,0,0,0.07)',
+      borderTopColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.95)',
       alignItems: 'center', gap: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: isDark ? 0.35 : 0.10,
+      shadowRadius: 10,
+      elevation: 5,
     },
     searchIconWrap: {
       width: 30, height: 30, borderRadius: 9,
@@ -555,20 +583,21 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     },
     searchHint: { fontSize: 14, color: colors.textMuted, flex: 1, textAlign: ta },
 
-    // ── Chips ───────────────────────────────────────────────────
-    chipsScroll:  { marginBottom: 20 },
-    chipsContent: { paddingHorizontal: H_PAD, gap: 8, paddingVertical: 4 },
-    chip: {
-      flexDirection:  'row',
-      alignItems:     'center',
-      gap:            5,
-      paddingHorizontal: 12, paddingVertical: 8,
-      borderRadius: 20, borderWidth: 1.5,
-      borderColor: colors.border,
-      backgroundColor: colors.surface,
+    // ── Icon row ─────────────────────────────────────────────────
+    iconRowScroll:  { marginBottom: 20 },
+    iconRowContent: { paddingHorizontal: H_PAD, gap: 14, paddingVertical: 4 },
+    iconItem:       { alignItems: 'center', gap: 5, width: ICON_BTN + 10 },
+    iconCircle: {
+      width: ICON_BTN, height: ICON_BTN, borderRadius: ICON_BTN / 2,
+      backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+      borderWidth: 1.5, borderColor: colors.border,
+      alignItems: 'center', justifyContent: 'center',
     },
-    chipEmoji: { fontSize: 13 },
-    chipText:  { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
+    iconEmoji: { fontSize: ICON_FONT },
+    iconLabel: {
+      fontSize: 9, color: colors.textMuted, fontWeight: '500',
+      textAlign: 'center', width: ICON_BTN + 10,
+    },
 
     // ── Section labels ───────────────────────────────────────────
     sectionLabel: {
