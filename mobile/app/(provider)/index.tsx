@@ -561,9 +561,12 @@ function RequestCard({
           </View>
 
           {item.ai_suggested_price_min && item.ai_suggested_price_max && !isUrgent && (
-            <Text style={styles.aiPrice}>
-              {item.ai_suggested_price_min}–{item.ai_suggested_price_max} د.أ
-            </Text>
+            <View>
+              <Text style={styles.aiPriceTag}>✨ توقع ذ.ا</Text>
+              <Text style={styles.aiPrice}>
+                {item.ai_suggested_price_min}–{item.ai_suggested_price_max} د.أ
+              </Text>
+            </View>
           )}
 
           {myBidMeta !== undefined ? (
@@ -1692,9 +1695,12 @@ export default function ProviderFeed() {
             <Text style={styles.modalSubtitle}>{bidModal.target?.title}</Text>
 
             {bidModal.target?.ai_suggested_price_min && (
-              <Text style={styles.modalAiHint}>
-                {t('providerFeed.aiPrice', { min: bidModal.target.ai_suggested_price_min, max: bidModal.target.ai_suggested_price_max })}
-              </Text>
+              <View>
+                <Text style={styles.modalAiHint}>
+                  ✨ {t('providerFeed.aiPrice', { min: bidModal.target.ai_suggested_price_min, max: bidModal.target.ai_suggested_price_max })}
+                </Text>
+                <Text style={styles.modalAiNote}>{t('newRequest.aiHint')}</Text>
+              </View>
             )}
 
             {/* Credit cost hint */}
@@ -2176,10 +2182,13 @@ export default function ProviderFeed() {
 
                 {detailSheet?.ai_suggested_price_min && (
                   <View style={styles.detailInfoRow}>
-                    <Text style={styles.detailInfoIcon}>💰</Text>
-                    <Text style={[styles.detailInfoValue, { color: colors.accent, fontWeight: '700' }]}>
-                      {detailSheet.ai_suggested_price_min}–{detailSheet.ai_suggested_price_max} د.أ
-                    </Text>
+                    <Text style={styles.detailInfoIcon}>✨</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.aiPriceTag}>توقع ذكاء اصطناعي</Text>
+                      <Text style={[styles.detailInfoValue, { color: colors.accent, fontWeight: '700' }]}>
+                        {detailSheet.ai_suggested_price_min}–{detailSheet.ai_suggested_price_max} د.أ
+                      </Text>
+                    </View>
                   </View>
                 )}
 
@@ -2325,6 +2334,8 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   bidsCount:    { fontSize: 12, color: colors.textSecondary, flexShrink: 1 },
   biddingEnds:  { fontSize: 11, color: colors.textMuted, flexShrink: 1 },
   aiPrice:    { fontSize: 13, color: colors.accent, fontWeight: '600' },
+  aiPriceTag: { fontSize: 10, color: colors.textMuted, marginBottom: 1 },
+  modalAiNote:{ fontSize: 11, color: colors.textMuted, textAlign: ta, marginBottom: 12 },
 
   bidBtn:           { backgroundColor: colors.accent, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 8 },
   bidBtnLocked:     { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border },

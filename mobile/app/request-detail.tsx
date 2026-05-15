@@ -453,10 +453,11 @@ export default function RequestDetail() {
 
           {request.ai_suggested_price_min && request.ai_suggested_price_max && (
             <View style={styles.aiPriceBox}>
-              <Text style={styles.aiPriceLabel}>{t('requests.aiPriceLabel')}</Text>
+              <Text style={styles.aiPriceLabel}>✨ {t('newRequest.aiTag')}</Text>
               <Text style={styles.aiPriceValue}>
                 {t('requests.aiPriceValue', { min: request.ai_suggested_price_min, max: request.ai_suggested_price_max })}
               </Text>
+              <Text style={styles.aiPriceNote}>{t('newRequest.aiHint')}</Text>
             </View>
           )}
         </View>
@@ -874,6 +875,7 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean = false
   aiPriceBox:   { marginTop: 16, backgroundColor: colors.accentDim, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(201,168,76,0.30)', alignItems: 'center' },
   aiPriceLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 4 },
   aiPriceValue: { fontSize: 22, fontWeight: '700', color: colors.accent },
+  aiPriceNote:  { fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 18 },
 
   section:      { marginBottom: 20 },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: colors.textPrimary, marginBottom: 12, alignSelf: 'stretch', textAlign: ta },

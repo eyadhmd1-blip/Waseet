@@ -543,16 +543,28 @@ export default function NewRequestScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
           <View style={styles.priceCard}>
-            <Text style={styles.priceLabel}>{t('newRequest.aiPrice')}</Text>
+            <Text style={styles.aiTag}>✨ {t('newRequest.aiTag')}</Text>
             {aiLoading ? (
               <View style={styles.priceLoading}>
                 <ActivityIndicator color={colors.accent} />
                 <Text style={styles.priceLoadingText}>{t('newRequest.aiAnalyzing')}</Text>
               </View>
             ) : aiPrice ? (
-              <Text style={styles.priceValue}>
-                {aiPrice.min} – {aiPrice.max} {t('common.jod')}
-              </Text>
+              <>
+                <View style={styles.rangeRow}>
+                  <Text style={styles.rangeNum}>{aiPrice.min}</Text>
+                  <View style={styles.rangeTrack}>
+                    <View style={styles.rangeDot} />
+                    <View style={styles.rangeBarLine} />
+                    <View style={styles.rangeDot} />
+                  </View>
+                  <Text style={styles.rangeNum}>{aiPrice.max}</Text>
+                </View>
+                <Text style={styles.rangeCurrency}>{t('common.jod')}</Text>
+                <View style={styles.priceDivider} />
+                <Text style={styles.priceHint}>{t('newRequest.aiHint')}</Text>
+                <Text style={styles.socialProof}>{t('newRequest.aiSocialProof')}</Text>
+              </>
             ) : (
               <Text style={styles.priceNA}>{t('newRequest.priceTBD')}</Text>
             )}
@@ -661,6 +673,16 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     priceNA:         { fontSize: 15, color: colors.textSecondary },
     priceLoading:    { flexDirection: 'row', alignItems: 'center', gap: 10 },
     priceLoadingText:{ fontSize: 14, color: colors.textMuted },
+    aiTag:           { fontSize: 12, fontWeight: '700', color: colors.accent, marginBottom: 14 },
+    rangeRow:        { flexDirection: 'row', alignItems: 'center', gap: 10, width: '100%', justifyContent: 'center' },
+    rangeNum:        { fontSize: 26, fontWeight: '800', color: colors.accent, minWidth: 42, textAlign: 'center' },
+    rangeTrack:      { flex: 1, height: 4, borderRadius: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.border },
+    rangeBarLine:    { flex: 1, height: 4, backgroundColor: colors.accent + '55' },
+    rangeDot:        { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.accent },
+    rangeCurrency:   { fontSize: 13, color: colors.textMuted, textAlign: 'center', marginBottom: 14, marginTop: 4 },
+    priceDivider:    { height: 1, backgroundColor: colors.border, marginBottom: 12, width: '100%' },
+    priceHint:       { fontSize: 13, color: colors.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: 8 },
+    socialProof:     { fontSize: 12, color: '#3B82F6', textAlign: 'center', fontWeight: '600' },
 
     summaryCard: { backgroundColor: colors.surface, borderRadius: 16, paddingHorizontal: 16, marginBottom: 28, borderWidth: 1, borderColor: colors.border },
 

@@ -308,9 +308,12 @@ export default function ClientRequests() {
               </View>
             )}
             {item.ai_suggested_price_min && item.ai_suggested_price_max && (
-              <Text style={styles.aiPrice}>
-                {item.ai_suggested_price_min}–{item.ai_suggested_price_max} {t('common.jod')}
-              </Text>
+              <View>
+                <Text style={styles.aiPriceTag}>✨ {t('newRequest.aiTag')}</Text>
+                <Text style={styles.aiPrice}>
+                  {item.ai_suggested_price_min}–{item.ai_suggested_price_max} {t('common.jod')}
+                </Text>
+              </View>
             )}
           </View>
         </View>
@@ -652,6 +655,7 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
     bidsChip:    { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
     bidChipText: { fontSize: 12, fontWeight: '700' },
 
+    aiPriceTag: { fontSize: 10, color: colors.textMuted, marginBottom: 1 },
     aiPrice: { fontSize: 12, color: colors.accent, fontWeight: '600' },
 
     repostBtn: {
