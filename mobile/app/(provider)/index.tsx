@@ -978,7 +978,9 @@ export default function ProviderFeed() {
   // Grouped: demo bid modal state
   const [demoModal, setDemoModal] = useState({ open: false, amount: '', note: '', loading: false });
   const [bidAmountError,      setBidAmountError]      = useState(false);
+  const [bidNoteError,        setBidNoteError]         = useState(false);
   const [contractAmountError, setContractAmountError] = useState(false);
+  const [contractNoteError,   setContractNoteError]   = useState(false);
   const [demoAmountError,     setDemoAmountError]     = useState(false);
 
   // Grouped: bid modal state
@@ -1386,6 +1388,7 @@ export default function ProviderFeed() {
     const { target, amount: amountStr, note } = bidModal;
     if (!target) return;
     if (!amountStr) { setBidAmountError(true); return; }
+    if (!note.trim()) { setBidNoteError(true); return; }
     const amount = parseFloat(amountStr);
     if (isNaN(amount) || amount <= 0) {
       Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
@@ -1485,6 +1488,7 @@ export default function ProviderFeed() {
     const { target, amount: amountStr, note } = contractModal;
     if (!target) return;
     if (!amountStr) { setContractAmountError(true); return; }
+    if (!note.trim()) { setContractNoteError(true); return; }
     const price = parseFloat(amountStr);
     if (isNaN(price) || price <= 0) {
       Alert.alert(t('common.error'), t('providerFeed.errInvalidAmount'));
@@ -1722,17 +1726,20 @@ export default function ProviderFeed() {
 
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
-              style={[styles.modalInput, styles.modalInputText, { height: 80, textAlignVertical: 'top' }]}
+              style={[styles.modalInput, styles.modalInputText, { height: 80, textAlignVertical: 'top' }, bidNoteError && styles.inputError]}
               placeholder={t('providerFeed.bidWhyPlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={bidModal.note}
-              onChangeText={text => setBidModal(prev => ({ ...prev, note: text }))}
+              onChangeText={text => { setBidModal(prev => ({ ...prev, note: text })); if (bidNoteError) setBidNoteError(false); }}
               textAlign={ta}
               multiline
             />
+            {bidNoteError && (
+              <Text style={styles.errorHint}>{t('providerFeed.errRequiredNote')}</Text>
+            )}
 
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => { setBidModal(prev => ({ ...prev, target: null, amount: '', note: '' })); setBidAmountError(false); }}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => { setBidModal(prev => ({ ...prev, target: null, amount: '', note: '' })); setBidAmountError(false); setBidNoteError(false); }}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -1790,16 +1797,19 @@ export default function ProviderFeed() {
             )}
             <Text style={styles.modalLabel}>{t('providerFeed.bidNote')}</Text>
             <TextInput
-              style={[styles.modalInput, styles.modalInputText, { height: 80, textAlignVertical: 'top' }]}
+              style={[styles.modalInput, styles.modalInputText, { height: 80, textAlignVertical: 'top' }, contractNoteError && styles.inputError]}
               placeholder={t('providerFeed.contractNotePlaceholder')}
               placeholderTextColor={colors.textMuted}
               value={contractModal.note}
-              onChangeText={text => setContractModal(prev => ({ ...prev, note: text }))}
+              onChangeText={text => { setContractModal(prev => ({ ...prev, note: text })); if (contractNoteError) setContractNoteError(false); }}
               textAlign={ta}
               multiline
             />
+            {contractNoteError && (
+              <Text style={styles.errorHint}>{t('providerFeed.errRequiredNote')}</Text>
+            )}
             <View style={styles.modalBtns}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => { setContractModal(prev => ({ ...prev, target: null, amount: '', note: '' })); setContractAmountError(false); }}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => { setContractModal(prev => ({ ...prev, target: null, amount: '', note: '' })); setContractAmountError(false); setContractNoteError(false); }}>
                 <Text style={styles.modalCancelText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity

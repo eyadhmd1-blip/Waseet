@@ -1,6 +1,6 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 5.0  
+**Document Version:** 6.0  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
@@ -51,6 +51,22 @@
 38. [BUGFIX — Bug-Fix Regression Suite (v2.6)](#38-bugfix--bug-fix-regression-suite-v26)
 39. [BUGFIX2 — Bug-Fix Regression Suite v3.0 (Pass-2)](#39-bugfix2--bug-fix-regression-suite-v30-pass-2)
 40. [RPTS — Reports Export Hub (25 Reports)](#40-rpts--reports-export-hub-25-reports)
+41. [BUGFIX3 — Bug-Fix Regression Suite v4.0 (Pass-3)](#41-bugfix3--bug-fix-regression-suite-v40-pass-3)
+42. [BUGFIX4 — Bug-Fix Regression Suite v4.1 (BUG-AC01)](#42-bugfix4--bug-fix-regression-suite-v41-bug-ac01)
+43. [BUGFIX5 — Bug-Fix Regression Suite v4.2 (BUG-AC02)](#43-bugfix5--bug-fix-regression-suite-v42-bug-ac02)
+44. [BUGFIX6 — Bug-Fix Regression Suite v4.3 (BUG-AH06)](#44-bugfix6--bug-fix-regression-suite-v43-bug-ah06)
+45. [BUGFIX7 — Bug-Fix Regression Suite v4.4 (BUG-AM02)](#45-bugfix7--bug-fix-regression-suite-v44-bug-am02)
+46. [BUGFIX8 — Bug-Fix Regression Suite v4.5 (BUG-H04)](#46-bugfix8--bug-fix-regression-suite-v45-bug-h04)
+47. [BUGFIX9 — Bug-Fix Regression Suite v4.6 (Race Condition)](#47-bugfix9--bug-fix-regression-suite-v46-race-condition--useunreadmsgcount)
+48. [BUGFIX10 — Bug-Fix Regression Suite v4.7 (BUG-AL01 i18n)](#48-bugfix10--bug-fix-regression-suite-v47-bug-al01-i18n)
+49. [BUGFIX11 — Bug-Fix Regression Suite v4.8 (كهرباء → كهرباء المنازل)](#49-bugfix11--bug-fix-regression-suite-v48-كهرباء--كهرباء-المنازل)
+50. [FEAT1 — Onboarding Flow Redesign (Auto-Trial + Welcome Screen)](#50-feat1--onboarding-flow-redesign-auto-trial--welcome-screen)
+51. [BUGFIX12 — Bug-Fix Regression Suite v5.0 (City i18n)](#51-bugfix12--bug-fix-regression-suite-v50-city-i18n)
+52. [BUGFIX13 — RTL Alert Dialog Fix (AppAlert Hook)](#52-bugfix13--rtl-alert-dialog-fix-appalert-hook)
+53. [BUGFIX14 — Image Picker Buttons RTL Order Fix](#53-bugfix14--image-picker-buttons-rtl-order-fix)
+54. [PRELAUNCH1 — Pre-Launch Hardening Suite (3G Resilience + Security)](#54-prelaunch1--pre-launch-hardening-suite-3g-resilience--security)
+55. [BUGFIX15 — Zero-Risk Bug Fixes (BUG-011, BUG-013, BUG-015, BUG-018, BUG-019)](#55-bugfix15--zero-risk-bug-fixes-bug-011-bug-013-bug-015-bug-018-bug-019)
+56. [BUGFIX16 — Category Labels, Display Order & RTL Greeting Emoji Fix](#56-bugfix16--category-labels-display-order--rtl-greeting-emoji-fix)
 
 ---
 
@@ -109,7 +125,23 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | BUGFIX | 8 | 5 | 3 | 0 | 0 |
 | BUGFIX2 | 13 | 5 | 5 | 3 | 0 |
 | RPTS | 22 | 4 | 10 | 6 | 2 |
-| **TOTAL** | **558** | **149** | **234** | **144** | **31** |
+| BUGFIX3 | 8 | 2 | 3 | 2 | 1 |
+| BUGFIX4 | 8 | 1 | 5 | 2 | 0 |
+| BUGFIX5 | 6 | 3 | 2 | 1 | 0 |
+| BUGFIX6 | 6 | 0 | 3 | 3 | 0 |
+| BUGFIX7 | 6 | 0 | 2 | 3 | 1 |
+| BUGFIX8 | 4 | 1 | 2 | 1 | 0 |
+| BUGFIX9 | 3 | 0 | 2 | 1 | 0 |
+| BUGFIX10 | 4 | 0 | 0 | 3 | 1 |
+| BUGFIX11 | 4 | 0 | 0 | 3 | 1 |
+| FEAT1 | 5 | 1 | 3 | 1 | 0 |
+| BUGFIX12 | 4 | 0 | 2 | 2 | 0 |
+| BUGFIX13 | 6 | 0 | 2 | 3 | 1 |
+| BUGFIX14 | 2 | 0 | 0 | 0 | 2 |
+| PRELAUNCH1 | 20 | 4 | 7 | 7 | 2 |
+| BUGFIX15 | 10 | 0 | 2 | 3 | 5 |
+| BUGFIX16 | 10 | 1 | 6 | 3 | 0 |
+| **TOTAL** | **664** | **162** | **275** | **182** | **45** |
 
 ---
 
