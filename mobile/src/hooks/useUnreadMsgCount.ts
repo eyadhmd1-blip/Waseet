@@ -45,8 +45,17 @@ export function useUnreadMsgCount() {
       const userId = userIdRef.current;
       if (!userId) return;
 
+      // supabase.channel() returns the *existing* channel if one with the same
+      // name is still registered (its async removeChannel hasn't resolved yet).
+      // Calling .on() on an already-subscribed channel throws. Explicitly await
+      // the removal of any stale channel before creating a fresh one.
+      const channelName = `unread_msg_${userId}`;
+      const stale = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
+
       channel = supabase
-        .channel(`unread_msg_${userId}`)
+        .channel(channelName)
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
           const msg = payload.new as any;
           if (msg.sender_id === userId) return;
