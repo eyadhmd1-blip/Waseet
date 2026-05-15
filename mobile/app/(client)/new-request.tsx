@@ -19,6 +19,20 @@ import type { AppColors } from '../../src/constants/colors';
 
 type Step = 1 | 2 | 3;
 
+const AI_SOCIAL_PROOFS: Record<string, string[]> = {
+  ar: [
+    'معظم الطلبات المشابهة تستلم ردوداً خلال ساعات ⚡',
+    'مقدمو الخدمة ينتظرون طلبك 💬',
+    'المنافسة بين المحترفين تضمن لك أفضل عرض 🏆',
+    'طلبك سيصل لعشرات المحترفين في مدينتك 📍',
+  ],
+  en: [
+    'Most similar requests receive replies within hours ⚡',
+    'Service providers are waiting for your request 💬',
+    'Competition ensures you get the best offer 🏆',
+    'Your request will reach professionals in your city 📍',
+  ],
+};
 
 export default function NewRequestScreen() {
   const router = useRouter();
@@ -31,6 +45,11 @@ export default function NewRequestScreen() {
   } = useLocalSearchParams<{ category?: string; notif_id?: string; repost_from?: string }>();
 
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const socialProof = useMemo(() => {
+    const msgs = AI_SOCIAL_PROOFS[lang] ?? AI_SOCIAL_PROOFS.ar;
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const { groups } = useCategories();
 
   const [step, setStep]               = useState<Step>(preselectedCategory ? 2 : 1);
@@ -563,7 +582,7 @@ export default function NewRequestScreen() {
                 <Text style={styles.rangeCurrency}>{t('common.jod')}</Text>
                 <View style={styles.priceDivider} />
                 <Text style={styles.priceHint}>{t('newRequest.aiHint')}</Text>
-                <Text style={styles.socialProof}>{t('newRequest.aiSocialProof')}</Text>
+                <Text style={styles.socialProof}>{socialProof}</Text>
               </>
             ) : (
               <Text style={styles.priceNA}>{t('newRequest.priceTBD')}</Text>
