@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { CATEGORY_GROUPS } from '../constants/categories';
 import type { CategoryGroup, ServiceCategory } from '../types';
 
-const CACHE_KEY    = 'waseet_categories_v2';
+const CACHE_KEY    = 'waseet_categories_v3';
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 type CacheEntry = { ts: number; groups: CategoryGroup[] };
