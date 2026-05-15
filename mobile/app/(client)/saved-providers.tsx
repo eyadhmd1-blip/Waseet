@@ -216,6 +216,13 @@ export default function SavedProvidersScreen() {
             </View>
             <Text style={styles.emptyTitle}>{t('saved.noSaved')}</Text>
             <Text style={styles.emptySub}>{t('saved.noSavedDesc')}</Text>
+            <TouchableOpacity
+              style={styles.emptyCta}
+              onPress={() => router.push('/(client)/new-request' as any)}
+              activeOpacity={0.82}
+            >
+              <Text style={styles.emptyCtaText}>{t('home.newRequest')}</Text>
+            </TouchableOpacity>
           </View>
         }
         renderItem={({ item, index }) => (
@@ -355,7 +362,9 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
       alignItems: 'center', justifyContent: 'center',
       marginBottom: 16,
     },
-    emptyTitle: { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginBottom: 10, textAlign: ta },
-    emptySub:   { fontSize: 14, color: colors.textMuted, lineHeight: 22, textAlign: 'center' },
+    emptyTitle:   { fontSize: 18, fontWeight: '800', color: colors.textPrimary, marginBottom: 10, textAlign: ta },
+    emptySub:     { fontSize: 14, color: colors.textMuted, lineHeight: 22, textAlign: 'center', marginBottom: 20 },
+    emptyCta:     { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
+    emptyCtaText: { fontSize: 15, fontWeight: '700', color: colors.bg },
   });
 }

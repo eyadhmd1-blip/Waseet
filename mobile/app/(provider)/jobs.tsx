@@ -366,13 +366,22 @@ export default function ProviderJobs() {
                   : (tab === 'active' ? t('profile.noActiveJobs') : t('profile.noCompletedJobs'))
                 }
               </Text>
-              {hasError && (
+              {hasError ? (
                 <TouchableOpacity onPress={() => load(false)} style={{ marginTop: 12, padding: 10 }}>
                   <Text style={{ color: colors.accent, fontWeight: '700' }}>
                     {lang === 'ar' ? '↻ إعادة المحاولة' : '↻ Retry'}
                   </Text>
                 </TouchableOpacity>
-              )}
+              ) : tab === 'active' ? (
+                <TouchableOpacity
+                  onPress={() => router.push('/(provider)' as any)}
+                  style={styles.emptyCta}
+                >
+                  <Text style={styles.emptyCtaText}>
+                    {lang === 'ar' ? 'تصفح الطلبات المتاحة' : 'Browse Available Requests'}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           }
         />
@@ -478,8 +487,10 @@ function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   reviewText:         { fontSize: 12, color: colors.textSecondary, marginStart: 8, flex: 1, textAlign: ta },
   confirmedAt:        { fontSize: 11, color: colors.textMuted, marginTop: 6, textAlign: ta },
 
-  empty:     { alignItems: 'center', paddingTop: 80 },
-  emptyText: { fontSize: 16, color: colors.textMuted },
+  empty:        { alignItems: 'center', paddingTop: 80, paddingHorizontal: 32 },
+  emptyText:    { fontSize: 16, color: colors.textMuted, textAlign: 'center', marginBottom: 20 },
+  emptyCta:     { backgroundColor: colors.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 28 },
+  emptyCtaText: { fontSize: 15, fontWeight: '700', color: colors.bg },
 
   modalOverlay: { flex: 1, backgroundColor: '#00000088', justifyContent: 'flex-end' },
   modalSheet:   { backgroundColor: colors.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 48 },
