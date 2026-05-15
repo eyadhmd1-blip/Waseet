@@ -34,6 +34,7 @@ workflows:
       groups:
         - android_signing
         - firebase_credentials
+        - sentry_credentials
 
       vars:
         EXPO_PUBLIC_ENV: "staging"
@@ -63,6 +64,15 @@ workflows:
 
       - name: Expo prebuild Android
         script: npx expo prebuild --clean --platform android --non-interactive
+
+      - name: Write sentry.properties (Android)
+        script: |
+          cat > android/sentry.properties <<EOF
+          defaults.org=$SENTRY_ORG
+          defaults.project=$SENTRY_PROJECT
+          auth.token=$SENTRY_AUTH_TOKEN
+          EOF
+          echo "✓ android/sentry.properties written"
 
       - name: Write google-services.json
         script: |
@@ -137,6 +147,7 @@ workflows:
       groups:
         - app_store_credentials
         - ios_credentials
+        - sentry_credentials
 
       vars:
         EXPO_PUBLIC_ENV: "staging"
@@ -166,6 +177,15 @@ workflows:
 
       - name: Expo prebuild iOS
         script: npx expo prebuild --clean --platform ios --non-interactive
+
+      - name: Write sentry.properties (iOS)
+        script: |
+          cat > ios/sentry.properties <<EOF
+          defaults.org=$SENTRY_ORG
+          defaults.project=$SENTRY_PROJECT
+          auth.token=$SENTRY_AUTH_TOKEN
+          EOF
+          echo "✓ ios/sentry.properties written"
 
       - name: Install pods
         script: |
