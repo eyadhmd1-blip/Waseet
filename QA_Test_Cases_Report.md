@@ -8841,9 +8841,163 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v5.5*  
-*Total Test Cases: 710 across 59 modules*  
-*Critical: 165 | High: 291 | Medium: 188 | Low: 48 (previously: 688/58)*  
+---
+
+## 58. BUGFIX18 — Pre-Launch Hardening (i18n, Splash, Notification Tint, Admin Name)
+
+**Date:** 2026-05-17  
+**Scope:** app.json, eas.json, login.tsx, verify.tsx, ar.json, en.json, admin/app/page.tsx, onboarding_assets.png  
+**Root Cause:** مراجعة ما قبل الإطلاق (2026-05-14) كشفت عن: 5 نصوص عربية مشفّرة في شاشات المصادقة، لون إشعارات خاطئ، غياب تهيئة Splash للوضع الفاتح، واسم أدمن مشفّر في لوحة التحكم.  
+**Fix:** إضافة 5 مفاتيح i18n جديدة + تطبيقها في login/verify، تصحيح notification tint إلى الذهبي، إضافة splash.dark للوضع الفاتح، وجعل اسم الأدمن ديناميكياً من الجلسة.
+
+---
+
+#### BUGFIX18-001
+**Name:** شاشة تسجيل الدخول — رسالة خطأ رقم الهاتف مترجمة (إنجليزية)  
+**Priority:** High | **Type:** i18n  
+**Preconditions:** اللغة = الإنجليزية، حقل الهاتف فارغ
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "Send Code" بدون إدخال رقم | تظهر رسالة "⚠️ Please enter your phone number" بالإنجليزية |
+| 2 | تبديل اللغة للعربية وكرر | تظهر رسالة "⚠️ يرجى إدخال رقم هاتفك" بالعربية |
+
+**Regression:** رسالة الخطأ لا تزال تظهر ولا تختفي بعد الكتابة  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-002
+**Name:** شاشة تسجيل الدخول — نص "بطء الشبكة" مترجم  
+**Priority:** Medium | **Type:** i18n  
+**Preconditions:** شبكة بطيئة جداً أو mocked delay > 8 ثوانٍ، اللغة = إنجليزية
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | اضغط "Send Code" على شبكة بطيئة | بعد 8 ثوانٍ تظهر "🌐 Slow network, message is on its way..." |
+| 2 | بدّل للعربية | تظهر "🌐 الشبكة بطيئة، الرسالة في الطريق..." |
+
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-003
+**Name:** شاشة تسجيل الدخول — نص "الشروط القانونية" مترجم  
+**Priority:** Medium | **Type:** i18n  
+**Preconditions:** اللغة = إنجليزية
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح شاشة تسجيل الدخول | النص السفلي يظهر "🔒 By continuing, you agree to our Terms & Conditions and Privacy Policy" |
+| 2 | بدّل للعربية | يظهر "🔒 بالمتابعة، أنت توافق على الشروط والأحكام وسياسة الخصوصية" |
+
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-004
+**Name:** شاشة التحقق من الرمز — رسالة خطأ الرمز الناقص مترجمة  
+**Priority:** High | **Type:** i18n  
+**Preconditions:** اللغة = إنجليزية، رمز OTP غير مكتمل
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أدخل 3 أرقام فقط واضغط Verify | "⚠️ Please enter the complete 6-digit code" بالإنجليزية |
+| 2 | بدّل للعربية وكرر | "⚠️ يرجى إدخال الرمز المكون من 6 أرقام كاملاً" |
+
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-005
+**Name:** شاشة التحقق — نص "بطء الشبكة" أثناء التحقق مترجم  
+**Priority:** Medium | **Type:** i18n  
+**Preconditions:** شبكة بطيئة، اللغة = إنجليزية
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | أدخل رمز صحيح واضغط Verify على شبكة بطيئة | بعد delay يظهر "🌐 Slow network, please wait..." |
+| 2 | بدّل للعربية | يظهر "🌐 الشبكة بطيئة، يرجى الانتظار..." |
+
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-006
+**Name:** لون Splash Screen — وضع الإضاءة الفاتح  
+**Priority:** High | **Type:** Visual / Platform  
+**Preconditions:** جهاز مضبوط على Light Mode، بناء EAS (staging أو production)
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح التطبيق من حالة مغلقة | شاشة البداية تظهر بخلفية كريمية فاتحة (`#FAF7F0`) لا داكنة |
+| 2 | اكتمال تحميل auth + i18n | انتقال سلس إلى شاشة الدخول الفاتحة — لا وميض أزرق داكن |
+
+**Regression:** Dark Mode لا يزال يظهر `#0F172A`  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-007
+**Name:** لون Splash Screen — وضع الإضاءة الداكن  
+**Priority:** Medium | **Type:** Visual / Platform  
+**Preconditions:** جهاز مضبوط على Dark Mode، بناء EAS
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | افتح التطبيق من حالة مغلقة | شاشة البداية بخلفية داكنة `#0F172A` كما كانت سابقاً |
+| 2 | اكتمال تحميل | انتقال سلس إلى شاشة الدخول الداكنة |
+
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-008
+**Name:** لون شارة الإشعارات — ذهبي لا أزرق  
+**Priority:** Medium | **Type:** Visual / Platform  
+**Preconditions:** Android، تطبيق مثبّت من EAS Build جديد بعد هذا التعديل
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | تسجيل الدخول وانتظار إشعار جديد | شارة الإشعار على أيقونة التطبيق بلون ذهبي `#C9A84C` لا أزرق |
+| 2 | افتح drawer الإشعارات | أيقونة الإشعار المرافقة ذهبية |
+
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-009
+**Name:** لوحة الأدمن — اسم الأدمن من الجلسة لا من كود مشفّر  
+**Priority:** High | **Type:** Admin / Security  
+**Preconditions:** أدمن بـ username مختلف عن "eyad" (مثلاً "admin")
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | سجّل دخول الأدمن بـ username = "admin" | الترحيب في Dashboard يعرض "admin" لا "إياد" |
+| 2 | سجّل دخول بـ username = "eyad" | يعرض "eyad" (لا يُحوَّل لـ "إياد") |
+
+**Regression:** الداشبورد يعمل ويُظهر الاسم في كل الحالات  
+**Automation Candidate:** No
+
+---
+
+#### BUGFIX18-010
+**Name:** أداء الإطلاق الأول — صورة onboarding أصغر  
+**Priority:** Medium | **Type:** Performance  
+**Preconditions:** جهاز Android قديم أو شبكة 3G
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | ثبّت التطبيق من صفر وافتح شاشة الـ Onboarding | شاشة الـ Onboarding تُحمَّل خلال أقل من 2 ثانية |
+| 2 | قارن مع بنيان قديم (onboarding_assets = 1.5MB) | بنيان الجديد (172KB) أسرع ملحوظاً على 3G |
+
+**Automation Candidate:** No
+
+---
+
+*End of Waseet QA Test Cases Report v6.0*  
+*Total Test Cases: 720 across 60 modules*  
+*Critical: 165 | High: 298 | Medium: 197 | Low: 48 (previously: 710/59)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/ICON_LABEL/DISPLAY_ORDER في (client)/index.tsx*  
 *⚠️ عند تعديل DemoRequestCard: تحقق من DEMO-001..008 كاملاً*
