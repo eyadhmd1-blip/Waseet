@@ -1,18 +1,11 @@
 -- ============================================================
--- Migration 094: Carry-over remaining credits on subscription renewal
+-- Migration 095: Fix trial carry-over bug in migration 094
 --
--- Previous behaviour: activate_provider_subscription always replaced
--- subscription_credits with the new plan's flat amount, discarding
--- any unused credits the provider had.
+-- Bug: v_current_tier = 'trial' was not excluded from carry-over,
+-- causing trial remaining credits to transfer to paid plans.
+-- PM decision: trial credits never carry forward (trial = free taste).
 --
--- New behaviour:
---   - trial  (to)   → always fresh (10), no carry-over
---   - premium (to)  → 0 (unlimited tracked by tier, not credits)
---   - premium (from)→ carry = 0 (can't quantify "remaining" unlimited)
---   - all other     → new = LEAST(carry + plan_credits, plan_credits * 2)
---
--- This means a provider renewing Basic with 3 credits left gets 23,
--- capped at 40 (2 × 20) to prevent runaway accumulation.
+-- Fix: add WHEN v_current_tier = 'trial' THEN 0 to carry logic.
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION activate_provider_subscription(
@@ -34,7 +27,7 @@ DECLARE
   v_current_cred  INT;
   v_caller_id     UUID;
 BEGIN
-  -- Ownership / admin check (unchanged from migration 091)
+  -- Ownership / admin check
   v_caller_id := auth.uid();
   IF v_caller_id IS NOT NULL
      AND v_caller_id <> p_provider_id
@@ -50,7 +43,7 @@ BEGIN
     RAISE EXCEPTION 'invalid period_months: must be between 1 and 12';
   END IF;
 
-  -- Trial re-use guard (unchanged)
+  -- Trial re-use guard
   IF p_tier = 'trial' THEN
     SELECT trial_used INTO v_trial_used
     FROM   providers
