@@ -105,6 +105,7 @@ export default function RecurringRequestScreen() {
   const [notes, setNotes]             = useState('');
   const [title, setTitle]             = useState('');
   const [description, setDescription] = useState('');
+  const [descError, setDescError]     = useState(false);
   const [submitting, setSubmitting]   = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -129,9 +130,10 @@ export default function RecurringRequestScreen() {
   const handleStep3Continue = () => {
     if (!title.trim()) { Alert.alert(t('common.attention'), t('recurringRequest.errTitleRequired')); return; }
     if (!description.trim() || description.length < 20) {
-      Alert.alert(t('common.attention'), t('recurringRequest.errDescRequired'));
+      setDescError(true);
       return;
     }
+    setDescError(false);
     goNext(4);
   };
 
@@ -426,9 +428,9 @@ export default function RecurringRequestScreen() {
 
               <Text style={styles.fieldLabel}>{t('recurringRequest.descLabel')}</Text>
               <TextInput
-                style={[styles.input, styles.inputMulti]}
+                style={[styles.input, styles.inputMulti, { marginBottom: 4 }, descError && { borderColor: '#EF4444' }]}
                 value={description}
-                onChangeText={setDescription}
+                onChangeText={v => { setDescription(v); if (descError && v.length >= 20) setDescError(false); }}
                 placeholder={t('recurringRequest.descPlaceholder')}
                 placeholderTextColor={colors.textMuted}
                 textAlign={ta}
@@ -436,6 +438,14 @@ export default function RecurringRequestScreen() {
                 numberOfLines={4}
                 maxLength={600}
               />
+              <Text style={[styles.charCount, description.length < 20 && styles.charCountWarn]}>
+                {description.length < 20
+                  ? t('recurringRequest.charCountMin' as any, { count: description.length, min: 20 })
+                  : `${description.length}/600`}
+              </Text>
+              {descError && (
+                <Text style={styles.errorHint}>{t('recurringRequest.errDescRequired')}</Text>
+              )}
 
               <Text style={styles.fieldLabel}>
                 {t('recurringRequest.notesLabel')}{' '}
@@ -653,6 +663,9 @@ function createStyles(colors: AppColors, isRTL: boolean) {
 
   input:          { backgroundColor: colors.surface, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, color: colors.textPrimary, fontSize: 15, borderWidth: 1, borderColor: colors.border, marginHorizontal: 16, marginBottom: 16, writingDirection: isRTL ? 'rtl' : 'ltr' },
   inputMulti:     { height: 100, textAlignVertical: 'top', paddingTop: 12 },
+  charCount:      { fontSize: 11, color: colors.textMuted, textAlign: isRTL ? 'left' : 'right', marginHorizontal: 16, marginBottom: 4 },
+  charCountWarn:  { color: '#F59E0B' },
+  errorHint:      { fontSize: 12, color: '#EF4444', marginHorizontal: 16, marginBottom: 12, textAlign: ta },
 
   heroCard:       { marginHorizontal: 16, marginBottom: 16, backgroundColor: CONTRACT_DIM, borderRadius: 20, padding: 20, borderWidth: 2, borderColor: CONTRACT_COLOR, alignItems: 'center' },
   heroIcon:       { fontSize: 40, marginBottom: 8 },
