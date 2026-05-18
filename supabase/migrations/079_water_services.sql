@@ -1,5 +1,5 @@
 -- ============================================================
--- Migration 078: Water Services Category Group
+-- Migration 079b: Water Services Category Group
 --
 -- Adds new group "water_services" (خدمات المياه) with 3 categories:
 --   1. water_tank    — تنك مياه صالحة للشرب

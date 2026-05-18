@@ -102,7 +102,12 @@
     "invalidPhone": "Invalid phone number.\nEnter a valid Jordanian number\nExample: 0791234567",
     "otpLabel": "Verification Code",
     "resendAfter": "⏱ Resend in",
-    "otpSecurity": "🔒 Code valid for 10 minutes only"
+    "otpSecurity": "🔒 Code valid for 10 minutes only",
+    "phoneRequired": "⚠️ Please enter your phone number",
+    "slowNetworkSend": "🌐 Slow network, message is on its way...",
+    "legalText": "🔒 By continuing, you agree to our Terms & Conditions and Privacy Policy",
+    "codeRequired": "⚠️ Please enter the complete 6-digit code",
+    "slowNetworkVerify": "🌐 Slow network, please wait..."
   },
   "home": {
     "tabHome": "Home",

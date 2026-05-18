@@ -1,14 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const sb = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
-
-const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+import { reviewSuggestion } from './actions';
 
 export function SuggestionActions({
   id,
@@ -25,54 +18,7 @@ export function SuggestionActions({
 
   const act = async (status: 'approved' | 'rejected') => {
     setLoading(status);
-
-    await sb.from('service_suggestions').update({
-      status,
-      admin_note:  note.trim() || null,
-      reviewed_at: new Date().toISOString(),
-      reviewed_by: 'admin',
-    }).eq('id', id);
-
-    // On approval: send push notification and insert inbox row
-    if (status === 'approved') {
-      const notifTitle = '✅ تمت إضافة خدمتك!';
-      const notifBody  = `تمت إضافة "${serviceName}" إلى قائمة الخدمات. يمكنك الآن طلبها أو تقديم عروض عليها.`;
-
-      const { data: tokens } = await sb
-        .from('push_tokens')
-        .select('token')
-        .eq('user_id', userId);
-
-      await Promise.all([
-        tokens && tokens.length > 0
-          ? fetch(EXPO_PUSH_URL, {
-              method:  'POST',
-              headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-              body: JSON.stringify(tokens.map((t: any) => ({
-                to:       t.token,
-                title:    notifTitle,
-                body:     notifBody,
-                sound:    'default',
-                priority: 'normal',
-                data:     { screen: 'new_request' },
-              }))),
-            }).catch(() => {})
-          : Promise.resolve(),
-        (async () => {
-          try {
-            await sb.from('notifications').insert({
-              user_id:  userId,
-              title:    notifTitle,
-              body:     notifBody,
-              type:     'suggestion_approved',
-              screen:   'new_request',
-              metadata: { service_name: serviceName },
-            });
-          } catch { /* non-blocking */ }
-        })(),
-      ]);
-    }
-
+    await reviewSuggestion(id, userId, serviceName, status, note);
     setLoading(null);
     setDone(true);
   };

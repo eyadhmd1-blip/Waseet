@@ -17,7 +17,10 @@
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0F172A"
+      "backgroundColor": "#FAF7F0",
+      "dark": {
+        "backgroundColor": "#0F172A"
+      }
     },
     "android": {
       "package": "com.waseet.app",
@@ -75,7 +78,7 @@
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
-          "color": "#3B82F6",
+          "color": "#C9A84C",
           "defaultChannel": "default",
           "sounds": [
             "./assets/sounds/notification.wav"

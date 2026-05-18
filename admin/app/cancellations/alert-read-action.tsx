@@ -1,24 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-);
+import { markAlertRead } from './actions';
 
 export function AlertReadAction({ alertId }: { alertId: string }) {
   const [loading, setLoading] = useState(false);
 
   const markRead = async () => {
     setLoading(true);
-    await supabase
-      .from('admin_alerts')
-      .update({ is_read: true })
-      .eq('id', alertId);
+    await markAlertRead(alertId);
     setLoading(false);
-    window.location.reload();
   };
 
   return (

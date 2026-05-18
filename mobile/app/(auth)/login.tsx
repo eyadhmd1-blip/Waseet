@@ -153,7 +153,7 @@ export default function LoginScreen() {
 
           {/* Inline error */}
           {phoneError && (
-            <Text style={styles.errorHint}>⚠️ يرجى إدخال رقم هاتفك</Text>
+            <Text style={styles.errorHint}>{t('auth.phoneRequired')}</Text>
           )}
 
           {/* Security badge */}
@@ -174,12 +174,12 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           {slowNetwork && loading && (
-            <Text style={styles.slowHint}>🌐 الشبكة بطيئة، الرسالة في الطريق...</Text>
+            <Text style={styles.slowHint}>{t('auth.slowNetworkSend')}</Text>
           )}
 
           {/* Legal text */}
           <Text style={styles.legal}>
-            🔒 بالمتابعة، أنت توافق على الشروط والأحكام وسياسة الخصوصية
+            {t('auth.legalText')}
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

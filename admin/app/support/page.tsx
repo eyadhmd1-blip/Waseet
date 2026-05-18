@@ -36,7 +36,7 @@ async function getTickets(params: {
     .from('support_tickets')
     .select('id, category, priority, status, subject, rating, opened_at, resolved_at, user_id', { count: 'exact' })
     .order('priority', { ascending: false })
-    .order('opened_at', { ascending: true })
+    .order('opened_at', { ascending: false })
     .range(params.page * PAGE_SIZE, (params.page + 1) * PAGE_SIZE - 1);
 
   if (params.status)   q = q.eq('status',   params.status);

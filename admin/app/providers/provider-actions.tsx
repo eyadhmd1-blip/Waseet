@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { ConfirmModal } from '../ui/confirm-modal';
 import {
   suspendProvider, unsuspendProvider, verifyProvider, unverifyProvider,
@@ -48,6 +48,8 @@ export function ProviderActions({
   isSubscribed, currentSubTier, trialUsed,
 }: ProviderActionsProps) {
   const [open,        setOpen]        = useState(false);
+  const [dropPos,     setDropPos]     = useState<{ top: number; left: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const [modal,       setModal]       = useState<'suspend' | 'unsuspend' | 'verify' | 'unverify' | 'tier' | 'credits' | 'subscription' | null>(null);
   const [reason,      setReason]      = useState('');
   const [tier,        setTier]        = useState(currentTier);
@@ -108,19 +110,31 @@ export function ProviderActions({
     }
   }
 
+  function openDrop() {
+    if (btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 4, left: r.left });
+    }
+    setOpen(true);
+  }
+
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(o => !o)}
+        ref={btnRef}
+        onClick={() => open ? setOpen(false) : openDrop()}
         className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-colors font-semibold"
       >
         إجراء ▾
       </button>
 
-      {open && (
+      {open && dropPos && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 mt-1 w-44 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-40 overflow-hidden text-right">
+          <div
+            style={{ top: dropPos.top, left: dropPos.left }}
+            className="fixed w-44 bg-slate-800 border border-slate-700 rounded-xl shadow-xl z-40 overflow-hidden text-right"
+          >
             {isActive ? (
               <button className="w-full px-4 py-2.5 text-sm text-red-400 hover:bg-slate-700 transition-colors text-right"
                 onClick={() => { setOpen(false); setModal('suspend'); }}>

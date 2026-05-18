@@ -264,7 +264,7 @@ export default function VerifyScreen() {
 
           {/* Inline error */}
           {otpError && otp.join('').length < 6 && (
-            <Text style={styles.errorHint}>⚠️ يرجى إدخال الرمز المكون من 6 أرقام كاملاً</Text>
+            <Text style={styles.errorHint}>{t('auth.codeRequired')}</Text>
           )}
 
           {/* Countdown / resend */}
@@ -304,7 +304,7 @@ export default function VerifyScreen() {
 
           {slowNetwork && (loading || resending) && (
             <Text style={{ fontSize: 12, color: '#F59E0B', textAlign: 'center', marginBottom: 8 }}>
-              🌐 الشبكة بطيئة، يرجى الانتظار...
+              {t('auth.slowNetworkVerify')}
             </Text>
           )}
 

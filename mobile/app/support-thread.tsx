@@ -49,10 +49,10 @@ export default function SupportThreadScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, ta, lang, isRTL } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   const [ticket,            setTicket]            = useState<Ticket | null>(null);
   const [messages,          setMessages]          = useState<SupportMessage[]>([]);
@@ -444,7 +444,7 @@ export default function SupportThreadScreen() {
   );
 }
 
-function createStyles(colors: AppColors, isRTL: boolean) {
+function createStyles(colors: AppColors, isRTL: boolean, isDark: boolean) {
   const ta = isRTL ? 'right' : 'left' as const;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.bg },
@@ -493,8 +493,8 @@ function createStyles(colors: AppColors, isRTL: boolean) {
     sendBtnDisabled: { backgroundColor: colors.border },
     sendBtnText:     { fontSize: 14, fontWeight: '700', color: colors.bg },
 
-    resolvedBar:     { padding: 14, borderTopWidth: 1, borderTopColor: colors.border, alignItems: 'center', backgroundColor: 'rgba(20,83,45,0.2)' },
-    resolvedBarText: { fontSize: 13, color: '#86EFAC', fontWeight: '600' },
+    resolvedBar:     { padding: 14, borderTopWidth: 1, borderTopColor: colors.border, alignItems: 'center', backgroundColor: isDark ? 'rgba(20,83,45,0.2)' : 'rgba(20,83,45,0.08)' },
+    resolvedBarText: { fontSize: 13, color: isDark ? '#86EFAC' : '#166534', fontWeight: '600' },
 
     paymentBanner:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderBottomWidth: 1, borderBottomColor: colors.border, backgroundColor: 'rgba(201,168,76,0.07)', gap: 10 },
     paymentBannerLeft:   { flex: 1, gap: 2 },

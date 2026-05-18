@@ -279,7 +279,7 @@ export default async function DashboardPage() {
     getDashboardData(),
   ]);
 
-  const adminName = adminNameRaw === 'eyad' || adminNameRaw === 'Eyad' ? 'إياد' : adminNameRaw;
+  const adminName = adminNameRaw;
 
   const completionRate = d.totalRequests > 0
     ? Math.round((d.completedJobs30 / Math.max(d.totalRequests, 1)) * 100)
