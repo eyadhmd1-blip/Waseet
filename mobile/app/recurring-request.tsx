@@ -359,7 +359,7 @@ export default function RecurringRequestScreen() {
                     style={[styles.cityChip, city === c && styles.cityChipActive]}
                     onPress={() => setCity(c)}
                   >
-                    <Text style={[styles.cityChipText, city === c && styles.cityChipTextActive]}>{c}</Text>
+                    <Text style={[styles.cityChipText, city === c && styles.cityChipTextActive]}>{t(`cities.${c}` as any, c)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
