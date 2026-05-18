@@ -145,7 +145,7 @@ function ContractMiniCard({
 }) {
   const { colors } = useTheme();
   const cStyles = useMemo(() => createCStyles(colors), [colors]);
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const totalVisits = FREQ_VISITS_PER_MONTH[contract.frequency] * contract.duration_months;
   const freqKey = `providerFeed.freq${contract.frequency.charAt(0).toUpperCase() + contract.frequency.slice(1)}` as any;
 
@@ -156,7 +156,7 @@ function ContractMiniCard({
       </View>
       <Text style={cStyles.title} numberOfLines={2}>{contract.title}</Text>
       <Text style={cStyles.freq}>{t(freqKey)} · {t('providerFeed.contractVisitCount', { count: totalVisits })}</Text>
-      <Text style={cStyles.city}>📍 {contract.city}</Text>
+      <Text style={cStyles.city}>📍 {t(`cities.${contract.city}` as any, contract.city)}</Text>
       <View style={cStyles.footer}>
         <Text style={cStyles.bids}>{t('providerFeed.bidCount', { count: contract.bids_count ?? 0 })}</Text>
         <View style={cStyles.bidBtn}>
@@ -551,7 +551,7 @@ function RequestCard({
         {/* Footer */}
         <View style={styles.cardFooter}>
           <View style={styles.cardLeft}>
-            <Text style={styles.cardCity} numberOfLines={1}>📍 {item.city}</Text>
+            <Text style={styles.cardCity} numberOfLines={1}>📍 {t(`cities.${item.city}` as any, item.city)}</Text>
             {bidsCount > 0 && !isUrgent && (
               <Text style={styles.bidsCount} numberOfLines={1}>{t('providerFeed.bidCount', { count: bidsCount })}</Text>
             )}
@@ -657,7 +657,7 @@ function DemoRequestCard({
       <Text style={demoStyles.desc} numberOfLines={2}>{req.description}</Text>
 
       <View style={demoStyles.metaRow}>
-        <Text style={demoStyles.metaText}>📍 {req.city}{req.district ? ` — ${req.district}` : ''}</Text>
+        <Text style={demoStyles.metaText}>📍 {t(`cities.${req.city}` as any, req.city)}{req.district ? ` — ${req.district}` : ''}</Text>
         <Text style={demoStyles.metaText}>
           {reqIcon} {(lang === 'ar' ? reqCat?.name_ar : reqCat?.name_en) ?? reqCat?.name_ar ?? req.category_slug}
         </Text>
@@ -1897,12 +1897,12 @@ export default function ProviderFeed() {
             <View style={[urgentStyles.acceptRow, { flexDirection: 'row' }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentServiceLabel')}</Text>
               <Text style={urgentStyles.acceptValue}>
-                {urgentModal.target?.category?.name_ar ?? urgentModal.target?.category_slug}
+                {(lang === 'ar' ? urgentModal.target?.category?.name_ar : (urgentModal.target?.category?.name_en ?? urgentModal.target?.category?.name_ar)) ?? urgentModal.target?.category_slug}
               </Text>
             </View>
             <View style={[urgentStyles.acceptRow, { flexDirection: 'row' }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentCityLabel')}</Text>
-              <Text style={urgentStyles.acceptValue}>{urgentModal.target?.city}</Text>
+              <Text style={urgentStyles.acceptValue}>{urgentModal.target?.city ? t(`cities.${urgentModal.target.city}` as any, urgentModal.target.city) : ''}</Text>
             </View>
             <View style={[urgentStyles.acceptRow, { flexDirection: 'row' }]}>
               <Text style={urgentStyles.acceptLabel}>{t('providerFeed.urgentDescLabel')}</Text>
@@ -2121,7 +2121,7 @@ export default function ProviderFeed() {
               {/* Category + urgent badge */}
               <View style={styles.detailCatRow}>
                 <Text style={styles.detailCat}>
-                  {ICON_MAP[detailSheet?.category?.icon ?? ''] ?? '🔧'} {detailSheet?.category?.name_ar ?? detailSheet?.category_slug}
+                  {ICON_MAP[detailSheet?.category?.icon ?? ''] ?? '🔧'} {(lang === 'ar' ? detailSheet?.category?.name_ar : (detailSheet?.category?.name_en ?? detailSheet?.category?.name_ar)) ?? detailSheet?.category_slug}
                 </Text>
                 {detailSheet?.is_urgent && (
                   <View style={urgentStyles.urgentBadge}>
@@ -2161,7 +2161,7 @@ export default function ProviderFeed() {
                 <View style={styles.detailInfoRow}>
                   <Text style={styles.detailInfoIcon}>📍</Text>
                   <Text style={styles.detailInfoValue}>
-                    {detailSheet?.city}{detailSheet?.district ? ` — ${detailSheet.district}` : ''}
+                    {detailSheet?.city ? t(`cities.${detailSheet.city}` as any, detailSheet.city) : ''}{detailSheet?.district ? ` — ${detailSheet.district}` : ''}
                   </Text>
                 </View>
 

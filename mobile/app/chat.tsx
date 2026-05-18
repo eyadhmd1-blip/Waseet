@@ -1128,7 +1128,7 @@ function ProfileCardBubble({
           {prov ? (
             <>
               <Text style={pcStyles.name}>{filterPhoneNumbers(prov.user.full_name)}</Text>
-              <Text style={pcStyles.city}>📍 {filterPhoneNumbers(prov.user.city)}</Text>
+              <Text style={pcStyles.city}>📍 {filterPhoneNumbers(String(t(`cities.${prov.user.city}` as any, prov.user.city)))}</Text>
               <View style={pcStyles.badgeRow}>
                 <View style={[pcStyles.tier, { backgroundColor: tierColor + '22' }]}>
                   <Text style={[pcStyles.tierText, { color: tierColor }]}>
