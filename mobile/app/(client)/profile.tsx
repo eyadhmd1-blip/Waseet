@@ -277,7 +277,7 @@ export default function ClientProfile() {
             </View>
             {user.phone_verified && (
               <View style={[styles.pill, { backgroundColor: colors.success + '22' }]}>
-                <Text style={[styles.pillText, { color: colors.successSoft }]}>✓ موثّق</Text>
+                <Text style={[styles.pillText, { color: colors.successSoft }]}>✓ {t('common.verified')}</Text>
               </View>
             )}
           </View>
