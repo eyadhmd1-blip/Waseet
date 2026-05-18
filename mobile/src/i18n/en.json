@@ -581,6 +581,7 @@
     "completed": "Completed",
     "language": "Language",
     "theme": "Theme",
+    "themeSection": "Theme & Preferences",
     "arabic": "Arabic",
     "english": "English",
     "langChangeTitle": "Language Changed",

@@ -359,7 +359,7 @@ export default function ClientProfile() {
 
         {/* ══ SETTINGS CARD ════════════════════════════════════ */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>{t('profile.theme')} والتفضيلات</Text>
+          <Text style={styles.sectionTitle}>{t('profile.themeSection')}</Text>
           <View style={styles.card}>
 
             {/* Language row */}
