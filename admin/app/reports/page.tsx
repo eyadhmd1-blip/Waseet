@@ -23,6 +23,8 @@ async function getCounts() {
     /* 11 E-04 */ supabaseAdmin.from('jobs').select('id', { count: 'exact', head: true }).lte('client_rating', 2).not('client_rating', 'is', null),
     /* 12 E-01 */ supabaseAdmin.from('requests').select('id', { count: 'exact', head: true }).eq('status', 'cancelled').gte('created_at', ago30d),
     /* 13 F-01 */ supabaseAdmin.from('admin_audit_log').select('id', { count: 'exact', head: true }),
+    /* 14 B-08 */ supabaseAdmin.from('bids').select('id', { count: 'exact', head: true }).gte('created_at', ago30d),
+    /* 15 E-05 */ supabaseAdmin.from('bids').select('id', { count: 'exact', head: true }).lt('amount', 2).gte('created_at', ago30d),
   ]);
 
   const c = (i: number) =>
@@ -43,6 +45,8 @@ async function getCounts() {
     lowRatings:   c(11),
     cancelled30d: c(12),
     auditCount:   c(13),
+    bids30d:      c(14),
+    lowBids:      c(15),
   };
 }
 
@@ -121,6 +125,7 @@ export default async function ReportsPage() {
         { id: 'b05', code: 'B-05', title: 'وقت الاستجابة للعرض',         desc: 'من نشر الطلب إلى أول عرض — بالدقائق لكل طلب (30 يوم)' },
         { id: 'b06', code: 'B-06', title: 'وقت إكمال الوظائف',           desc: 'من قبول العرض إلى تأكيد الإكمال — بالساعات لكل وظيفة' },
         { id: 'b07', code: 'B-07', title: 'فجوة العرض والطلب',           desc: 'مدن وفئات فيها طلب عالٍ لكن مقدمو خدمة قليلون' },
+        { id: 'b08', code: 'B-08', title: 'كل عروض الأسعار',             desc: 'جميع العروض المُقدَّمة آخر 30 يوم — مزود الخدمة، الطلب، الفئة، المبلغ، الحالة', count: ct.bids30d, countLabel: 'عرض' },
       ],
     },
     {
@@ -150,6 +155,7 @@ export default async function ReportsPage() {
         { id: 'e02', code: 'E-02', title: 'البلاغات والشكاوى',       desc: 'تقارير الإساءة المعلّقة بانتظار المراجعة',               count: ct.pendingRpts,  countLabel: 'بلاغ', urgent: ct.pendingRpts > 0 },
         { id: 'e03', code: 'E-03', title: 'الإلغاءات المتكررة',      desc: 'مستخدمون ألغوا 3 مرات أو أكثر في آخر 90 يوماً' },
         { id: 'e04', code: 'E-04', title: 'التقييمات المنخفضة',      desc: 'وظائف حصلت على تقييم نجمة أو نجمتين',                   count: ct.lowRatings,   countLabel: 'وظيفة' },
+        { id: 'e05', code: 'E-05', title: 'عروض أقل من 2 دينار',     desc: 'عروض مُقدَّمة بمبلغ أقل من دينارين آخر 30 يوم — للكشف عن إدخالات غير منطقية', count: ct.lowBids, countLabel: 'عرض', urgent: ct.lowBids > 0 },
       ],
     },
     {
@@ -170,7 +176,7 @@ export default async function ReportsPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-100">التقارير</h1>
           <p className="text-slate-500 text-sm mt-0.5">
-            25 تقرير قابل للتصدير كـ CSV — يفتح مباشرة في Excel مع دعم العربية
+            27 تقرير قابل للتصدير كـ CSV — يفتح مباشرة في Excel مع دعم العربية
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-600 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2">
