@@ -438,7 +438,7 @@ export default function RequestDetail() {
           <Text style={styles.requestTitle}>{request.title}</Text>
 
           <View style={styles.metaRow}>
-            <Text style={styles.metaText}>📍 {request.city}</Text>
+            <Text style={styles.metaText}>📍 {t(`cities.${request.city}` as any, { defaultValue: request.city })}</Text>
             <Text style={styles.metaText}>
               {new Date(request.created_at).toLocaleDateString(locale, {
                 day: 'numeric', month: 'long', year: 'numeric',
@@ -803,7 +803,7 @@ function BidCard({
               )}
               <Text style={bidStyles.jobs}>{t('chat.jobsCount', { count: bid.provider.lifetime_jobs })}</Text>
               {bid.provider.user?.city ? (
-                <Text style={bidStyles.city}>📍 {bid.provider.user.city}</Text>
+                <Text style={bidStyles.city}>📍 {t(`cities.${bid.provider.user.city}` as any, { defaultValue: bid.provider.user.city })}</Text>
               ) : null}
             </View>
           </View>

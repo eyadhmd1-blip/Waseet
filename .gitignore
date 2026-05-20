@@ -39,6 +39,12 @@ google-services.json
 GoogleService-Info.plist
 google-service-account.json
 
+# ── Local scripts & documents ────────────────────────────────────────────────
+*.py
+*.xlsx
+*.xls
+admin/app/api/debug/
+
 # ── Build outputs ─────────────────────────────────────────────────────────────
 dist/
 build/

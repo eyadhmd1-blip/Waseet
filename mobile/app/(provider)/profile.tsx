@@ -443,7 +443,7 @@ export default function ProviderProfile() {
               {/* Header row: plan name + price */}
               <View style={styles.subHeaderRow}>
                 <View style={[styles.subTierBadge, { backgroundColor: tierColor + '22', borderColor: tierColor + '55' }]}>
-                  <Text style={[styles.subTierText, { color: tierColor }]}>{plan.name_ar}</Text>
+                  <Text style={[styles.subTierText, { color: tierColor }]}>{isRTL ? plan.name_ar : (plan.name_en ?? plan.name_ar)}</Text>
                 </View>
                 {plan.is_trial ? (
                   <View style={styles.trialBadge}>
@@ -1030,7 +1030,7 @@ export default function ProviderProfile() {
             <ScrollView style={{ paddingHorizontal: 20, paddingTop: 8 }} showsVerticalScrollIndicator={false}>
               {CATEGORY_GROUPS.map(group => (
                 <View key={group.slug} style={{ marginBottom: 16 }}>
-                  <Text style={[styles.catGroupLabel, { color: colors.textMuted }]}>{group.name_ar}</Text>
+                  <Text style={[styles.catGroupLabel, { color: colors.textMuted }]}>{isRTL ? group.name_ar : (group.name_en ?? group.name_ar)}</Text>
                   <View style={styles.catsWrap}>
                     {group.categories.map((cat, i) => {
                       const selected = selectedCats.includes(cat.slug);

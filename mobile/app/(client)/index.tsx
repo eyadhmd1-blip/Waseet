@@ -316,7 +316,7 @@ export default function ClientHome() {
     return group.categories.map(c => ({
       slug:  c.slug,
       icon:  ICON_MAP[c.icon] ?? '🔧',
-      name:  c.name_ar,
+      name:  isRTL ? c.name_ar : (c.name_en ?? c.name_ar),
       color: GROUP_COLORS[group.slug] ?? '#3B82F6',
     }));
   }, [activeGroup]);
@@ -333,7 +333,7 @@ export default function ClientHome() {
         variant="root"
         userName={user?.full_name}
         userRole="client"
-        userCity={user?.city}
+        userCity={user?.city ? String(t(`cities.${user.city}` as any, { defaultValue: user.city })) : undefined}
         notifCount={notifCount}
         onNotifPress={() => router.push('/notification-inbox' as any)}
         onAvatarPress={() => router.push('/(client)/profile' as any)}
