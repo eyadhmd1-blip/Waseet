@@ -50,6 +50,10 @@ function reportTypeLbl(t: string | null | undefined): string {
   return ({ no_show: 'غياب', fake_bid: 'عرض وهمي', abusive: 'إساءة', spam: 'سبام', other: 'أخرى' } as Record<string, string>)[t ?? ''] ?? (t ?? '');
 }
 
+function bidStatusLbl(s: string | null | undefined): string {
+  return ({ pending: 'معلق', accepted: 'مقبول', rejected: 'مرفوض', withdrawn: 'منسحب' } as Record<string, string>)[s ?? ''] ?? (s ?? '');
+}
+
 // ── Route ──────────────────────────────────────────────────────────────────────
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -330,6 +334,33 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           ];
         });
         filename = `b06-completion-time-${today}.csv`;
+        break;
+      }
+
+      case 'b08': { // كل عروض الأسعار (آخر 30 يوم)
+        const { data } = await supabaseAdmin
+          .from('bids')
+          .select(`
+            amount, status, created_at,
+            request:requests!bids_request_id_fkey(title, city, category_slug),
+            provider:providers!bids_provider_id_fkey(
+              user:users!providers_id_fkey(full_name, phone)
+            )
+          `)
+          .gte('created_at', ago30d)
+          .order('created_at', { ascending: false });
+        H = ['مزود الخدمة', 'الهاتف', 'عنوان الطلب', 'الفئة', 'المدينة', 'المبلغ (د.أ)', 'حالة العرض', 'التاريخ'];
+        R = (data ?? []).map((b: any) => [
+          (b.provider as any)?.user?.full_name,
+          (b.provider as any)?.user?.phone,
+          (b.request as any)?.title,
+          (b.request as any)?.category_slug,
+          (b.request as any)?.city,
+          b.amount,
+          bidStatusLbl(b.status),
+          fmtDT(b.created_at),
+        ]);
+        filename = `b08-all-bids-${today}.csv`;
         break;
       }
 
@@ -650,6 +681,34 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           .map((u: any) => [u.full_name, u.phone, u.city, byClient.get(u.id) ?? 0])
           .sort((a: any, b: any) => Number(b[3]) - Number(a[3]));
         filename = `e03-repeat-cancellers-${today}.csv`;
+        break;
+      }
+
+      case 'e05': { // عروض أقل من 2 دينار (آخر 30 يوم)
+        const { data } = await supabaseAdmin
+          .from('bids')
+          .select(`
+            amount, status, created_at,
+            request:requests!bids_request_id_fkey(title, city, category_slug),
+            provider:providers!bids_provider_id_fkey(
+              user:users!providers_id_fkey(full_name, phone)
+            )
+          `)
+          .lt('amount', 2)
+          .gte('created_at', ago30d)
+          .order('amount', { ascending: true });
+        H = ['مزود الخدمة', 'الهاتف', 'عنوان الطلب', 'الفئة', 'المدينة', 'المبلغ (د.أ)', 'حالة العرض', 'التاريخ'];
+        R = (data ?? []).map((b: any) => [
+          (b.provider as any)?.user?.full_name,
+          (b.provider as any)?.user?.phone,
+          (b.request as any)?.title,
+          (b.request as any)?.category_slug,
+          (b.request as any)?.city,
+          b.amount,
+          bidStatusLbl(b.status),
+          fmtDT(b.created_at),
+        ]);
+        filename = `e05-low-bids-${today}.csv`;
         break;
       }
 
