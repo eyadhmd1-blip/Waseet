@@ -2,9 +2,7 @@
 
 import { cookies, headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { buildToken, verifyToken } from '../lib/token';
-
-export { verifyToken };
+import { buildToken } from '../lib/token';
 
 const SESSION_MAX_AGE = 8 * 60 * 60;
 const COOKIE_NAME     = 'waseet_admin_session';
