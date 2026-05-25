@@ -6,7 +6,7 @@
 // operations even if they know the server action endpoint URL.
 
 import { cookies } from 'next/headers';
-import { verifyToken } from '../login/actions';
+import { verifyToken } from './token';
 
 const COOKIE_NAME = 'waseet_admin_session';
 

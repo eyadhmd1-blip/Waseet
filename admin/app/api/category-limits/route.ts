@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '../../lib/supabase';
-import { verifyToken } from '../../login/actions';
+import { verifyToken } from '../../lib/token';
 
 const COOKIE_NAME = 'waseet_admin_session';
 
