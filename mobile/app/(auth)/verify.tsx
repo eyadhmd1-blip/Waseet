@@ -17,7 +17,9 @@ import { useAppAlert } from '../../src/components/AppAlert';
 const RESEND_COOLDOWN = 60;
 
 const normalizeDigits = (s: string) =>
-  s.replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660));
+  s
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0));
 
 export default function VerifyScreen() {
   const { headerPad, contentPad } = useInsets();

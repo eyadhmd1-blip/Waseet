@@ -14,7 +14,9 @@ import { useAppAlert } from '../src/components/AppAlert';
 const RESEND_COOLDOWN = 60; // seconds
 
 const normalizeDigits = (s: string) =>
-  s.replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660));
+  s
+    .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06F0));
 
 export default function VerifyPhoneScreen() {
   const router   = useRouter();
@@ -175,7 +177,7 @@ export default function VerifyPhoneScreen() {
                 placeholderTextColor="#475569"
                 keyboardType="phone-pad"
                 value={phone}
-                onChangeText={setPhone}
+                onChangeText={v => setPhone(normalizeDigits(v))}
                 textAlign={ta}
                 maxLength={10}
               />
