@@ -4,6 +4,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   invalid: 'اسم المستخدم أو كلمة المرور غير صحيحة',
   config:  'بيانات المدير غير مُهيأة في الخادم',
   session: 'انتهت صلاحية الجلسة، يرجى إعادة تسجيل الدخول',
+  locked:  'تم تعليق الدخول مؤقتاً لمدة 15 دقيقة بسبب محاولات متكررة',
 };
 
 export default async function LoginPage({
