@@ -80,7 +80,7 @@ export async function loginAction(formData: FormData): Promise<void> {
   jar.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure:   process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     maxAge:   SESSION_MAX_AGE,
     path:     '/',
   });
