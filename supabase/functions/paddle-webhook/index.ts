@@ -57,6 +57,10 @@ async function verifyPaddleSignature(
   const { ts, h1 } = parts;
   if (!ts || !h1) return false;
 
+  // Reject webhooks older than 5 minutes to block replay attacks
+  const tsNum = parseInt(ts, 10);
+  if (isNaN(tsNum) || Math.abs(Date.now() / 1000 - tsNum) > 300) return false;
+
   const payload = `${ts}:${body}`;
   const key = await crypto.subtle.importKey(
     "raw",
