@@ -2,9 +2,11 @@
 
 import { supabaseAdmin } from '../lib/supabase';
 import { logAudit } from '../lib/audit';
+import { requireAdminSession } from '../lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export async function closeRequest(requestId: string, title: string, reason: string) {
+  await requireAdminSession();
   await supabaseAdmin
     .from('requests')
     .update({ status: 'cancelled' })
@@ -22,6 +24,7 @@ export async function closeRequest(requestId: string, title: string, reason: str
 }
 
 export async function deleteRequest(requestId: string, title: string, reason: string) {
+  await requireAdminSession();
   // Soft-delete: just cancel (hard delete would cascade bids/jobs)
   await supabaseAdmin
     .from('requests')
