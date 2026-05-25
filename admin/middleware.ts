@@ -5,7 +5,7 @@ import { verifyToken } from './app/lib/token';
 const COOKIE_NAME  = 'waseet_admin_session';
 const PUBLIC_PATHS = ['/login', '/_next', '/favicon.ico', '/p/', '/.well-known/'];
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (PUBLIC_PATHS.some(p => pathname.startsWith(p))) {
