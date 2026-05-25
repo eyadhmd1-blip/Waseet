@@ -14,8 +14,8 @@ const LOCKOUT_MS   = 15 * 60 * 1000; // 15 minutes
 interface Attempt { count: number; lockedUntil: number }
 const loginAttempts = new Map<string, Attempt>();
 
-function getClientIp(): string {
-  const hdrs = headers() as unknown as { get: (k: string) => string | null };
+async function getClientIp(): Promise<string> {
+  const hdrs = await headers();
   return (
     hdrs.get('x-forwarded-for')?.split(',')[0].trim() ??
     hdrs.get('x-real-ip') ??
@@ -45,7 +45,7 @@ function resetAttempts(ip: string): void {
 }
 
 export async function loginAction(formData: FormData): Promise<void> {
-  const ip = getClientIp();
+  const ip = await getClientIp();
 
   if (checkBruteForce(ip)) {
     redirect('/login?error=locked');
