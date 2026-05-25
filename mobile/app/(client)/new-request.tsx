@@ -209,6 +209,7 @@ export default function NewRequestScreen() {
   };
 
   const handleSubmit = async () => {
+    if (submitting) return;
     setSubmitting(true);
     const { data: { session: _ses } } = await supabase.auth.getSession();
     const user = _ses?.user;
