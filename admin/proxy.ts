@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from './app/login/actions';
+import { verifyToken } from './app/lib/token';
 
 const COOKIE_NAME  = 'waseet_admin_session';
 const PUBLIC_PATHS = ['/login', '/_next', '/favicon.ico', '/p/', '/.well-known/'];
