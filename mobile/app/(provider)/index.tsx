@@ -1264,6 +1264,41 @@ export default function ProviderFeed() {
     return () => { if (profileChannel) supabase.removeChannel(profileChannel); };
   }, []);
 
+  // ── Realtime: prepend new open requests as they arrive ───────
+  useEffect(() => {
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setup = async () => {
+      const stale = supabase.getChannels().find(ch => ch.topic === 'realtime:open_requests_feed');
+      if (stale) await supabase.removeChannel(stale);
+
+      channel = supabase
+        .channel('open_requests_feed')
+        .on('postgres_changes', {
+          event:  'INSERT',
+          schema: 'public',
+          table:  'requests',
+          filter: 'status=eq.open',
+        }, async (payload) => {
+          const { data } = await supabase
+            .from('requests')
+            .select('*, category:service_categories(name_ar, name_en, icon), bids_count:bids(count)')
+            .eq('id', payload.new.id)
+            .single();
+          if (data) {
+            setRequests(prev => {
+              if (prev.some(r => r.id === data.id)) return prev;
+              return [data as RequestWithMeta, ...prev];
+            });
+          }
+        })
+        .subscribe();
+    };
+
+    setup().catch(() => {});
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, []);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await load();
