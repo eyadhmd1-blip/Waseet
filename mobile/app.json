@@ -24,7 +24,7 @@
     },
     "android": {
       "package": "com.waseet.app",
-
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#0F172A"
@@ -85,8 +85,7 @@
             "./assets/sounds/notification.wav"
           ]
         }
-      ],
-      "@sentry/react-native"
+      ]
     ],
     "experiments": {
       "typedRoutes": true
