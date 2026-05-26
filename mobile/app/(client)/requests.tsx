@@ -71,6 +71,60 @@ const FILTER_ACCENT: Record<Filter, string> = {
   expired:     '#9CA3AF',
 };
 
+function BidsChip({ label, colors }: { label: string; colors: AppColors }) {
+  const ringScale   = useRef(new Animated.Value(1)).current;
+  const ringOpacity = useRef(new Animated.Value(0.7)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(ringScale,   { toValue: 1.55, duration: 900, useNativeDriver: true }),
+          Animated.timing(ringOpacity, { toValue: 0,    duration: 900, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(ringScale,   { toValue: 1,    duration: 0,   useNativeDriver: true }),
+          Animated.timing(ringOpacity, { toValue: 0.7,  duration: 0,   useNativeDriver: true }),
+        ]),
+        Animated.delay(900),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position:     'absolute',
+          top: 0, bottom: 0, left: 0, right: 0,
+          borderRadius: 10,
+          borderWidth:  2,
+          borderColor:  colors.accent,
+          transform:    [{ scale: ringScale }],
+          opacity:      ringOpacity,
+        }}
+      />
+      <View style={{
+        backgroundColor:   colors.accentDim,
+        borderRadius:      10,
+        paddingHorizontal: 10,
+        paddingVertical:   5,
+        flexDirection:     'row',
+        alignItems:        'center',
+        gap:               4,
+      }}>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accent }}>
+          {label}
+        </Text>
+        <Text style={{ fontSize: 11, color: colors.accent, opacity: 0.75 }}>←</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function ClientRequests() {
   const { headerPad } = useInsets();
   const router                    = useRouter();
@@ -301,11 +355,10 @@ export default function ClientRequests() {
           </Text>
           <View style={[styles.footerEnd, { flexDirection: 'row' }]}>
             {item.status === 'open' && bidsCount > 0 && (
-              <View style={[styles.bidsChip, { backgroundColor: colors.accentDim }]}>
-                <Text style={[styles.bidChipText, { color: colors.accent }]}>
-                  {t('requests.bidCount', { count: bidsCount })}
-                </Text>
-              </View>
+              <BidsChip
+                label={t('requests.bidCount', { count: bidsCount })}
+                colors={colors}
+              />
             )}
             {item.ai_suggested_price_min && item.ai_suggested_price_max && (
               <View>
