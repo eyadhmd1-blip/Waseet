@@ -1,11 +1,11 @@
 # Waseet Application — Comprehensive QA Test Cases Report
 
-**Document Version:** 6.0  
+**Document Version:** 7.0  
 **Prepared By:** Senior QA Lead  
 **Application:** Waseet (وسيط) — Service Marketplace Platform  
 **Platforms:** React Native (iOS/Android), Next.js Admin Portal  
 **Backend:** Supabase (PostgreSQL + Edge Functions + Realtime)  
-**Date:** 2026-05-14  
+**Date:** 2026-05-27  
 
 ---
 
@@ -68,6 +68,11 @@
 55. [BUGFIX15 — Zero-Risk Bug Fixes (BUG-011, BUG-013, BUG-015, BUG-018, BUG-019)](#55-bugfix15--zero-risk-bug-fixes-bug-011-bug-013-bug-015-bug-018-bug-019)
 56. [BUGFIX16 — Category Labels, Display Order & RTL Greeting Emoji Fix](#56-bugfix16--category-labels-display-order--rtl-greeting-emoji-fix)
 57. [BUGFIX17 — iPad/Expo Go White Screen Fix (Loading View)](#57-bugfix17--ipadexpo-go-white-screen-fix-loading-view)
+58. [BUGFIX18 — Pre-Launch Hardening (i18n, Splash, Notification Tint, Admin Name)](#58-bugfix18--pre-launch-hardening-i18n-splash-notification-tint-admin-name)
+59. [PNTF2 — Push Notification System (FCM + Token Registration)](#59-pntf2--push-notification-system-fcm--token-registration)
+60. [NTFINBOX — Notification Inbox Always-Save Fix](#60-ntfinbox--notification-inbox-always-save-fix)
+61. [BIDSCHIP — Animated Bid Count Badge (Client Requests Screen)](#61-bidschip--animated-bid-count-badge-client-requests-screen)
+62. [RTFEED — Provider Feed Realtime (Auto-Prepend New Requests)](#62-rtfeed--provider-feed-realtime-auto-prepend-new-requests)
 
 ---
 
@@ -143,7 +148,12 @@ Waseet (وسيط) is a two-sided service marketplace for Jordan, connecting **cl
 | BUGFIX15 | 10 | 0 | 2 | 3 | 5 |
 | BUGFIX16 | 10 | 1 | 6 | 3 | 0 |
 | BUGFIX17 | 4 | 0 | 1 | 3 | 0 |
-| **TOTAL** | **668** | **162** | **276** | **185** | **45** |
+| BUGFIX18 | 10 | 0 | 4 | 6 | 0 |
+| PNTF2 | 10 | 3 | 6 | 1 | 0 |
+| NTFINBOX | 8 | 3 | 4 | 1 | 0 |
+| BIDSCHIP | 8 | 0 | 5 | 3 | 0 |
+| RTFEED | 10 | 1 | 7 | 2 | 0 |
+| **TOTAL** | **756** | **169** | **302** | **201** | **45** |
 
 ---
 
@@ -8995,8 +9005,678 @@ ORDER BY group_slug, sort_order;
 
 ---
 
-*End of Waseet QA Test Cases Report v6.0*  
-*Total Test Cases: 720 across 60 modules*  
+---
+
+## 59. PNTF2 — Push Notification System (FCM + Token Registration)
+
+**Date:** 2026-05-27  
+**Scope:** mobile/app/_layout.tsx (push token registration), mobile/google-services.json (FCM config), codemagic.yaml (build order fix), supabase/push_tokens table  
+**Root Cause:** APK built without proper FCM configuration — `google-services.json` was written AFTER `expo prebuild` in Codemagic, so Firebase was never configured in the generated Android project.  
+**Fix:** (1) Added `googleServicesFile` to `app.json` android section. (2) Moved "Write google-services.json" step BEFORE "Expo prebuild Android" in `codemagic.yaml`. Result: FCM properly embedded → Expo push tokens registerable → device-level notifications deliverable.
+
+---
+
+#### PNTF2-001
+**Name:** Push token registers in push_tokens table on first login (FCM APK)  
+**Priority:** Critical | **Type:** Functional / Integration  
+**Preconditions:** Fresh Codemagic staging APK installed (post-FCM fix); user not previously logged in; notification permission granted.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Install new APK and launch | App opens to login screen |
+| 2 | Grant notification permission when prompted | OS permission dialog dismissed |
+| 3 | Log in with valid credentials | Auth succeeds; app navigates to home screen |
+| 4 | Wait 5 seconds | `getExpoPushTokenAsync({ projectId })` completes in _layout.tsx |
+| 5 | Check push_tokens table in Supabase Dashboard | Row exists for this user_id with token starting `ExponentPushToken[` |
+
+**Expected Result:** push_tokens table has 1 row for user_id with valid FCM-backed Expo token.  
+**Automation Candidate:** No (requires physical Android device with FCM build)
+
+---
+
+#### PNTF2-002
+**Name:** System notification appears in device notification drawer — app in background  
+**Priority:** Critical | **Type:** Functional / E2E  
+**Preconditions:** Push token registered; second device available to trigger notification.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Background the app (Home button pressed) | App backgrounded, not killed |
+| 2 | From second device: submit a bid on client's open request | `notify-client-new-bid` edge function fires |
+| 3 | On recipient device: pull down notification drawer | System notification visible with correct Arabic/English title and body |
+| 4 | Notification content | Title matches buildCopy output; body includes request title |
+
+**Expected Result:** OS notification appears in drawer within 10 seconds.  
+**Automation Candidate:** No
+
+---
+
+#### PNTF2-003
+**Name:** System notification appears when app is fully closed (cold start)  
+**Priority:** Critical | **Type:** Functional / E2E  
+**Preconditions:** Push token registered; app force-closed.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Force-close the app (Recent Apps → swipe away) | App not running |
+| 2 | Client accepts provider's bid | `notify-provider-bid-accepted` fires |
+| 3 | Provider device: check notification drawer | System notification appears |
+| 4 | Tap notification | App cold-starts and navigates to provider_confirm screen with correct job_id |
+
+**Expected Result:** Cold-start deep link from notification to correct screen.  
+**Automation Candidate:** No
+
+---
+
+#### PNTF2-004
+**Name:** Push token upsert — no duplicate rows on re-login  
+**Priority:** High | **Type:** Data Integrity  
+**Preconditions:** User already has row in push_tokens.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Check push_tokens: 1 row for user_id | Confirmed |
+| 2 | Log out | Session cleared |
+| 3 | Log back in | Token registration code runs again |
+| 4 | Check push_tokens table | Still 1 row for user_id — no duplicate inserted |
+| 5 | Token value | Same (or updated if device token rotated) |
+
+**Expected Result:** Composite unique constraint `UNIQUE(user_id, token)` + upsert prevents duplicates.  
+**Automation Candidate:** No
+
+---
+
+#### PNTF2-005
+**Name:** Urgent notification delivered on `urgent` channel with correct copy  
+**Priority:** High | **Type:** Functional / Platform  
+**Preconditions:** Provider token registered; bid with is_urgent=true accepted by client.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client accepts urgent bid | `notify-provider-bid-accepted` called with is_urgent=true |
+| 2 | Inspect push payload sent to Expo | channelId = "urgent", priority = "high", ttl = minutesLeft × 60 |
+| 3 | Provider Arabic notification | Title: "🚨 قبِل عميل عرضك — طلب طارئ!"; body includes "+20% طارئ" |
+| 4 | Provider English notification | Title: "🚨 Client accepted your bid — urgent!"; body includes "+20% urgent" |
+
+**Expected Result:** Urgent channelId triggers device-level urgent alert sound/vibration pattern.  
+**Automation Candidate:** No
+
+---
+
+#### PNTF2-006
+**Name:** No push token registered when notification permission is denied  
+**Priority:** High | **Type:** Negative / Permission  
+**Preconditions:** Fresh install; user denies notification permission when prompted.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Install APK and launch | Permission dialog appears |
+| 2 | Tap "Don't Allow" / "منع" | Permission denied |
+| 3 | Log in normally | Auth succeeds; no token registration attempted |
+| 4 | Check push_tokens table | No row for this user_id |
+| 5 | Trigger event notification for this user | Edge function returns `{ sent: false, inbox: true, reason: "no_push_token" }` |
+
+**Expected Result:** App fully functional; in-app inbox still receives notifications.  
+**Automation Candidate:** No
+
+---
+
+#### PNTF2-007
+**Name:** Deep link from notification — client navigates to correct request  
+**Priority:** High | **Type:** Navigation / Deep Link  
+**Preconditions:** Client token registered; notification with `data.screen="new-request"` and `data.request_id` delivered.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Notification delivered with data.screen="new-request", data.request_id="abc123" | System notification visible |
+| 2 | Tap notification | App opens (foreground or cold-start) |
+| 3 | Navigation target | Opens the specific request detail screen, not generic home |
+| 4 | Screen content | Shows request referenced by request_id in notification payload |
+
+**Expected Result:** Notification tap routes to exact resource, not just app root.  
+**Automation Candidate:** No
+
+---
+
+#### PNTF2-008
+**Name:** Deep link from notification — provider navigates to provider_confirm screen  
+**Priority:** High | **Type:** Navigation / Deep Link  
+**Preconditions:** Provider token registered; bid-accepted notification contains `data.screen="provider_confirm"` and `data.job_id`.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client accepts bid → notification sent to provider | data.screen="provider_confirm", data.job_id set |
+| 2 | Provider taps notification | App navigates to provider confirm screen |
+| 3 | Screen shows | Correct job details: request title, bid amount, commit deadline |
+
+**Expected Result:** Provider sees the confirmation screen for the specific job immediately.  
+**Automation Candidate:** No
+
+---
+
+#### PNTF2-009
+**Name:** Tap notification after logout — redirects to login, no data exposed  
+**Priority:** High | **Type:** Security  
+**Preconditions:** User logged out; old push token still in OS; notification arrives.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | User logs out | Local session cleared |
+| 2 | Notification arrives (sent before logout token cleanup) | OS shows notification |
+| 3 | Tap notification | App opens cold-start |
+| 4 | App routing | Redirects to login screen (no valid auth session) |
+| 5 | No sensitive content | Request/job details not shown before re-authentication |
+
+**Expected Result:** Auth guard prevents data exposure after logout.  
+**Automation Candidate:** No
+
+---
+
+#### PNTF2-010
+**Name:** APK built with old Codemagic (pre-fix) shows no token registration  
+**Priority:** Medium | **Type:** Regression / Build Verification  
+**Preconditions:** Two APKs available: old (pre-FCM fix) and new (post-FCM fix).
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Install OLD APK, grant permission, log in | Token registration attempted |
+| 2 | Check push_tokens | No row — FCM not configured in old build |
+| 3 | Install NEW APK, grant permission, log in | Token registration attempted |
+| 4 | Check push_tokens | Row present with valid ExponentPushToken |
+
+**Expected Result:** Confirms the FCM build-order fix is effective. Only post-fix APK registers tokens.  
+**Automation Candidate:** No
+
+---
+
+## 60. NTFINBOX — Notification Inbox Always-Save Fix
+
+**Date:** 2026-05-27  
+**Scope:** supabase/functions/notify-client-new-bid/index.ts, supabase/functions/notify-provider-bid-accepted/index.ts  
+**Root Cause:** Both edge functions had an early-return guard `if (!tokenRow?.token) return json(...)` that was placed BEFORE `notifications.insert`. Result: any user without a push token never received in-app notifications. Inbox showed only admin-broadcast notifications.  
+**Fix:** Restructured both functions — `notifications.insert` now runs unconditionally BEFORE the push token check. Response always includes `inbox: true` to confirm in-app save.
+
+---
+
+#### NTFINBOX-001
+**Name:** Client in-app notification saved for new bid — even when no push token  
+**Priority:** Critical | **Type:** Regression / Functional  
+**Preconditions:** Client has NO row in push_tokens; provider submits bid on client's open request.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider submits bid | `notify-client-new-bid` edge function called with request_id |
+| 2 | Edge function: checks push_tokens | No token found for client_id |
+| 3 | notifications.insert runs BEFORE early return | Row inserted: user_id=client, type="new_bid", screen="new-request", metadata={request_id} |
+| 4 | Function response | `{ sent: false, inbox: true, reason: "no_push_token" }` |
+| 5 | Client opens notification inbox | Notification visible in list |
+
+**Expected Result:** In-app notification always saved regardless of push token.  
+**Automation Candidate:** No
+
+---
+
+#### NTFINBOX-002
+**Name:** Client receives both push AND in-app notification when token exists  
+**Priority:** Critical | **Type:** Functional  
+**Preconditions:** Client has valid push token in push_tokens.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider submits bid | `notify-client-new-bid` fires |
+| 2 | notifications.insert runs first | In-app notification saved |
+| 3 | Push token found | Expo push API called |
+| 4 | Expo response | `data.status === "ok"` |
+| 5 | Function response | `{ sent: true, inbox: true }` |
+
+**Expected Result:** Both delivery channels active; in-app inbox and system notification both received.  
+**Automation Candidate:** No
+
+---
+
+#### NTFINBOX-003
+**Name:** Provider in-app notification saved for bid accepted — even when no push token  
+**Priority:** Critical | **Type:** Regression / Functional  
+**Preconditions:** Provider has NO push token; client accepts provider's bid.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client calls accept_bid() | job row created in jobs table |
+| 2 | Client calls notify-provider-bid-accepted with job_id | Edge function fires |
+| 3 | No push token found for provider | Function does NOT early-return |
+| 4 | notifications table | Row inserted: user_id=provider, type="job_commit_request", screen="provider_confirm", metadata={job_id, is_urgent} |
+| 5 | Provider opens inbox | Notification visible with correct title and deadline |
+
+**Expected Result:** Provider inbox shows bid-accepted notification regardless of push capability.  
+**Automation Candidate:** No
+
+---
+
+#### NTFINBOX-004
+**Name:** Notification copy — Arabic urgent bid-accepted  
+**Priority:** High | **Type:** i18n / Functional  
+**Preconditions:** Provider lang='ar' in users table; is_urgent=true; job has provider_commit_deadline set.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client accepts urgent bid | notify-provider-bid-accepted fires with is_urgent=true |
+| 2 | Provider lang fetched | lang = 'ar' |
+| 3 | buildCopy called | title: "🚨 قبِل عميل عرضك — طلب طارئ!" |
+| 4 | Body | "{reqTitle} · {amount} {currency} +20% طارئ — أكّد خلال N دقائق" |
+| 5 | minutesLeft | Calculated from provider_commit_deadline, minimum 1 |
+
+**Expected Result:** Arabic urgent copy with correct amount, currency, deadline minutes.  
+**Automation Candidate:** No
+
+---
+
+#### NTFINBOX-005
+**Name:** Notification copy — English multi-bid (≥5 bids threshold)  
+**Priority:** High | **Type:** i18n / Functional  
+**Preconditions:** Client lang='en'; 5th bid submitted on request.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | 5th bid submitted | notify-client-new-bid fires |
+| 2 | bidCount query | count = 5 (exactly at threshold) |
+| 3 | buildCopy: count >= 5 | title: "📈 You received 5 bids" |
+| 4 | Body (count > 1) | "{reqTitle} — review bids now" |
+| 5 | Submit 6th bid | title: "📈 You received 6 bids" |
+
+**Expected Result:** Count thresholds work: ≥5 → "N bids"; 3-4 → "N bids on your request"; <3 → "New bid on your request".  
+**Automation Candidate:** No
+
+---
+
+#### NTFINBOX-006
+**Name:** Inbox shows both admin-broadcast and event notifications together  
+**Priority:** High | **Type:** Functional / Regression  
+**Preconditions:** Client has both types of notifications in DB.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Admin sends broadcast to client | notifications row with type="broadcast" |
+| 2 | Provider submits bid | notifications row with type="new_bid" |
+| 3 | Client opens notification inbox | Both notifications visible in list |
+| 4 | Order | Most recent first (created_at DESC) |
+| 5 | Badge count | Shows total unread across all types |
+
+**Expected Result:** Inbox is type-agnostic; all notification types rendered.  
+**Automation Candidate:** No
+
+---
+
+#### NTFINBOX-007
+**Name:** Unauthorized user cannot trigger bid-accepted notification for another client's job  
+**Priority:** Critical | **Type:** Security / Authorization  
+**Preconditions:** job_id=123 belongs to client_A; attacker authenticates as client_B.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | client_B calls notify-provider-bid-accepted with job_id=123 | Edge function authenticates client_B |
+| 2 | Function fetches job | job.client_id = client_A |
+| 3 | Authorization check | job.client_id (client_A) ≠ user.id (client_B) |
+| 4 | Response | 403 `{ error: "not_authorized" }` |
+| 5 | notifications table | No row inserted for this unauthorized attempt |
+
+**Expected Result:** Only the actual job owner can trigger the notification. 403 returned otherwise.  
+**Automation Candidate:** No
+
+---
+
+#### NTFINBOX-008
+**Name:** Invalid job_id returns 404 — no orphan notification created  
+**Priority:** High | **Type:** Negative / Validation  
+**Preconditions:** Authenticated client.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Call notify-provider-bid-accepted with job_id="00000000-0000-0000-0000-000000000000" | Edge function queries jobs table |
+| 2 | Job not found | jobErr set |
+| 3 | Response | 404 `{ error: "job_not_found" }` |
+| 4 | notifications table | No new row inserted |
+
+**Expected Result:** Graceful 404; no orphan notifications for non-existent jobs.  
+**Automation Candidate:** No
+
+---
+
+## 61. BIDSCHIP — Animated Bid Count Badge (Client Requests Screen)
+
+**Date:** 2026-05-27  
+**Scope:** mobile/app/(client)/requests.tsx — BidsChip component (pulse ring animation)  
+**Feature:** Replaced static bid-count `View` with animated `BidsChip` component featuring a looping pulse-ring (scale 1→1.55, opacity 0.7→0) that draws client attention to requests with pending bids.
+
+---
+
+#### BIDSCHIP-001
+**Name:** Badge appears on open requests with ≥1 bid  
+**Priority:** High | **Type:** Functional  
+**Preconditions:** Client has open request with 1+ bids; Requests screen loaded.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open Requests screen | Request list loads |
+| 2 | Request: status='open', bids_count=1 | BidsChip renders on that card |
+| 3 | Badge text | Correct translated count ("1 عرض" / "1 bid") |
+| 4 | Arrow indicator | ← visible next to count text |
+
+**Expected Result:** BidsChip renders only when `item.status === 'open' && bidsCount > 0`.  
+**Automation Candidate:** No
+
+---
+
+#### BIDSCHIP-002
+**Name:** Badge NOT shown on open request with 0 bids  
+**Priority:** High | **Type:** Negative  
+**Preconditions:** Client has open request with no bids.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Open Requests screen | Request cards visible |
+| 2 | Request: status='open', bids_count=0 | No BidsChip on this card |
+| 3 | Card layout | Normal layout, no badge area |
+
+**Expected Result:** `bidsCount > 0` condition prevents rendering when count is zero.  
+**Automation Candidate:** No
+
+---
+
+#### BIDSCHIP-003
+**Name:** Badge NOT shown on non-open requests  
+**Priority:** High | **Type:** Negative / Business Rule  
+**Preconditions:** Client has requests with multiple statuses, each with bids.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Request: status='cancelled', bids_count=3 | No BidsChip |
+| 2 | Request: status='completed', bids_count=2 | No BidsChip |
+| 3 | Request: status='in_progress', bids_count=1 | No BidsChip |
+| 4 | Request: status='open', bids_count=2 | BidsChip visible ✅ |
+
+**Expected Result:** `item.status === 'open'` is strict — only open requests show badge.  
+**Automation Candidate:** No
+
+---
+
+#### BIDSCHIP-004
+**Name:** Pulse ring animation plays and loops continuously  
+**Priority:** Medium | **Type:** Visual / Animation  
+**Preconditions:** BidsChip rendered with bids > 0.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Observe BidsChip for 4 seconds | Ring animates outward and fades |
+| 2 | Scale | Animates 1 → 1.55 over 900ms |
+| 3 | Opacity | Fades 0.7 → 0 over 900ms, resets to 0.7 after 0ms |
+| 4 | Delay | 900ms pause between pulses |
+| 5 | Continuity | Loop repeats without stopping or stuttering |
+
+**Expected Result:** Smooth looping pulse. useNativeDriver=true ensures 60fps on both platforms.  
+**Automation Candidate:** No
+
+---
+
+#### BIDSCHIP-005
+**Name:** Animation cleanup on unmount — no memory leak  
+**Priority:** High | **Type:** Performance / Memory  
+**Preconditions:** Requests screen open with animated BidsChip cards.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Observe: animation running on multiple cards | All loops active |
+| 2 | Navigate away from Requests screen | Components unmount |
+| 3 | Console | No "Can't perform React state update on unmounted component" error |
+| 4 | Return to Requests screen | Animations restart cleanly |
+
+**Expected Result:** `loop.stop()` in useEffect cleanup runs on unmount, preventing memory leak.  
+**Automation Candidate:** No
+
+---
+
+#### BIDSCHIP-006
+**Name:** Badge count reflects exact DB bids_count value  
+**Priority:** High | **Type:** Data Accuracy  
+**Preconditions:** Request has exactly 3 bids.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Request has 3 bids in DB | bids_count = 3 |
+| 2 | Open Requests screen | Badge shows "3 عروض" (Arabic) or "3 bids" (English) |
+| 3 | Arabic plural form | 3 عروض (not عرض) — plural rule applied |
+| 4 | English singular | 1 bid (not 1 bids) |
+
+**Expected Result:** Count from `requests.bids_count` accurate; i18n plural forms applied correctly.  
+**Automation Candidate:** No
+
+---
+
+#### BIDSCHIP-007
+**Name:** Badge renders correctly in RTL (Arabic) layout  
+**Priority:** High | **Type:** Localization / RTL  
+**Preconditions:** App language = Arabic.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Set language to Arabic | RTL layout active |
+| 2 | Open Requests screen | BidsChip visible on open requests with bids |
+| 3 | Badge position on card | No overflow, fits within card bounds |
+| 4 | Text alignment | Arabic text aligned right-to-left inside badge |
+| 5 | flexDirection: row | Count and arrow render in correct RTL order |
+
+**Expected Result:** No layout overflow, clipping, or misalignment in RTL mode.  
+**Automation Candidate:** No
+
+---
+
+#### BIDSCHIP-008
+**Name:** Badge theme — correct colors in Dark Mode and Light Mode  
+**Priority:** Medium | **Type:** Visual / Theme  
+**Preconditions:** Device theme switchable between Dark and Light.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Dark Mode: open Requests | Badge background = colors.accentDim (dark variant) |
+| 2 | Dark Mode: ring color | colors.accent = gold #C9A84C |
+| 3 | Dark Mode: text | White/gold, readable on dark background |
+| 4 | Light Mode: open Requests | Badge background = colors.accentDim (light variant) |
+| 5 | Light Mode: ring color | colors.accent = gold, visible on light background |
+
+**Expected Result:** Badge uses theme-aware color tokens, not hardcoded hex values.  
+**Automation Candidate:** No
+
+---
+
+## 62. RTFEED — Provider Feed Realtime (Auto-Prepend New Requests)
+
+**Date:** 2026-05-27  
+**Scope:** mobile/app/(provider)/index.tsx — Supabase `postgres_changes` subscription on `requests` table (event: INSERT, filter: status=eq.open)  
+**Feature:** Provider home feed auto-prepends newly posted open requests without manual pull-to-refresh.  
+**Prerequisite:** Supabase Realtime must be enabled on `requests` table via Publications → supabase_realtime.
+
+---
+
+#### RTFEED-001
+**Name:** New open request appears in provider feed without manual refresh  
+**Priority:** Critical | **Type:** Functional / Realtime  
+**Preconditions:** Provider logged in; feed visible; Realtime enabled on requests table.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider opens home feed | Existing requests load normally |
+| 2 | Client posts new service request (status='open') | INSERT event fires in Supabase Realtime |
+| 3 | Provider's device (no pull-to-refresh) | New request card appears at TOP of list within 2-3 seconds |
+| 4 | New request content | Correct title, city, category icon, bids_count=0 |
+| 5 | Existing requests | Unchanged, no reorder |
+
+**Expected Result:** Real-time prepend via `setRequests(prev => [data, ...prev])`.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-002
+**Name:** Duplicate request NOT added when same id received twice  
+**Priority:** High | **Type:** Edge Case / Data Integrity  
+**Preconditions:** Provider feed open; same request INSERT event arrives twice (e.g., reconnect resend).
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Request id="abc" already in feed | Visible as first card |
+| 2 | Duplicate INSERT event for id="abc" | Realtime payload received again |
+| 3 | Dedup guard | `prev.some(r => r.id === data.id)` returns true |
+| 4 | setRequests | Returns prev unchanged |
+| 5 | Feed | Still shows 1 card for id="abc" |
+
+**Expected Result:** Dedup guard prevents duplicate cards regardless of reconnect behavior.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-003
+**Name:** Request with status != 'open' does NOT appear via realtime  
+**Priority:** High | **Type:** Negative / Server-Side Filter  
+**Preconditions:** Provider feed open; requests table has Realtime with filter `status=eq.open`.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | INSERT event fires for request with status='closed' | Supabase evaluates filter |
+| 2 | Filter: status=eq.open | Event filtered at server level — not sent to client |
+| 3 | Provider feed | Closed request does NOT appear |
+| 4 | INSERT event for status='open' | Appears normally ✅ |
+
+**Expected Result:** Realtime server-side filter ensures only open requests reach client.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-004
+**Name:** Realtime channel removed on component unmount  
+**Priority:** High | **Type:** Memory / Performance  
+**Preconditions:** Provider on home feed with active subscription.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | 'open_requests_feed' channel active | Subscription live |
+| 2 | Navigate away from provider home screen | Component unmounts |
+| 3 | useEffect cleanup | `supabase.removeChannel(channel)` called |
+| 4 | Check active channels | 'realtime:open_requests_feed' no longer in `supabase.getChannels()` |
+
+**Expected Result:** No dangling subscription after unmount.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-005
+**Name:** Stale channel cleaned up before new subscription on re-mount  
+**Priority:** High | **Type:** Regression / Realtime  
+**Preconditions:** Provider navigates away from home and returns.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider leaves home screen | Channel should be removed by cleanup |
+| 2 | Provider returns to home | setup() runs inside useEffect |
+| 3 | setup() checks for stale channel | `getChannels().find(ch => ch.topic === 'realtime:open_requests_feed')` |
+| 4 | If stale found | `await supabase.removeChannel(stale)` before creating new |
+| 5 | Final state | Exactly 1 active subscription |
+
+**Expected Result:** No "duplicate channel" errors in Supabase logs; no missed events.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-006
+**Name:** New request card shows full data via secondary SELECT query  
+**Priority:** High | **Type:** Functional / API  
+**Preconditions:** Realtime INSERT event received; secondary query required for joins.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | INSERT event: payload.new = { id: "xyz", status: "open", ... } | Raw payload received |
+| 2 | Secondary query fires | `SELECT *, category:service_categories(name_ar, name_en, icon), bids_count:bids(count)` |
+| 3 | Category icon | Correct emoji/icon from service_categories |
+| 4 | bids_count | 0 (new request) |
+| 5 | All fields present | title, city, created_at, category — no missing/undefined |
+
+**Expected Result:** Complete request card rendered from DB join, not raw event payload.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-007
+**Name:** 5 rapid new requests all appear without race condition  
+**Priority:** High | **Type:** Concurrency / Stress  
+**Preconditions:** Provider feed open; 5 clients post requests within 1 second.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | 5 INSERT events arrive in rapid succession | 5 Realtime callbacks triggered |
+| 2 | Each: `setRequests(prev => [data, ...prev])` | Functional update form handles concurrent state |
+| 3 | Feed after all 5 events | 5 new unique cards at top of list |
+| 4 | No duplicates | Dedup guard active |
+| 5 | UI responsiveness | Feed remains scrollable, no freeze |
+
+**Expected Result:** All 5 requests appear in order; functional update pattern prevents stale closure issues.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-008
+**Name:** Subscription auto-reconnects after network loss  
+**Priority:** High | **Type:** Resilience / Network  
+**Preconditions:** Provider feed open with active subscription.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Disconnect WiFi / mobile data | Realtime connection drops |
+| 2 | New request posted while offline | Provider misses this event |
+| 3 | Reconnect network | Supabase Realtime WebSocket reconnects automatically |
+| 4 | New request posted after reconnect | Appears in provider feed |
+| 5 | Pull-to-refresh | Full reload shows request missed during offline window |
+
+**Expected Result:** Auto-reconnect works; manual refresh catches missed events.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-009
+**Name:** Expired-subscription provider sees new requests via realtime but cannot bid  
+**Priority:** High | **Type:** Business Rule / Permission  
+**Preconditions:** Provider subscription expired (provider_analytics.subscribed = false).
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider subscription expires | subscribed = false |
+| 2 | New request appears via realtime | Card visible at top of feed |
+| 3 | Provider taps request | Opens request detail normally |
+| 4 | Provider attempts to bid | Error: "اشتراكك منتهٍ — جدّد للمتابعة" |
+| 5 | Bid NOT submitted | credits not deducted; bids table unchanged |
+
+**Expected Result:** Feed visible to all authenticated providers; subscription enforced at bid submission, not feed display.  
+**Automation Candidate:** No
+
+---
+
+#### RTFEED-010
+**Name:** Requests from all cities appear in realtime feed (no city filter)  
+**Priority:** Medium | **Type:** Functional / Scope  
+**Preconditions:** Provider profile city = Amman; client in Irbid posts request.
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client in Irbid posts request (city='Irbid') | INSERT event fires |
+| 2 | Provider in Amman: feed | Irbid request appears at top without filtering |
+| 3 | Request card | Displays city="Irbid" clearly |
+| 4 | Provider can bid | No city restriction on bidding |
+
+**Expected Result:** Realtime subscription has no city filter — providers see nationwide requests.  
+**Automation Candidate:** No
+
+---
+
+---
+
+*End of Waseet QA Test Cases Report v7.0*  
+*Total Test Cases: 756 across 62 modules*  
 *Critical: 165 | High: 298 | Medium: 197 | Low: 48 (previously: 710/59)*  
 *⚠️ عند إضافة خدمة جديدة: سطر في CAT-005 + حالة في NCAT + تحديث العدد*  
 *⚠️ عند إضافة مجموعة جديدة: سطر في CAT-006 + تحديث GROUP_COLORS/EMOJI/SHORT_AR/ICON_LABEL/DISPLAY_ORDER في (client)/index.tsx*  
