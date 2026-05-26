@@ -12,8 +12,7 @@
       },
       "android": {
         "buildType": "apk",
-        "gradleCommand": ":app:assembleDebug",
-        "googleServicesFile": "./android/app/google-services.json"
+        "gradleCommand": ":app:assembleDebug"
       },
       "ios": {
         "buildConfiguration": "Debug",
@@ -30,8 +29,7 @@
         "EXPO_PUBLIC_PROJECT_ID": "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
       },
       "android": {
-        "buildType": "apk",
-        "googleServicesFile": "./android/app/google-services.json"
+        "buildType": "apk"
       },
       "ios": {
         "buildConfiguration": "Release"
@@ -45,8 +43,7 @@
         "EXPO_PUBLIC_PROJECT_ID": "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
       },
       "android": {
-        "buildType": "app-bundle",
-        "googleServicesFile": "./android/app/google-services.json"
+        "buildType": "app-bundle"
       },
       "ios": {
         "buildConfiguration": "Release"
