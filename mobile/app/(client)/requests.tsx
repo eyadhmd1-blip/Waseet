@@ -145,6 +145,11 @@ export default function ClientRequests() {
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
 
+  // Ref keeps latest requests accessible inside Realtime handler without
+  // triggering re-subscription on every state update (avoids infinite loop).
+  const allRequestsRef = useRef<ServiceRequest[]>([]);
+  useEffect(() => { allRequestsRef.current = allRequests; }, [allRequests]);
+
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
   // sync tab from deep-link params (e.g. navigate from recurring-request success)
@@ -261,6 +266,42 @@ export default function ClientRequests() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  // Realtime: increment bid count when a new bid arrives on an open request.
+  // Uses allRequestsRef so the handler sees current data without re-subscribing.
+  // Fallback: useFocusEffect + pull-to-refresh still work if Realtime is unavailable.
+  useEffect(() => {
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const channelName = 'client-bids-live';
+
+    const setup = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user || cancelled) return;
+
+      const stale = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
+
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bids' }, (payload) => {
+          const bid = payload.new as { request_id: string };
+          const req = allRequestsRef.current.find(r => r.id === bid.request_id);
+          if (!req || req.status !== 'open') return;
+
+          setAllRequests(prev => prev.map(r => {
+            if (r.id !== bid.request_id) return r;
+            const count = (r as any).bids_count?.[0]?.count ?? 0;
+            return { ...r, bids_count: [{ count: count + 1 }] } as unknown as ServiceRequest;
+          }));
+        })
+        .subscribe();
+    };
+
+    setup().catch(e => console.warn('[bids-rt] setup error:', e?.message));
+    return () => { cancelled = true; if (channel) supabase.removeChannel(channel); };
+  }, []); // mount/unmount only — ref keeps data current
 
   // Safety net: stop spinner after 12s on slow network
   useEffect(() => {
