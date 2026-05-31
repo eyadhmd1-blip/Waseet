@@ -27,6 +27,7 @@ mobile/ios/
 
 # ── Secrets & credentials ─────────────────────────────────────────────────────
 *.jks
+*-base64.txt
 *.p8
 *.p12
 *.key
