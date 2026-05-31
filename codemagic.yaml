@@ -127,6 +127,97 @@ workflows:
 
 
   # ─────────────────────────────────────────────
+  # ANDROID PRODUCTION → Google Play (AAB)
+  # ─────────────────────────────────────────────
+  android-production:
+    name: Android Production → Google Play
+    max_build_duration: 60
+    working_directory: mobile
+
+    environment:
+      node: 20.18.0
+      java: 17
+
+      groups:
+        - android_signing
+        - firebase_credentials
+        - sentry_credentials
+
+      vars:
+        EXPO_PUBLIC_ENV: "production"
+        EXPO_PUBLIC_SUPABASE_URL: "https://kyupkrhqitojeluczvvv.supabase.co"
+        EXPO_PUBLIC_SUPABASE_ANON_KEY: "sb_publishable_XK4aGp_mHIjBNbWTswNRqA_2efiSoJX"
+        EXPO_PUBLIC_SENTRY_DSN: "https://8cff48a5bbbf98dabd80ffa2631952b0@o4511390740250624.ingest.de.sentry.io/4511390753161296"
+        EXPO_PUBLIC_PROJECT_ID: "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
+
+    cache:
+      cache_paths:
+        - $CM_BUILD_DIR/mobile/node_modules
+        - $HOME/.gradle/caches
+
+    scripts:
+      - name: Install dependencies
+        script: npm ci --prefer-offline
+
+      - name: Write .env.local
+        script: |
+          cat > .env.local <<EOF
+          EXPO_PUBLIC_SUPABASE_URL=$EXPO_PUBLIC_SUPABASE_URL
+          EXPO_PUBLIC_SUPABASE_ANON_KEY=$EXPO_PUBLIC_SUPABASE_ANON_KEY
+          EXPO_PUBLIC_PROJECT_ID=$EXPO_PUBLIC_PROJECT_ID
+          EOF
+          echo "✓ .env.local written"
+
+      - name: Write google-services.json
+        script: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then
+            echo "$GOOGLE_SERVICES_JSON" | base64 --decode > google-services.json
+            echo "✓ google-services.json written"
+          else
+            echo "⚠ GOOGLE_SERVICES_JSON not set — using git version"
+          fi
+
+      - name: Expo prebuild Android
+        script: npx expo prebuild --clean --platform android --non-interactive
+
+      - name: Write sentry.properties (Android)
+        script: |
+          cat > android/sentry.properties <<EOF
+          defaults.org=$SENTRY_ORG
+          defaults.project=$SENTRY_PROJECT
+          auth.token=$SENTRY_AUTH_TOKEN
+          EOF
+          echo "✓ android/sentry.properties written"
+
+      - name: Decode keystore
+        script: echo "$CM_KEYSTORE" | base64 --decode > /tmp/keystore.jks
+
+      - name: Set version code
+        script: echo "versionCode=$BUILD_NUMBER" >> android/gradle.properties
+
+      - name: Build AAB
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=/tmp/keystore.jks \
+            -Pandroid.injected.signing.store.password="$CM_KEYSTORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$CM_KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$CM_KEY_PASSWORD"
+
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
+
+    publishing:
+      email:
+        recipients:
+          - eyadhmd1@gmail.com
+        notify:
+          success: true
+          failure: true
+
+
+  # ─────────────────────────────────────────────
   # iOS → TestFlight
   # ─────────────────────────────────────────────
   ios-staging:
