@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>Waseet — Feature Graphic 1024×500</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 1024px;
+    height: 500px;
+    overflow: hidden;
+    background: #0F1117;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+  }
+
+  .root {
+    width: 1024px;
+    height: 500px;
+    position: relative;
+    background: linear-gradient(135deg, #0F1117 0%, #1A1407 60%, #0F1117 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 72px;
+    overflow: hidden;
+  }
+
+  /* ── خلفية دائرية ديكورية ── */
+  .circle-1 {
+    position: absolute;
+    width: 520px; height: 520px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+    right: -80px; top: -100px;
+  }
+  .circle-2 {
+    position: absolute;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(201,168,76,0.07) 0%, transparent 70%);
+    left: -60px; bottom: -80px;
+  }
+  .circle-3 {
+    position: absolute;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    border: 1px solid rgba(201,168,76,0.15);
+    right: 260px; bottom: 40px;
+  }
+
+  /* ── خطوط ديكورية ── */
+  .line-h {
+    position: absolute;
+    width: 100%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.08), transparent);
+    top: 50%;
+  }
+
+  /* ── القسم الأيسر — النص الرئيسي ── */
+  .left {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    max-width: 480px;
+  }
+
+  .badge {
+    background: rgba(201,168,76,0.15);
+    border: 1px solid rgba(201,168,76,0.35);
+    border-radius: 30px;
+    padding: 6px 18px;
+    font-size: 13px;
+    color: #C9A84C;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .app-name {
+    font-size: 96px;
+    font-weight: 900;
+    color: #C9A84C;
+    line-height: 1;
+    letter-spacing: -2px;
+    text-shadow: 0 0 60px rgba(201,168,76,0.25);
+  }
+
+  .app-name-en {
+    font-size: 28px;
+    font-weight: 700;
+    color: rgba(201,168,76,0.55);
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    margin-top: -8px;
+  }
+
+  .tagline {
+    font-size: 22px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 500;
+    line-height: 1.5;
+    max-width: 380px;
+    direction: rtl;
+    text-align: right;
+  }
+
+  .tagline strong {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  .divider {
+    width: 60px; height: 3px;
+    background: linear-gradient(90deg, #C9A84C, transparent);
+    border-radius: 2px;
+    align-self: flex-end;
+  }
+
+  /* ── القسم الأيمن — بطاقات الميزات ── */
+  .right {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: flex-end;
+  }
+
+  .feature-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(201,168,76,0.18);
+    border-radius: 16px;
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 260px;
+    direction: rtl;
+    backdrop-filter: blur(10px);
+  }
+
+  .feature-card:nth-child(2) {
+    margin-right: 20px;
+  }
+
+  .feature-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    background: rgba(201,168,76,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .feature-text h4 {
+    font-size: 15px;
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+
+  .feature-text p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+  }
+
+  /* ── شريط سفلي ── */
+  .bottom-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, #C9A84C, transparent);
+  }
+
+  /* ── شارة تحقق ── */
+  .verified-badge {
+    position: absolute;
+    top: 28px; left: 72px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16,185,129,0.12);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: #10B981;
+    font-weight: 600;
+  }
+</style>
+</head>
+<body>
+<div class="root">
+
+  <div class="circle-1"></div>
+  <div class="circle-2"></div>
+  <div class="circle-3"></div>
+  <div class="line-h"></div>
+
+  <div class="verified-badge">
+    ✓ متاح في الأردن
+  </div>
+
+  <!-- Right: Features -->
+  <div class="right">
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-text">
+        <h4>انشر طلبك في ثوانٍ</h4>
+        <p>+55 فئة خدمية في كل أنحاء الأردن</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💰</div>
+      <div class="feature-text">
+        <h4>قارن العروض واختر الأفضل</h4>
+        <p>منافسة حقيقية تضمن أفضل سعر</p>
+      </div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⭐</div>
+      <div class="feature-text">
+        <h4>مزودون موثّقون وموثوقون</h4>
+        <p>تقييمات حقيقية من عملاء حقيقيين</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Left: App Identity -->
+  <div class="left">
+    <div class="badge">Jordan's Service Marketplace</div>
+    <div class="app-name">وسيط</div>
+    <div class="app-name-en">WASEET</div>
+    <div class="divider"></div>
+    <div class="tagline">
+      اطلب <strong>أي خدمة</strong> — احصل على عروض أسعار —<br>
+      وظّف <strong>أفضل مقدم خدمة</strong> في منطقتك
+    </div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+</body>
+</html>

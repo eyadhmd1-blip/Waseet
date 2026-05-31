@@ -71,6 +71,60 @@ const FILTER_ACCENT: Record<Filter, string> = {
   expired:     '#9CA3AF',
 };
 
+function BidsChip({ label, colors }: { label: string; colors: AppColors }) {
+  const ringScale   = useRef(new Animated.Value(1)).current;
+  const ringOpacity = useRef(new Animated.Value(0.7)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(ringScale,   { toValue: 1.55, duration: 900, useNativeDriver: true }),
+          Animated.timing(ringOpacity, { toValue: 0,    duration: 900, useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(ringScale,   { toValue: 1,    duration: 0,   useNativeDriver: true }),
+          Animated.timing(ringOpacity, { toValue: 0.7,  duration: 0,   useNativeDriver: true }),
+        ]),
+        Animated.delay(900),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, []);
+
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View
+        pointerEvents="none"
+        style={{
+          position:     'absolute',
+          top: 0, bottom: 0, left: 0, right: 0,
+          borderRadius: 10,
+          borderWidth:  2,
+          borderColor:  colors.accent,
+          transform:    [{ scale: ringScale }],
+          opacity:      ringOpacity,
+        }}
+      />
+      <View style={{
+        backgroundColor:   colors.accentDim,
+        borderRadius:      10,
+        paddingHorizontal: 10,
+        paddingVertical:   5,
+        flexDirection:     'row',
+        alignItems:        'center',
+        gap:               4,
+      }}>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: colors.accent }}>
+          {label}
+        </Text>
+        <Text style={{ fontSize: 11, color: colors.accent, opacity: 0.75 }}>←</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function ClientRequests() {
   const { headerPad } = useInsets();
   const router                    = useRouter();
@@ -90,6 +144,11 @@ export default function ClientRequests() {
 
   const fadeAnim  = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(14)).current;
+
+  // Ref keeps latest requests accessible inside Realtime handler without
+  // triggering re-subscription on every state update (avoids infinite loop).
+  const allRequestsRef = useRef<ServiceRequest[]>([]);
+  useEffect(() => { allRequestsRef.current = allRequests; }, [allRequests]);
 
   const styles = useMemo(() => createStyles(colors, isRTL, isDark), [colors, isRTL, isDark]);
 
@@ -208,6 +267,42 @@ export default function ClientRequests() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Realtime: increment bid count when a new bid arrives on an open request.
+  // Uses allRequestsRef so the handler sees current data without re-subscribing.
+  // Fallback: useFocusEffect + pull-to-refresh still work if Realtime is unavailable.
+  useEffect(() => {
+    let cancelled = false;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    const channelName = 'client-bids-live';
+
+    const setup = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user || cancelled) return;
+
+      const stale = supabase.getChannels().find(c => c.topic === `realtime:${channelName}`);
+      if (stale) await supabase.removeChannel(stale);
+      if (cancelled) return;
+
+      channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bids' }, (payload) => {
+          const bid = payload.new as { request_id: string };
+          const req = allRequestsRef.current.find(r => r.id === bid.request_id);
+          if (!req || req.status !== 'open') return;
+
+          setAllRequests(prev => prev.map(r => {
+            if (r.id !== bid.request_id) return r;
+            const count = (r as any).bids_count?.[0]?.count ?? 0;
+            return { ...r, bids_count: [{ count: count + 1 }] } as unknown as ServiceRequest;
+          }));
+        })
+        .subscribe();
+    };
+
+    setup().catch(e => console.warn('[bids-rt] setup error:', e?.message));
+    return () => { cancelled = true; if (channel) supabase.removeChannel(channel); };
+  }, []); // mount/unmount only — ref keeps data current
+
   // Safety net: stop spinner after 12s on slow network
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 12000);
@@ -301,11 +396,10 @@ export default function ClientRequests() {
           </Text>
           <View style={[styles.footerEnd, { flexDirection: 'row' }]}>
             {item.status === 'open' && bidsCount > 0 && (
-              <View style={[styles.bidsChip, { backgroundColor: colors.accentDim }]}>
-                <Text style={[styles.bidChipText, { color: colors.accent }]}>
-                  {t('requests.bidCount', { count: bidsCount })}
-                </Text>
-              </View>
+              <BidsChip
+                label={t('requests.bidCount', { count: bidsCount })}
+                colors={colors}
+              />
             )}
             {item.ai_suggested_price_min && item.ai_suggested_price_max && (
               <View>

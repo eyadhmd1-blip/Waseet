@@ -89,8 +89,6 @@ Deno.serve(async (req) => {
       admin.from("users").select("lang").eq("id", job.provider_id).maybeSingle(),
     ]);
 
-    if (!tokenRow?.token) return json({ sent: false, reason: "no_push_token" });
-
     const lang = providerUser?.lang ?? "ar";
 
     const deadline = job.provider_commit_deadline ? new Date(job.provider_commit_deadline) : null;
@@ -108,6 +106,18 @@ Deno.serve(async (req) => {
       bid_data.currency ?? "JOD",
       minutesLeft
     );
+
+    // Always save in-app notification regardless of push token
+    await admin.from("notifications").insert({
+      user_id:  job.provider_id,
+      title,
+      body,
+      type:     "job_commit_request",
+      screen:   "provider_confirm",
+      metadata: { job_id, is_urgent },
+    }).catch(() => {});
+
+    if (!tokenRow?.token) return json({ sent: false, inbox: true, reason: "no_push_token" });
 
     const message = {
       to:       tokenRow.token,
@@ -134,16 +144,7 @@ Deno.serve(async (req) => {
     const expoData = await expoRes.json();
     const sent = expoData?.data?.status === "ok";
 
-    await admin.from("notifications").insert({
-      user_id:  job.provider_id,
-      title,
-      body,
-      type:     "job_commit_request",
-      screen:   "provider_confirm",
-      metadata: { job_id, is_urgent },
-    }).then(() => {}).catch(() => {});
-
-    return json({ sent });
+    return json({ sent, inbox: true });
 
   } catch (err) {
     return json({ error: String(err) }, 500);

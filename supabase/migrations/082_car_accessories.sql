@@ -8,8 +8,8 @@
 -- last item within car_services group.
 -- ============================================================
 
-INSERT INTO service_categories (slug, name_ar, name_en, icon, group_slug, sort_order, is_active)
-VALUES ('car_accessories', 'إكسسوارات وزينة السيارات', 'Car Accessories & Decor', 'car-mod', 'car_services', 51, true)
+INSERT INTO service_categories (slug, name_ar, name_en, icon, group_slug, group_ar, group_en, sort_order, is_active)
+VALUES ('car_accessories', 'إكسسوارات وزينة السيارات', 'Car Accessories & Decor', 'car-mod', 'car_services', 'صيانة السيارات', 'Car Services', 51, true)
 ON CONFLICT (slug) DO NOTHING;
 
 -- ─── Demo request template for car_accessories ───────────────

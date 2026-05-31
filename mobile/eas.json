@@ -40,8 +40,6 @@
       "channel": "production",
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_SUPABASE_URL": "",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "",
         "EXPO_PUBLIC_PROJECT_ID": "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
       },
       "android": {

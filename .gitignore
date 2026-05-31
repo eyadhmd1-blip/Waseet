@@ -43,6 +43,7 @@ google-service-account.json
 *.py
 *.xlsx
 *.xls
+/*.html
 admin/app/api/debug/
 
 # ── Build outputs ─────────────────────────────────────────────────────────────

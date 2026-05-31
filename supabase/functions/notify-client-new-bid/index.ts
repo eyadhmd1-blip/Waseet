@@ -100,13 +100,23 @@ Deno.serve(async (req) => {
       admin.from("push_tokens").select("token").eq("user_id", request.client_id).maybeSingle(),
     ]);
 
-    if (!tokenRow?.token) return json({ sent: false, reason: "no_push_token" });
-
     const lang         = clientUser?.lang ?? "ar";
     const providerName = providerUser?.full_name ?? (lang === "en" ? "Provider" : "مقدم");
     const count        = bidCount ?? 1;
 
     const { title, body } = buildCopy(lang, count, request.title, providerName);
+
+    // Always save in-app notification regardless of push token
+    await admin.from("notifications").insert({
+      user_id:  request.client_id,
+      title,
+      body,
+      type:     "new_bid",
+      screen:   "new-request",
+      metadata: { request_id },
+    }).catch(() => {});
+
+    if (!tokenRow?.token) return json({ sent: false, inbox: true, reason: "no_push_token" });
 
     const message = {
       to:        tokenRow.token,
@@ -131,17 +141,7 @@ Deno.serve(async (req) => {
     const expoData = await expoRes.json();
     const sent = expoData?.data?.status === "ok";
 
-    // Insert in-app notification for the client
-    await admin.from("notifications").insert({
-      user_id:  request.client_id,
-      title,
-      body,
-      type:     "new_bid",
-      screen:   "new-request",
-      metadata: { request_id },
-    }).catch(() => {});
-
-    return json({ sent });
+    return json({ sent, inbox: true });
 
   } catch (err) {
     return json({ error: String(err) }, 500);
