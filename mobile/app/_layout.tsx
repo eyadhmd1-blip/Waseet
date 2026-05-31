@@ -103,13 +103,21 @@ async function registerPushToken(userId: string) {
       finalStatus = status;
     }
 
-    if (finalStatus !== 'granted') return;
+    if (finalStatus !== 'granted') {
+      console.warn('[push] permission denied');
+      return;
+    }
 
     // projectId falls back to app.json extra.eas.projectId when env var is absent
     const projectId = process.env.EXPO_PUBLIC_PROJECT_ID ?? 'ce995c3f-5df4-46fc-bc17-8cd30eefadbc';
+    console.log('[push] requesting token with projectId:', projectId);
     const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
+    console.log('[push] token received:', token ? token.slice(0, 20) + '...' : 'null');
 
-    if (!token) return;
+    if (!token) {
+      console.warn('[push] token is null');
+      return;
+    }
 
     // onConflict must match the composite unique constraint (user_id, token)
     // added in migration 030. Using 'user_id' alone caused a silent PG error
