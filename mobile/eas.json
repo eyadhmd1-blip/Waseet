@@ -41,7 +41,7 @@
       "env": {
         "EXPO_PUBLIC_ENV": "production",
         "EXPO_PUBLIC_SUPABASE_URL": "https://kyupkrhqitojeluczvvv.supabase.co",
-        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_XK4aGp_mHIjBNbWTswNRqA_2efiSoJX",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imt5dXBrcmhxaXRvamVsdWN6dnZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyMTU1MjYsImV4cCI6MjA5NTc5MTUyNn0.o0ypAbvu3WduIzGy73-YNuOxkb_BAImK0KCZGqGc0CU",
         "EXPO_PUBLIC_PROJECT_ID": "ce995c3f-5df4-46fc-bc17-8cd30eefadbc"
       },
       "android": {
