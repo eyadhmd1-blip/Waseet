@@ -1,13 +1,15 @@
 // Supabase Edge Function — send-otp
 // Deno runtime
-// Sends an OTP SMS via Unifonic to verify a phone number.
+// Sends an OTP SMS via Twilio (primary) or Unifonic (fallback).
 //
 // ENV vars required (set in Supabase Dashboard → Edge Functions → Secrets):
-//   UNIFONIC_APP_SID   — Unifonic application SID / API key
-//   SUPABASE_URL       — auto-injected
-//   SUPABASE_SERVICE_ROLE_KEY — auto-injected
+//   TWILIO_ACCOUNT_SID  — Twilio Account SID (primary provider)
+//   TWILIO_AUTH_TOKEN   — Twilio Auth Token
+//   TWILIO_FROM_NUMBER  — Twilio phone number e.g. "+12345678901"
+//   UNIFONIC_APP_SID    — Unifonic (fallback if Twilio not configured)
+//   ENVIRONMENT         — "development" to return OTP in response (testing only)
 //
-// Request body: { phone: string }  — E.164 format e.g. "00962791234567" or "+962791234567"
+// Request body: { phone: string }  — E.164 format e.g. "+962791234567"
 // Response:     { success: true } | { error: string }
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -18,6 +20,79 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Normalize phone to E.164 (+962xxxxxxxxx)
+function toE164(phone: string): string {
+  const p = phone.trim().replace(/\s+/g, "");
+  if (p.startsWith("+962")) return p;
+  if (p.startsWith("00962")) return "+" + p.slice(2);
+  if (p.startsWith("0") && !p.startsWith("00")) return "+962" + p.slice(1);
+  if (/^7[789]/.test(p)) return "+962" + p;
+  return p;
+}
+
+// Normalize phone to 00962 format for Unifonic
+function toUnifonic(phone: string): string {
+  const e164 = toE164(phone);
+  return "00962" + e164.slice(4);
+}
+
+async function sendViaTwilio(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
+  const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID")!;
+  const authToken  = Deno.env.get("TWILIO_AUTH_TOKEN")!;
+  const from       = Deno.env.get("TWILIO_FROM_NUMBER")!;
+
+  const credentials = btoa(`${accountSid}:${authToken}`);
+
+  const formData = new URLSearchParams({ To: to, From: from, Body: body });
+
+  const res = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+    {
+      method: "POST",
+      headers: {
+        "Authorization": `Basic ${credentials}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData.toString(),
+    }
+  );
+
+  const result = await res.json();
+  if (!res.ok || result?.status === "failed" || result?.error_code) {
+    console.error("[send-otp] Twilio error:", result);
+    return { ok: false, error: result?.message ?? "TWILIO_FAILED" };
+  }
+  return { ok: true };
+}
+
+async function sendViaUnifonic(to: string, body: string): Promise<{ ok: boolean; error?: string }> {
+  const appSid = Deno.env.get("UNIFONIC_APP_SID")!;
+
+  const formData = new URLSearchParams({
+    AppSid:       appSid,
+    Recipient:    toUnifonic(to),
+    Body:         body,
+    SenderID:     "Waseet",
+    responseType: "JSON",
+  });
+
+  const res = await fetch(
+    "https://el.cloud.unifonic.com/rest/SMS/messages",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: formData.toString(),
+    }
+  );
+
+  const result = await res.json();
+  if (!res.ok || result?.Success === false) {
+    console.error("[send-otp] Unifonic error:", result);
+    return { ok: false, error: "UNIFONIC_FAILED" };
+  }
+  return { ok: true };
+}
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -34,10 +109,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Normalize: strip spaces, ensure starts with 00962 or +962
     const normalizedPhone = phone.trim().replace(/\s+/g, "");
 
-    // Basic Jordanian phone validation
     const jordanPattern = /^(\+962|00962|0)?7[789]\d{7}$/;
     if (!jordanPattern.test(normalizedPhone)) {
       return new Response(
@@ -46,27 +119,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Normalize to 00962 format for Unifonic
-    let unifonicPhone = normalizedPhone;
-    if (unifonicPhone.startsWith("+962")) {
-      unifonicPhone = "00962" + unifonicPhone.slice(4);
-    } else if (unifonicPhone.startsWith("0") && !unifonicPhone.startsWith("00")) {
-      unifonicPhone = "00962" + unifonicPhone.slice(1);
-    } else if (/^7[789]/.test(unifonicPhone)) {
-      unifonicPhone = "00962" + unifonicPhone;
-    }
-
-    // Create Supabase admin client to call send_otp RPC
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       getServiceRoleKey()
     );
 
-    // Call DB function to generate OTP code
     const { data, error } = await supabase.rpc("send_otp", { p_phone: normalizedPhone });
 
     if (error) {
-      console.error("send_otp RPC error:", error);
+      console.error("[send-otp] RPC error:", error);
       return new Response(
         JSON.stringify({ error: "DB_ERROR" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -81,55 +142,43 @@ Deno.serve(async (req: Request) => {
     }
 
     const code = data.code as string;
+    const smsBody = `رمز التحقق في وسيط: ${code}\nلا تشاركه مع أحد.\nWaseet OTP: ${code}`;
+    const e164Phone = toE164(normalizedPhone);
 
-    // Send SMS via Unifonic REST API
-    const appSid = Deno.env.get("UNIFONIC_APP_SID");
+    // ── Provider selection: Twilio → Unifonic → Dev mode ──
+    const hasTwilio   = !!Deno.env.get("TWILIO_ACCOUNT_SID");
+    const hasUnifonic = !!Deno.env.get("UNIFONIC_APP_SID");
+    const isDev       = Deno.env.get("ENVIRONMENT") === "development";
 
-    if (!appSid) {
-      // BUG-001 FIX: Only expose dev_code when explicitly running in development
-      // environment. A missing AppSid in staging/production must be a hard error,
-      // not a silent bypass that exposes the OTP in the HTTP response.
-      const isDev = Deno.env.get("ENVIRONMENT") === "development";
-      if (isDev) {
-        console.warn("[send-otp] Dev mode — OTP returned in response (ENVIRONMENT=development)");
+    if (hasTwilio) {
+      console.log("[send-otp] Using Twilio");
+      const result = await sendViaTwilio(e164Phone, smsBody);
+      if (!result.ok) {
         return new Response(
-          JSON.stringify({ success: true, dev_code: code }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          JSON.stringify({ error: "SMS_SEND_FAILED" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      console.error("[send-otp] UNIFONIC_APP_SID is not configured in this environment");
+    } else if (hasUnifonic) {
+      console.log("[send-otp] Using Unifonic");
+      const result = await sendViaUnifonic(normalizedPhone, smsBody);
+      if (!result.ok) {
+        return new Response(
+          JSON.stringify({ error: "SMS_SEND_FAILED" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else if (isDev) {
+      console.warn("[send-otp] Dev mode — OTP in response");
+      return new Response(
+        JSON.stringify({ success: true, dev_code: code }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    } else {
+      console.error("[send-otp] No SMS provider configured");
       return new Response(
         JSON.stringify({ error: "SMS_PROVIDER_NOT_CONFIGURED" }),
         { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const smsBody = `رمز التحقق الخاص بك في وسيط هو: ${code}\nلا تشاركه مع أحد.\nYour Waseet OTP: ${code}`;
-
-    const formData = new URLSearchParams({
-      AppSid:      appSid,
-      Recipient:   unifonicPhone,
-      Body:        smsBody,
-      SenderID:    "Waseet",
-      responseType: "JSON",
-    });
-
-    const smsResponse = await fetch(
-      "https://el.cloud.unifonic.com/rest/SMS/messages",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: formData.toString(),
-      }
-    );
-
-    const smsResult = await smsResponse.json();
-
-    if (!smsResponse.ok || smsResult?.Success === false) {
-      console.error("Unifonic SMS failed:", smsResult);
-      return new Response(
-        JSON.stringify({ error: "SMS_SEND_FAILED" }),
-        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -139,7 +188,7 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (err) {
-    console.error("send-otp error:", err);
+    console.error("[send-otp] error:", err);
     return new Response(
       JSON.stringify({ error: "INTERNAL_ERROR" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
