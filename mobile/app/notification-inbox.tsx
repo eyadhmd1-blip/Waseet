@@ -131,6 +131,13 @@ export default function NotificationInboxScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore,     setHasMore]     = useState(true);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // IDs whose title/body was actually clamped on render (reliable truncation
+  // detection — char-count heuristics miss Arabic wrapping & newlines).
+  const [truncatedIds, setTruncatedIds] = useState<Set<string>>(new Set());
+
+  const markTruncated = useCallback((id: string) => {
+    setTruncatedIds(prev => prev.has(id) ? prev : new Set(prev).add(id));
+  }, []);
   const cursorRef = useRef<{ created_at: string; id: string } | null>(null);
 
   // ── Fetch page ──────────────────────────────────────────────
@@ -295,7 +302,9 @@ export default function NotificationInboxScreen() {
       provider_name:  (item.metadata?.provider_name  as string) ?? undefined,
     };
 
-    const isLong     = (item.body?.length ?? 0) > 60 || item.title.length > 60;
+    // Expandable if the text was actually clamped on render (or, as a
+    // pre-layout fallback, if it's long enough to likely wrap past 2 lines).
+    const isLong     = truncatedIds.has(item.id) || (item.body?.length ?? 0) > 45 || item.title.length > 45;
     const isExpanded = expandedIds.has(item.id);
 
     if (isLong && !isExpanded) {
@@ -311,7 +320,7 @@ export default function NotificationInboxScreen() {
         });
       }
     }
-  }, [router, expandedIds]);
+  }, [router, expandedIds, truncatedIds]);
 
   // ── Mark all read ───────────────────────────────────────────
   const markAllRead = useCallback(async () => {
@@ -353,7 +362,7 @@ export default function NotificationInboxScreen() {
     }
 
     const expanded  = expandedIds.has(item.id);
-    const isLong    = (item.body?.length ?? 0) > 60 || item.title.length > 60;
+    const isLong    = truncatedIds.has(item.id) || (item.body?.length ?? 0) > 45 || item.title.length > 45;
     const showHint  = isLong && !expanded;
 
     return (
@@ -373,13 +382,21 @@ export default function NotificationInboxScreen() {
 
         <View style={st.cardBody}>
           <View style={st.cardTop}>
-            <Text style={st.title} numberOfLines={expanded ? undefined : 2}>
+            <Text
+              style={st.title}
+              numberOfLines={expanded ? undefined : 2}
+              onTextLayout={e => { if (!expanded && e.nativeEvent.lines.length > 2) markTruncated(item.id); }}
+            >
               {item.title}
             </Text>
             <Text style={st.time}>{relativeTime(item.created_at, locale, t)}</Text>
           </View>
           {!!item.body && (
-            <Text style={st.body} numberOfLines={expanded ? undefined : 2}>
+            <Text
+              style={st.body}
+              numberOfLines={expanded ? undefined : 2}
+              onTextLayout={e => { if (!expanded && e.nativeEvent.lines.length > 2) markTruncated(item.id); }}
+            >
               {item.body}
             </Text>
           )}
@@ -394,7 +411,7 @@ export default function NotificationInboxScreen() {
         {!item.is_read && <View style={st.unreadDot} />}
       </TouchableOpacity>
     );
-  }, [st, locale, onTap, onLongPress, expandedIds, t]);
+  }, [st, locale, onTap, onLongPress, expandedIds, truncatedIds, markTruncated, t]);
 
   const unreadCount = useMemo(() => items.filter(n => !n.is_read).length, [items]);
 
