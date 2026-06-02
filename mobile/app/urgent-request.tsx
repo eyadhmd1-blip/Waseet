@@ -297,9 +297,9 @@ export default function UrgentRequestScreen() {
 
       if (error) throw error;
 
-      supabase.functions.invoke('notify-urgent', {
-        body: { request_id: req!.id, city, category_slug: selectedCat!.slug },
-      }).catch(err => console.warn('[Waseet] notify-urgent failed:', err?.message));
+      // Provider notifications are dispatched server-side by the
+      // trg_notify_on_new_request trigger (migration 105), which routes
+      // urgent requests to notify-urgent — no client-side call needed.
 
       setShowConfirm(false);
       setShowSuccess(true);

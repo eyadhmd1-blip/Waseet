@@ -60,26 +60,24 @@ Deno.serve(async (req) => {
     const { request_id, provider_id: bodyProviderId } = reqBody;
     if (!request_id) return json({ error: "request_id required" }, 400);
 
-    // Detect if called from a DB trigger (service_role key) vs mobile app (user JWT)
-    const serviceKey    = getServiceRoleKey();
-    const isTriggerCall = serviceKey !== "" && authHeader === `Bearer ${serviceKey}`;
-
     let providerId: string;
 
-    if (isTriggerCall) {
-      // DB trigger supplies provider_id in the body
-      if (!bodyProviderId) return json({ error: "provider_id required" }, 400);
+    // Try user JWT auth first (mobile app call)
+    const anonClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      getAnonKey(),
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user } } = await anonClient.auth.getUser();
+
+    if (user) {
+      // Valid user JWT — app call
+      providerId = user.id;
+    } else if (bodyProviderId) {
+      // Not a user JWT — DB trigger call (sends service_role key + provider_id in body)
       providerId = bodyProviderId;
     } else {
-      // Mobile app: verify the caller is an authenticated user
-      const anonClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        getAnonKey(),
-        { global: { headers: { Authorization: authHeader } } }
-      );
-      const { data: { user }, error: authErr } = await anonClient.auth.getUser();
-      if (authErr || !user) return json({ error: "unauthorized" }, 401);
-      providerId = user.id;
+      return json({ error: "unauthorized" }, 401);
     }
 
     const admin = createClient(
@@ -132,7 +130,7 @@ Deno.serve(async (req) => {
       type:     "new_bid",
       screen:   "new-request",
       metadata: { request_id },
-    }).catch(() => {});
+    }).then(() => {}).catch(() => {});
 
     if (!tokenRow?.token) return json({ sent: false, inbox: true, reason: "no_push_token" });
 

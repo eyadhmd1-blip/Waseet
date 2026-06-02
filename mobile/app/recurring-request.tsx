@@ -180,12 +180,9 @@ export default function RecurringRequestScreen() {
 
       if (error) throw error;
 
-      // Fire-and-forget: notify matching providers
-      if (inserted?.id) {
-        supabase.functions.invoke('notify-contract', {
-          body: { contract_id: inserted.id, city, category_slug: selectedCat.slug },
-        }).catch(err => console.warn('[Waseet] notify-contract failed:', err?.message));
-      }
+      // Provider notifications are dispatched server-side by the
+      // trg_notify_on_new_contract trigger (migration 105) — fires on the
+      // recurring_contracts INSERT, no client-side call needed.
 
       setShowSuccess(true);
     } catch {

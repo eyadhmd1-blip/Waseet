@@ -108,7 +108,7 @@ Deno.serve(async (req) => {
     metadata: {},
   }));
   if (notifInserts.length > 0) {
-    await supabase.from("notifications").insert(notifInserts).catch(() => {});
+    await supabase.from("notifications").insert(notifInserts).then(() => {}).catch(() => {});
   }
 
   console.log(`[Demo] done. sent=${sent} total=${pending.length}`);

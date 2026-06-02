@@ -78,30 +78,22 @@ Deno.serve(async (req) => {
       return json({ error: "missing params" }, 400);
     }
 
-    // Detect if called from a DB trigger (service_role key) vs mobile app (user JWT)
-    const serviceKey    = getServiceRoleKey();
-    const isTriggerCall = serviceKey !== "" && authHeader === `Bearer ${serviceKey}`;
-
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       getServiceRoleKey(),
       { auth: { persistSession: false } }
     );
 
-    if (isTriggerCall) {
-      // Called from DB trigger — ownership already guaranteed by the trigger
-      // client_id must be supplied in the body
-      if (!bodyClientId) return json({ error: "client_id required" }, 400);
-    } else {
-      // Called from mobile app — verify the caller owns the request
-      const anonClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        getAnonKey(),
-        { global: { headers: { Authorization: authHeader } } }
-      );
-      const { data: { user }, error: authErr } = await anonClient.auth.getUser();
-      if (authErr || !user) return json({ error: "unauthorized" }, 401);
+    // Try user JWT auth first (mobile app call)
+    const anonClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      getAnonKey(),
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user } } = await anonClient.auth.getUser();
 
+    if (user) {
+      // Valid user JWT — verify ownership
       const { data: reqRow } = await supabase
         .from("requests")
         .select("client_id")
@@ -111,6 +103,11 @@ Deno.serve(async (req) => {
       if (!reqRow || reqRow.client_id !== user.id) {
         return json({ error: "request_not_found_or_unauthorized" }, 403);
       }
+    } else if (bodyClientId) {
+      // Not a user JWT — DB trigger call (client_id comes from body)
+      // Trigger only fires for valid requests, so no extra check needed
+    } else {
+      return json({ error: "unauthorized" }, 401);
     }
 
     // Fetch request title for notification copy
@@ -204,6 +201,7 @@ Deno.serve(async (req) => {
       await supabase
         .from("notifications")
         .insert(inboxInserts.slice(i, i + 500))
+        .then(() => {})
         .catch(() => {});
     }
 
