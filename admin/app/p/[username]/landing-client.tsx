@@ -17,7 +17,7 @@ interface Provider {
 
 // Fill in once apps are published on stores
 const IOS_STORE_URL     = 'https://apps.apple.com/app/waseet/idPLACEHOLDER';
-const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.waseet.app';
+const ANDROID_STORE_URL = 'https://play.google.com/store/apps/details?id=com.waseet.jo';
 
 const TIER_LABEL: Record<string, string> = {
   new:     'جديد',

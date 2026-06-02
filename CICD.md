@@ -56,7 +56,7 @@ git push -u origin main
 ### 2.2 Add the Android app
 
 1. Inside the project, click the **Android icon** (Add app)
-2. Android package name: `com.waseet.app`
+2. Android package name: `com.waseet.jo`
 3. App nickname: `Waseet Staging`
 4. Download **google-services.json** (needed for push notifications via FCM)
 5. Click **Next** through the remaining steps — skip the SDK setup (handled by Expo)
@@ -230,7 +230,7 @@ In Codemagic → **Teams** → **Global variables and secrets**, create these gr
 3. Platform: **iOS**
 4. Name: `Waseet` (or `وسيط`)
 5. Primary Language: **Arabic**
-6. Bundle ID: `com.waseet.app` ← must match exactly
+6. Bundle ID: `com.waseet.jo` ← must match exactly
 7. SKU: `waseet-staging` (any unique string)
 8. User Access: **Full Access**
 9. Click **Create**
@@ -257,7 +257,7 @@ Codemagic automatically fetches your provisioning profiles from Apple using the 
 1. Codemagic → **Teams → Code signing identities → iOS**
 2. Click **Fetch from Apple Developer Portal**
 3. Enter your Apple ID credentials or use the API key
-4. Select **Distribution certificate** for `com.waseet.app`
+4. Select **Distribution certificate** for `com.waseet.jo`
 5. Codemagic stores and manages this automatically
 
 ### 5.5 Create a TestFlight tester group
@@ -336,9 +336,9 @@ Build numbers auto-increment — no manual version bumping needed for staging.
 - The build will warn but continue. Push notifications won't work until you add `GOOGLE_SERVICES_JSON`
 - This is expected if you haven't set up Firebase FCM yet
 
-### iOS build fails: "No profiles for 'com.waseet.app' were found"
+### iOS build fails: "No profiles for 'com.waseet.jo' were found"
 - Complete §5.4 — Codemagic needs to fetch provisioning profiles
-- Ensure the bundle ID in App Store Connect matches exactly: `com.waseet.app`
+- Ensure the bundle ID in App Store Connect matches exactly: `com.waseet.jo`
 
 ### iOS build fails: "Export options: method was 'app-store' but signingStyle was 'manual'"
 - Open `mobile/ios/ExportOptions.plist` and confirm `signingStyle` is `automatic`

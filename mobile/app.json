@@ -23,7 +23,7 @@
       }
     },
     "android": {
-      "package": "com.waseet.app",
+      "package": "com.waseet.jo",
       "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -56,7 +56,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.waseet.app",
+      "bundleIdentifier": "com.waseet.jo",
       "associatedDomains": [
         "applinks:waseet.app"
       ],
