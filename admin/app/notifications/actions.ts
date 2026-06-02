@@ -34,11 +34,13 @@ async function sendExpoPush(
 
   for (let i = 0; i < tokens.length; i += EXPO_PUSH_BATCH) {
     const batch = tokens.slice(i, i + EXPO_PUSH_BATCH).map(token => ({
-      to:    token,
+      to:        token,
       title,
       body,
-      sound: 'default',
-      data:  { type: 'admin_broadcast' },
+      sound:     'default',
+      priority:  'high',      // high-priority so FCM wakes devices under Doze/battery optimisation
+      channelId: 'default',   // route to the MAX-importance channel (heads-up + sound)
+      data:      { type: 'admin_broadcast' },
     }));
 
     try {
