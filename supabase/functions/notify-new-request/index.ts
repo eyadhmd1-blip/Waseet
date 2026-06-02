@@ -110,15 +110,17 @@ Deno.serve(async (req) => {
       return json({ error: "unauthorized" }, 401);
     }
 
-    // Fetch request title for notification copy
-    const { data: reqRow } = await supabase
-      .from("requests")
-      .select("title, city")
-      .eq("id", request_id)
-      .single();
+    // Fetch request city + the localized category name for the notification copy.
+    // The copy reads "{category} في {city} — …", so we show the category name in
+    // each provider's language (never the raw English slug).
+    const [{ data: reqRow }, { data: cat }] = await Promise.all([
+      supabase.from("requests").select("city").eq("id", request_id).maybeSingle(),
+      supabase.from("service_categories").select("name_ar, name_en").eq("slug", category_slug).maybeSingle(),
+    ]);
 
-    const catName = reqRow?.title ?? category_slug;
-    const reqCity = reqRow?.city  ?? city;
+    const catNameAr = cat?.name_ar ?? category_slug;
+    const catNameEn = cat?.name_en ?? category_slug;
+    const reqCity   = reqRow?.city ?? city;
 
     // Fetch tiered provider list (cooldown for tier 3 enforced in RPC)
     const { data: targets, error: rpcErr } = await supabase.rpc(
@@ -150,6 +152,7 @@ Deno.serve(async (req) => {
       days_lapsed: number;
     }) => {
       const lang = langMap.get(t.provider_id) ?? "ar";
+      const catName = lang === "en" ? catNameEn : catNameAr;
       const { title, body } = t.is_active
         ? buildActiveCopy(lang, catName, reqCity)
         : buildLapsedCopy(lang, catName, reqCity);
@@ -183,6 +186,7 @@ Deno.serve(async (req) => {
       is_active:   boolean;
     }) => {
       const lang = langMap.get(t.provider_id) ?? "ar";
+      const catName = lang === "en" ? catNameEn : catNameAr;
       const { title, body } = t.is_active
         ? buildActiveCopy(lang, catName, reqCity)
         : buildLapsedCopy(lang, catName, reqCity);
