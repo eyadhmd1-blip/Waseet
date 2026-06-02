@@ -108,6 +108,10 @@ export function handleNotifTap(data: NotifRouteData, router: Router) {
       // Fallback: navigate to the screen path directly if it looks like a route
       if (screen?.startsWith('/') || screen?.startsWith('(')) {
         router.push(screen as any);
+      } else {
+        // No specific destination (e.g. admin broadcasts) → open the
+        // in-app notification inbox so the user can read the message.
+        router.push('/notification-inbox' as any);
       }
       break;
   }
