@@ -9673,6 +9673,88 @@ ORDER BY group_slug, sort_order;
 
 ---
 
+## Module: Server-Side Notification Delivery (NOTIF-DELIVERY)
+
+*Added 2026-06-02 — after migrating notification dispatch from client-side `functions.invoke` to DB triggers (migrations 104/105) and fixing two root-cause bugs: the `.insert(...).catch()` antipattern (invalid in supabase-js v2) and missing `service_role` table grants (migration 106). These cases assert the END RESULT — a row in `notifications` — not just that the UI action succeeded.*
+
+#### NOTIF-DELIVERY-001
+**Name:** New request inserts in-app notification for matching providers
+**Priority:** Critical | **Type:** Functional / Server-side
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client posts a normal request (matching provider exists in same city+category with push token) | requests INSERT fires trg_notify_on_new_request |
+| 2 | Query `notifications` table | Row with type='new_request' for the provider's user_id |
+| 3 | `net._http_response` | notify-new-request returned 200 |
+
+**Expected Result:** In-app notification row created server-side regardless of app/network state.
+**Automation Candidate:** Yes
+
+#### NOTIF-DELIVERY-002
+**Name:** New bid inserts in-app notification for the client
+**Priority:** Critical | **Type:** Functional / Server-side
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Provider submits a bid on a request | bids INSERT fires trg_notify_on_new_bid |
+| 2 | Query `notifications` table | Row with type='new_bid' for the request owner (client) |
+| 3 | `net._http_response` | notify-client-new-bid returned 200 (not 404/500) |
+
+**Expected Result:** Client receives in-app bid notification.
+**Automation Candidate:** Yes
+
+#### NOTIF-DELIVERY-003
+**Name:** Accepting a bid notifies rejected providers
+**Priority:** High | **Type:** Functional / Server-side
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Request has ≥2 bids; client accepts one | accept_bid creates a job → trg_notify_on_job_created fires |
+| 2 | Query `notifications` | type='bid_rejected' (or 'perseverance_reward') rows for losing providers |
+| 3 | Single-bidder case | notify-providers-bid-rejected returns no_rejected_bids (no error) |
+
+**Expected Result:** Losing providers notified; no error when there are none.
+**Automation Candidate:** Yes
+
+#### NOTIF-DELIVERY-004
+**Name:** Urgent request routes to notify-urgent via trigger
+**Priority:** High | **Type:** Functional / Server-side
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Client posts an urgent request (is_urgent=true) | trg_notify_on_new_request routes to notify-urgent (not notify-new-request) |
+| 2 | Query `notifications` | type='urgent_request' rows for available providers |
+
+**Expected Result:** Urgent requests use the dedicated urgent flow server-side.
+**Automation Candidate:** Yes
+
+#### NOTIF-DELIVERY-005
+**Name:** Notification failure never blocks the core write
+**Priority:** Critical | **Type:** Resilience
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Force a notification trigger error (e.g. config row missing) | Trigger EXCEPTION block swallows the error |
+| 2 | Verify the bid/request/job row | Row is still committed successfully |
+| 3 | Postgres logs | WARNING logged, no transaction rollback |
+
+**Expected Result:** notify_on_* triggers are wrapped in EXCEPTION handlers; a notification failure cannot roll back the bid/request/job insert.
+**Automation Candidate:** Yes
+
+#### NOTIF-DELIVERY-006
+**Name:** service_role has full DML on public tables
+**Priority:** Critical | **Type:** Infrastructure / Regression
+
+| Step | Action | Expected Result |
+|------|--------|----------------|
+| 1 | Query role_table_grants for service_role on requests/jobs/bids/notifications | SELECT, INSERT, UPDATE, DELETE all present |
+| 2 | Edge Function reads requests with the secret key | Succeeds (no SQLSTATE 42501) |
+
+**Expected Result:** Regression guard for migration 106 — service_role must retain full table privileges so server-side functions work.
+**Automation Candidate:** Yes
+
+---
+
 ---
 
 *End of Waseet QA Test Cases Report v7.0*  

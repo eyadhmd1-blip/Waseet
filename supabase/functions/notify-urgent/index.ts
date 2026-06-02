@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
     });
     if (notifInserts.length > 0) {
       for (let i = 0; i < notifInserts.length; i += 500) {
-        await supabase.from("notifications").insert(notifInserts.slice(i, i + 500)).catch(() => {});
+        await supabase.from("notifications").insert(notifInserts.slice(i, i + 500)).then(() => {}).catch(() => {});
       }
     }
 

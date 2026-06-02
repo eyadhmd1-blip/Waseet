@@ -166,6 +166,7 @@ Deno.serve(async (req) => {
       await supabase
         .from("notifications")
         .insert(inboxInserts.slice(i, i + 500))
+        .then(() => {})
         .catch(() => {});
     }
 

@@ -115,7 +115,7 @@ Deno.serve(async (req) => {
       type:     "job_commit_request",
       screen:   "provider_confirm",
       metadata: { job_id, is_urgent },
-    }).catch(() => {});
+    }).then(() => {}).catch(() => {});
 
     if (!tokenRow?.token) return json({ sent: false, inbox: true, reason: "no_push_token" });
 

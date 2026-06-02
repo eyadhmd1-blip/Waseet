@@ -130,7 +130,7 @@ Deno.serve(async (req) => {
       type:     "new_bid",
       screen:   "new-request",
       metadata: { request_id },
-    }).catch(() => {});
+    }).then(() => {}).catch(() => {});
 
     if (!tokenRow?.token) return json({ sent: false, inbox: true, reason: "no_push_token" });
 

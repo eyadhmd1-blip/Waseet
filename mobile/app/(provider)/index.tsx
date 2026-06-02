@@ -1415,9 +1415,8 @@ export default function ProviderFeed() {
     const submittedId = target.id;
     setUrgentModal({ target: null, loading: false });
     setMyBidAmounts(prev => new Map([...prev, [submittedId, { amount: premiumMin ?? 0, bidId: result.bid_id ?? '', is_boosted: false, boost_expires_at: null }]]));
-    supabase.functions.invoke('notify-client-new-bid', {
-      body: { request_id: submittedId },
-    }).catch(err => console.warn('[Waseet] notify-client-new-bid failed:', err?.message));
+    // Client notification is dispatched server-side by trg_notify_on_new_bid
+    // (migrations 104/105) — fires on the bids INSERT, no client call needed.
     Alert.alert(t('providerFeed.successUrgentTitle'), t('providerFeed.successUrgentMsg'));
     load();
   };
@@ -1475,9 +1474,8 @@ export default function ProviderFeed() {
     const submittedAmount = amount;
     setBidModal({ target: null, amount: '', note: '', loading: false });
     setMyBidAmounts(prev => new Map([...prev, [submittedId, { amount: submittedAmount, bidId: result.bid_id ?? '', is_boosted: false, boost_expires_at: null }]]));
-    supabase.functions.invoke('notify-client-new-bid', {
-      body: { request_id: submittedId },
-    }).catch(err => console.warn('[Waseet] notify-client-new-bid failed:', err?.message));
+    // Client notification is dispatched server-side by trg_notify_on_new_bid
+    // (migrations 104/105) — fires on the bids INSERT, no client call needed.
     Alert.alert(t('providerFeed.successBidTitle'), t('providerFeed.successBidMsg'));
     load();
   };

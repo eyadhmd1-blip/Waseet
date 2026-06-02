@@ -303,12 +303,9 @@ export default function NewRequestScreen() {
       });
     }
 
-    // Notify matching providers (active + recently lapsed + medium-inactive)
-    if (newReq?.id) {
-      supabase.functions.invoke('notify-new-request', {
-        body: { request_id: newReq.id, city, category_slug: selectedCat!.slug },
-      }).catch(err => console.warn('[Waseet] notify-new-request failed:', err?.message));
-    }
+    // Provider notifications are dispatched server-side by the
+    // trg_notify_on_new_request trigger (migrations 104/105) — guaranteed
+    // to fire regardless of app/network state, so no client-side call here.
 
     setShowSuccess(true);
   };

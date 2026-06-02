@@ -94,16 +94,16 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "unauthorized" }, 401);
 
+    const { request_id } = await req.json() as { request_id: string };
+    if (!request_id) return json({ error: "request_id required" }, 400);
+
+    // Try user JWT auth first (mobile app call); fall back to DB trigger call.
     const anonClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       getAnonKey(),
       { global: { headers: { Authorization: authHeader } } }
     );
-    const { data: { user }, error: authErr } = await anonClient.auth.getUser();
-    if (authErr || !user) return json({ error: "unauthorized" }, 401);
-
-    const { request_id } = await req.json() as { request_id: string };
-    if (!request_id) return json({ error: "request_id required" }, 400);
+    const { data: { user } } = await anonClient.auth.getUser();
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -117,8 +117,10 @@ Deno.serve(async (req) => {
       .eq("id", request_id)
       .single();
 
-    if (!request)                       return json({ error: "request_not_found" }, 404);
-    if (request.client_id !== user.id)  return json({ error: "not_authorized" },   403);
+    if (!request) return json({ error: "request_not_found" }, 404);
+    // App call: enforce ownership. Trigger call (no user): allowed — the
+    // jobs INSERT trigger only fires after a legitimate accept_bid().
+    if (user && request.client_id !== user.id) return json({ error: "not_authorized" }, 403);
 
     const [{ count: totalBids }, { count: newRequestCount }] = await Promise.all([
       admin.from("bids").select("id", { count: "exact", head: true }).eq("request_id", request_id),

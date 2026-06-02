@@ -244,9 +244,9 @@ export default function RequestDetail() {
       p_is_urgent: isUrgent,
     });
 
-    supabase.functions.invoke('notify-providers-bid-rejected', {
-      body: { request_id: id },
-    }).catch(err => console.warn('[Waseet] notify-providers-bid-rejected failed:', err?.message));
+    // Rejected-bid notifications are dispatched server-side by the
+    // trg_notify_on_job_created trigger (migration 105) — fires on the
+    // jobs INSERT inside accept_bid(), no client-side call needed.
 
     setAccepting(null);
 
