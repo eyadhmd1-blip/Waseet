@@ -63,22 +63,26 @@ Deno.serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
+    // Fetch job columns and the request title separately to avoid the
+    // PostgREST "column client_id is ambiguous" error (client_id exists on
+    // both jobs and requests when the request is embedded).
     const { data: job } = await admin
       .from("jobs")
-      .select("provider_id, client_id, request_id, request:requests(title)")
+      .select("provider_id, client_id, request_id")
       .eq("id", job_id)
       .single();
 
     if (!job) return json({ error: "job_not_found" }, 404);
     if (job.client_id !== user.id) return json({ error: "not_authorized" }, 403);
 
-    const [{ data: tokenRow }, { data: providerUser }] = await Promise.all([
+    const [{ data: tokenRow }, { data: providerUser }, { data: reqRow }] = await Promise.all([
       admin.from("push_tokens").select("token").eq("user_id", job.provider_id).maybeSingle(),
       admin.from("users").select("lang").eq("id", job.provider_id).maybeSingle(),
+      admin.from("requests").select("title").eq("id", job.request_id).maybeSingle(),
     ]);
 
     const lang     = providerUser?.lang ?? "ar";
-    const reqTitle = (job as any).request?.title ?? "";
+    const reqTitle = reqRow?.title ?? "";
     const { title, body } = buildCopy(lang, reqTitle);
 
     // Insert in-app notification
