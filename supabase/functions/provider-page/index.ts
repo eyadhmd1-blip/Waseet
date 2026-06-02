@@ -79,7 +79,7 @@ serve(async (req) => {
   // Deep link uses only the provider UUID (safe, UUID format enforced by DB)
   const appDeepLink = `waseet://provider-profile?provider_id=${encodeURIComponent(prov.id)}`;
   const appStoreUrl = 'https://apps.apple.com/app/waseet';
-  const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.waseet.app';
+  const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.waseet.jo';
 
   // Escaped display values — applied to every DB-sourced field in the HTML
   const safeFullName   = escapeHtml(prov.full_name);
