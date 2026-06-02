@@ -1,10 +1,12 @@
 // ============================================================
 // WASEET — notify-client-new-bid
-// Called by provider app after a bid is successfully submitted.
-// Notifies the request owner (client) in their preferred language.
+// Notifies the request owner (client) when a provider submits a bid.
 //
-// Body: { request_id: string }
-// Auth: must be the provider who submitted the bid
+// Callers:
+//   (a) DB trigger (after INSERT on bids) — Authorization: Bearer <service_role_key>
+//       Body: { request_id, provider_id }
+//   (b) Mobile app (fire-and-forget after bid submit) — Authorization: Bearer <user_jwt>
+//       Body: { request_id }
 // ============================================================
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -53,16 +55,32 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) return json({ error: "unauthorized" }, 401);
 
-    const anonClient = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      getAnonKey(),
-      { global: { headers: { Authorization: authHeader } } }
-    );
-    const { data: { user }, error: authErr } = await anonClient.auth.getUser();
-    if (authErr || !user) return json({ error: "unauthorized" }, 401);
-
-    const { request_id } = await req.json() as { request_id: string };
+    // Read body once — Deno body can only be consumed once
+    const reqBody = await req.json() as { request_id: string; provider_id?: string };
+    const { request_id, provider_id: bodyProviderId } = reqBody;
     if (!request_id) return json({ error: "request_id required" }, 400);
+
+    // Detect if called from a DB trigger (service_role key) vs mobile app (user JWT)
+    const serviceKey    = getServiceRoleKey();
+    const isTriggerCall = serviceKey !== "" && authHeader === `Bearer ${serviceKey}`;
+
+    let providerId: string;
+
+    if (isTriggerCall) {
+      // DB trigger supplies provider_id in the body
+      if (!bodyProviderId) return json({ error: "provider_id required" }, 400);
+      providerId = bodyProviderId;
+    } else {
+      // Mobile app: verify the caller is an authenticated user
+      const anonClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        getAnonKey(),
+        { global: { headers: { Authorization: authHeader } } }
+      );
+      const { data: { user }, error: authErr } = await anonClient.auth.getUser();
+      if (authErr || !user) return json({ error: "unauthorized" }, 401);
+      providerId = user.id;
+    }
 
     const admin = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -82,7 +100,7 @@ Deno.serve(async (req) => {
       .from("bids")
       .select("id")
       .eq("request_id", request_id)
-      .eq("provider_id", user.id)
+      .eq("provider_id", providerId)
       .eq("status", "pending")
       .maybeSingle();
 
@@ -94,7 +112,7 @@ Deno.serve(async (req) => {
       { data: clientUser },
       { data: tokenRow },
     ] = await Promise.all([
-      admin.from("users").select("full_name").eq("id", user.id).maybeSingle(),
+      admin.from("users").select("full_name").eq("id", providerId).maybeSingle(),
       admin.from("bids").select("id", { count: "exact", head: true }).eq("request_id", request_id).eq("status", "pending"),
       admin.from("users").select("lang").eq("id", request.client_id).maybeSingle(),
       admin.from("push_tokens").select("token").eq("user_id", request.client_id).maybeSingle(),
@@ -104,13 +122,13 @@ Deno.serve(async (req) => {
     const providerName = providerUser?.full_name ?? (lang === "en" ? "Provider" : "مقدم");
     const count        = bidCount ?? 1;
 
-    const { title, body } = buildCopy(lang, count, request.title, providerName);
+    const { title, body: notifBody } = buildCopy(lang, count, request.title, providerName);
 
-    // Always save in-app notification regardless of push token
+    // Always insert in-app notification regardless of push token
     await admin.from("notifications").insert({
       user_id:  request.client_id,
       title,
-      body,
+      body:     notifBody,
       type:     "new_bid",
       screen:   "new-request",
       metadata: { request_id },
@@ -121,7 +139,7 @@ Deno.serve(async (req) => {
     const message = {
       to:        tokenRow.token,
       title,
-      body,
+      body:      notifBody,
       sound:     "default",
       priority:  "high",
       data: {
