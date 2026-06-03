@@ -111,6 +111,20 @@ Deno.serve(async (req: Request) => {
 
     const normalizedPhone = phone.trim().replace(/\s+/g, "");
 
+    // ── Google Play reviewer test account ──────────────────────────────────
+    // Google's app reviewers cannot receive a real SMS OTP on a Jordanian
+    // number. For this ONE dedicated test number we skip sending any SMS and
+    // return success; verify-otp accepts a fixed code for the same number.
+    // This affects ONLY this number — every real user still goes through the
+    // normal CSPRNG OTP + Twilio/Unifonic path with no change.
+    const TEST_PHONE = "+962799999999";
+    if (toE164(normalizedPhone) === TEST_PHONE) {
+      return new Response(
+        JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const jordanPattern = /^(\+962|00962|0)?7[789]\d{7}$/;
     if (!jordanPattern.test(normalizedPhone)) {
       return new Response(

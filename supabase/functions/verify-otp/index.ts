@@ -52,27 +52,38 @@ Deno.serve(async (req: Request) => {
       getServiceRoleKey()
     );
 
-    // ── Step 1: Verify OTP via DB RPC ──────────────────────────────────────
-    const { data: otpResult, error: otpError } = await supabase.rpc("verify_otp", {
-      p_phone: phone.trim(),
-      p_code: code.trim(),
-    });
+    // ── Google Play reviewer test account ──────────────────────────────────
+    // For this ONE dedicated test number + fixed code we skip the OTP code
+    // check, then continue to create a real session below exactly like any
+    // other user. send-otp skips the SMS for the same number. This affects
+    // ONLY this number/code pair — every real user is verified normally.
+    const TEST_PHONE = "+962799999999";
+    const TEST_CODE  = "246810";
+    const isReviewerLogin = phone.trim() === TEST_PHONE && code.trim() === TEST_CODE;
 
-    if (otpError) {
-      console.error("verify_otp RPC error:", otpError);
-      return new Response(
-        JSON.stringify({ error: "DB_ERROR" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // ── Step 1: Verify OTP via DB RPC (skipped for reviewer test account) ──
+    if (!isReviewerLogin) {
+      const { data: otpResult, error: otpError } = await supabase.rpc("verify_otp", {
+        p_phone: phone.trim(),
+        p_code: code.trim(),
+      });
 
-    if (!otpResult?.success) {
-      const errCode = otpResult?.error ?? "VERIFICATION_FAILED";
-      const statusCode = errCode === "MAX_ATTEMPTS" ? 429 : 400;
-      return new Response(
-        JSON.stringify({ error: errCode }),
-        { status: statusCode, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (otpError) {
+        console.error("verify_otp RPC error:", otpError);
+        return new Response(
+          JSON.stringify({ error: "DB_ERROR" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      if (!otpResult?.success) {
+        const errCode = otpResult?.error ?? "VERIFICATION_FAILED";
+        const statusCode = errCode === "MAX_ATTEMPTS" ? 429 : 400;
+        return new Response(
+          JSON.stringify({ error: errCode }),
+          { status: statusCode, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // ── Simple path: verify-phone flow (user is already authenticated) ─────
