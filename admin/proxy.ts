@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { verifyToken } from './app/lib/token';
 
 const COOKIE_NAME  = 'waseet_admin_session';
-const PUBLIC_PATHS = ['/login', '/_next', '/favicon.ico', '/p/', '/.well-known/'];
+const PUBLIC_PATHS = ['/login', '/_next', '/favicon.ico', '/p/', '/.well-known/', '/privacy', '/delete-account'];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
